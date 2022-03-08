@@ -1,0 +1,15 @@
+network unknown {
+}
+variable risk_perception_r {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable work_from_home {
+  type discrete [ 2 ] { 1, 2 };
+}
+probability ( risk_perception_r | work_from_home ) {
+  (1) 0.00204040, 0.01367068, 0.06162008, 0.23485003, 0.37890226, 0.25770251, 0.05121404;
+  (2) 0.000520969, 0.006251628, 0.036988799, 0.165668143, 0.357645220, 0.353998437, 0.078926804;
+}
+probability ( work_from_home ) {
+  table 0.5607551, 0.4392449;
+}

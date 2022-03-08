@@ -1,0 +1,106 @@
+network unknown {
+}
+variable COVIDeffect_4 {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable COVIDexp {
+  type discrete [ 9 ] { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+}
+variable DemHealthcare {
+  type discrete [ 2 ] { 1, 2 };
+}
+variable Ethnicmin {
+  type discrete [ 3 ] { 1, 2, 4 };
+}
+variable Friends_3 {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable Govresponse_7 {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable Govresponse_8 {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable Longitude_1 {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable MediaExp_1 {
+  type discrete [ 2 ] { 1, 2 };
+}
+variable MediaExp_2 {
+  type discrete [ 2 ] { 1, 2 };
+}
+variable MediaExp_3 {
+  type discrete [ 2 ] { 1, 2 };
+}
+variable Personal_4 {
+  type discrete [ 7 ] { 1, 2, 3, 4, 5, 6, 7 };
+}
+variable risk_perception {
+  type discrete [ 2 ] { 1, 2 };
+}
+variable Trustingroups_7 {
+  type discrete [ 5 ] { 1, 2, 3, 4, 5 };
+}
+variable work_from_home {
+  type discrete [ 2 ] { 1, 2 };
+}
+probability ( COVIDeffect_4 | work_from_home ) {
+  (1) 0.75025505, 0.06957764, 0.03958376, 0.05855948, 0.03795144, 0.02264844, 0.02142420;
+  (2) 0.72987757, 0.09090909, 0.02682990, 0.04662673, 0.04011461, 0.02735087, 0.03829122;
+}
+probability ( COVIDexp | risk_perception ) {
+  (1) 0.015427770, 0.026647966, 0.035764376, 0.007713885, 0.004207574, 0.001402525, 0.000000000, 0.842215989, 0.066619916;
+  (2) 0.0064260323, 0.0448455018, 0.0607054963, 0.0069729286, 0.0005468964, 0.0012305168, 0.0004101723, 0.7668854252, 0.1119770304;
+}
+probability ( DemHealthcare | risk_perception ) {
+  (1) 0.07152875, 0.92847125;
+  (2) 0.07054963, 0.92945037;
+}
+probability ( Ethnicmin | risk_perception ) {
+  (1) 0.17180926, 0.78611501, 0.04207574;
+  (2) 0.15613891, 0.80926989, 0.03459119;
+}
+probability ( Friends_3 | risk_perception ) {
+  (1) 0.31346424, 0.22089762, 0.14025245, 0.19424965, 0.07223001, 0.03015428, 0.02875175;
+  (2) 0.19948045, 0.19565217, 0.14957616, 0.21821165, 0.12729013, 0.06261963, 0.04716981;
+}
+probability ( Govresponse_7 | work_from_home ) {
+  (1) 0.02611712, 0.03591104, 0.07447460, 0.18302387, 0.24321567, 0.25402979, 0.18322791;
+  (2) 0.01536859, 0.02292264, 0.04297994, 0.11695754, 0.23104975, 0.29330555, 0.27741599;
+}
+probability ( Govresponse_8 | work_from_home ) {
+  (1) 0.05305040, 0.06692512, 0.09793920, 0.18241175, 0.26035503, 0.21913895, 0.12017956;
+  (2) 0.04636624, 0.06512113, 0.06902839, 0.16671008, 0.25214900, 0.23990623, 0.16071894;
+}
+probability ( Longitude_1 | risk_perception ) {
+  (1) 0.14305750, 0.12412342, 0.17251052, 0.22931276, 0.16129032, 0.08555400, 0.08415147;
+  (2) 0.01449275, 0.02597758, 0.05933826, 0.12783702, 0.23420837, 0.22983320, 0.30831282;
+}
+probability ( MediaExp_1 | risk_perception ) {
+  (1) 0.4663394, 0.5336606;
+  (2) 0.4972655, 0.5027345;
+}
+probability ( MediaExp_2 | risk_perception ) {
+  (1) 0.6500701, 0.3499299;
+  (2) 0.759639, 0.240361;
+}
+probability ( MediaExp_3 | risk_perception ) {
+  (1) 0.8464236, 0.1535764;
+  (2) 0.94407985, 0.05592015;
+}
+probability ( Personal_4 | risk_perception ) {
+  (1) 0.25525947, 0.18723703, 0.14726508, 0.22300140, 0.11360449, 0.03646564, 0.03716690;
+  (2) 0.12277823, 0.16051408, 0.14356030, 0.21889527, 0.18033908, 0.09980859, 0.07410446;
+}
+probability ( risk_perception | work_from_home ) {
+  (1) 0.1956744, 0.8043256;
+  (2) 0.1216463, 0.8783537;
+}
+probability ( Trustingroups_7 | risk_perception ) {
+  (1) 0.02524544, 0.07012623, 0.25525947, 0.38849930, 0.26086957;
+  (2) 0.007519825, 0.023379820, 0.136313919, 0.446404156, 0.386382281;
+}
+probability ( work_from_home ) {
+  table 0.5607551, 0.4392449;
+}
