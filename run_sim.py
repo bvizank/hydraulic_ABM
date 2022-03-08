@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
-output_file = 'all_pred_wfh.xlsx'
+output_file = 'Output Files/all_pred_wfh.xlsx'
 
 f = Micro_pop
 days = 90
