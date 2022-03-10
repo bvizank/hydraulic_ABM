@@ -39,8 +39,7 @@ class ConsumerAgent(Agent):
         '''
         BBN parameters for predicting work from home.
         '''
-        self.agent_params = {"Govresponse_7":0, "Govresponse_8":0,
-                             "COVIDeffect_4":0, "risk_perception_r":0}
+        self.agent_params = {}
 
     def complying(self):
         if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:

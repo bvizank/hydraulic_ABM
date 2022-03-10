@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import time
 
-output_file = 'Output Files/all_pred_wfh.xlsx'
+output_file = 'Output Files/naive_wfh.xlsx'
 
 f = Micro_pop
 days = 90
@@ -36,13 +36,9 @@ plt.legend(loc='best')
 plt.show()
 print('Total demands are ' + str(Demands_test.sum(axis = 0)))
 
-# print(model.status_tot)
+# print(Demands_test[:,0])
 
 model.status_tot['t'] = Micro_pop * model.status_tot['t'] / 24
-
-with pd.ExcelWriter(output_file) as writer:
-    model.status_tot.to_excel(writer, sheet_name='seir_data')
-    model.param_out.to_excel(writer, sheet_name='params')
 
 plt.plot('t', 'S', data = model.status_tot, label = 'Susceptible')
 plt.plot('t', 'E', data = model.status_tot, label = 'Exposed')
@@ -63,3 +59,13 @@ plt.xlabel('Time (days)')
 plt.ylabel('Population')
 plt.legend()
 plt.show()
+
+''' Save the model outputs '''
+model.status_tot['t'] = model.status_tot['t'] * 24 * 3600
+model.status_tot['t'] = pd.to_numeric(model.status_tot['t'],downcast="integer")
+model.status_tot = model.status_tot.set_index('t')
+model.status_tot = pd.concat([model.status_tot, Demands_test], axis=1)
+
+with pd.ExcelWriter(output_file) as writer:
+    model.status_tot.to_excel(writer, sheet_name='seir_data')
+    model.param_out.to_excel(writer, sheet_name='params')

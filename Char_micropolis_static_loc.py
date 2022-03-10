@@ -164,4 +164,4 @@ TV_data = pd.read_excel(r'Input Files/TV_data.xlsx')
 TV_distr = TV_data['tv_data'].tolist()
 
 # Load agent parameters for BBN predictions
-bbn_params = pd.read_csv(r'Input Files/raw_rp_db.csv')
+bbn_params = pd.read_csv(r'Input Files/wfh_db.csv')
