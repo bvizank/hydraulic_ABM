@@ -8,6 +8,7 @@ from Char_micropolis_static_loc import *
 import networkx as nx
 from mesa.space import NetworkGrid
 import random
+import time
 
 class ConsumerAgent(Agent):
 
