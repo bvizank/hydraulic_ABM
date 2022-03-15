@@ -1,0 +1,22 @@
+WordOfMouth false
+Mobility true
+ProbabilisticIngesting true
+ProbabilisticTimeOfIngesting true
+Adaptation true
+DynamicInfectiousDoses true
+ProtectiveLevel 1
+InfectiousDose 1
+NoOfSensors 3
+VolumeIngesting 0.93
+isGame true
+needRouting false
+WantToSeePassedRoutes false
+hydrantOpening false
+FireDepartments 9
+LocationOfFireDepartments IN1232 IN0943 IN0011 IN0089 IN0267 IN1514 IN0414 IN0573 IN1391
+RaduisRatio 0.2
+isOptimization false
+wantWatchingTv false
+wantComplianceModel false
+wantComplianceWOM false
+mediawarningCapability false
