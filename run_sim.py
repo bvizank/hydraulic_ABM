@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import time
+import wntr
 
 output_file = 'Output Files/naive_wfh.xlsx'
 
@@ -69,3 +70,13 @@ model.status_tot = pd.concat([model.status_tot, Demands_test], axis=1)
 with pd.ExcelWriter(output_file) as writer:
     model.status_tot.to_excel(writer, sheet_name='seir_data')
     model.param_out.to_excel(writer, sheet_name='params')
+
+wn.options.time.duration = 23*3600
+sim = wntr.sim.EpanetSimulator(wn)
+results = sim.run_sim()
+
+orig_pres = results.node['pressure']
+orig_pres_hr12 = orig_pres.[3600*12,:]
+sim_pres_hr12 = model.pressure_matrix[3600*12,:]
+
+orig_plot = wntr.graphics.plot_netword(wn, node_attribute=)

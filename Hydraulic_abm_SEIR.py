@@ -13,7 +13,6 @@ from agent_model import *
 import math
 import time
 import bnlearn as bn
-import multiprocessing as mp
 
 inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
@@ -73,6 +72,7 @@ class ConsumerModel(Model):
         self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
         self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.covid_exposed = start_inf #round(0.001*N) # number of starting infectious
         self.exposure_rate = 0.05 # infection rate per contact per day in households
         self.exposure_rate_large = 0.01 # infection rate per contact per day in workplaces
@@ -136,9 +136,9 @@ class ConsumerModel(Model):
                         8: [0.9, 0.2457, 0.1742, 0.08292],
                         9: [0.9, 0.2457, 0.1742, 0.1619]}
 
-        self.status_tot = [0,self.num_agents-self.covid_exposed,0,self.covid_exposed,0,0,0,0,0,0,0,self.cumm_infectious]
+        self.status_tot = [0,self.num_agents-self.covid_exposed,0,self.covid_exposed,0,0,0,0,0,0,0,self.cumm_infectious,0]
         self.status_tot = np.divide(self.status_tot, self.num_agents)
-        self.status_tot = pd.DataFrame([self.status_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I'])
+        self.status_tot = pd.DataFrame([self.status_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
 
         self.create_node_list()
         self.create_agents()
@@ -314,8 +314,10 @@ class ConsumerModel(Model):
             else:
                 pass
 
+        self.stat_tot[11] = int(len(self.agents_wfh()))
+
         self.stat_tot = np.divide(self.stat_tot, self.num_agents)
-        step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I'])
+        step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
         self.status_tot = pd.concat([self.status_tot, step_status])
 
     def contact(self, agent_to_move, node_type):
@@ -721,7 +723,6 @@ class ConsumerModel(Model):
             except:
                 pass
 
-
     def run_hydraulic(self):
         # Simulate hydraulics
         sim = wntr.sim.EpanetSimulator(wn)
@@ -736,7 +737,7 @@ class ConsumerModel(Model):
 
         # SAVING CURRENT DEMAND TIMESTEP IN DEMAND MATRIX
         self.demand_matrix[self.timestep: self.timestep + 1] = results.node['demand'][self.timestepN: self.timestepN + 1]
-
+        self.pressure_matrix[self.timestep: self.timestep + 1] = results.node['pressure'][self.timestepN: self.timestepN + 1]
 
     def inform_status(self):
         info_stat_all = 0
