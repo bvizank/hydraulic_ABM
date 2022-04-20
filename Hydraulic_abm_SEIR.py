@@ -283,7 +283,7 @@ class ConsumerModel(Model):
         class (mild, severe, and critical). This information is printed every
         hour step.
         """
-        self.stat_tot = [self.timestep, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self.cumm_infectious]
+        self.stat_tot = [self.timestep, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self.cumm_infectious,0]
         for i, agent in enumerate(self.schedule.agents):
             if agent.covid == 'susceptible':
                 self.stat_tot[1] += 1
@@ -314,7 +314,7 @@ class ConsumerModel(Model):
             else:
                 pass
 
-        self.stat_tot[11] = int(len(self.agents_wfh()))
+        self.stat_tot[12] = int(len(self.agents_wfh()))
 
         self.stat_tot = np.divide(self.stat_tot, self.num_agents)
         step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])

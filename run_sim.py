@@ -76,7 +76,13 @@ sim = wntr.sim.EpanetSimulator(wn)
 results = sim.run_sim()
 
 orig_pres = results.node['pressure']
-orig_pres_hr12 = orig_pres.[3600*12,:]
-sim_pres_hr12 = model.pressure_matrix[3600*12,:]
+orig_pres_hr12 = orig_pres.loc[3600*12,:]
+sim_pres_hr12 = model.pressure_matrix.loc[3600*12*45,:]
 
-orig_plot = wntr.graphics.plot_netword(wn, node_attribute=)
+wntr.graphics.plot_network(wn, node_attribute=orig_pres_hr12,
+                           node_colorbar_label='Pressure (m)',
+                           filename='orig_hr12.png')
+
+wntr.graphics.plot_network(wn, node_attribute=sim_pres_hr12,
+                           node_colorbar_label='Pressure (m)',
+                           filename='sim_hr12.png')

@@ -10,8 +10,8 @@ inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 
 # Graph the network
-wntr.graphics.plot_network(wn, title=wn.name)
-plt.show()
+# wntr.graphics.plot_network(wn, title=wn.name)
+# plt.show()
 
 #Simulate hydraulics
 #wn.options.time.duration = 23*3600
