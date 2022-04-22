@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import time
 import wntr
 
-output_file = 'Output Files/naive_wfh.xlsx'
+output_file = 'Output Files/no_wfh.xlsx'
 
 f = Micro_pop
 days = 90

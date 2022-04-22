@@ -12,21 +12,15 @@ import random
 from agent_model import *
 import math
 import time
+import os
+import copy
 import bnlearn as bn
-
-inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
-wn = wntr.network.WaterNetworkModel(inp_file)
-G = wn.get_graph()
-wn.options.time.duration = 0
-wn.options.time.hydraulic_timestep = 3600
-wn.options.time.pattern_timestep = 3600
 
 
 class ConsumerModel(Model):
     """A Model with some number of Agents"""
     def __init__(self,
                  N,
-                 num_nodes = len(G.nodes),
                  nodes_capacity = Max_pop_pnode_resid,
                  nodes_resident = Nodes_resident,
                  nodes_industr = Nodes_industr,
@@ -47,8 +41,6 @@ class ConsumerModel(Model):
 
         init_start = time.perf_counter()
         self.num_agents = N
-        self.G = G
-        self.num_nodes = num_nodes
         self.nodes_resident = nodes_resident
         self.nodes_industr = nodes_industr
         self.nodes_cafe = nodes_cafe # There is no node assigned to "dairy queen" so it was neglected
@@ -60,7 +52,6 @@ class ConsumerModel(Model):
         self.comm_distr_ph = Comm_distr_ph
         self.industr_distr_ph = industr_distr_ph
         self.sum_distr_ph = Sum_distr_ph
-        self.grid = NetworkGrid(self.G)
         self.t = 0
         self.schedule = RandomActivation(self)
         self.timestep = 0
@@ -71,8 +62,6 @@ class ConsumerModel(Model):
         self.snw_agents = {}
         self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
-        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
-        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.covid_exposed = start_inf #round(0.001*N) # number of starting infectious
         self.exposure_rate = 0.05 # infection rate per contact per day in households
         self.exposure_rate_large = 0.01 # infection rate per contact per day in workplaces
@@ -125,6 +114,14 @@ class ConsumerModel(Model):
         self.param_out = self.param_out.append(pd.DataFrame([['lag_period', self.lag_period]],
                                                             columns = ['Param', 'value1']))
 
+        inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
+        self.wn = wntr.network.WaterNetworkModel(inp_file)
+        self.G = self.wn.get_graph()
+        self.grid = NetworkGrid(self.G)
+        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
+        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
+        self.reset_wn(self.wn)
+
         # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
         self.susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
                         2: [0.6, 0.0072, 0.00036, 0.0001],
@@ -145,16 +142,13 @@ class ConsumerModel(Model):
         self.set_attributes()
         # self.create_comm_network()
 
-        # # Create dictionary of work from home probabilities using bnlearn.
-        # self.rp_wfh_probs = {}
-        # for i in range(7):
-        #     query = bn.inference.fit(self.wfh_dag,
-        #                              variables = ['work_from_home'],
-        #                              evidence = {'risk_perception_r':(i)},
-        #                              verbose = 0)
-        #     self.rp_wfh_probs[i] = query.df['p'][1]
-        #
-        # print(self.rp_wfh_probs)
+        for node in self.grid.G.nodes:
+            try:
+                node_1 = self.wn.get_node(node)
+                # Save first base demand so later assign it back to Node after simulation
+                self.base_demands_previous[node] = node_1.demand_timeseries_list[0].base_value
+            except:
+                pass
 
         init_stop = time.perf_counter()
 
@@ -256,6 +250,18 @@ class ConsumerModel(Model):
                         agent.agent_params[param] = int(agent_set_params[param]) - 1
                 except:
                     pass
+
+    def reset_wn(self, wn):
+        self.wn = copy.deepcopy(wn)
+        self.wn.options.time.duration = 0
+        self.wn.options.time.hydraulic_timestep = 3600
+        self.wn.options.time.pattern_timestep = 3600
+        # curr_dir = os.getcwd()
+        # files_in_dir = os.listdir(curr_dir)
+        #
+        # for file in files_in_dir:
+        #     if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
+        #         os.remove(os.path.join(curr_dir, file))
 
     def create_comm_network(self):
         '''
@@ -534,12 +540,9 @@ class ConsumerModel(Model):
                                        and a.work_type == 'commercial']
             for i in range(min(delta_agents_comm, len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                if Agent_to_move.wfh == 0:
-                    self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                    Possible_Agents_to_move.remove(Agent_to_move)
-                    self.infect_agent(Agent_to_move, 'workplace')
-                else:
-                    pass
+                self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+                Possible_Agents_to_move.remove(Agent_to_move)
+                self.infect_agent(Agent_to_move, 'workplace')
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
             Possible_Agents_to_move = self.commercial_agents()
@@ -704,19 +707,17 @@ class ConsumerModel(Model):
         for node in self.grid.G.nodes:
             try:
                 Capacity_node = self.nodes_capacity[node]
-                node_1 = wn.get_node(node)
+                node_1 = self.wn.get_node(node)
                 # determine demand reduction
                 demand_reduction_node = 0
                 agents_at_node = len(self.grid.G.nodes[node]['agent'])
-                for agent in self.grid.G.nodes[node]['agent']: # determine demand reduction for every agent at that node
-                    if agent.compliance == 1:
-                        rf = self.random.randint(0.035 * 1000, 0.417 * 1000) / 1000  # Reduction factor for demands
-                        demand_reduction_node += node_1.demand_timeseries_list[0].base_value * rf /  agents_at_node     # Calculating demand reduction per agent per node
-                    else:
-                        continue
+                # for agent in self.grid.G.nodes[node]['agent']: # determine demand reduction for every agent at that node
+                #     if agent.compliance == 1:
+                #         rf = self.random.randint(0.035 * 1000, 0.417 * 1000) / 1000  # Reduction factor for demands
+                #         demand_reduction_node += node_1.demand_timeseries_list[0].base_value * rf /  agents_at_node     # Calculating demand reduction per agent per node
+                #     else:
+                #         continue
 
-                # Save first base demand so later assign it back to Node after simulation
-                self.base_demands_previous[node] = node_1.demand_timeseries_list[0].base_value
                 # print(self.base_demands_previous[node])
                 node_1.demand_timeseries_list[0].base_value = node_1.demand_timeseries_list[0].base_value * agents_at_node/ Capacity_node - demand_reduction_node
 
@@ -725,13 +726,12 @@ class ConsumerModel(Model):
 
     def run_hydraulic(self):
         # Simulate hydraulics
-        sim = wntr.sim.EpanetSimulator(wn)
-        results = sim.run_sim()
-        wn.options.time.duration += 3600
+        sim = wntr.sim.EpanetSimulator(self.wn)
+        results = sim.run_sim(str(self.timestepN), version = 2.2)
+        self.wn.options.time.duration += 3600
 
         # Assigning first base demand again to individual Nodes so WNTR doesnt add all BD up
-        for node,base_demand in self.base_demands_previous.items():
-
+        for node, base_demand in self.base_demands_previous.items():
             node_1 = wn.get_node(node)
             node_1.demand_timeseries_list[0].base_value = base_demand
 
@@ -775,9 +775,8 @@ class ConsumerModel(Model):
     def change_time_model(self):
         self.timestep += 1
         if self.timestep % 24 == 0:
-            wn.options.time.duration = 0
+            self.reset_wn(self.wn)
             self.timestep_day += 1
-            agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
             for i, agent in enumerate(self.schedule.agents):
                 if agent.covid == 'exposed':
                     self.check_infectious(agent)
@@ -789,8 +788,11 @@ class ConsumerModel(Model):
                         pass
                     self.check_recovered(agent)
                     self.check_death(agent)
-                if agent.adj_covid_change == 1:
-                    self.predict_wfh(agent)
+                '''
+                NEED TO UNCOMMENT FOR WFH PREDICTION
+                '''
+                # if agent.adj_covid_change == 1:
+                #     self.predict_wfh(agent)
             # self.check_social_dist()
         else:
             pass
@@ -833,14 +835,14 @@ class ConsumerModel(Model):
     def step(self):
         self.schedule.step()
         if self.timestep != 0:
-            # self.move()
-            self.move_wfh()
+            self.move()
+            # self.move_wfh()
         # BV: changed times to 6, 14, and 22 because I think this is more representative
         # of a three shift schedule. Unsure if this changes anything with water
         # patterns, but I suspect it might.
         if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
-            # self.move_indust()
-            self.move_indust_wfh()
+            self.move_indust()
+            # self.move_indust_wfh()
         self.check_status()
         # self.communication_utility()
         self.demandsfunc()
