@@ -788,8 +788,8 @@ class ConsumerModel(Model):
                         pass
                     self.check_recovered(agent)
                     self.check_death(agent)
-                if agent.adj_covid_change == 1:
-                    self.predict_wfh(agent)
+                # if agent.adj_covid_change == 1:
+                #     self.predict_wfh(agent)
             # self.check_social_dist()
         else:
             pass
