@@ -21,6 +21,7 @@ G = wn.get_graph()
 wn.options.time.duration = 0
 wn.options.time.hydraulic_timestep = 3600
 wn.options.time.pattern_timestep = 3600
+wn.options.quality.parameter = 'AGE'
 
 
 class ConsumerModel(Model):
@@ -44,7 +45,8 @@ class ConsumerModel(Model):
                  days = 90,
                  start_inf = 5,
                  daily_contacts = 10,
-                 lag_period = 7):
+                 lag_period = 7,
+                 wfh = False):
 
         init_start = time.perf_counter()
         self.num_agents = N
@@ -72,7 +74,6 @@ class ConsumerModel(Model):
         self.snw_agents = {}
         self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
-        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.covid_exposed = start_inf #round(0.001*N) # number of starting infectious
         self.exposure_rate = 0.05 # infection rate per contact per day in households
         self.exposure_rate_large = 0.01 # infection rate per contact per day in workplaces
@@ -90,6 +91,7 @@ class ConsumerModel(Model):
         self.wfh_dag = bn.import_DAG('Input Files/naive_wfh.bif')
         self.bbn_params = bbn_params # pandas dataframe of bbn parameters
         self.lag_period = lag_period # number of days to wait before social distancing
+        self.model_wfh = wfh
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
@@ -124,6 +126,11 @@ class ConsumerModel(Model):
                                                             columns = ['Param', 'value1']))
         self.param_out = self.param_out.append(pd.DataFrame([['lag_period', self.lag_period]],
                                                             columns = ['Param', 'value1']))
+
+        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.node_num = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
 
         # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
         self.susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
@@ -530,6 +537,7 @@ class ConsumerModel(Model):
             Possible_Agents_to_move = [a for a in self.schedule.agents
                                        if a.pos in self.nodes_resident
                                        and a.work_type == 'commercial']
+
             for i in range(min(delta_agents_comm, len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
                 if Agent_to_move.wfh == 0:
@@ -559,11 +567,15 @@ class ConsumerModel(Model):
             Possible_Agents_to_move = [a for a in self.schedule.agents
                                        if a.pos in self.nodes_resident
                                        and a.work_type == 'restaurant']
+
             for i in range(min(delta_agents_rest,len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                Possible_Agents_to_move.remove(Agent_to_move)
-                self.infect_agent(Agent_to_move, 'workplace')
+                if Agent_to_move.wfh == 0:
+                    self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+                    Possible_Agents_to_move.remove(Agent_to_move)
+                    self.infect_agent(Agent_to_move, 'workplace')
+                else:
+                    pass
 
         elif delta_agents_rest < 0:
             Possible_Agents_to_move = self.rest_agents()
@@ -597,106 +609,109 @@ class ConsumerModel(Model):
 
         for i in range(Agents_to_work):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
-            self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-            Possible_Agents_to_move_to_work.remove(Agent_to_move)
-            self.infect_agent(Agent_to_move, 'workplace')
-
-    def move_wfh(self):
-        """
-        Move the correct number of agents to and from commercial nodes.
-        """
-        curr_comm_num = self.comm_distr_ph[self.timestepN]
-        prev_comm_num = self.comm_distr_ph[self.timestepN - 1]
-        delta_agents_comm = int(curr_comm_num - prev_comm_num)
-        if delta_agents_comm > 0:
-            Possible_Agents_to_move = [a for a in self.schedule.agents
-                                       if a.pos in self.nodes_resident
-                                       and a.work_type == 'commercial']
-            # delta_agents_comm = round(delta_agents_comm * (1 - (self.stat_tot[3] * 2)))
-            for i in range(delta_agents_comm):
-                Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                if Agent_to_move.wfh == 0:
-                    self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                    Possible_Agents_to_move.remove(Agent_to_move)
-                    self.infect_agent(Agent_to_move, 'workplace')
-                else:
-                    pass
-
-        elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
-            Possible_Agents_to_move = self.commercial_agents()
-            for i in range(min(abs(delta_agents_comm), len(Possible_Agents_to_move))):
-                Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
-                Possible_Agents_to_move.remove(Agent_to_move)
-                self.infect_agent(Agent_to_move, 'residential')
-        else:
-            pass
-
-        """
-        Move the correct number of agents to and from rest nodes.
-        """
-        curr_rest_num = self.comm_rest_distr_ph[self.timestepN]
-        prev_rest_num = self.comm_rest_distr_ph[self.timestepN - 1]
-        delta_agents_rest = int(curr_rest_num - prev_rest_num)
-        if delta_agents_rest > 0:
-            Possible_Agents_to_move = [a for a in self.schedule.agents
-                                       if a.pos in self.nodes_resident
-                                       and a.work_type == 'restaurant']
-            # delta_agents_rest = round(delta_agents_rest * (1 - (self.stat_tot[3] * 2)))
-            for i in range(delta_agents_rest):
-                Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                if Agent_to_move.wfh == 0:
-                    self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                    Possible_Agents_to_move.remove(Agent_to_move)
-                    self.infect_agent(Agent_to_move, 'workplace')
-                else:
-                    pass
-
-        elif delta_agents_rest < 0:
-            Possible_Agents_to_move = self.rest_agents()
-            for i in range(min(abs(delta_agents_rest), len(Possible_Agents_to_move))):
-                Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
-                Possible_Agents_to_move.remove(Agent_to_move)
-                self.infect_agent(Agent_to_move, 'residential')
-        else:
-            pass
-
-    def move_indust_wfh(self):
-        """
-        Test function for moving industrial agents during work from home scenarios.
-        """
-
-        # Moving Agents from Industrial nodes back home to residential home nodes
-        Possible_Agents_to_move_home = self.industry_agents()
-        Agents_to_home = int(len(Possible_Agents_to_move_home) / 2)
-
-        t = self.timestepN
-        for i in range(Agents_to_home):
-            Agent_to_move = self.random.choice(Possible_Agents_to_move_home)
-            self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
-            Possible_Agents_to_move_home.remove(Agent_to_move)
-            self.infect_agent(Agent_to_move, 'residential')
-
-        # Agents from Residential nodes to Industrial
-        Possible_Agents_to_work = [a for a in self.schedule.agents
-                                           if a.pos in self.nodes_resident
-                                           and a.work_type == 'industrial'
-                                           and a.wfh == 0]
-
-        if self.timestep != 0:
-            Agents_to_work = (int(1092/2) if len(Possible_Agents_to_work) >= int(1092/2) else len(Possible_Agents_to_work))
-        else:
-            Agents_to_work = int(1092)
-
-        for i in range(Agents_to_work):
-            Agent_to_move = self.random.choice(Possible_Agents_to_work)
             if Agent_to_move.wfh == 0:
                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                Possible_Agents_to_work.remove(Agent_to_move)
+                Possible_Agents_to_move_to_work.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'workplace')
             else:
                 pass
+
+    # def move_wfh(self):
+    #     """
+    #     Move the correct number of agents to and from commercial nodes.
+    #     """
+    #     curr_comm_num = self.comm_distr_ph[self.timestepN]
+    #     prev_comm_num = self.comm_distr_ph[self.timestepN - 1]
+    #     delta_agents_comm = int(curr_comm_num - prev_comm_num)
+    #     if delta_agents_comm > 0:
+    #         Possible_Agents_to_move = [a for a in self.schedule.agents
+    #                                    if a.pos in self.nodes_resident
+    #                                    and a.work_type == 'commercial']
+    #         # delta_agents_comm = round(delta_agents_comm * (1 - (self.stat_tot[3] * 2)))
+    #         for i in range(delta_agents_comm):
+    #             Agent_to_move = self.random.choice(Possible_Agents_to_move)
+    #             if Agent_to_move.wfh == 0:
+    #                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+    #                 Possible_Agents_to_move.remove(Agent_to_move)
+    #                 self.infect_agent(Agent_to_move, 'workplace')
+    #             else:
+    #                 pass
+    #
+    #     elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
+    #         Possible_Agents_to_move = self.commercial_agents()
+    #         for i in range(min(abs(delta_agents_comm), len(Possible_Agents_to_move))):
+    #             Agent_to_move = self.random.choice(Possible_Agents_to_move)
+    #             self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
+    #             Possible_Agents_to_move.remove(Agent_to_move)
+    #             self.infect_agent(Agent_to_move, 'residential')
+    #     else:
+    #         pass
+    #
+    #     """
+    #     Move the correct number of agents to and from rest nodes.
+    #     """
+    #     curr_rest_num = self.comm_rest_distr_ph[self.timestepN]
+    #     prev_rest_num = self.comm_rest_distr_ph[self.timestepN - 1]
+    #     delta_agents_rest = int(curr_rest_num - prev_rest_num)
+    #     if delta_agents_rest > 0:
+    #         Possible_Agents_to_move = [a for a in self.schedule.agents
+    #                                    if a.pos in self.nodes_resident
+    #                                    and a.work_type == 'restaurant']
+    #         # delta_agents_rest = round(delta_agents_rest * (1 - (self.stat_tot[3] * 2)))
+    #         for i in range(delta_agents_rest):
+    #             Agent_to_move = self.random.choice(Possible_Agents_to_move)
+    #             if Agent_to_move.wfh == 0:
+    #                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+    #                 Possible_Agents_to_move.remove(Agent_to_move)
+    #                 self.infect_agent(Agent_to_move, 'workplace')
+    #             else:
+    #                 pass
+    #
+    #     elif delta_agents_rest < 0:
+    #         Possible_Agents_to_move = self.rest_agents()
+    #         for i in range(min(abs(delta_agents_rest), len(Possible_Agents_to_move))):
+    #             Agent_to_move = self.random.choice(Possible_Agents_to_move)
+    #             self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
+    #             Possible_Agents_to_move.remove(Agent_to_move)
+    #             self.infect_agent(Agent_to_move, 'residential')
+    #     else:
+    #         pass
+    #
+    # def move_indust_wfh(self):
+    #     """
+    #     Test function for moving industrial agents during work from home scenarios.
+    #     """
+    #
+    #     # Moving Agents from Industrial nodes back home to residential home nodes
+    #     Possible_Agents_to_move_home = self.industry_agents()
+    #     Agents_to_home = int(len(Possible_Agents_to_move_home) / 2)
+    #
+    #     t = self.timestepN
+    #     for i in range(Agents_to_home):
+    #         Agent_to_move = self.random.choice(Possible_Agents_to_move_home)
+    #         self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
+    #         Possible_Agents_to_move_home.remove(Agent_to_move)
+    #         self.infect_agent(Agent_to_move, 'residential')
+    #
+    #     # Agents from Residential nodes to Industrial
+    #     Possible_Agents_to_work = [a for a in self.schedule.agents
+    #                                        if a.pos in self.nodes_resident
+    #                                        and a.work_type == 'industrial'
+    #                                        and a.wfh == 0]
+    #
+    #     if self.timestep != 0:
+    #         Agents_to_work = (int(1092/2) if len(Possible_Agents_to_work) >= int(1092/2) else len(Possible_Agents_to_work))
+    #     else:
+    #         Agents_to_work = int(1092)
+    #
+    #     for i in range(Agents_to_work):
+    #         Agent_to_move = self.random.choice(Possible_Agents_to_work)
+    #         if Agent_to_move.wfh == 0:
+    #             self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+    #             Possible_Agents_to_work.remove(Agent_to_move)
+    #             self.infect_agent(Agent_to_move, 'workplace')
+    #         else:
+    #             pass
 
     def demandsfunc(self):
         for node in self.grid.G.nodes:
@@ -706,12 +721,12 @@ class ConsumerModel(Model):
                 # determine demand reduction
                 demand_reduction_node = 0
                 agents_at_node = len(self.grid.G.nodes[node]['agent'])
-                for agent in self.grid.G.nodes[node]['agent']: # determine demand reduction for every agent at that node
-                    if agent.compliance == 1:
-                        rf = self.random.randint(0.035 * 1000, 0.417 * 1000) / 1000  # Reduction factor for demands
-                        demand_reduction_node += node_1.demand_timeseries_list[0].base_value * rf /  agents_at_node     # Calculating demand reduction per agent per node
-                    else:
-                        continue
+                # for agent in self.grid.G.nodes[node]['agent']: # determine demand reduction for every agent at that node
+                #     if agent.compliance == 1:
+                #         rf = self.random.randint(0.035 * 1000, 0.417 * 1000) / 1000  # Reduction factor for demands
+                #         demand_reduction_node += node_1.demand_timeseries_list[0].base_value * rf /  agents_at_node     # Calculating demand reduction per agent per node
+                #     else:
+                #         continue
 
                 # Save first base demand so later assign it back to Node after simulation
                 self.base_demands_previous[node] = node_1.demand_timeseries_list[0].base_value
@@ -736,6 +751,8 @@ class ConsumerModel(Model):
 
         # SAVING CURRENT DEMAND TIMESTEP IN DEMAND MATRIX
         self.demand_matrix[self.timestep: self.timestep + 1] = results.node['demand'][self.timestepN: self.timestepN + 1]
+        self.pressure_matrix[self.timestep: self.timestep + 1] = results.node['pressure'][self.timestepN: self.timestepN + 1]
+        self.age_matrix[self.timestep: self.timestep + 1] = results.node['quality'][self.timestepN: self.timestepN + 1]
 
 
     def inform_status(self):
@@ -788,8 +805,10 @@ class ConsumerModel(Model):
                         pass
                     self.check_recovered(agent)
                     self.check_death(agent)
-                # if agent.adj_covid_change == 1:
-                #     self.predict_wfh(agent)
+
+                if self.model_wfh:
+                    if agent.adj_covid_change == 1:
+                        self.predict_wfh(agent)
             # self.check_social_dist()
         else:
             pass
@@ -832,14 +851,14 @@ class ConsumerModel(Model):
     def step(self):
         self.schedule.step()
         if self.timestep != 0:
-            # self.move()
-            self.move_wfh()
+            self.move()
+            # self.move_wfh()
         # BV: changed times to 6, 14, and 22 because I think this is more representative
         # of a three shift schedule. Unsure if this changes anything with water
         # patterns, but I suspect it might.
         if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
-            # self.move_indust()
-            self.move_indust_wfh()
+            self.move_indust()
+            # self.move_indust_wfh()
         self.check_status()
         # self.communication_utility()
         self.demandsfunc()
