@@ -13,11 +13,11 @@ curr_dt = strftime("%Y-%m-%d_%H-%M", localtime())
 output_loc = 'Output Files/' + curr_dt + '_results'
 os.mkdir(output_loc)
 
-output_file = 'naive_wfh_2022-04-21.xlsx'
+output_file = 'naive_wfh.xlsx'
 
 f = Micro_pop
 days = 90
-model = ConsumerModel(f, seed = 123, days = days)
+model = ConsumerModel(f, seed = 123, days = days, wfh=True)
 
 start = perf_counter()
 

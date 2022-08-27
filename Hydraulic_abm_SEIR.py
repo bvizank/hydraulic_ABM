@@ -14,6 +14,7 @@ import math
 import time
 import bnlearn as bn
 import multiprocessing as mp
+import os
 
 inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
@@ -540,6 +541,10 @@ class ConsumerModel(Model):
 
             for i in range(min(delta_agents_comm, len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
+                work_node = Agent_to_move.work_node
+                while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
+                    Agent_to_move = self.random.choice(Possible_Agents_to_move)
+                    work_node = Agent_to_move.work_node
                 if Agent_to_move.wfh == 0:
                     self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
                     Possible_Agents_to_move.remove(Agent_to_move)
@@ -609,6 +614,10 @@ class ConsumerModel(Model):
 
         for i in range(Agents_to_work):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
+            work_node = Agent_to_move.work_node
+            while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
+                Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
+                work_node = Agent_to_move.work_node
             if Agent_to_move.wfh == 0:
                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
                 Possible_Agents_to_move_to_work.remove(Agent_to_move)
@@ -792,6 +801,12 @@ class ConsumerModel(Model):
         self.timestep += 1
         if self.timestep % 24 == 0:
             wn.options.time.duration = 0
+            curr_dir = os.getcwd()
+            files_in_dir = os.listdir(curr_dir)
+
+            for file in files_in_dir:
+                if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
+                    os.remove(os.path.join(curr_dir, file))
             self.timestep_day += 1
             agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
             for i, agent in enumerate(self.schedule.agents):
