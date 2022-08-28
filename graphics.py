@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import networkx as nx
 
-output_loc = 'Output Files/2022-08-27_07-45_results/'
+output_loc = 'Output Files/2022-08-26_22-37_results/'
 
 '''Import demand, pressure, and age data'''
 data_file = output_loc + 'naive_wfh.xlsx'
