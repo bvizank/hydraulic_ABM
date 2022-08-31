@@ -5,10 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import networkx as nx
 
-output_loc = 'Output Files/2022-08-26_22-37_results/'
+output_loc = 'Output Files/2022-08-31_08-36_results/'
 
 '''Import demand, pressure, and age data'''
-data_file = output_loc + 'naive_wfh.xlsx'
+data_file = output_loc + 'datasheet.xlsx'
 
 demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
 pressure = pd.read_excel(data_file, sheet_name='pressure', index_col=0)
@@ -50,7 +50,11 @@ def make_contour(graph, data, data_type, fig_name,
     y = np.matrix.flatten(y); #Gridded latitude
     z = np.matrix.flatten(z); #Gridded elevation
 
-    plt.scatter(x,y,1,z,vmin=plots['vmin'])
+    if 'vmax' in plots:
+        plt.scatter(x,y,1,z,vmin=plots['vmin'], vmax=plots['vmax'])
+    else:
+        plt.scatter(x,y,1,z,vmin=plots['vmin'])
+
     nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
                      node_size=0)
     if label:
@@ -58,12 +62,22 @@ def make_contour(graph, data, data_type, fig_name,
     plt.savefig(fig_name)
     plt.close()
 
-times = [12, (24*18)+12, (24*36)+12, (24*54)+12, (24*72)+12]
+# times = [12, (24*18)+12, (24*36)+12, (24*54)+12, (24*72)+12]
+#
+# for time in times:
+#     make_contour(G, demand.iloc[time], 'demand', output_loc + 'demand_' + str(time), True,
+#                  'Demand [ML]', vmin=0)
+#     make_contour(G, pressure.iloc[time], 'pressure', output_loc + 'pressure_' + str(time), True,
+#                  'Pressure [m]', vmin=0)
+#     make_contour(G, age.iloc[time], 'age', output_loc + 'age_' + str(time), True,
+#                  'Age [sec]', vmin=0)
 
-for time in times:
-    make_contour(G, demand.iloc[time], 'demand', output_loc + 'demand_' + str(time), True,
-                 'Demand [ML]', vmin=0)
-    make_contour(G, pressure.iloc[time], 'pressure', output_loc + 'pressure_' + str(time), True,
-                 'Pressure [m]', vmin=0)
-    make_contour(G, age.iloc[time], 'age', output_loc + 'age_' + str(time), True,
-                 'Age [sec]', vmin=0)
+# make_contour(G, pressure.iloc[12], 'pressure', output_loc + 'pressure_' + str(12), True,
+#              'Pressure [m]', vmin=0, vmax=85)
+# make_contour(G, pressure.iloc[12+(24*45)], 'pressure', output_loc + 'pressure_' + str(12+(24*45)), True,
+#              'Pressure [m]', vmin=0, vmax=85)
+
+make_contour(G, demand.iloc[12], 'demand', output_loc + 'demand_' + str(12), True,
+             'Demand [ML]', vmin=0, vmax=0.02)
+make_contour(G, demand.iloc[12+(24*45)], 'demand', output_loc + 'demand_' + str(12+(24*45)), True,
+             'Demand [ML]', vmin=0, vmax=0.02)

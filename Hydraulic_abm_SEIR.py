@@ -791,7 +791,7 @@ class ConsumerModel(Model):
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         query = bn.inference.fit(self.wfh_dag,
                                  variables = ['work_from_home'],
-                                 evidence = agent.agent_params,
+                                 evidence = evidence_agent,
                                  verbose = 0)
         if self.random.random() < query.df['p'][1]:
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
