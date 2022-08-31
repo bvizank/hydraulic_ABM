@@ -89,7 +89,7 @@ class ConsumerModel(Model):
         self.recTimeC = (18.1,6.3)
         self.daily_contacts = daily_contacts
         self.cumm_infectious = self.covid_exposed
-        self.wfh_dag = bn.import_DAG('Input Files/naive_wfh.bif')
+        self.wfh_dag = bn.import_DAG('Input Files/data_driven_wfh.bif')
         self.bbn_params = bbn_params # pandas dataframe of bbn parameters
         self.lag_period = lag_period # number of days to wait before social distancing
         self.model_wfh = wfh
@@ -248,9 +248,9 @@ class ConsumerModel(Model):
             # agent.agent_params['risk_perception_r'] = int(agent_set_params['risk_perception_r']) - 1
             for param in self.bbn_params:
                 try:
-                    if param == "COVIDeffect_4":
-                        pass
-                    elif param == "DemEdu":
+                    # if param == "COVIDeffect_4":
+                    #     pass
+                    if param == "DemEdu":
                         if int(agent_set_params[param]) == 9:
                             agent.agent_params[param] = 5
                         else:
@@ -341,10 +341,10 @@ class ConsumerModel(Model):
 
         for agent in agents_to_infect:
             agent.adj_covid_change = 1
-            # if agent.agent_params["COVIDeffect_4"] < 6 and node_type == 'residential':
-            #     agent.agent_params["COVIDeffect_4"] += 1
-            # else:
-            #     pass
+            if agent.agent_params["COVIDeffect_4"] < 6 and node_type == 'residential':
+                agent.agent_params["COVIDeffect_4"] += 0.1
+            else:
+                pass
 
             if agent.covid == 'susceptible':
                 if node_type == 'workplace':
@@ -788,7 +788,7 @@ class ConsumerModel(Model):
         # for agent in agents_not_wfh:
         agent.adj_covid_change = 0
         evidence_agent = agent.agent_params
-        # evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         query = bn.inference.fit(self.wfh_dag,
                                  variables = ['work_from_home'],
                                  evidence = agent.agent_params,

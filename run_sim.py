@@ -13,7 +13,7 @@ curr_dt = strftime("%Y-%m-%d_%H-%M", localtime())
 output_loc = 'Output Files/' + curr_dt + '_results'
 os.mkdir(output_loc)
 
-output_file = 'naive_wfh.xlsx'
+output_file = 'datasheet.xlsx'
 
 f = Micro_pop
 days = 90
