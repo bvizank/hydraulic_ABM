@@ -63,3 +63,5 @@ for (i in 2:length(hourly_norm)){
   lines(hourly_norm[[i]], type='l', col=i)
 }
 legend("top", legend=c(colnames(hourly_norm)), col=1:8, lty=1, ncol=4)
+
+write.csv(hourly_norms, '~/Documents/hydraulic_abm/Input Files/res_patterns/normalized_res_patterns.csv')
