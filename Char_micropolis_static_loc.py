@@ -165,3 +165,6 @@ TV_distr = TV_data['tv_data'].tolist()
 
 # Load agent parameters for BBN predictions
 bbn_params = pd.read_csv(r'Input Files/data_driven_wfh.csv')
+
+# Load in the new residential patterns from Lakewood data
+wfh_patterns = pd.read_csv(r'Input Files/res_patterns/normalized_res_patterns.csv')

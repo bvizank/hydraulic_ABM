@@ -15,6 +15,7 @@ import time
 import bnlearn as bn
 import multiprocessing as mp
 import os
+import numpy as np
 
 inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
@@ -23,6 +24,8 @@ wn.options.time.duration = 0
 wn.options.time.hydraulic_timestep = 3600
 wn.options.time.pattern_timestep = 3600
 wn.options.quality.parameter = 'AGE'
+for i in range(wfh_patterns.shape[1]):
+    wn.add_pattern('wk'+str(i+1), np.array(wfh_patterns.iloc[:,i]))
 
 
 class ConsumerModel(Model):
@@ -144,9 +147,9 @@ class ConsumerModel(Model):
                         8: [0.9, 0.2457, 0.1742, 0.08292],
                         9: [0.9, 0.2457, 0.1742, 0.1619]}
 
-        self.status_tot = [0,self.num_agents-self.covid_exposed,0,self.covid_exposed,0,0,0,0,0,0,0,self.cumm_infectious]
+        self.status_tot = [0,self.num_agents-self.covid_exposed,0,self.covid_exposed,0,0,0,0,0,0,0,self.cumm_infectious, len(self.agents_wfh())]
         self.status_tot = np.divide(self.status_tot, self.num_agents)
-        self.status_tot = pd.DataFrame([self.status_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I'])
+        self.status_tot = pd.DataFrame([self.status_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
 
         self.create_node_list()
         self.create_agents()
@@ -291,7 +294,7 @@ class ConsumerModel(Model):
         class (mild, severe, and critical). This information is printed every
         hour step.
         """
-        self.stat_tot = [self.timestep, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self.cumm_infectious]
+        self.stat_tot = [self.timestep, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self.cumm_infectious, len(self.agents_wfh())]
         for i, agent in enumerate(self.schedule.agents):
             if agent.covid == 'susceptible':
                 self.stat_tot[1] += 1
@@ -323,7 +326,7 @@ class ConsumerModel(Model):
                 pass
 
         self.stat_tot = np.divide(self.stat_tot, self.num_agents)
-        step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I'])
+        step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
         self.status_tot = pd.concat([self.status_tot, step_status])
 
     def contact(self, agent_to_move, node_type):
@@ -729,7 +732,9 @@ class ConsumerModel(Model):
                 node_1 = wn.get_node(node)
                 # determine demand reduction
                 demand_reduction_node = 0
-                agents_at_node = len(self.grid.G.nodes[node]['agent'])
+                agents_at_node_list = self.grid.G.nodes[node]['agent']
+                agents_at_node = len(agents_at_node_list)
+                agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
                 # for agent in self.grid.G.nodes[node]['agent']: # determine demand reduction for every agent at that node
                 #     if agent.compliance == 1:
                 #         rf = self.random.randint(0.035 * 1000, 0.417 * 1000) / 1000  # Reduction factor for demands
@@ -741,7 +746,11 @@ class ConsumerModel(Model):
                 self.base_demands_previous[node] = node_1.demand_timeseries_list[0].base_value
                 # print(self.base_demands_previous[node])
                 node_1.demand_timeseries_list[0].base_value = node_1.demand_timeseries_list[0].base_value * agents_at_node/ Capacity_node - demand_reduction_node
-
+                # check how many agents are working from home at current node
+                # if more than 50%, changes pattern
+                perc_wfh = agents_wfh / agents_at_node
+                if perc_wfh > 0.5:
+                    node_1.demand_timeseries_list[0].pattern_name = 'wk1'
             except:
                 pass
 
@@ -796,6 +805,7 @@ class ConsumerModel(Model):
         if self.random.random() < query.df['p'][1]:
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.wfh = 1
+
 
     def change_time_model(self):
         self.timestep += 1
