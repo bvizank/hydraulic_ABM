@@ -50,7 +50,9 @@ class ConsumerModel(Model):
                  start_inf = 5,
                  daily_contacts = 10,
                  lag_period = 7,
-                 wfh = False):
+                 wfh = False,
+                 lakewood_res = False,
+                 wfh_lag = 0):
 
         init_start = time.perf_counter()
         self.num_agents = N
@@ -96,6 +98,8 @@ class ConsumerModel(Model):
         self.bbn_params = bbn_params # pandas dataframe of bbn parameters
         self.lag_period = lag_period # number of days to wait before social distancing
         self.model_wfh = wfh
+        self.lakewood_res = lakewood_res
+        self.wfh_lag = wfh_lag # infection percent before work from home allowed
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
@@ -129,6 +133,12 @@ class ConsumerModel(Model):
         self.param_out = self.param_out.append(pd.DataFrame([['daily_contacts', self.daily_contacts]],
                                                             columns = ['Param', 'value1']))
         self.param_out = self.param_out.append(pd.DataFrame([['lag_period', self.lag_period]],
+                                                            columns = ['Param', 'value1']))
+        self.param_out = self.param_out.append(pd.DataFrame([['wfh', self.model_wfh]],
+                                                            columns = ['Param', 'value1']))
+        self.param_out = self.param_out.append(pd.DataFrame([['lakewood data', self.lakewood_res]],
+                                                            columns = ['Param', 'value1']))
+        self.param_out = self.param_out.append(pd.DataFrame([['wfh_lag', self.wfh_lag]],
                                                             columns = ['Param', 'value1']))
 
         self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
@@ -548,12 +558,12 @@ class ConsumerModel(Model):
                 while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
                     Agent_to_move = self.random.choice(Possible_Agents_to_move)
                     work_node = Agent_to_move.work_node
-                if Agent_to_move.wfh == 0:
+                if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+                    pass
+                else:
                     self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
                     Possible_Agents_to_move.remove(Agent_to_move)
                     self.infect_agent(Agent_to_move, 'workplace')
-                else:
-                    pass
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
             Possible_Agents_to_move = self.commercial_agents()
@@ -578,12 +588,12 @@ class ConsumerModel(Model):
 
             for i in range(min(delta_agents_rest,len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                if Agent_to_move.wfh == 0:
+                if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+                    pass
+                else:
                     self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
                     Possible_Agents_to_move.remove(Agent_to_move)
                     self.infect_agent(Agent_to_move, 'workplace')
-                else:
-                    pass
 
         elif delta_agents_rest < 0:
             Possible_Agents_to_move = self.rest_agents()
@@ -621,12 +631,12 @@ class ConsumerModel(Model):
             while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
                 Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
                 work_node = Agent_to_move.work_node
-            if Agent_to_move.wfh == 0:
+            if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+                pass
+            else:
                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
                 Possible_Agents_to_move_to_work.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'workplace')
-            else:
-                pass
 
     # def move_wfh(self):
     #     """
@@ -748,9 +758,10 @@ class ConsumerModel(Model):
                 node_1.demand_timeseries_list[0].base_value = node_1.demand_timeseries_list[0].base_value * agents_at_node/ Capacity_node - demand_reduction_node
                 # check how many agents are working from home at current node
                 # if more than 50%, changes pattern
-                perc_wfh = agents_wfh / agents_at_node
-                if perc_wfh > 0.5:
-                    node_1.demand_timeseries_list[0].pattern_name = 'wk1'
+                if self.lakewood_res:
+                    perc_wfh = agents_wfh / agents_at_node
+                    if perc_wfh > 0.5:
+                        node_1.demand_timeseries_list[0].pattern_name = 'wk1'
             except:
                 pass
 
@@ -832,6 +843,7 @@ class ConsumerModel(Model):
                     self.check_death(agent)
 
                 if self.model_wfh:
+
                     if agent.adj_covid_change == 1:
                         self.predict_wfh(agent)
             # self.check_social_dist()
