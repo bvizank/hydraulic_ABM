@@ -98,7 +98,7 @@ class ConsumerModel(Model):
         self.bbn_params = bbn_params # pandas dataframe of bbn parameters
         self.lag_period = lag_period # number of days to wait before social distancing
         self.model_wfh = wfh
-        self.lakewood_res = lakewood_res
+        self.lakewood_res = lakewood_res # bool to decide to use lakewood pandemic water demand pattern
         self.wfh_lag = wfh_lag # infection percent before work from home allowed
 
         """
@@ -631,12 +631,12 @@ class ConsumerModel(Model):
             while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
                 Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
                 work_node = Agent_to_move.work_node
-            if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
-                pass
-            else:
-                self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                Possible_Agents_to_move_to_work.remove(Agent_to_move)
-                self.infect_agent(Agent_to_move, 'workplace')
+            # if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+            #     pass
+            # else:
+            self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+            Possible_Agents_to_move_to_work.remove(Agent_to_move)
+            self.infect_agent(Agent_to_move, 'workplace')
 
     # def move_wfh(self):
     #     """
