@@ -197,6 +197,16 @@ class ConsumerModel(Model):
 
 
     def create_agents(self):
+        ''' Creating lists of nodes where employers have decided not to allow
+        working from home or jobs that are "essential". '''
+        no_wfh_ind_nodes = self.random.choices(population=self.nodes_industr,
+                                               k=int(len(self.nodes_industr)*0.5))
+        no_wfh_comm_nodes = self.random.choices(population=self.nodes_rest,
+                                                k=int(len(self.nodes_rest)*0.2))
+        no_wfh_rest_nodes = self.random.choices(population=self.nodes_cafe,
+                                                k=int(len(self.nodes_cafe)*0.2))
+        total_no_wfh = no_wfh_ind_nodes + no_wfh_comm_nodes + no_wfh_rest_nodes
+
         ind_agents = max(self.industr_distr_ph) * 2
         rest_agents = max(self.comm_rest_distr_ph)
         comm_agents = max(self.comm_distr_ph)
@@ -228,6 +238,8 @@ class ConsumerModel(Model):
             elif ind_agents == 0 and rest_agents == 0 and comm_agents == 0:
                 a.home_node = self.random.choice(self.res_loc_list)
                 self.res_loc_list.remove(a.home_node)
+            if a.work_node in total_no_wfh:
+                a.can_wfh == False
             self.grid.place_agent(self.schedule.agents[i], a.home_node)
 
     def set_attributes(self):
@@ -558,7 +570,9 @@ class ConsumerModel(Model):
                 while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
                     Agent_to_move = self.random.choice(Possible_Agents_to_move)
                     work_node = Agent_to_move.work_node
-                if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+                if (Agent_to_move.wfh == 1 and
+                    self.stat_tot[3] > self.wfh_lag and
+                    Agent_to_move.can_wfh == True):
                     pass
                 else:
                     self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
@@ -588,7 +602,9 @@ class ConsumerModel(Model):
 
             for i in range(min(delta_agents_rest,len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+                if (Agent_to_move.wfh == 1 and
+                    self.stat_tot[3] > self.wfh_lag and
+                    Agent_to_move.can_wfh == True):
                     pass
                 else:
                     self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
@@ -631,7 +647,9 @@ class ConsumerModel(Model):
             while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
                 Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
                 work_node = Agent_to_move.work_node
-            if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
+            if (Agent_to_move.wfh == 1 and
+                self.stat_tot[3] > self.wfh_lag and
+                Agent_to_move.can_wfh == True):
                 pass
             else:
                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
