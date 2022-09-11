@@ -100,6 +100,7 @@ class ConsumerModel(Model):
         self.model_wfh = wfh
         self.lakewood_res = lakewood_res
         self.wfh_lag = wfh_lag # infection percent before work from home allowed
+        self.wfh_thres = False # whether wfh lag has been reached
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
@@ -571,7 +572,7 @@ class ConsumerModel(Model):
                     Agent_to_move = self.random.choice(Possible_Agents_to_move)
                     work_node = Agent_to_move.work_node
                 if (Agent_to_move.wfh == 1 and
-                    self.stat_tot[3] > self.wfh_lag and
+                    self.wfh_thres and
                     Agent_to_move.can_wfh == True):
                     pass
                 else:
@@ -603,7 +604,7 @@ class ConsumerModel(Model):
             for i in range(min(delta_agents_rest,len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
                 if (Agent_to_move.wfh == 1 and
-                    self.stat_tot[3] > self.wfh_lag and
+                    self.wfh_thres and
                     Agent_to_move.can_wfh == True):
                     pass
                 else:
@@ -648,7 +649,7 @@ class ConsumerModel(Model):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
                 work_node = Agent_to_move.work_node
             if (Agent_to_move.wfh == 1 and
-                self.stat_tot[3] > self.wfh_lag and
+                self.wfh_thres and
                 Agent_to_move.can_wfh == True):
                 pass
             else:
@@ -865,6 +866,8 @@ class ConsumerModel(Model):
                     if agent.adj_covid_change == 1:
                         self.predict_wfh(agent)
             # self.check_social_dist()
+            if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
+                self.wfh_thres = True
         else:
             pass
         self.timestepN = self.timestep - self.timestep_day * 24
