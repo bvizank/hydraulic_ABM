@@ -17,7 +17,7 @@ output_file = 'datasheet.xlsx'
 
 f = Micro_pop
 days = 90
-model = ConsumerModel(f, seed=123, days=days, wfh=True, lakewood_res=True,
+model = ConsumerModel(f, seed=123, days=days, wfh=True, res_pat_select='pysimdeum',
                       wfh_lag=0.02)
 
 start = perf_counter()
