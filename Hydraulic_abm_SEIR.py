@@ -182,19 +182,20 @@ class ConsumerModel(Model):
 
         print('Time to initialize: ', init_stop - init_start)
 
-    def create_node_list(self):
-        def node_list(list, nodes):
-            list_out = []
-            for node in nodes:
-                for i in range(int(list[node])):
-                    list_out.append(node)
-            return list_out
 
+    def node_list(self, list, nodes):
+        list_out = []
+        for node in nodes:
+            for i in range(int(list[node])):
+                list_out.append(node)
+        return list_out
+
+    def create_node_list(self):
         nodes_industr_2x = self.nodes_industr + self.nodes_industr
-        self.ind_loc_list = node_list(self.nodes_capacity, nodes_industr_2x)
-        self.res_loc_list = node_list(self.nodes_capacity, self.nodes_resident)
-        self.rest_loc_list = node_list(self.nodes_capacity, self.nodes_cafe)
-        self.comm_loc_list = node_list(self.nodes_capacity, self.nodes_rest)
+        self.ind_loc_list = self.node_list(self.nodes_capacity, nodes_industr_2x)
+        self.res_loc_list = self.node_list(self.nodes_capacity, self.nodes_resident)
+        # self.rest_loc_list = node_list(self.nodes_capacity, self.nodes_cafe)
+        # self.comm_loc_list = node_list(self.nodes_capacity, self.nodes_rest)
 
 
     def create_agents(self):
@@ -202,11 +203,11 @@ class ConsumerModel(Model):
         working from home or jobs that are "essential". '''
         no_wfh_ind_nodes = self.random.choices(population=self.nodes_industr,
                                                k=int(len(self.nodes_industr)*0.5))
-        no_wfh_comm_nodes = self.random.choices(population=self.nodes_rest,
-                                                k=int(len(self.nodes_rest)*0.2))
-        no_wfh_rest_nodes = self.random.choices(population=self.nodes_cafe,
-                                                k=int(len(self.nodes_cafe)*0.2))
-        total_no_wfh = no_wfh_ind_nodes + no_wfh_comm_nodes + no_wfh_rest_nodes
+        # no_wfh_comm_nodes = self.random.choices(population=self.nodes_rest,
+        #                                         k=int(len(self.nodes_rest)*0.2))
+        # no_wfh_rest_nodes = self.random.choices(population=self.nodes_cafe,
+        #                                         k=int(len(self.nodes_cafe)*0.2))
+        total_no_wfh = no_wfh_ind_nodes# + no_wfh_comm_nodes + no_wfh_rest_nodes
 
         ind_agents = max(self.industr_distr_ph) * 2
         rest_agents = max(self.comm_rest_distr_ph)
@@ -222,20 +223,20 @@ class ConsumerModel(Model):
                 self.res_loc_list.remove(a.home_node)
                 a.work_type = 'industrial'
                 ind_agents -= 1
-            elif rest_agents != 0:
-                a.work_node = self.random.choice(self.rest_loc_list)
-                a.home_node = self.random.choice(self.res_loc_list)
-                self.rest_loc_list.remove(a.work_node)
-                self.res_loc_list.remove(a.home_node)
-                a.work_type = 'restaurant'
-                rest_agents -= 1
-            elif comm_agents != 0:
-                a.work_node = self.random.choice(self.comm_loc_list)
-                a.home_node = self.random.choice(self.res_loc_list)
-                self.comm_loc_list.remove(a.work_node)
-                self.res_loc_list.remove(a.home_node)
-                a.work_type = 'commercial'
-                comm_agents -= 1
+            # elif rest_agents != 0:
+            #     a.work_node = self.random.choice(self.rest_loc_list)
+            #     a.home_node = self.random.choice(self.res_loc_list)
+            #     self.rest_loc_list.remove(a.work_node)
+            #     self.res_loc_list.remove(a.home_node)
+            #     a.work_type = 'restaurant'
+            #     rest_agents -= 1
+            # elif comm_agents != 0:
+            #     a.work_node = self.random.choice(self.comm_loc_list)
+            #     a.home_node = self.random.choice(self.res_loc_list)
+            #     self.comm_loc_list.remove(a.work_node)
+            #     self.res_loc_list.remove(a.home_node)
+            #     a.work_type = 'commercial'
+            #     comm_agents -= 1
             elif ind_agents == 0 and rest_agents == 0 and comm_agents == 0:
                 a.home_node = self.random.choice(self.res_loc_list)
                 self.res_loc_list.remove(a.home_node)
@@ -562,22 +563,34 @@ class ConsumerModel(Model):
         delta_agents_comm = round(curr_comm_num - prev_comm_num)
         if delta_agents_comm > 0:
             Possible_Agents_to_move = [a for a in self.schedule.agents
-                                       if a.pos in self.nodes_resident
-                                       and a.work_type == 'commercial']
+                                       if a.pos in self.nodes_resident]
+                                       #and a.work_type == 'commercial']
+
+            nodes_comm = list()
+            for node in self.nodes_rest:
+                avail_spots = self.nodes_capacity[node] - self.grid.G.nodes[node]['agent']
+                if avail_spots > 0:
+                    for i in range(int(avail_spots)):
+                        nodes_comm.append(node)
+
+            # we want all the commercial nodes that have vacancies and how many
+            # vacancies...
 
             for i in range(min(delta_agents_comm, len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                work_node = Agent_to_move.work_node
-                while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
-                    Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                    work_node = Agent_to_move.work_node
+                location = self.random.choice(nodes_comm)
+                # work_node = Agent_to_move.work_node
+                # while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
+                #     Agent_to_move = self.random.choice(Possible_Agents_to_move)
+                    # work_node = Agent_to_move.work_node
                 if (Agent_to_move.wfh == 1 and
                     self.wfh_thres and
                     Agent_to_move.can_wfh == True):
                     pass
                 else:
-                    self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+                    self.grid.move_agent(Agent_to_move, location)
                     Possible_Agents_to_move.remove(Agent_to_move)
+                    nodes_comm.remove(location)
                     self.infect_agent(Agent_to_move, 'workplace')
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
