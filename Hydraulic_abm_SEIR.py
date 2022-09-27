@@ -398,17 +398,17 @@ class ConsumerModel(Model):
         """
         if len(self.grid.G.nodes[agent_to_move.pos]['agent']) > 6:
             agents_at_node = self.grid.G.nodes[agent_to_move.pos]['agent']
-            agents_to_infect = self.random.choices(population = agents_at_node,
+            agents_to_expose = self.random.choices(population = agents_at_node,
                                                    k = self.daily_contacts)
         else:
-            agents_to_infect = self.grid.G.nodes[agent_to_move.pos]['agent']
+            agents_to_expose = self.grid.G.nodes[agent_to_move.pos]['agent']
 
-        for agent in agents_to_infect:
-            agent.adj_covid_change = 1
-            if agent.agent_params["COVIDeffect_4"] < 6 and node_type == 'residential':
-                agent.agent_params["COVIDeffect_4"] += 0.1
-            else:
-                pass
+        for agent in agents_to_expose:
+            # agent.adj_covid_change = 1
+            # if agent.agent_params["COVIDeffect_4"] < 6 and node_type == 'residential':
+            #     agent.agent_params["COVIDeffect_4"] += 0.1
+            # else:
+            #     pass
 
             if agent.covid == 'susceptible':
                 if node_type == 'workplace':
@@ -472,6 +472,7 @@ class ConsumerModel(Model):
             agent.covid = 'infectious'
             self.cumm_infectious += 1
             agent.exp_time = 0
+            agent.agent_params["COVIDexp"] = 2
         else:
             pass
 
@@ -887,6 +888,7 @@ class ConsumerModel(Model):
                 pass
         print('\tPeople informed: ' + str(info_stat_all))
 
+
     def compliance_status(self):
         compl_stat_all = 0
         for i, a in enumerate(self.schedule.agents):
@@ -896,6 +898,7 @@ class ConsumerModel(Model):
                 pass
 
         print('\tPeople complying: ' + str(compl_stat_all))
+
 
     def predict_wfh(self, agent):
         # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
@@ -912,10 +915,31 @@ class ConsumerModel(Model):
             agent.wfh = 1
 
 
+    def change_house_adj(self, agent):
+        ''' Function to check whether agents in a given agents node have become
+        infected with COVID '''
+        node = agent.home_node
+        agents_at_node = self.grid.G.nodes[node]['agent']
+        agents_at_node.remove(agent)
+        for a in agents_at_node:
+            a.adj_covid_change == 1
+            if a.agent_params["COVIDeffect_4"] < 6:
+                a.agent_params["COVIDeffect_4"] += 0.1
+            else:
+                pass
+
+
+    def check_agent_change(self):
+        ''' Function to check each agent for a change in household COVID '''
+        for i, agent in enumerate(self.schedule.agents):
+            # assumes the person talks with household members immediately after
+            # finding out about COVID infection
+            if agent.infectious_time == 1:
+                self.change_house_adj(agent)
+
+
     def change_time_model(self):
         self.timestep += 1
-        if self.res_pat_select == 'pysimdeum':
-            self.check_houses()
         if self.timestep % 24 == 0:
             wn.options.time.duration = 0
             curr_dir = os.getcwd()
@@ -994,6 +1018,9 @@ class ConsumerModel(Model):
             self.move_indust()
             # self.move_indust_wfh()
         self.check_status()
+        self.check_agent_change()
+        if self.res_pat_select == 'pysimdeum':
+            self.check_houses()
         # self.communication_utility()
         self.demandsfunc()
         self.run_hydraulic()
