@@ -647,14 +647,6 @@ class ConsumerModel(Model):
             while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
                 Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
                 work_node = Agent_to_move.work_node
-<<<<<<< HEAD
-            # if Agent_to_move.wfh == 1 and self.stat_tot[3] > self.wfh_lag:
-            #     pass
-            # else:
-            self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-            Possible_Agents_to_move_to_work.remove(Agent_to_move)
-            self.infect_agent(Agent_to_move, 'workplace')
-=======
             if (Agent_to_move.wfh == 1 and
                 self.stat_tot[3] > self.wfh_lag and
                 Agent_to_move.can_wfh == True):
@@ -663,7 +655,6 @@ class ConsumerModel(Model):
                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
                 Possible_Agents_to_move_to_work.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'workplace')
->>>>>>> aad6a34f428ba34c982c1d7ff2f444ea3165f82a
 
     # def move_wfh(self):
     #     """
