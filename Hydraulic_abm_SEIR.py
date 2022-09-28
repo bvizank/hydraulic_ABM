@@ -264,7 +264,6 @@ class ConsumerModel(Model):
                     home_size = self.random.choice(range(1,7))
                     curr_housemates = self.random.choices(curr_node, k=home_size)
                     curr_node = [a for a in curr_node if a not in curr_housemates]
-                    print(curr_node)
                     for mate in curr_housemates:
                         agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
                         agent.housemates = copy.deepcopy(curr_housemates) # this includes current agent
@@ -969,13 +968,14 @@ class ConsumerModel(Model):
         # agents_at_node = copy.deepcopy(self.grid.G.nodes[node]['agent'])
         # if len(agents_at_node) > 6:
         agents_in_house = copy.deepcopy(agent.housemates)
-        print(agent)
-        print(agents_in_house)
-        agents_in_house.remove(agent)
-        for a in agents_in_house:
-            a.adj_covid_change == 1
-            if a.agent_params["COVIDeffect_4"] < 6:
-                a.agent_params["COVIDeffect_4"] += 0.1
+        # print(agent)
+        # print(agents_in_house)
+        agents_in_house.remove(agent.unique_id)
+        for agent in agents_in_house:
+            agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
+            agent.adj_covid_change == 1
+            if agent.agent_params["COVIDeffect_4"] < 6:
+                agent.agent_params["COVIDeffect_4"] += 0.1
             else:
                 pass
         # else:
