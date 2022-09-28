@@ -255,8 +255,8 @@ class ConsumerModel(Model):
                     # self.res_loc_list.remove(a.home_node)
                 if a.work_node in total_no_wfh:
                     a.can_wfh == False
-                self.grid.place_agent(a, node)
-                curr_node.append(a)
+                self.grid.place_agent(a, a.home_node)
+                curr_node.append(a.unique_id)
                 ids += 1
 
             if len(curr_node) > 6: # multifamily housing
@@ -264,14 +264,18 @@ class ConsumerModel(Model):
                     home_size = self.random.choice(range(1,7))
                     curr_housemates = self.random.choices(curr_node, k=home_size)
                     curr_node = [a for a in curr_node if a not in curr_housemates]
+                    print(curr_node)
                     for mate in curr_housemates:
-                        mate.housemates = curr_housemates # this includes current agent
+                        agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+                        agent.housemates = copy.deepcopy(curr_housemates) # this includes current agent
 
                 for mate in curr_node:
-                    mate.housemates = curr_node
+                    agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+                    agent.housemates = copy.deepcopy(curr_node)
             else:
                 for agent in curr_node:
-                    agent.housemates = curr_node
+                    agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
+                    agent.housemates = copy.deepcopy(curr_node)
 
 
     def create_demand_houses(self):
@@ -652,13 +656,20 @@ class ConsumerModel(Model):
                 #     Agent_to_move.can_wfh == True):
                 #     pass
                 # else:
-                print(location)
-                print(Agent_to_move.pos)
-                print(Agent_to_move.home_node)
-                print(Agent_to_move.work_node)
-                print(Agent_to_move)
-                print(self.grid.G.nodes[Agent_to_move.pos]['agent'])
-                print(self.grid.G.nodes[Agent_to_move.home_node]['agent'])
+                # print(location)
+                # print(Agent_to_move.pos)
+                # print(Agent_to_move.home_node)
+                # print(Agent_to_move.work_node)
+                # print(Agent_to_move)
+                # if Agent_to_move in self.agents_moved:
+                #     print('Agent was moved to industrial node.')
+                # if len(self.grid.G.nodes[Agent_to_move.pos]['agent']) < 7:
+                #     print(self.grid.G.nodes[Agent_to_move.pos]['agent'])
+                #     print(self.grid.G.nodes[Agent_to_move.home_node]['agent'])
+                #
+                # if (Agent_to_move.work_type != None and
+                #     Agent_to_move in self.grid.G.nodes[Agent_to_move.work_node]['agent']):
+                #     print(f"Agent {Agent_to_move} is at work.")
                 self.grid.move_agent(Agent_to_move, location)
                 Possible_Agents_to_move.remove(Agent_to_move)
                 nodes_comm.remove(location)
@@ -734,7 +745,7 @@ class ConsumerModel(Model):
                                            and a.work_type == 'industrial']
 
         Agents_to_work = 1092 # int(1092/2) if self.timestep != 0 else 1092
-
+        self.agents_moved = list()
         for i in range(Agents_to_work):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
             work_node = Agent_to_move.work_node
@@ -746,7 +757,10 @@ class ConsumerModel(Model):
                 Agent_to_move.can_wfh == True):
                 pass
             else:
+                self.agents_moved.append(Agent_to_move)
                 self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+                if Agent_to_move.home_node == Agent_to_move.pos:
+                    print(f"Agent {Agent_to_move} not moved")
                 Possible_Agents_to_move_to_work.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'workplace')
 
@@ -951,25 +965,27 @@ class ConsumerModel(Model):
     def change_house_adj(self, agent):
         ''' Function to check whether agents in a given agents node have become
         infected with COVID '''
-        node = agent.home_node
-        agents_at_node = self.grid.G.nodes[node]['agent']
-        if len(agents_at_node) > 6:
-            agents_in_house = agent.housemates
-            agents_in_house.remove(agent)
-            for a in agents_in_house:
-                a.adj_covid_change == 1
-                if a.agent_params["COVIDeffect_4"] < 6:
-                    a.agent_params["COVIDeffect_4"] += 0.1
-                else:
-                    pass
-        else:
-            agents_at_node.remove(agent)
-            for a in agents_at_node:
-                a.adj_covid_change == 1
-                if a.agent_params["COVIDeffect_4"] < 6:
-                    a.agent_params["COVIDeffect_4"] += 0.1
-                else:
-                    pass
+        # node = agent.home_node
+        # agents_at_node = copy.deepcopy(self.grid.G.nodes[node]['agent'])
+        # if len(agents_at_node) > 6:
+        agents_in_house = copy.deepcopy(agent.housemates)
+        print(agent)
+        print(agents_in_house)
+        agents_in_house.remove(agent)
+        for a in agents_in_house:
+            a.adj_covid_change == 1
+            if a.agent_params["COVIDeffect_4"] < 6:
+                a.agent_params["COVIDeffect_4"] += 0.1
+            else:
+                pass
+        # else:
+        #     agents_at_node.remove(agent)
+        #     for a in agents_at_node:
+        #         a.adj_covid_change == 1
+        #         if a.agent_params["COVIDeffect_4"] < 6:
+        #             a.agent_params["COVIDeffect_4"] += 0.1
+        #         else:
+        #             pass
 
 
     def check_agent_change(self):
@@ -979,6 +995,22 @@ class ConsumerModel(Model):
             # finding out about COVID infection
             if agent.infectious_time == 1:
                 self.change_house_adj(agent)
+
+
+    def check_agent_loc(self):
+        self.wrong_node = 0
+        for i, agent in enumerate(self.schedule.agents):
+            if agent.pos == agent.work_node:
+                if agent not in self.grid.G.nodes[agent.work_node]['agent']:
+                    self.wrong_node += 1
+                    print(f"Agent {agent} is not at its work node.")
+            elif agent.pos == agent.home_node:
+                if agent not in self.grid.G.nodes[agent.home_node]['agent']:
+                    self.wrong_node += 1
+                    print(agent in self.agents_moved)
+                    print(f"Agent {agent} is not at its home node.")
+
+        print(self.wrong_node)
 
 
     def change_time_model(self):
@@ -1054,6 +1086,7 @@ class ConsumerModel(Model):
         if self.timestep != 0:
             self.move()
             # self.move_wfh()
+        self.check_agent_loc()
         # BV: changed times to 6, 14, and 22 because I think this is more representative
         # of a three shift schedule. Unsure if this changes anything with water
         # patterns, but I suspect it might.
