@@ -264,7 +264,6 @@ class ConsumerModel(Model):
                     home_size = self.random.choice(range(1,7))
                     curr_housemates = self.random.choices(curr_node, k=home_size)
                     curr_node = [a for a in curr_node if a not in curr_housemates]
-                    print(curr_node)
                     for mate in curr_housemates:
                         agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
                         agent.housemates = copy.deepcopy(curr_housemates) # this includes current agent
