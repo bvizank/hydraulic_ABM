@@ -17,6 +17,7 @@ import multiprocessing as mp
 import os
 import numpy as np
 from pysimdeum import pysimdeum
+import copy
 
 inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
@@ -194,7 +195,7 @@ class ConsumerModel(Model):
         return list_out
 
     def create_node_list(self):
-        nodes_industr_2x = self.nodes_industr + self.nodes_industr
+        nodes_industr_2x = self.nodes_industr + self.nodes_industr + self.nodes_industr
         self.ind_loc_list = self.node_list(self.nodes_capacity, nodes_industr_2x)
         self.res_loc_list = self.node_list(self.nodes_capacity, self.nodes_resident)
         # self.rest_loc_list = node_list(self.nodes_capacity, self.nodes_cafe)
@@ -212,40 +213,65 @@ class ConsumerModel(Model):
         #                                         k=int(len(self.nodes_cafe)*0.2))
         total_no_wfh = no_wfh_ind_nodes# + no_wfh_comm_nodes + no_wfh_rest_nodes
 
-        ind_agents = max(self.industr_distr_ph) * 2
-        rest_agents = max(self.comm_rest_distr_ph)
-        comm_agents = max(self.comm_distr_ph)
+        ind_agents = max(self.industr_distr_ph) * 3
+        # rest_agents = max(self.comm_rest_distr_ph)
+        # comm_agents = max(self.comm_distr_ph)
         # CREATING AGENTS
-        for i in range(self.num_agents):
-            a = ConsumerAgent(i, self)
-            self.schedule.add(a)
-            if ind_agents != 0:
-                a.work_node = self.random.choice(self.ind_loc_list)
-                a.home_node = self.random.choice(self.res_loc_list)
-                self.ind_loc_list.remove(a.work_node)
-                self.res_loc_list.remove(a.home_node)
-                a.work_type = 'industrial'
-                ind_agents -= 1
-            # elif rest_agents != 0:
-            #     a.work_node = self.random.choice(self.rest_loc_list)
-            #     a.home_node = self.random.choice(self.res_loc_list)
-            #     self.rest_loc_list.remove(a.work_node)
-            #     self.res_loc_list.remove(a.home_node)
-            #     a.work_type = 'restaurant'
-            #     rest_agents -= 1
-            # elif comm_agents != 0:
-            #     a.work_node = self.random.choice(self.comm_loc_list)
-            #     a.home_node = self.random.choice(self.res_loc_list)
-            #     self.comm_loc_list.remove(a.work_node)
-            #     self.res_loc_list.remove(a.home_node)
-            #     a.work_type = 'commercial'
-            #     comm_agents -= 1
+        ''' Needed to account for multifamily housing, so iterating through
+        residential nodes and placing agents that way and then storing their
+        housemates in the agent object. '''
+        res_nodes = copy.deepcopy(self.nodes_resident)
+        self.random.shuffle(res_nodes)
+        ids = 0
+        for node in res_nodes:
+            curr_node = list()
+            for spot in range(int(self.nodes_capacity[node])):
+                a = ConsumerAgent(ids, self)
+                self.schedule.add(a)
+                if ind_agents != 0:
+                    a.work_node = self.random.choice(self.ind_loc_list)
+                    a.home_node = node
+                    # a.home_node = self.random.choice(self.res_loc_list)
+                    self.ind_loc_list.remove(a.work_node)
+                    # self.res_loc_list.remove(a.home_node)
+                    a.work_type = 'industrial'
+                    ind_agents -= 1
+                # elif rest_agents != 0:
+                #     a.work_node = self.random.choice(self.rest_loc_list)
+                #     a.home_node = self.random.choice(self.res_loc_list)
+                #     self.rest_loc_list.remove(a.work_node)
+                #     self.res_loc_list.remove(a.home_node)
+                #     a.work_type = 'restaurant'
+                #     rest_agents -= 1
+                # elif comm_agents != 0:
+                #     a.work_node = self.random.choice(self.comm_loc_list)
+                #     a.home_node = self.random.choice(self.res_loc_list)
+                #     self.comm_loc_list.remove(a.work_node)
+                #     self.res_loc_list.remove(a.home_node)
+                #     a.work_type = 'commercial'
+                #     comm_agents -= 1
+                else:
+                    a.home_node = node
+                    # self.res_loc_list.remove(a.home_node)
+                if a.work_node in total_no_wfh:
+                    a.can_wfh == False
+                self.grid.place_agent(a, a.home_node)
+                curr_node.append(a)
+                ids += 1
+
+            if len(curr_node) > 6: # multifamily housing
+                while len(curr_node) > 6:
+                    home_size = self.random.choice(range(1,7))
+                    curr_housemates = self.random.choices(curr_node, k=home_size)
+                    curr_node = [a for a in curr_node if a not in curr_housemates]
+                    for mate in curr_housemates:
+                        mate.housemates = curr_housemates # this includes current agent
+
+                for mate in curr_node:
+                    mate.housemates = curr_node
             else:
-                a.home_node = self.random.choice(self.res_loc_list)
-                self.res_loc_list.remove(a.home_node)
-            if a.work_node in total_no_wfh:
-                a.can_wfh == False
-            self.grid.place_agent(self.schedule.agents[i], a.home_node)
+                for agent in curr_node:
+                    agent.housemates = curr_node
 
 
     def create_demand_houses(self):
@@ -920,13 +946,23 @@ class ConsumerModel(Model):
         infected with COVID '''
         node = agent.home_node
         agents_at_node = self.grid.G.nodes[node]['agent']
-        agents_at_node.remove(agent)
-        for a in agents_at_node:
-            a.adj_covid_change == 1
-            if a.agent_params["COVIDeffect_4"] < 6:
-                a.agent_params["COVIDeffect_4"] += 0.1
-            else:
-                pass
+        if len(agents_at_node) > 6:
+            agents_in_house = agent.housemates
+            agents_in_house.remove(agent)
+            for a in agents_in_house:
+                a.adj_covid_change == 1
+                if a.agent_params["COVIDeffect_4"] < 6:
+                    a.agent_params["COVIDeffect_4"] += 0.1
+                else:
+                    pass
+        else:
+            agents_at_node.remove(agent)
+            for a in agents_at_node:
+                a.adj_covid_change == 1
+                if a.agent_params["COVIDeffect_4"] < 6:
+                    a.agent_params["COVIDeffect_4"] += 0.1
+                else:
+                    pass
 
 
     def check_agent_change(self):
