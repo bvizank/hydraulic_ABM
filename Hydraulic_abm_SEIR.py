@@ -16,7 +16,7 @@ import bnlearn as bn
 import multiprocessing as mp
 import os
 import numpy as np
-from pysimdeum import pysimdeum
+# from pysimdeum import pysimdeum
 import copy
 
 inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
@@ -652,6 +652,8 @@ class ConsumerModel(Model):
                 #     Agent_to_move.can_wfh == True):
                 #     pass
                 # else:
+                print(location)
+                print(Agent_to_move)
                 self.grid.move_agent(Agent_to_move, location)
                 Possible_Agents_to_move.remove(Agent_to_move)
                 nodes_comm.remove(location)
