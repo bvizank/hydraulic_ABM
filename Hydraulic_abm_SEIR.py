@@ -255,7 +255,7 @@ class ConsumerModel(Model):
                     # self.res_loc_list.remove(a.home_node)
                 if a.work_node in total_no_wfh:
                     a.can_wfh == False
-                self.grid.place_agent(a, a.home_node)
+                self.grid.place_agent(a, node)
                 curr_node.append(a)
                 ids += 1
 
@@ -653,7 +653,12 @@ class ConsumerModel(Model):
                 #     pass
                 # else:
                 print(location)
+                print(Agent_to_move.pos)
+                print(Agent_to_move.home_node)
+                print(Agent_to_move.work_node)
                 print(Agent_to_move)
+                print(self.grid.G.nodes[Agent_to_move.pos]['agent'])
+                print(self.grid.G.nodes[Agent_to_move.home_node]['agent'])
                 self.grid.move_agent(Agent_to_move, location)
                 Possible_Agents_to_move.remove(Agent_to_move)
                 nodes_comm.remove(location)
