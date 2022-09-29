@@ -1,4 +1,4 @@
-  Page 1                                    Wed Sep 28 11:44:02 2022
+  Page 1                                    Wed Sep 28 22:08:59 2022
 
   ******************************************************************
   *                           E P A N E T                          *
@@ -38,7 +38,7 @@
          All Nodes
          No Links
    
-  Analysis begun Wed Sep 28 11:44:02 2022
+  Analysis begun Wed Sep 28 22:08:59 2022
 
    
   Hydraulic Status:
@@ -52,7 +52,7 @@
      0:06:00: Balanced after 5 trials
      0:06:00: Reservoir Aquifer is closed
      0:06:00: Reservoir SurfaceResrvr is closed
-     0:06:00: Tank Tank is emptying at 115.37 ft
+     0:06:00: Tank Tank is emptying at 115.36 ft
      0:06:00: CV 1 changed from open to closed
      0:06:00: Pump HSP#1 changed from open to closed
    
@@ -75,7 +75,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 2:00:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 2:00:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 2:00:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 2:00:00 hrs.
    
      3:00:00: Balanced after 2 trials
    
@@ -84,43 +83,50 @@
   WARNING: Pump WellPump#3 closed because cannot deliver head at 3:00:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 3:00:00 hrs.
    
-     3:36:00: Pump HSP#3 changed by rule 6
-     3:36:00: Balanced after 10 trials
-     3:36:00: Reservoir Aquifer is emptying
-     3:36:00: Reservoir SurfaceResrvr is emptying
-     3:36:00: Tank Tank is filling at 109.90 ft
-     3:36:00: CV 1 changed from closed to open
-     3:36:00: Pump HSP#3 changed from closed to open
+     3:30:00: Pump HSP#3 changed by rule 6
+     3:30:00: Balanced after 10 trials
+     3:30:00: Reservoir Aquifer is emptying
+     3:30:00: Reservoir SurfaceResrvr is emptying
+     3:30:00: Tank Tank is filling at 109.98 ft
+     3:30:00: CV 1 changed from closed to open
+     3:30:00: Pump HSP#3 changed from closed to open
    
-     3:42:00: Pump HSP#3 changed by rule 7
-     3:42:00: Balanced after 5 trials
-     3:42:00: Reservoir Aquifer is closed
-     3:42:00: Reservoir SurfaceResrvr is closed
-     3:42:00: Tank Tank is emptying at 110.25 ft
-     3:42:00: CV 1 changed from open to closed
-     3:42:00: Pump HSP#3 changed from open to closed
+     3:36:00: Pump HSP#3 changed by rule 7
+     3:36:00: Balanced after 6 trials
+     3:36:00: Reservoir Aquifer is closed
+     3:36:00: Reservoir SurfaceResrvr is closed
+     3:36:00: Tank Tank is emptying at 110.33 ft
+     3:36:00: CV 1 changed from open to closed
+     3:36:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 3:42:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 3:42:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 3:42:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 3:42:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 3:42:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 3:36:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 3:36:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 3:36:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 3:36:00 hrs.
    
-     3:54:00: Pump HSP#3 changed by rule 6
-     3:54:00: Balanced after 10 trials
-     3:54:00: Reservoir Aquifer is emptying
-     3:54:00: Reservoir SurfaceResrvr is emptying
-     3:54:00: Tank Tank is filling at 109.90 ft
-     3:54:00: CV 1 changed from closed to open
-     3:54:00: Pump HSP#3 changed from closed to open
+     3:48:00: Pump HSP#3 changed by rule 6
+     3:48:00: Balanced after 10 trials
+     3:48:00: Reservoir Aquifer is emptying
+     3:48:00: Reservoir SurfaceResrvr is emptying
+     3:48:00: Tank Tank is filling at 109.97 ft
+     3:48:00: CV 1 changed from closed to open
+     3:48:00: Pump HSP#3 changed from closed to open
    
-     4:00:00: Pump HSP#3 changed by rule 7
-     4:00:00: Balanced after 5 trials
-     4:00:00: Reservoir Aquifer is closed
-     4:00:00: Reservoir SurfaceResrvr is closed
-     4:00:00: Tank Tank is emptying at 110.24 ft
-     4:00:00: CV 1 changed from open to closed
-     4:00:00: Pump HSP#3 changed from open to closed
+     3:54:00: Pump HSP#3 changed by rule 7
+     3:54:00: Balanced after 6 trials
+     3:54:00: Reservoir Aquifer is closed
+     3:54:00: Reservoir SurfaceResrvr is closed
+     3:54:00: Tank Tank is emptying at 110.31 ft
+     3:54:00: CV 1 changed from open to closed
+     3:54:00: Pump HSP#3 changed from open to closed
+   
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 3:54:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 3:54:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 3:54:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 3:54:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 3:54:00 hrs.
+   
+     4:00:00: Balanced after 3 trials
    
   WARNING: Pump WellPump#1 closed because cannot deliver head at 4:00:00 hrs.
   WARNING: Pump WellPump#2 closed because cannot deliver head at 4:00:00 hrs.
@@ -128,55 +134,55 @@
   WARNING: Pump WellPump#4 closed because cannot deliver head at 4:00:00 hrs.
   WARNING: Pump ResvrPump closed because cannot deliver head at 4:00:00 hrs.
    
-     4:12:00: Pump HSP#3 changed by rule 6
-     4:12:00: Balanced after 10 trials
-     4:12:00: Reservoir Aquifer is emptying
-     4:12:00: Reservoir SurfaceResrvr is emptying
-     4:12:00: Tank Tank is filling at 109.80 ft
-     4:12:00: CV 1 changed from closed to open
-     4:12:00: Pump HSP#3 changed from closed to open
+     4:06:00: Pump HSP#3 changed by rule 6
+     4:06:00: Balanced after 10 trials
+     4:06:00: Reservoir Aquifer is emptying
+     4:06:00: Reservoir SurfaceResrvr is emptying
+     4:06:00: Tank Tank is filling at 109.91 ft
+     4:06:00: CV 1 changed from closed to open
+     4:06:00: Pump HSP#3 changed from closed to open
    
-     4:18:00: Pump HSP#3 changed by rule 7
-     4:18:00: Balanced after 5 trials
-     4:18:00: Reservoir Aquifer is closed
-     4:18:00: Reservoir SurfaceResrvr is closed
-     4:18:00: Tank Tank is emptying at 110.11 ft
-     4:18:00: CV 1 changed from open to closed
-     4:18:00: Pump HSP#3 changed from open to closed
+     4:12:00: Pump HSP#3 changed by rule 7
+     4:12:00: Balanced after 5 trials
+     4:12:00: Reservoir Aquifer is closed
+     4:12:00: Reservoir SurfaceResrvr is closed
+     4:12:00: Tank Tank is emptying at 110.21 ft
+     4:12:00: CV 1 changed from open to closed
+     4:12:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 4:18:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 4:18:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 4:18:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 4:18:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 4:18:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 4:12:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 4:12:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 4:12:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 4:12:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 4:12:00 hrs.
    
-     4:24:00: Pump HSP#3 changed by rule 6
-     4:24:00: Balanced after 10 trials
-     4:24:00: Reservoir Aquifer is emptying
-     4:24:00: Reservoir SurfaceResrvr is emptying
-     4:24:00: Tank Tank is filling at 109.89 ft
-     4:24:00: CV 1 changed from closed to open
-     4:24:00: Pump HSP#3 changed from closed to open
+     4:18:00: Pump HSP#3 changed by rule 6
+     4:18:00: Balanced after 10 trials
+     4:18:00: Reservoir Aquifer is emptying
+     4:18:00: Reservoir SurfaceResrvr is emptying
+     4:18:00: Tank Tank is filling at 109.99 ft
+     4:18:00: CV 1 changed from closed to open
+     4:18:00: Pump HSP#3 changed from closed to open
    
-     4:30:00: Pump HSP#3 changed by rule 7
-     4:30:00: Balanced after 5 trials
-     4:30:00: Reservoir Aquifer is closed
-     4:30:00: Reservoir SurfaceResrvr is closed
-     4:30:00: Tank Tank is emptying at 110.19 ft
-     4:30:00: CV 1 changed from open to closed
-     4:30:00: Pump HSP#3 changed from open to closed
+     4:24:00: Pump HSP#3 changed by rule 7
+     4:24:00: Balanced after 5 trials
+     4:24:00: Reservoir Aquifer is closed
+     4:24:00: Reservoir SurfaceResrvr is closed
+     4:24:00: Tank Tank is emptying at 110.29 ft
+     4:24:00: CV 1 changed from open to closed
+     4:24:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 4:30:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 4:30:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 4:30:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 4:30:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 4:30:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 4:24:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 4:24:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 4:24:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 4:24:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 4:24:00 hrs.
    
      4:36:00: Pump HSP#3 changed by rule 6
      4:36:00: Balanced after 10 trials
      4:36:00: Reservoir Aquifer is emptying
      4:36:00: Reservoir SurfaceResrvr is emptying
-     4:36:00: Tank Tank is filling at 109.97 ft
+     4:36:00: Tank Tank is filling at 109.84 ft
      4:36:00: CV 1 changed from closed to open
      4:36:00: Pump HSP#3 changed from closed to open
    
@@ -184,7 +190,7 @@
      4:42:00: Balanced after 5 trials
      4:42:00: Reservoir Aquifer is closed
      4:42:00: Reservoir SurfaceResrvr is closed
-     4:42:00: Tank Tank is emptying at 110.27 ft
+     4:42:00: Tank Tank is emptying at 110.14 ft
      4:42:00: CV 1 changed from open to closed
      4:42:00: Pump HSP#3 changed from open to closed
    
@@ -192,191 +198,200 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 4:42:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 4:42:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 4:42:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 4:42:00 hrs.
    
-     4:54:00: Pump HSP#3 changed by rule 6
-     4:54:00: Balanced after 10 trials
-     4:54:00: Reservoir Aquifer is emptying
-     4:54:00: Reservoir SurfaceResrvr is emptying
-     4:54:00: Tank Tank is filling at 109.83 ft
-     4:54:00: CV 1 changed from closed to open
-     4:54:00: Pump HSP#3 changed from closed to open
+     4:48:00: Pump HSP#3 changed by rule 6
+     4:48:00: Balanced after 10 trials
+     4:48:00: Reservoir Aquifer is emptying
+     4:48:00: Reservoir SurfaceResrvr is emptying
+     4:48:00: Tank Tank is filling at 109.91 ft
+     4:48:00: CV 1 changed from closed to open
+     4:48:00: Pump HSP#3 changed from closed to open
    
-     5:00:00: Pump HSP#3 changed by rule 7
-     5:00:00: Balanced after 5 trials
-     5:00:00: Reservoir Aquifer is closed
-     5:00:00: Reservoir SurfaceResrvr is closed
-     5:00:00: Tank Tank is emptying at 110.13 ft
-     5:00:00: CV 1 changed from open to closed
-     5:00:00: Pump HSP#3 changed from open to closed
+     4:54:00: Pump HSP#3 changed by rule 7
+     4:54:00: Balanced after 5 trials
+     4:54:00: Reservoir Aquifer is closed
+     4:54:00: Reservoir SurfaceResrvr is closed
+     4:54:00: Tank Tank is emptying at 110.21 ft
+     4:54:00: CV 1 changed from open to closed
+     4:54:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:00:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:00:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:00:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:00:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 4:54:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 4:54:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 4:54:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 4:54:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 4:54:00 hrs.
    
-     5:06:00: Pump HSP#3 changed by rule 6
-     5:06:00: Balanced after 18 trials
-     5:06:00: Reservoir Aquifer is emptying
-     5:06:00: Reservoir SurfaceResrvr is emptying
-     5:06:00: Tank Tank is filling at 109.86 ft
-     5:06:00: CV 1 changed from closed to open
-     5:06:00: Pump HSP#3 changed from closed to open
+     5:00:00: Pump HSP#3 changed by rule 6
+     5:00:00: Balanced after 10 trials
+     5:00:00: Reservoir Aquifer is emptying
+     5:00:00: Reservoir SurfaceResrvr is emptying
+     5:00:00: Tank Tank is filling at 109.99 ft
+     5:00:00: CV 1 changed from closed to open
+     5:00:00: Pump HSP#3 changed from closed to open
    
-     5:12:00: Pump HSP#3 changed by rule 7
-     5:12:00: Balanced after 5 trials
-     5:12:00: Reservoir Aquifer is closed
-     5:12:00: Reservoir SurfaceResrvr is closed
-     5:12:00: Tank Tank is emptying at 110.12 ft
-     5:12:00: CV 1 changed from open to closed
-     5:12:00: Pump HSP#3 changed from open to closed
+     5:06:00: Pump HSP#3 changed by rule 7
+     5:06:00: Balanced after 5 trials
+     5:06:00: Reservoir Aquifer is closed
+     5:06:00: Reservoir SurfaceResrvr is closed
+     5:06:00: Tank Tank is emptying at 110.24 ft
+     5:06:00: CV 1 changed from open to closed
+     5:06:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:12:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:12:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:12:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:12:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 5:12:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:06:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:06:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:06:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:06:00 hrs.
    
-     5:18:00: Pump HSP#3 changed by rule 6
-     5:18:00: Balanced after 18 trials
-     5:18:00: Reservoir Aquifer is emptying
-     5:18:00: Reservoir SurfaceResrvr is emptying
-     5:18:00: Tank Tank is filling at 109.85 ft
-     5:18:00: CV 1 changed from closed to open
-     5:18:00: Pump HSP#3 changed from closed to open
+     5:12:00: Pump HSP#3 changed by rule 6
+     5:12:00: Balanced after 17 trials
+     5:12:00: Reservoir Aquifer is emptying
+     5:12:00: Reservoir SurfaceResrvr is emptying
+     5:12:00: Tank Tank is filling at 109.97 ft
+     5:12:00: CV 1 changed from closed to open
+     5:12:00: Pump HSP#3 changed from closed to open
    
-     5:24:00: Pump HSP#3 changed by rule 7
-     5:24:00: Balanced after 5 trials
-     5:24:00: Reservoir Aquifer is closed
-     5:24:00: Reservoir SurfaceResrvr is closed
-     5:24:00: Tank Tank is emptying at 110.11 ft
-     5:24:00: CV 1 changed from open to closed
-     5:24:00: Pump HSP#3 changed from open to closed
+     5:18:00: Pump HSP#3 changed by rule 7
+     5:18:00: Balanced after 5 trials
+     5:18:00: Reservoir Aquifer is closed
+     5:18:00: Reservoir SurfaceResrvr is closed
+     5:18:00: Tank Tank is emptying at 110.22 ft
+     5:18:00: CV 1 changed from open to closed
+     5:18:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:24:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:24:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:24:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:24:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 5:24:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:18:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:18:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:18:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:18:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 5:18:00 hrs.
    
-     5:30:00: Pump HSP#3 changed by rule 6
-     5:30:00: Balanced after 18 trials
-     5:30:00: Reservoir Aquifer is emptying
-     5:30:00: Reservoir SurfaceResrvr is emptying
-     5:30:00: Tank Tank is filling at 109.84 ft
-     5:30:00: CV 1 changed from closed to open
-     5:30:00: Pump HSP#3 changed from closed to open
+     5:24:00: Pump HSP#3 changed by rule 6
+     5:24:00: Balanced after 17 trials
+     5:24:00: Reservoir Aquifer is emptying
+     5:24:00: Reservoir SurfaceResrvr is emptying
+     5:24:00: Tank Tank is filling at 109.95 ft
+     5:24:00: CV 1 changed from closed to open
+     5:24:00: Pump HSP#3 changed from closed to open
    
-     5:36:00: Pump HSP#3 changed by rule 7
-     5:36:00: Balanced after 5 trials
-     5:36:00: Reservoir Aquifer is closed
-     5:36:00: Reservoir SurfaceResrvr is closed
-     5:36:00: Tank Tank is emptying at 110.09 ft
-     5:36:00: CV 1 changed from open to closed
-     5:36:00: Pump HSP#3 changed from open to closed
+     5:30:00: Pump HSP#3 changed by rule 7
+     5:30:00: Balanced after 5 trials
+     5:30:00: Reservoir Aquifer is closed
+     5:30:00: Reservoir SurfaceResrvr is closed
+     5:30:00: Tank Tank is emptying at 110.20 ft
+     5:30:00: CV 1 changed from open to closed
+     5:30:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:36:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:36:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:36:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:36:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:30:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:30:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:30:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:30:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 5:30:00 hrs.
    
-     5:42:00: Pump HSP#3 changed by rule 6
-     5:42:00: Balanced after 18 trials
-     5:42:00: Reservoir Aquifer is emptying
-     5:42:00: Reservoir SurfaceResrvr is emptying
-     5:42:00: Tank Tank is filling at 109.82 ft
-     5:42:00: CV 1 changed from closed to open
-     5:42:00: Pump HSP#3 changed from closed to open
+     5:36:00: Pump HSP#3 changed by rule 6
+     5:36:00: Balanced after 17 trials
+     5:36:00: Reservoir Aquifer is emptying
+     5:36:00: Reservoir SurfaceResrvr is emptying
+     5:36:00: Tank Tank is filling at 109.92 ft
+     5:36:00: CV 1 changed from closed to open
+     5:36:00: Pump HSP#3 changed from closed to open
    
-     5:48:00: Pump HSP#3 changed by rule 7
-     5:48:00: Balanced after 5 trials
-     5:48:00: Reservoir Aquifer is closed
-     5:48:00: Reservoir SurfaceResrvr is closed
-     5:48:00: Tank Tank is emptying at 110.08 ft
-     5:48:00: CV 1 changed from open to closed
-     5:48:00: Pump HSP#3 changed from open to closed
+     5:42:00: Pump HSP#3 changed by rule 7
+     5:42:00: Balanced after 5 trials
+     5:42:00: Reservoir Aquifer is closed
+     5:42:00: Reservoir SurfaceResrvr is closed
+     5:42:00: Tank Tank is emptying at 110.18 ft
+     5:42:00: CV 1 changed from open to closed
+     5:42:00: Pump HSP#3 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:48:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:48:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:48:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:48:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 5:48:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:42:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:42:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:42:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:42:00 hrs.
    
-     5:54:00: Pump HSP#3 changed by rule 6
-     5:54:00: Balanced after 18 trials
-     5:54:00: Reservoir Aquifer is emptying
-     5:54:00: Reservoir SurfaceResrvr is emptying
-     5:54:00: Tank Tank is filling at 109.81 ft
-     5:54:00: CV 1 changed from closed to open
-     5:54:00: Pump HSP#3 changed from closed to open
+     5:48:00: Pump HSP#3 changed by rule 6
+     5:48:00: Balanced after 17 trials
+     5:48:00: Reservoir Aquifer is emptying
+     5:48:00: Reservoir SurfaceResrvr is emptying
+     5:48:00: Tank Tank is filling at 109.90 ft
+     5:48:00: CV 1 changed from closed to open
+     5:48:00: Pump HSP#3 changed from closed to open
    
-     6:00:00: Pump HSP#3 changed by rule 3
+     5:54:00: Pump HSP#3 changed by rule 7
+     5:54:00: Balanced after 5 trials
+     5:54:00: Reservoir Aquifer is closed
+     5:54:00: Reservoir SurfaceResrvr is closed
+     5:54:00: Tank Tank is emptying at 110.15 ft
+     5:54:00: CV 1 changed from open to closed
+     5:54:00: Pump HSP#3 changed from open to closed
+   
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 5:54:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 5:54:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 5:54:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 5:54:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 5:54:00 hrs.
+   
      6:00:00: Pump HSP#1 changed by rule 3
-     6:00:00: Balanced after 7 trials
+     6:00:00: Balanced after 17 trials
+     6:00:00: Reservoir Aquifer is emptying
+     6:00:00: Reservoir SurfaceResrvr is emptying
+     6:00:00: Tank Tank is filling at 109.88 ft
+     6:00:00: CV 1 changed from closed to open
      6:00:00: Pump HSP#1 changed from closed to open
-     6:00:00: Pump HSP#3 changed from open to closed
    
-     6:30:00: Pump HSP#1 changed by rule 4
-     6:30:00: Balanced after 6 trials
-     6:30:00: Reservoir Aquifer is closed
-     6:30:00: Reservoir SurfaceResrvr is closed
-     6:30:00: Tank Tank is emptying at 111.18 ft
-     6:30:00: CV 1 changed from open to closed
-     6:30:00: Pump HSP#1 changed from open to closed
+     6:36:00: Pump HSP#1 changed by rule 4
+     6:36:00: Balanced after 6 trials
+     6:36:00: Reservoir Aquifer is closed
+     6:36:00: Reservoir SurfaceResrvr is closed
+     6:36:00: Tank Tank is emptying at 111.19 ft
+     6:36:00: CV 1 changed from open to closed
+     6:36:00: Pump HSP#1 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 6:30:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 6:30:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 6:30:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 6:30:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 6:36:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 6:36:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 6:36:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 6:36:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 6:36:00 hrs.
    
-     6:36:00: Pump HSP#1 changed by rule 3
-     6:36:00: Balanced after 17 trials
-     6:36:00: Reservoir Aquifer is emptying
-     6:36:00: Reservoir SurfaceResrvr is emptying
-     6:36:00: Tank Tank is filling at 110.88 ft
-     6:36:00: CV 1 changed from closed to open
-     6:36:00: Pump HSP#1 changed from closed to open
+     6:42:00: Pump HSP#1 changed by rule 3
+     6:42:00: Balanced after 18 trials
+     6:42:00: Reservoir Aquifer is emptying
+     6:42:00: Reservoir SurfaceResrvr is emptying
+     6:42:00: Tank Tank is filling at 110.88 ft
+     6:42:00: CV 1 changed from closed to open
+     6:42:00: Pump HSP#1 changed from closed to open
    
-     6:42:00: Pump HSP#1 changed by rule 4
-     6:42:00: Balanced after 6 trials
-     6:42:00: Reservoir Aquifer is closed
-     6:42:00: Reservoir SurfaceResrvr is closed
-     6:42:00: Tank Tank is emptying at 111.10 ft
-     6:42:00: CV 1 changed from open to closed
-     6:42:00: Pump HSP#1 changed from open to closed
+     6:48:00: Pump HSP#1 changed by rule 4
+     6:48:00: Balanced after 6 trials
+     6:48:00: Reservoir Aquifer is closed
+     6:48:00: Reservoir SurfaceResrvr is closed
+     6:48:00: Tank Tank is emptying at 111.10 ft
+     6:48:00: CV 1 changed from open to closed
+     6:48:00: Pump HSP#1 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 6:42:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 6:42:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 6:42:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 6:42:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 6:42:00 hrs.
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 6:48:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 6:48:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 6:48:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 6:48:00 hrs.
    
-     6:48:00: Pump HSP#1 changed by rule 3
-     6:48:00: Balanced after 17 trials
-     6:48:00: Reservoir Aquifer is emptying
-     6:48:00: Reservoir SurfaceResrvr is emptying
-     6:48:00: Tank Tank is filling at 110.79 ft
-     6:48:00: CV 1 changed from closed to open
-     6:48:00: Pump HSP#1 changed from closed to open
+     6:54:00: Pump HSP#1 changed by rule 3
+     6:54:00: Balanced after 18 trials
+     6:54:00: Reservoir Aquifer is emptying
+     6:54:00: Reservoir SurfaceResrvr is emptying
+     6:54:00: Tank Tank is filling at 110.79 ft
+     6:54:00: CV 1 changed from closed to open
+     6:54:00: Pump HSP#1 changed from closed to open
    
-     6:54:00: Pump HSP#1 changed by rule 4
-     6:54:00: Balanced after 6 trials
-     6:54:00: Reservoir Aquifer is closed
-     6:54:00: Reservoir SurfaceResrvr is closed
-     6:54:00: Tank Tank is emptying at 111.02 ft
-     6:54:00: CV 1 changed from open to closed
-     6:54:00: Pump HSP#1 changed from open to closed
+     7:00:00: Pump HSP#1 changed by rule 4
+     7:00:00: Balanced after 5 trials
+     7:00:00: Reservoir Aquifer is closed
+     7:00:00: Reservoir SurfaceResrvr is closed
+     7:00:00: Tank Tank is emptying at 111.01 ft
+     7:00:00: CV 1 changed from open to closed
+     7:00:00: Pump HSP#1 changed from open to closed
    
-  WARNING: Pump WellPump#1 closed because cannot deliver head at 6:54:00 hrs.
-  WARNING: Pump WellPump#2 closed because cannot deliver head at 6:54:00 hrs.
-  WARNING: Pump WellPump#3 closed because cannot deliver head at 6:54:00 hrs.
-  WARNING: Pump WellPump#4 closed because cannot deliver head at 6:54:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 6:54:00 hrs.
-   
-     7:00:00: Pump HSP#1 changed by rule 3
-     7:00:00: Balanced after 17 trials
-     7:00:00: Reservoir Aquifer is emptying
-     7:00:00: Reservoir SurfaceResrvr is emptying
-     7:00:00: Tank Tank is filling at 110.71 ft
-     7:00:00: CV 1 changed from closed to open
-     7:00:00: Pump HSP#1 changed from closed to open
+  WARNING: Pump WellPump#1 closed because cannot deliver head at 7:00:00 hrs.
+  WARNING: Pump WellPump#2 closed because cannot deliver head at 7:00:00 hrs.
+  WARNING: Pump WellPump#3 closed because cannot deliver head at 7:00:00 hrs.
+  WARNING: Pump WellPump#4 closed because cannot deliver head at 7:00:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 7:00:00 hrs.
    
