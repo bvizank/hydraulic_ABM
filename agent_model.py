@@ -35,6 +35,8 @@ class ConsumerAgent(Agent):
         self.inf_severity = 0    # 0: asymptomatic, 1: mild, 2: severe, 3: critical
         self.adj_covid_change = 0     # 0: no change in housemates having covid, 1: recently a housemate became infectious
         self.wfh = 0  # working from home decision status
+        self.no_dine = 0 # not dining out
+        self.less_groceries = 0 # shopping for groceries less
         self.can_wfh = True   # bool based on workplace decision to allow work from home
         self.agent_params = {}  # BBN parameters for predicting work from home
         self.housemates = list()
