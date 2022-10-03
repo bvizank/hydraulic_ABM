@@ -51,7 +51,8 @@ colnames(hourly_avgs) <- col_names
 hourly_norm <- as.data.frame(hourly_norm)
 colnames(hourly_norm) <- col_names
 
-plot(hourly_avgs[[1]], type='l', ylim=c(0.5, 2.5))
+plot(hourly_avgs[[1]], type='l', ylim=c(0.5, 2.5),
+     xlab="Time of Day [hr]", ylab="Total Demand [")
 for (i in 2:length(hourly_avgs)){
   lines(hourly_avgs[[i]], type='l', col=i)
 }

@@ -1077,6 +1077,9 @@ class ConsumerModel(Model):
     def rest_agents(self):
         return [a for a in self.schedule.agents if a.pos in self.nodes_cafe]
 
+    def resident_agents(self):
+        return [a for a in self.schedule.agents if a.pos == a.home_node]
+
     def infect_agent(self, agent, next_loc):
         if agent.covid == 'infectious':
             self.contact(agent, next_loc)
@@ -1098,7 +1101,7 @@ class ConsumerModel(Model):
         print('\tAgents at commercial nodes: ' + str(len(self.commercial_agents())))
         print('\tAgents at restaurant nodes: ' + str(len(self.rest_agents())))
         print('\n')
-        print('\tAgents working from home: ' + str(len(self.agents_wfh())))
+        print('\tAgents at home: ' + str(len(self.resident_agents())))
         print('\n')
 
     def step(self):
