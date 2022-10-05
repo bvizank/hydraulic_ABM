@@ -48,15 +48,8 @@ class ConsumerModel(Model):
                  Resident_distr_ph = Resident_distr_ph,
                  industr_distr_ph = Industr_distr_ph,
                  bbn_params = bbn_params,
-                 seed = None,
                  days = 90,
-                 start_inf = 5,
-                 daily_contacts = 10,
-                 lag_period = 7,
-                 wfh = False,
-                 res_pat_select = 'lakewood',
-                 wfh_lag = 0,
-                 no_wfh_perc = 0.5):
+                 **kwargs):
 
         init_start = time.perf_counter()
         self.num_agents = N
@@ -80,11 +73,18 @@ class ConsumerModel(Model):
         self.timestep_day = 0
         self.timestepN = 0
         # self.base_demands_previous = {}
-        self.snw = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = seed)
+        if 'seed' in kwargs:
+            seed = kwargs['seed']
+            self.snw = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = seed)
+        else:
+            self.snw = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = 919)
         self.snw_agents = {}
         self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
-        self.covid_exposed = start_inf #round(0.001*N) # number of starting infectious
+        if 'start_inf' in kwargs:
+            self.covid_exposed = kwargs['start_inf'] #round(0.001*N) # number of starting infectious
+        else:
+            self.covid_exposed = 5
         self.exposure_rate = 0.05 # infection rate per contact per day in households
         self.exposure_rate_large = 0.01 # infection rate per contact per day in workplaces
         self.e2i = (4.5,1.5) # mean and sd number of days before infection shows
@@ -96,18 +96,33 @@ class ConsumerModel(Model):
         self.recTimeMild = (8.0,2.0) # mean and sd number of days for recovery: mild cases
         self.recTimeSev = (18.1,6.3)
         self.recTimeC = (18.1,6.3)
-        self.daily_contacts = daily_contacts
+        if 'daily_contacts' in kwargs:
+            self.daily_contacts = kwargs['daily_contacts']
+        else:
+            self.daily_contacts = 10
         self.cumm_infectious = self.covid_exposed
         self.wfh_dag = bn.import_DAG('Input Files/data_driven_wfh.bif', verbose=0)
         self.dine_less_dag = bn.import_DAG('Input Files/data_driven_dine.bif', verbose=0)
         self.grocery_dag = bn.import_DAG('Input Files/data_driven_grocery.bif', verbose=0)
         self.bbn_params = bbn_params # pandas dataframe of bbn parameters
-        self.lag_period = lag_period # number of days to wait before social distancing
-        self.model_wfh = wfh
-        self.res_pat_select = res_pat_select
-        self.wfh_lag = wfh_lag # infection percent before work from home allowed
+        if 'res_pat_select' in kwargs:
+            self.res_pat_select = kwargs['res_pat_select']
+        else:
+            self.res_pat_select = 'lakewood'
+        if 'wfh_lag' in kwargs:
+            self.wfh_lag = kwargs['wfh_lag'] # infection percent before work from home allowed
+        else:
+            self.wfh_lag = 0
         self.wfh_thres = False # whether wfh lag has been reached
-        self.no_wfh_perc = no_wfh_perc
+        if 'no_wfh_perc' in kwargs:
+            self.no_wfh_perc = kwargs['no_wfh_perc']
+        else:
+            self.no_wfh_perc = 0.5
+        if 'bbn_models' in kwargs:
+            if 'all' in kwargs['bbn_models']:
+                self.bbn_models = ['wfh', 'dine', 'grocery', 'ppe']
+            else:
+                self.bbn_models = kwargs['bbn_models']
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
@@ -140,9 +155,7 @@ class ConsumerModel(Model):
                                                             columns = ['Param', 'value1', 'value2']))
         self.param_out = self.param_out.append(pd.DataFrame([['daily_contacts', self.daily_contacts]],
                                                             columns = ['Param', 'value1']))
-        self.param_out = self.param_out.append(pd.DataFrame([['lag_period', self.lag_period]],
-                                                            columns = ['Param', 'value1']))
-        self.param_out = self.param_out.append(pd.DataFrame([['wfh', self.model_wfh]],
+        self.param_out = self.param_out.append(pd.DataFrame([['bbn_models', self.bbn_models]],
                                                             columns = ['Param', 'value1']))
         self.param_out = self.param_out.append(pd.DataFrame([['res pattern', self.res_pat_select]],
                                                             columns = ['Param', 'value1']))
@@ -693,10 +706,22 @@ class ConsumerModel(Model):
                 if self.base_pattern[location] == '6' and Agent_to_move.less_groceries == 1:
                     pass
                 else:
-                    self.grid.move_agent(Agent_to_move, location)
-                    Possible_Agents_to_move.remove(Agent_to_move)
-                    nodes_comm.remove(location)
-                    self.infect_agent(Agent_to_move, 'workplace')
+                    if self.random.random() < 0.4:
+                        ''' The agents in this arm are considered workers '''
+                        if Agent_to_move.wfh == 0:
+                            self.grid.move_agent(Agent_to_move, location)
+                            Possible_Agents_to_move.remove(Agent_to_move)
+                            nodes_comm.remove(location)
+                            self.infect_agent(Agent_to_move, 'workplace')
+                        else:
+                            pass
+                    else:
+                        ''' The agents in this arm are considered non-workers '''
+                        self.grid.move_agent(Agent_to_move, location)
+                        Possible_Agents_to_move.remove(Agent_to_move)
+                        nodes_comm.remove(location)
+                        self.infect_agent(Agent_to_move, 'workplace')
+
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
             Possible_Agents_to_move = self.commercial_agents()
@@ -1040,16 +1065,15 @@ class ConsumerModel(Model):
                     self.check_recovered(agent)
                     self.check_death(agent)
 
-                if self.model_wfh:
-                    if agent.adj_covid_change == 1:
-                        if agent.wfh == 0:
-                            self.predict_wfh(agent)
+                if agent.adj_covid_change == 1:
+                    if agent.wfh == 0 and 'wfh' in self.bbn_models:
+                        self.predict_wfh(agent)
 
-                        if agent.no_dine == 0:
-                            self.predict_dine_less(agent)
+                    if agent.no_dine == 0 and 'dine' in self.bbn_models:
+                        self.predict_dine_less(agent)
 
-                        if agent.less_groceries == 0:
-                            self.predict_grocery(agent)
+                    if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
+                        self.predict_grocery(agent)
             # self.check_social_dist()
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
