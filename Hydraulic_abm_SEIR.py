@@ -123,6 +123,12 @@ class ConsumerModel(Model):
                 self.bbn_models = ['wfh', 'dine', 'grocery', 'ppe']
             else:
                 self.bbn_models = kwargs['bbn_models']
+        else:
+            self.bbn_models = ['wfh', 'dine', 'grocery', 'ppe']
+        if 'verbose' in kwargs:
+            self.verbose = kwargs['verbose']
+        else:
+            self.verbose = 1
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
@@ -208,7 +214,8 @@ class ConsumerModel(Model):
 
         init_stop = time.perf_counter()
 
-        print('Time to initialize: ', init_stop - init_start)
+        if self.verbose == 1:
+            print('Time to initialize: ', init_stop - init_start)
 
 
     def dag_nodes(self):
@@ -706,21 +713,14 @@ class ConsumerModel(Model):
                 if self.base_pattern[location] == '6' and Agent_to_move.less_groceries == 1:
                     pass
                 else:
-                    if self.random.random() < 0.4:
-                        ''' The agents in this arm are considered workers '''
-                        if Agent_to_move.wfh == 0:
-                            self.grid.move_agent(Agent_to_move, location)
-                            Possible_Agents_to_move.remove(Agent_to_move)
-                            nodes_comm.remove(location)
-                            self.infect_agent(Agent_to_move, 'workplace')
-                        else:
-                            pass
-                    else:
-                        ''' The agents in this arm are considered non-workers '''
+                    ''' The agents in this arm are considered workers '''
+                    if Agent_to_move.wfh == 0:
                         self.grid.move_agent(Agent_to_move, location)
                         Possible_Agents_to_move.remove(Agent_to_move)
                         nodes_comm.remove(location)
                         self.infect_agent(Agent_to_move, 'workplace')
+                    else:
+                        pass
 
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
@@ -909,7 +909,8 @@ class ConsumerModel(Model):
                 info_stat_all += 1
             else:
                 pass
-        print('\tPeople informed: ' + str(info_stat_all))
+        if self.verbose == 1:
+            print('\tPeople informed: ' + str(info_stat_all))
 
 
     def compliance_status(self):
@@ -920,7 +921,8 @@ class ConsumerModel(Model):
             else:
                 pass
 
-        print('\tPeople complying: ' + str(compl_stat_all))
+        if self.verbose == 1:
+            print('\tPeople complying: ' + str(compl_stat_all))
 
 
     def predict_wfh(self, agent):
@@ -1134,7 +1136,7 @@ class ConsumerModel(Model):
             self.move()
             # self.move_wfh()
         # self.check_agent_loc()
-        self.check_covid_change()
+        # self.check_covid_change()
         # BV: changed times to 6, 14, and 22 because I think this is more representative
         # of a three shift schedule. Unsure if this changes anything with water
         # patterns, but I suspect it might.
@@ -1151,4 +1153,5 @@ class ConsumerModel(Model):
         # self.inform_status()
         # self.compliance_status()
         self.num_status()
-        self.print_func()
+        if self.verbose == 1:
+            self.print_func()
