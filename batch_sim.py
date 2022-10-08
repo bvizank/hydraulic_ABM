@@ -1,14 +1,17 @@
 from run_sim import run_sim
-from mpi4py import MPI
+from multiprocessing import Pool
 
-start = 10
+start = 0
 end = 60 # need one more than actual end value.
 count = 10
 
-comm = MPI.COMM_WORLD
+def worker_wrapper(args):
+    return run_sim(**args)
 
-size = comm.Get_size()
-rank = comm.Get_rank()
 
-for i in range(start,10*size,count):
-    run_sim(id=rank, seed=123, wfh_lag=0, no_wfh_perc=i/100, verbose=0)
+if __name__ == '__main__':
+    jobs = []
+    pool = Pool(6)
+    for n in range(start,end,count):
+        jobs.append({'id':n, 'seed':123, 'no_wfh_perc':n/100,'verbose':0})
+    pool.map(worker_wrapper, jobs)

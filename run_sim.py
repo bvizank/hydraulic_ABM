@@ -18,7 +18,7 @@ def run_sim(id = 0, **kwargs):
 
     f = Micro_pop
     days = 90
-    model = ConsumerModel(f, days=days, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+    model = ConsumerModel(f, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
 
     start = perf_counter()
 

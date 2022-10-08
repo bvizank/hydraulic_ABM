@@ -49,9 +49,11 @@ class ConsumerModel(Model):
                  industr_distr_ph = Industr_distr_ph,
                  bbn_params = bbn_params,
                  days = 90,
+                 id = 0,
                  **kwargs):
 
         init_start = time.perf_counter()
+        self.id = id
         self.num_agents = N
         self.G = G
         self.num_nodes = num_nodes
@@ -888,7 +890,7 @@ class ConsumerModel(Model):
     def run_hydraulic(self):
         # Simulate hydraulics
         sim = wntr.sim.EpanetSimulator(wn)
-        results = sim.run_sim()
+        results = sim.run_sim('id' + str(self.id))
 
         # Assigning first base demand again to individual Nodes so WNTR doesnt add all BD up
         # for node, base_demand in self.base_demands.items():
@@ -1080,13 +1082,13 @@ class ConsumerModel(Model):
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
         elif (self.timestep + 1) % 24 == 0 and self.timestep != 0:
-            ''' Clear EPANET files and run hydraulic for the day '''
-            curr_dir = os.getcwd()
-            files_in_dir = os.listdir(curr_dir)
-
-            for file in files_in_dir:
-                if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
-                    os.remove(os.path.join(curr_dir, file))
+            # ''' Clear EPANET files and run hydraulic for the day '''
+            # curr_dir = os.getcwd()
+            # files_in_dir = os.listdir(curr_dir)
+            #
+            # for file in files_in_dir:
+            #     if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
+            #         os.remove(os.path.join(curr_dir, file))
             self.change_demands()
             self.run_hydraulic()
         else:
