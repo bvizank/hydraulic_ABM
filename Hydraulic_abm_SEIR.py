@@ -177,7 +177,7 @@ class ConsumerModel(Model):
         self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
-        self.node_num = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
 
         # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
         self.susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
@@ -308,7 +308,7 @@ class ConsumerModel(Model):
                     a.home_node = node
                     # self.res_loc_list.remove(a.home_node)
                 if a.work_node in total_no_wfh:
-                    a.can_wfh == False
+                    a.can_wfh = False
                 self.grid.place_agent(a, a.home_node)
                 curr_node.append(a.unique_id)
                 ids += 1
@@ -712,8 +712,14 @@ class ConsumerModel(Model):
                 # if (Agent_to_move.work_type != None and
                 #     Agent_to_move in self.grid.G.nodes[Agent_to_move.work_node]['agent']):
                 #     print(f"Agent {Agent_to_move} is at work.")
-                if self.base_pattern[location] == '6' and Agent_to_move.less_groceries == 1:
-                    pass
+                if self.base_pattern[location] == '6':
+                    if Agent_to_move.less_groceries == 1:
+                        pass
+                    else:
+                        self.grid.move_agent(Agent_to_move, location)
+                        Possible_Agents_to_move.remove(Agent_to_move)
+                        nodes_comm.remove(location)
+                        self.infect_agent(Agent_to_move, 'workplace')
                 else:
                     ''' The agents in this arm are considered workers '''
                     if Agent_to_move.wfh == 0:
@@ -828,12 +834,14 @@ class ConsumerModel(Model):
 
     def collect_demands(self):
         step_demand = dict()
+        step_agents = dict()
         for node in self.nodes_w_demand:
             if node in self.nodes_capacity:
                 Capacity_node = self.nodes_capacity[node]
                 node_1 = wn.get_node(node)
                 agents_at_node_list = self.grid.G.nodes[node]['agent']
                 agents_at_node = len(agents_at_node_list)
+                step_agents[node] = agents_at_node
                 agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
                 if Capacity_node != 0:
                     step_demand[node] = agents_at_node/Capacity_node
@@ -872,7 +880,9 @@ class ConsumerModel(Model):
             #     pass
 
         hourly_demand = pd.DataFrame(data=step_demand, index=[0])
+        hourly_agents = pd.DataFrame(data=step_agents, index=[0])
         self.daily_demand[self.timestepN:(self.timestepN+1)] = hourly_demand
+        self.agent_matrix[self.timestepN:(self.timestepN+1)] = hourly_agents
 
 
     def change_demands(self):
@@ -903,7 +913,7 @@ class ConsumerModel(Model):
         self.pressure_matrix[self.timestep-23: self.timestep+1] = results.node['pressure'][0:24]
         self.age_matrix[self.timestep-23: self.timestep+1] = results.node['quality'][0:24]
 
-
+    
     def inform_status(self):
         info_stat_all = 0
         for i, a in enumerate(self.schedule.agents):
@@ -1002,7 +1012,7 @@ class ConsumerModel(Model):
             agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
             agent.adj_covid_change = 1
             if agent.agent_params["COVIDeffect_4"] < 6:
-                agent.agent_params["COVIDeffect_4"] += 0.1
+                agent.agent_params["COVIDeffect_4"] += 1
             else:
                 pass
         # else:
@@ -1020,7 +1030,9 @@ class ConsumerModel(Model):
         for i, agent in enumerate(self.schedule.agents):
             # assumes the person talks with household members immediately after
             # finding out about COVID infection
-            if agent.infectious_time == 1:
+            if agent.infectious_time == 0:
+                pass
+            elif agent.infectious_time == 1 or agent.infectious_time % (24*5) == 0:
                 self.change_house_adj(agent)
 
 
@@ -1043,10 +1055,10 @@ class ConsumerModel(Model):
     def check_covid_change(self):
         covid_change = 0
         for agent in self.schedule.agents:
-            if agent.adj_covid_change == 1:
+            if agent.adj_covid_change == 1 and agent.wfh == 0:
                 covid_change += 1
 
-        print(covid_change)
+        return covid_change
 
 
     def change_time_model(self):
@@ -1069,7 +1081,7 @@ class ConsumerModel(Model):
                     self.check_recovered(agent)
                     self.check_death(agent)
 
-                if agent.adj_covid_change == 1:
+                if agent.adj_covid_change == 1:  # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
                     if agent.wfh == 0 and 'wfh' in self.bbn_models:
                         self.predict_wfh(agent)
 
@@ -1131,6 +1143,7 @@ class ConsumerModel(Model):
         print('\n')
         print('\tAgents at home: ' + str(len(self.resident_agents())))
         print('\n')
+        print('\tAgents that with close COVID: ' + str(self.check_covid_change()))
 
     def step(self):
         self.schedule.step()

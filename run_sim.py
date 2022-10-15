@@ -81,3 +81,4 @@ def run_sim(id = 0, **kwargs):
         model.demand_matrix.to_excel(writer, sheet_name='demand')
         model.pressure_matrix.to_excel(writer, sheet_name='pressure')
         model.age_matrix.to_excel(writer, sheet_name='age')
+        model.agent_matrix.to_excel(writer, sheet_name='agent locations')

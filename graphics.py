@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import networkx as nx
 
-output_loc = 'Output Files/2022-08-31_08-36_results/'
+output_loc = 'Output Files/2022-10-14_13-57_wfh_current_results/'
 
 '''Import demand, pressure, and age data'''
 data_file = output_loc + 'datasheet.xlsx'
@@ -13,6 +13,7 @@ data_file = output_loc + 'datasheet.xlsx'
 demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
 pressure = pd.read_excel(data_file, sheet_name='pressure', index_col=0)
 age = pd.read_excel(data_file, sheet_name='age', index_col=0)
+agent = pd.read_excel(data_file, sheet_name='agent locations', index_col=0)
 
 '''Import water network'''
 inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
@@ -26,22 +27,24 @@ def make_contour(graph, data, data_type, fig_name,
     y_coords = list()
     data_list = list()
     pos = dict()
-    for node in graph.nodes:
-        x_coord = graph.nodes[node]['pos'][0]
-        y_coord = graph.nodes[node]['pos'][1]
-        curr_data = data[node]
+    if data_type != 'agent':
+        for node in graph.nodes:
+            x_coord = graph.nodes[node]['pos'][0]
+            y_coord = graph.nodes[node]['pos'][1]
+            curr_data = data[node]
+            x_coords.append(x_coord)
+            y_coords.append(y_coord)
+            data_list.append(curr_data)
 
-        x_coords.append(x_coord)
-        y_coords.append(y_coord)
-        data_list.append(curr_data)
-
-        pos[node] = x_coord, y_coord
-
-    x_coords = np.array(x_coords)
-    y_coords = np.array(y_coords)
-    data_list = np.array(data_list)
-
-    x_mesh = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
+            pos[node] = x_coord, y_coord
+    else:
+        for node in graph.nodes:
+            try:
+                x_coord = graph.nodes[node]['pos'][0]
+                y_coord = graph.nodes[node]['pos'][1]
+                curr_data = data[node]
+                x_coords.append(x_coord)
+                y_coord = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
     y_mesh = np.linspace(np.min(y_coords), np.max(y_coords), int(np.sqrt(pts)))
     [x,y] = np.meshgrid(x_mesh, y_mesh)
 
@@ -62,22 +65,24 @@ def make_contour(graph, data, data_type, fig_name,
     plt.savefig(fig_name)
     plt.close()
 
-# times = [12, (24*18)+12, (24*36)+12, (24*54)+12, (24*72)+12]
-#
-# for time in times:
-#     make_contour(G, demand.iloc[time], 'demand', output_loc + 'demand_' + str(time), True,
-#                  'Demand [ML]', vmin=0)
-#     make_contour(G, pressure.iloc[time], 'pressure', output_loc + 'pressure_' + str(time), True,
-#                  'Pressure [m]', vmin=0)
-#     make_contour(G, age.iloc[time], 'age', output_loc + 'age_' + str(time), True,
-#                  'Age [sec]', vmin=0)
+times = [12, (24*18)+12, (24*36)+12, (24*54)+12, (24*72)+12]
+
+for time in times:
+    make_contour(G, demand.iloc[time], 'demand', output_loc + 'demand_' + str(time), True,
+                  'Demand [ML]', vmin=0)
+    make_contour(G, pressure.iloc[time], 'pressure', output_loc + 'pressure_' + str(time), True,
+                'Pressure [m]', vmin=0)
+    make_contour(G, age.iloc[time], 'age', output_loc + 'age_' + str(time), True,
+                 'Age [sec]', vmin=0)
+    make_contour(G, agent.iloc[time], 'agent', output_loc + 'locations_' + str(time), True,
+                 '# of Agents', vmin=0)    
 
 # make_contour(G, pressure.iloc[12], 'pressure', output_loc + 'pressure_' + str(12), True,
 #              'Pressure [m]', vmin=0, vmax=85)
 # make_contour(G, pressure.iloc[12+(24*45)], 'pressure', output_loc + 'pressure_' + str(12+(24*45)), True,
 #              'Pressure [m]', vmin=0, vmax=85)
 
-make_contour(G, demand.iloc[12], 'demand', output_loc + 'demand_' + str(12), True,
-             'Demand [ML]', vmin=0, vmax=0.02)
-make_contour(G, demand.iloc[12+(24*45)], 'demand', output_loc + 'demand_' + str(12+(24*45)), True,
-             'Demand [ML]', vmin=0, vmax=0.02)
+# make_contour(G, demand.iloc[12], 'demand', output_loc + 'demand_' + str(12), True,
+#              'Demand [ML]', vmin=0, vmax=0.02)
+# make_contour(G, demand.iloc[12+(24*45)], 'demand', output_loc + 'demand_' + str(12+(24*45)), True,
+#              'Demand [ML]', vmin=0, vmax=0.02)
