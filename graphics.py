@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import networkx as nx
 
-output_loc = 'Output Files/2022-10-14_13-57_wfh_current_results/'
+output_loc = 'Output Files/2022-10-16_20-57_wfh_current_results/'
 
 '''Import demand, pressure, and age data'''
 data_file = output_loc + 'datasheet.xlsx'
@@ -39,12 +39,19 @@ def make_contour(graph, data, data_type, fig_name,
             pos[node] = x_coord, y_coord
     else:
         for node in graph.nodes:
-            try:
-                x_coord = graph.nodes[node]['pos'][0]
-                y_coord = graph.nodes[node]['pos'][1]
+            x_coord = graph.nodes[node]['pos'][0]
+            y_coord = graph.nodes[node]['pos'][1]
+            if node in data:
                 curr_data = data[node]
-                x_coords.append(x_coord)
-                y_coord = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
+            else:
+                curr_data = 0
+            x_coords.append(x_coord)
+            y_coords.append(y_coord)
+            data_list.append(curr_data)
+                
+            pos[node] = x_coord, y_coord
+                
+    x_mesh = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
     y_mesh = np.linspace(np.min(y_coords), np.max(y_coords), int(np.sqrt(pts)))
     [x,y] = np.meshgrid(x_mesh, y_mesh)
 

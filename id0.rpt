@@ -1,4 +1,4 @@
-  Page 1                                    Fri Oct 14 15:09:43 2022
+  Page 1                                    Sun Oct 16 21:52:01 2022
 
   ******************************************************************
   *                           E P A N E T                          *
@@ -38,7 +38,7 @@
          All Nodes
          No Links
    
-  Analysis begun Fri Oct 14 15:09:43 2022
+  Analysis begun Sun Oct 16 21:52:01 2022
 
    
   Hydraulic Status:
@@ -82,7 +82,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 3:00:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 3:00:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 3:00:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 3:00:00 hrs.
    
      3:48:00: Pump HSP#3 changed by rule 6
      3:48:00: Balanced after 11 trials
@@ -112,6 +111,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 4:00:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 4:00:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 4:00:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 4:00:00 hrs.
    
      4:06:00: Pump HSP#3 changed by rule 6
      4:06:00: Balanced after 10 trials
@@ -155,7 +155,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 4:24:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 4:24:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 4:24:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 4:24:00 hrs.
    
      4:36:00: Pump HSP#3 changed by rule 6
      4:36:00: Balanced after 10 trials
@@ -249,7 +248,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 5:24:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 5:24:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 5:24:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 5:24:00 hrs.
    
      5:36:00: Pump HSP#3 changed by rule 6
      5:36:00: Balanced after 10 trials
@@ -293,7 +291,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 5:54:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 5:54:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 5:54:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 5:54:00 hrs.
    
      6:00:00: Pump HSP#1 changed by rule 3
      6:00:00: Balanced after 10 trials
@@ -315,7 +312,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 6:24:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 6:24:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 6:24:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 6:24:00 hrs.
    
      6:30:00: Pump HSP#1 changed by rule 3
      6:30:00: Balanced after 16 trials
@@ -359,6 +355,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 6:48:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 6:48:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 6:48:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 6:48:00 hrs.
    
      6:54:00: Pump HSP#1 changed by rule 3
      6:54:00: Balanced after 16 trials
@@ -512,6 +509,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 8:48:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 8:48:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 8:48:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 8:48:00 hrs.
    
      9:00:00: Pump HSP#3 changed by rule 6
      9:00:00: Balanced after 30 trials
@@ -599,7 +597,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 9:42:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 9:42:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 9:42:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 9:42:00 hrs.
    
      9:48:00: Pump HSP#3 changed by rule 6
      9:48:00: Balanced after 18 trials
@@ -643,7 +640,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 10:06:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 10:06:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 10:06:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 10:06:00 hrs.
    
     10:12:00: Pump HSP#3 changed by rule 6
     10:12:00: Balanced after 10 trials
@@ -731,7 +727,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 10:54:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 10:54:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 10:54:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 10:54:00 hrs.
    
     11:00:00: Pump HSP#3 changed by rule 6
     11:00:00: Balanced after 11 trials
@@ -753,7 +748,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 11:06:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 11:06:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 11:06:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 11:06:00 hrs.
    
     11:12:00: Pump HSP#3 changed by rule 6
     11:12:00: Balanced after 37 trials
@@ -797,6 +791,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 11:30:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 11:30:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 11:30:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 11:30:00 hrs.
    
     11:36:00: Pump HSP#3 changed by rule 6
     11:36:00: Balanced after 37 trials
@@ -818,7 +813,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 11:42:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 11:42:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 11:42:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 11:42:00 hrs.
    
     11:48:00: Pump HSP#3 changed by rule 6
     11:48:00: Balanced after 37 trials
@@ -906,6 +900,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 12:36:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 12:36:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 12:36:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 12:36:00 hrs.
    
     12:42:00: Pump HSP#3 changed by rule 6
     12:42:00: Balanced after 14 trials
@@ -949,7 +944,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 13:00:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 13:00:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 13:00:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 13:00:00 hrs.
    
     13:06:00: Pump HSP#3 changed by rule 6
     13:06:00: Balanced after 11 trials
@@ -1015,6 +1009,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 13:36:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 13:36:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 13:36:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 13:36:00 hrs.
    
     13:42:00: Pump HSP#3 changed by rule 6
     13:42:00: Balanced after 11 trials
@@ -1036,6 +1031,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 13:48:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 13:48:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 13:48:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 13:48:00 hrs.
    
     13:54:00: Pump HSP#3 changed by rule 6
     13:54:00: Balanced after 11 trials
@@ -1081,6 +1077,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 14:18:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 14:18:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 14:18:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 14:18:00 hrs.
    
     14:24:00: Pump HSP#3 changed by rule 6
     14:24:00: Balanced after 17 trials
@@ -1146,6 +1143,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 14:54:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 14:54:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 14:54:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 14:54:00 hrs.
    
     15:00:00: Pump HSP#3 changed by rule 6
     15:00:00: Balanced after 17 trials
@@ -1189,6 +1187,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 15:24:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 15:24:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 15:24:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 15:24:00 hrs.
    
     15:30:00: Pump HSP#3 changed by rule 6
     15:30:00: Balanced after 19 trials
@@ -1232,6 +1231,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 15:48:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 15:48:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 15:48:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 15:48:00 hrs.
    
     15:54:00: Pump HSP#3 changed by rule 6
     15:54:00: Balanced after 19 trials
@@ -1253,7 +1253,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 16:00:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 16:00:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 16:00:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 16:00:00 hrs.
    
     16:06:00: Pump HSP#3 changed by rule 6
     16:06:00: Balanced after 36 trials
@@ -1275,6 +1274,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 16:18:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 16:18:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 16:18:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 16:18:00 hrs.
    
     16:24:00: Pump HSP#3 changed by rule 6
     16:24:00: Balanced after 36 trials
@@ -1318,7 +1318,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 16:42:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 16:42:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 16:42:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 16:42:00 hrs.
    
     16:48:00: Pump HSP#3 changed by rule 6
     16:48:00: Balanced after 36 trials
@@ -1471,6 +1470,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 18:12:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 18:12:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 18:12:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 18:12:00 hrs.
    
     18:18:00: Pump HSP#3 changed by rule 6
     18:18:00: Balanced after 31 trials
@@ -1514,6 +1514,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 18:42:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 18:42:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 18:42:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 18:42:00 hrs.
    
     18:48:00: Pump HSP#3 changed by rule 6
     18:48:00: Balanced after 31 trials
@@ -1601,6 +1602,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 19:30:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 19:30:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 19:30:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 19:30:00 hrs.
    
     19:36:00: Pump HSP#3 changed by rule 6
     19:36:00: Balanced after 17 trials
@@ -1686,7 +1688,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 20:18:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 20:18:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 20:18:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 20:18:00 hrs.
    
     20:30:00: Pump HSP#3 changed by rule 6
     20:30:00: Balanced after 10 trials
@@ -1708,7 +1709,6 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 20:36:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 20:36:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 20:36:00 hrs.
-  WARNING: Pump ResvrPump closed because cannot deliver head at 20:36:00 hrs.
    
     20:42:00: Pump HSP#3 changed by rule 6
     20:42:00: Balanced after 10 trials
@@ -1730,6 +1730,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 20:48:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 20:48:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 20:48:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 20:48:00 hrs.
    
     21:00:00: Pump HSP#3 changed by rule 6
     21:00:00: Balanced after 10 trials
@@ -1861,6 +1862,7 @@
   WARNING: Pump WellPump#2 closed because cannot deliver head at 22:24:00 hrs.
   WARNING: Pump WellPump#3 closed because cannot deliver head at 22:24:00 hrs.
   WARNING: Pump WellPump#4 closed because cannot deliver head at 22:24:00 hrs.
+  WARNING: Pump ResvrPump closed because cannot deliver head at 22:24:00 hrs.
    
     22:42:00: Pump HSP#3 changed by rule 6
     22:42:00: Balanced after 10 trials
@@ -1894,11 +1896,11 @@
    
   Water Quality Mass Balance (hrs)
   ================================
-  Initial Mass:      0.00000e+000
-  Mass Inflow:       0.00000e+000
-  Mass Outflow:      4.52518e+005
-  Mass Reacted:      -5.62787e+006
-  Final Mass:        5.17535e+006
+  Initial Mass:       0.00000e+00
+  Mass Inflow:        0.00000e+00
+  Mass Outflow:       4.52518e+05
+  Mass Reacted:      -5.62787e+06
+  Final Mass:         5.17535e+06
   Mass Ratio:         1.00000
   ================================
 
@@ -4353,7 +4355,7 @@
   IN1155               0.00   1153.86     46.30      1.00
   IN1156               0.00   1153.86     42.84      1.00
   VN1157               0.00   1153.86     42.84      1.00
-  VN1158               0.00   1153.86     42.84      1.00
+  VN1158               0.00   1153.86     42.84      0.93
   IN1159               0.00   1153.86     43.27      1.00
   VN1160               0.00   1153.86     43.70      1.00
   VN1161               0.00   1153.86     43.70      1.00
@@ -4377,10 +4379,10 @@
   VN1180               0.00   1153.86     43.70      1.00
   VN1181               0.00   1153.87     45.01      1.00
   VN1182               0.00   1153.87     44.57      1.00
-  VN1183               0.00   1153.87     44.57      1.00
+  VN1183               0.00   1153.87     44.57      0.93
   IN1184               0.00   1153.87     44.14      1.00
   VN1185               0.00   1153.87     44.57      1.00
-  VN1186               0.00   1153.87     44.57      1.00
+  VN1186               0.00   1153.87     44.57      0.93
   IN1187               0.00   1153.87     44.57      1.00
   IN1188               0.00   1153.87     44.57      1.00
   IN1189               0.00   1153.87     44.57      1.00
@@ -4641,17 +4643,17 @@
   VN1450               0.00   1153.88     56.71      0.93
   IN1451               0.00   1153.88     58.01      1.00
   VN1452               0.00   1153.88     58.01      1.00
-  VN1453               0.00   1153.88     58.01      0.88
+  VN1453               0.00   1153.88     58.01      0.93
   VN1454               0.00   1153.88     59.31      1.00
   VN1455               0.00   1153.88     59.31      0.93
   IN1456               0.00   1153.88     59.31      1.00
   VN1457               0.00   1153.88     59.74      1.00
-  VN1458               0.00   1153.88     59.74      1.00
+  VN1458               0.00   1153.88     59.74      0.85
   VN1459               0.00   1153.88     60.18      1.00
-  VN1460               0.00   1153.88     60.18      1.00
+  VN1460               0.00   1153.88     60.18      0.93
   IN1461               0.00   1153.88     60.61      1.00
   VN1462               0.00   1153.88     60.18      1.00
-  VN1463               0.00   1153.88     60.18      0.16
+  VN1463               0.00   1153.88     60.18      0.93
   VN1464               0.00   1153.88     59.31      1.00
   VN1465               0.00   1153.88     59.31      1.00
   IN1466               0.00   1153.88     59.31      1.00
@@ -5937,7 +5939,7 @@
   IN1155               0.00   1152.42     45.68      2.00
   IN1156               0.00   1152.43     42.21      2.00
   VN1157               0.00   1152.43     42.21      2.00
-  VN1158               0.00   1152.43     42.21      2.00
+  VN1158               0.00   1152.43     42.21      1.92
   IN1159               0.00   1152.43     42.65      2.00
   VN1160               0.00   1152.43     43.08      2.00
   VN1161               0.00   1152.43     43.08      2.00
@@ -5961,10 +5963,10 @@
   VN1180               0.00   1152.43     43.08      2.00
   VN1181               0.00   1152.43     44.38      2.00
   VN1182               0.00   1152.43     43.95      2.00
-  VN1183               0.00   1152.43     43.95      2.00
+  VN1183               0.00   1152.43     43.95      1.92
   IN1184               0.00   1152.43     43.52      2.00
   VN1185               0.00   1152.43     43.95      2.00
-  VN1186               0.00   1152.43     43.95      2.00
+  VN1186               0.00   1152.43     43.95      1.92
   IN1187               0.00   1152.43     43.95      2.00
   IN1188               0.00   1152.43     43.95      2.00
   IN1189               0.00   1152.43     43.95      2.00
@@ -6220,22 +6222,22 @@
   VN1445               0.00   1152.36     51.72      2.00
   VN1446               0.00   1152.36     51.72      2.00
   VN1447               0.00   1152.45     54.36      2.00
-  VN1448               0.00   1152.45     54.36      1.89
+  VN1448               0.00   1152.45     54.36      1.92
   VN1449               0.00   1152.45     56.09      2.00
   VN1450               0.00   1152.45     56.09      1.92
   IN1451               0.00   1152.45     57.39      2.00
   VN1452               0.00   1152.45     57.39      2.00
-  VN1453               0.00   1152.45     57.39      1.88
+  VN1453               0.00   1152.45     57.39      1.92
   VN1454               0.00   1152.45     58.69      2.00
-  VN1455               0.00   1152.45     58.69      1.92
+  VN1455               0.00   1152.45     58.69      1.83
   IN1456               0.00   1152.45     58.69      2.00
   VN1457               0.00   1152.45     59.12      2.00
-  VN1458               0.00   1152.45     59.12      2.00
+  VN1458               0.00   1152.45     59.12      1.83
   VN1459               0.00   1152.45     59.56      2.00
-  VN1460               0.00   1152.45     59.56      2.00
+  VN1460               0.00   1152.45     59.56      1.92
   IN1461               0.00   1152.45     59.99      2.00
   VN1462               0.00   1152.45     59.56      2.00
-  VN1463               0.00   1152.45     59.56      0.17
+  VN1463               0.00   1152.45     59.56      1.92
   VN1464               0.00   1152.45     58.69      2.00
   VN1465               0.00   1152.45     58.69      2.00
   IN1466               0.00   1152.45     58.69      2.00
@@ -7521,7 +7523,7 @@
   IN1155               0.00   1150.88     45.01      3.00
   IN1156               0.00   1150.88     41.55      3.00
   VN1157               0.00   1150.88     41.55      3.00
-  VN1158               0.00   1150.88     41.55      3.00
+  VN1158               0.00   1150.88     41.55      2.83
   IN1159               0.00   1150.88     41.98      3.00
   VN1160               0.00   1150.88     42.41      3.00
   VN1161               0.00   1150.88     42.41      3.00
@@ -7545,10 +7547,10 @@
   VN1180               0.00   1150.89     42.41      3.00
   VN1181               0.00   1150.89     43.72      3.00
   VN1182               0.00   1150.89     43.28      3.00
-  VN1183               0.00   1150.89     43.28      3.00
+  VN1183               0.00   1150.89     43.28      2.92
   IN1184               0.00   1150.89     42.85      3.00
   VN1185               0.00   1150.89     43.28      3.00
-  VN1186               0.00   1150.89     43.28      3.00
+  VN1186               0.00   1150.89     43.28      2.92
   IN1187               0.00   1150.89     43.28      3.00
   IN1188               0.00   1150.89     43.28      3.00
   IN1189               0.00   1150.89     43.28      3.00
@@ -7809,17 +7811,17 @@
   VN1450               0.00   1150.91     55.42      2.92
   IN1451               0.00   1150.91     56.72      3.00
   VN1452               0.00   1150.91     56.72      3.00
-  VN1453               0.00   1150.91     56.72      2.88
+  VN1453               0.00   1150.91     56.72      2.92
   VN1454               0.00   1150.91     58.02      3.00
   VN1455               0.00   1150.91     58.02      2.92
   IN1456               0.00   1150.91     58.02      3.00
   VN1457               0.00   1150.91     58.46      3.00
-  VN1458               0.00   1150.91     58.46      3.00
+  VN1458               0.00   1150.91     58.46      2.83
   VN1459               0.00   1150.91     58.89      3.00
-  VN1460               0.00   1150.91     58.89      3.00
+  VN1460               0.00   1150.91     58.89      2.92
   IN1461               0.00   1150.91     59.32      3.00
   VN1462               0.00   1150.91     58.89      3.00
-  VN1463               0.00   1150.91     58.89      0.17
+  VN1463               0.00   1150.91     58.89      2.92
   VN1464               0.00   1150.91     58.02      3.00
   VN1465               0.00   1150.91     58.02      3.00
   IN1466               0.00   1150.91     58.02      3.00
@@ -8235,7 +8237,7 @@
   TN1833               0.22   1150.50     53.08      3.00
   TN1834               0.45   1150.50     53.08      3.00
   Aquifer              0.00    930.00      0.00      0.00  Reservoir
-  SurfaceResrvr        0.00   1030.00      0.00      0.00  Reservoir
+  SurfaceResrvr       -0.00   1030.00      0.00      0.00  Reservoir
   Tank              -406.29   1151.21     48.19      3.00  Tank
    
    
@@ -8818,8 +8820,8 @@
   IN853                0.00   1149.47     48.73      4.00
   VN854                0.00   1149.47     49.17      4.00
   VN855                0.00   1149.47     49.17      4.00
-  VN856                0.00   1149.47     51.77      4.00
-  VN857                0.00   1149.47     51.77      4.00
+  VN856                0.00   1149.47     51.76      4.00
+  VN857                0.00   1149.47     51.76      4.00
   IN858                0.00   1149.46     52.20      4.00
   IN859                0.00   1149.46     52.19      4.00
   VN860                0.00   1149.45     53.49      4.00
@@ -9105,7 +9107,7 @@
   IN1155               0.00   1149.58     44.45      4.00
   IN1156               0.00   1149.58     40.98      4.00
   VN1157               0.00   1149.58     40.98      4.00
-  VN1158               0.00   1149.58     40.98      4.00
+  VN1158               0.00   1149.58     40.98      3.88
   IN1159               0.00   1149.58     41.42      4.00
   VN1160               0.00   1149.58     41.85      4.00
   VN1161               0.00   1149.58     41.85      4.00
@@ -9129,10 +9131,10 @@
   VN1180               0.00   1149.59     41.85      4.00
   VN1181               0.00   1149.60     43.16      4.00
   VN1182               0.00   1149.60     42.72      4.00
-  VN1183               0.00   1149.60     42.72      4.00
+  VN1183               0.00   1149.60     42.72      3.98
   IN1184               0.00   1149.60     42.29      4.00
   VN1185               0.00   1149.60     42.72      4.00
-  VN1186               0.00   1149.60     42.72      4.00
+  VN1186               0.00   1149.60     42.72      3.98
   IN1187               0.00   1149.60     42.72      4.00
   IN1188               0.00   1149.60     42.72      4.00
   IN1189               0.00   1149.60     42.72      4.00
@@ -9175,7 +9177,7 @@
   VN1226               0.00   1149.62     54.00      4.00
   VN1227               0.00   1149.62     54.00      4.00
   IN1228               0.00   1149.62     54.00      4.00
-  IN1229               0.00   1149.63     53.57      4.00
+  IN1229               0.00   1149.62     53.57      4.00
   IN1230               0.00   1149.63     53.13      4.00
   VN1231               0.00   1149.62     52.70      4.00
   VN1232               0.00   1149.62     52.70      4.00
@@ -9388,22 +9390,22 @@
   VN1445               0.00   1149.47     50.47      4.00
   VN1446               0.00   1149.47     50.47      4.00
   VN1447               0.00   1149.63     53.13      4.00
-  VN1448               0.00   1149.63     53.13      3.89
+  VN1448               0.00   1149.63     53.13      3.88
   VN1449               0.00   1149.63     54.87      4.00
-  VN1450               0.00   1149.63     54.87      3.98
+  VN1450               0.00   1149.63     54.87      3.88
   IN1451               0.00   1149.63     56.17      4.00
   VN1452               0.00   1149.63     56.17      4.00
-  VN1453               0.00   1149.63     56.17      3.88
+  VN1453               0.00   1149.63     56.17      3.98
   VN1454               0.00   1149.63     57.47      4.00
   VN1455               0.00   1149.63     57.47      3.88
   IN1456               0.00   1149.63     57.47      4.00
   VN1457               0.00   1149.63     57.90      4.00
   VN1458               0.00   1149.63     57.90      3.98
   VN1459               0.00   1149.63     58.33      4.00
-  VN1460               0.00   1149.63     58.33      4.00
+  VN1460               0.00   1149.63     58.33      3.88
   IN1461               0.00   1149.63     58.77      4.00
   VN1462               0.00   1149.63     58.33      4.00
-  VN1463               0.00   1149.63     58.33      0.12
+  VN1463               0.00   1149.63     58.33      3.98
   VN1464               0.00   1149.63     57.47      4.00
   VN1465               0.00   1149.63     57.47      4.00
   IN1466               0.00   1149.63     57.47      4.00
@@ -9819,7 +9821,7 @@
   TN1833               0.28   1149.01     52.43      4.00
   TN1834               0.57   1149.01     52.43      4.00
   Aquifer              0.00    930.00      0.00      0.00  Reservoir
-  SurfaceResrvr       -0.00   1030.00      0.00      0.00  Reservoir
+  SurfaceResrvr        0.00   1030.00      0.00      0.00  Reservoir
   Tank              -503.50   1150.07     47.69      4.00  Tank
    
    
@@ -10321,7 +10323,7 @@
   TN729                0.39   1149.50     53.51      3.22
   TN731                0.52   1149.49     53.51      3.37
   TN733                0.26   1149.52     53.95      3.48
-  TN735                0.79   1149.44     53.92      3.60
+  TN735                0.79   1149.43     53.92      3.60
   TN737                0.52   1149.49     53.94      3.74
   TN739                0.52   1149.50     54.81      3.89
   TN741                0.13   1149.55     53.97      4.53
@@ -10689,7 +10691,7 @@
   IN1155               0.00   1149.50     44.41      5.00
   IN1156               0.00   1149.51     40.95      5.00
   VN1157               0.00   1149.51     40.95      5.00
-  VN1158               0.00   1149.51     40.95      5.00
+  VN1158               0.00   1149.51     40.95      4.88
   IN1159               0.00   1149.51     41.38      5.00
   VN1160               0.00   1149.51     41.82      5.00
   VN1161               0.00   1149.51     41.82      5.00
@@ -10708,15 +10710,15 @@
   VN1175               0.00   1149.51     43.55      5.00
   IN1176               0.00   1149.51     43.12      5.00
   VN1177               0.00   1149.51     42.68      5.00
-  VN1178               0.00   1149.51     42.68      4.72
+  VN1178               0.00   1149.51     42.68      4.22
   IN1179               0.00   1149.51     42.25      5.00
   VN1180               0.00   1149.51     41.82      5.00
-  VN1181               0.00   1149.53     43.13      5.00
+  VN1181               0.00   1149.53     43.13      4.72
   VN1182               0.00   1149.53     42.69      5.00
-  VN1183               0.00   1149.53     42.69      4.82
+  VN1183               0.00   1149.53     42.69      4.88
   IN1184               0.00   1149.53     42.26      5.00
   VN1185               0.00   1149.53     42.69      5.00
-  VN1186               0.00   1149.53     42.69      5.00
+  VN1186               0.00   1149.53     42.69      4.98
   IN1187               0.00   1149.53     42.69      5.00
   IN1188               0.00   1149.53     42.69      5.00
   IN1189               0.00   1149.53     42.69      5.00
@@ -10972,28 +10974,28 @@
   VN1445               0.00   1149.38     50.43      4.99
   VN1446               0.00   1149.38     50.43      4.99
   VN1447               0.00   1149.57     53.11      5.00
-  VN1448               0.00   1149.57     53.11      4.89
+  VN1448               0.00   1149.57     53.11      4.98
   VN1449               0.00   1149.57     54.84      5.00
   VN1450               0.00   1149.57     54.84      4.98
   IN1451               0.00   1149.57     56.14      5.00
   VN1452               0.00   1149.57     56.14      5.00
-  VN1453               0.00   1149.57     56.14      4.98
+  VN1453               0.00   1149.57     56.14      4.88
   VN1454               0.00   1149.57     57.44      5.00
   VN1455               0.00   1149.57     57.44      4.88
   IN1456               0.00   1149.57     57.44      5.00
   VN1457               0.00   1149.57     57.87      5.00
-  VN1458               0.00   1149.57     57.87      4.02
+  VN1458               0.00   1149.57     57.87      4.88
   VN1459               0.00   1149.57     58.31      5.00
-  VN1460               0.00   1149.57     58.31      5.00
+  VN1460               0.00   1149.57     58.31      4.88
   IN1461               0.00   1149.57     58.74      5.00
   VN1462               0.00   1149.57     58.31      5.00
-  VN1463               0.00   1149.57     58.31      0.12
+  VN1463               0.00   1149.57     58.31      4.98
   VN1464               0.00   1149.57     57.44      5.00
   VN1465               0.00   1149.57     57.44      5.00
   IN1466               0.00   1149.57     57.44      5.00
   IN1467               0.00   1149.57     57.44      5.00
   VN1468               0.00   1149.09     49.44      0.17
-  VN1469               0.00   1149.09     49.44      0.07
+  VN1469               0.00   1149.09     49.44      0.15
   IN1470               0.00   1149.09     49.00      0.06
   IN1471               0.00   1140.00     45.50      0.12
   VN1473               0.00   1149.12     54.22      5.00
@@ -11990,8 +11992,8 @@
   VN857                0.00   1150.60     52.26      5.99
   IN858                0.00   1150.60     52.69      5.99
   IN859                0.00   1150.61     52.69      6.00
-  VN860                0.00   1150.63     54.00      6.00
-  VN861                0.00   1150.63     54.00      6.00
+  VN860                0.00   1150.62     54.00      6.00
+  VN861                0.00   1150.62     54.00      6.00
   IN862                0.00   1150.64     54.87      6.00
   VN863                0.00   1150.66     55.32      6.00
   IN864                0.00   1150.69     55.76      6.00
@@ -12272,8 +12274,8 @@
   IN1154               0.00   1155.01     47.23      6.00
   IN1155               0.00   1155.01     46.80      6.00
   IN1156               0.00   1154.45     43.09      6.00
-  VN1157               0.00   1154.45     43.09      5.84
-  VN1158               0.00   1154.45     43.09      5.72
+  VN1157               0.00   1154.45     43.09      6.00
+  VN1158               0.00   1154.45     43.09      5.88
   IN1159               0.00   1154.45     43.52      6.00
   VN1160               0.00   1154.45     43.96      6.00
   VN1161               0.00   1154.45     43.96      6.00
@@ -12295,12 +12297,12 @@
   VN1178               0.00   1153.53     44.43      6.00
   IN1179               0.00   1153.53     43.99      6.00
   VN1180               0.00   1153.53     43.56      6.00
-  VN1181               0.00   1153.01     44.64      6.00
+  VN1181               0.00   1153.01     44.64      4.82
   VN1182               0.00   1153.01     44.20      6.00
-  VN1183               0.00   1153.01     44.20      4.82
+  VN1183               0.00   1153.01     44.20      5.88
   IN1184               0.00   1153.01     43.77      6.00
   VN1185               0.00   1153.01     44.20      6.00
-  VN1186               0.00   1153.01     44.20      6.00
+  VN1186               0.00   1153.01     44.20      5.98
   IN1187               0.00   1153.01     44.20      6.00
   IN1188               0.00   1153.01     44.20      6.00
   IN1189               0.00   1153.01     44.20      6.00
@@ -12361,7 +12363,7 @@
   VN1244               0.00   1153.01     49.40      1.39
   VN1245               0.00   1153.01     44.64      2.72
   VN1246               0.00   1153.01     44.64      2.72
-  VN1247               0.00   1153.01     45.94      0.00
+  VN1247               0.00   1153.01     45.94      2.72
   VN1248               0.00   1155.12     51.18      0.89
   VN1249               0.00   1155.12     51.18      4.87
   VN1250               0.00   1155.12     51.18      4.87
@@ -12528,7 +12530,7 @@
   VN1416               0.00   1153.53     43.56      6.00
   IN1417               0.00   1153.53     43.13      6.00
   IN1418               0.00   1153.01     44.64      6.00
-  VN1419               0.00   1153.01     44.64      6.00
+  VN1419               0.00   1153.01     44.64      4.82
   VN1420               0.00   1150.90     51.95      3.77
   VN1421               0.00   1150.86     51.07      4.15
   VN1422               0.00   1150.86     51.07      4.15
@@ -12556,24 +12558,24 @@
   VN1445               0.00   1150.78     51.03      5.07
   VN1446               0.00   1150.78     51.03      5.07
   VN1447               0.00   1150.95     53.71      6.00
-  VN1448               0.00   1150.95     53.71      5.98
+  VN1448               0.00   1150.95     53.71      5.88
   VN1449               0.00   1150.95     55.44      6.00
   VN1450               0.00   1150.95     55.44      5.88
   IN1451               0.00   1150.95     56.74      6.00
   VN1452               0.00   1150.95     56.74      6.00
   VN1453               0.00   1150.95     56.74      5.88
   VN1454               0.00   1150.95     58.04      6.00
-  VN1455               0.00   1150.95     58.04      5.98
+  VN1455               0.00   1150.95     58.04      5.88
   IN1456               0.00   1150.95     58.04      6.00
   VN1457               0.00   1150.95     58.47      6.00
-  VN1458               0.00   1150.95     58.47      4.02
+  VN1458               0.00   1150.95     58.47      5.88
   VN1459               0.00   1150.95     58.91      6.00
-  VN1460               0.00   1150.95     58.91      6.00
+  VN1460               0.00   1150.95     58.91      5.88
   IN1461               0.00   1150.95     59.34      6.00
   VN1462               0.00   1150.95     58.91      6.00
-  VN1463               0.00   1150.95     58.91      0.12
+  VN1463               0.00   1150.95     58.91      5.88
   VN1464               0.00   1150.95     58.04      6.00
-  VN1465               0.00   1150.95     58.04      6.00
+  VN1465               0.00   1150.95     58.04      5.22
   IN1466               0.00   1150.95     58.04      6.00
   IN1467               0.00   1150.95     58.04      6.00
   VN1468               0.00   1327.89    126.91      0.17
@@ -13856,8 +13858,8 @@
   IN1154               0.00   1150.58     45.32      7.00
   IN1155               0.00   1150.58     44.88      7.00
   IN1156               0.00   1150.58     41.41      7.00
-  VN1157               0.00   1150.58     41.41      6.34
-  VN1158               0.00   1150.58     41.41      5.72
+  VN1157               0.00   1150.58     41.41      7.00
+  VN1158               0.00   1150.58     41.41      6.88
   IN1159               0.00   1150.58     41.85      7.00
   VN1160               0.00   1150.58     42.28      7.00
   VN1161               0.00   1150.58     42.28      7.00
@@ -13879,9 +13881,9 @@
   VN1178               0.00   1150.47     43.10      7.00
   IN1179               0.00   1150.47     42.67      7.00
   VN1180               0.00   1150.47     42.23      7.00
-  VN1181               0.00   1150.65     43.61      7.00
+  VN1181               0.00   1150.65     43.61      5.04
   VN1182               0.00   1150.65     43.18      7.00
-  VN1183               0.00   1150.65     43.18      4.82
+  VN1183               0.00   1150.65     43.18      6.88
   IN1184               0.00   1150.65     42.74      7.00
   VN1185               0.00   1150.65     43.18      7.00
   VN1186               0.00   1150.65     43.18      7.00
@@ -14013,7 +14015,7 @@
   IN1316               0.00   1150.59     44.02      7.00
   VN1317               0.00   1150.60     48.79      7.00
   IN1318               0.00   1150.60     48.79      7.00
-  VN1319               0.00   1150.59     50.08      6.84
+  VN1319               0.00   1150.59     50.08      7.00
   IN1320               0.00   1150.59     50.08      7.00
   IN1321               0.00   1149.64     47.51      0.29
   VN1322               0.00   1149.71     47.54      0.31
@@ -14106,13 +14108,13 @@
   VN1410               0.00   1150.60     56.59      7.00
   VN1411               0.00   1150.71     48.84      6.85
   VN1412               0.00   1150.71     48.84      7.00
-  VN1413               0.00   1150.63     56.60      7.00
+  VN1413               0.00   1150.62     56.60      7.00
   VN1414               0.00   1150.63     57.90      7.00
   VN1415               0.00   1150.63     57.90      7.00
   VN1416               0.00   1150.47     42.23      7.00
   IN1417               0.00   1150.47     41.80      7.00
   IN1418               0.00   1150.65     43.61      7.00
-  VN1419               0.00   1150.65     43.61      7.00
+  VN1419               0.00   1150.65     43.61      5.05
   VN1420               0.00   1150.71     51.87      2.20
   VN1421               0.00   1150.69     51.00      2.35
   VN1422               0.00   1150.69     51.00      2.35
@@ -14140,24 +14142,24 @@
   VN1445               0.00   1150.64     50.97      3.46
   VN1446               0.00   1150.64     50.97      3.46
   VN1447               0.00   1150.74     53.62      7.00
-  VN1448               0.00   1150.74     53.62      6.98
+  VN1448               0.00   1150.74     53.62      6.88
   VN1449               0.00   1150.74     55.35      7.00
   VN1450               0.00   1150.74     55.35      6.88
   IN1451               0.00   1150.74     56.65      7.00
   VN1452               0.00   1150.74     56.65      7.00
-  VN1453               0.00   1150.74     56.65      6.98
+  VN1453               0.00   1150.74     56.65      6.88
   VN1454               0.00   1150.74     57.95      7.00
   VN1455               0.00   1150.74     57.95      6.88
   IN1456               0.00   1150.74     57.95      7.00
   VN1457               0.00   1150.74     58.38      7.00
-  VN1458               0.00   1150.74     58.38      4.02
+  VN1458               0.00   1150.74     58.38      6.88
   VN1459               0.00   1150.74     58.82      7.00
-  VN1460               0.00   1150.74     58.82      6.98
+  VN1460               0.00   1150.74     58.82      6.88
   IN1461               0.00   1150.74     59.25      7.00
   VN1462               0.00   1150.74     58.82      7.00
-  VN1463               0.00   1150.74     58.82      0.12
+  VN1463               0.00   1150.74     58.82      6.88
   VN1464               0.00   1150.74     57.95      7.00
-  VN1465               0.00   1150.74     57.95      7.00
+  VN1465               0.00   1150.74     57.95      5.22
   IN1466               0.00   1150.74     57.95      7.00
   IN1467               0.00   1150.74     57.95      7.00
   VN1468               0.00   1150.22     49.92      0.07
@@ -14174,8 +14176,8 @@
   VN1484               0.00   1150.59     54.42      7.00
   VN1485               0.00   1150.62     55.73      7.00
   VN1486               0.00   1150.62     55.73      7.00
-  IN1487               0.00   1150.63     55.73      7.00
-  VN1488               0.00   1150.63     56.60      7.00
+  IN1487               0.00   1150.62     55.73      7.00
+  VN1488               0.00   1150.62     56.60      7.00
   VN1489               0.00   1150.64     57.48      7.00
   VN1490               0.00   1150.64     57.48      7.00
   IN1491               0.00   1150.27     53.85      7.00
@@ -14204,14 +14206,14 @@
   HY19                 0.00   1150.65     57.26      0.00
   IN1508               0.00   1150.65     57.26      6.25
   IN1509               0.00   1150.65     59.21      6.96
-  HY22                 0.00   1150.63     55.73      0.00
+  HY22                 0.00   1150.62     55.73      0.00
   IN1510               0.00   1150.63     58.12      6.99
   HY24                 0.00   1150.65     53.14      0.00
   IN1511               0.00   1150.65     53.14      7.00
   HY27                 0.00   1150.63     53.79      0.00
   IN1512               0.00   1150.63     53.79      1.09
-  HY28                 0.00   1150.53     54.39      0.00
-  IN1513               0.00   1150.53     54.39      0.85
+  HY28                 0.00   1150.52     54.39      0.00
+  IN1513               0.00   1150.52     54.39      0.85
   HY29                 0.00   1150.50     54.38      0.00
   HY31                 0.00   1150.53     45.73      0.00
   IN1514               0.00   1150.47     43.54      7.00
@@ -14862,10 +14864,10 @@
   TN379               12.13   1149.26     45.61      1.02
   TN381                5.12   1149.50     46.15      0.72
   TN383                7.28   1149.46     47.43      0.68
-  TN385                8.63   1149.44     47.85      0.58
+  TN385                8.62   1149.44     47.85      0.58
   TN387                9.16   1149.30     45.63      0.83
   TN389                7.82   1149.37     46.09      0.68
-  TN391                8.63   1149.35     46.95      0.66
+  TN391                8.62   1149.35     46.95      0.66
   TN393                8.09   1149.43     47.42      0.51
   TN395                0.00   1149.89     45.45      8.00
   TN397                0.00   1149.89     45.88      8.00
@@ -15048,7 +15050,7 @@
   TN681                0.43   1149.94     51.10      1.14
   TN683                0.29   1149.94     50.67      2.04
   TN685               60.29   1144.93     39.83      3.05
-  TN687               49.02   1147.53     41.40      3.01
+  TN687               49.02   1147.53     41.39      3.01
   TN689                0.14   1149.75     43.22      1.84
   TN691                0.14   1149.75     43.66      1.77
   TN693                0.14   1149.76     44.53      1.60
@@ -15415,7 +15417,7 @@
   IN1127               0.00   1149.94     52.40      0.28
   VN1129               0.00   1150.35     48.25      1.12
   VN1130               0.00   1150.31     48.23      1.04
-  VN1131               0.00   1150.28     50.82      5.14
+  VN1131               0.00   1150.28     50.82      5.11
   VN1132               0.00   1150.35     44.78      1.31
   VN1133               0.00   1149.98     45.49      1.31
   VN1134               0.00   1149.98     45.49      1.31
@@ -15440,11 +15442,11 @@
   IN1154               0.00   1150.25     45.17      8.00
   IN1155               0.00   1150.25     44.74      8.00
   IN1156               0.00   1150.19     41.25      8.00
-  VN1157               0.00   1150.19     41.25      6.84
-  VN1158               0.00   1150.19     41.25      5.73
+  VN1157               0.00   1150.19     41.25      8.00
+  VN1158               0.00   1150.19     41.25      7.87
   IN1159               0.00   1150.19     41.68      8.00
   VN1160               0.00   1150.19     42.11      8.00
-  VN1161               0.00   1150.19     42.11      8.00
+  VN1161               0.00   1150.19     42.11      7.98
   IN1162               0.00   1150.19     42.55      8.00
   IN1163               0.00   1150.19     43.41      8.00
   VN1164               0.00   1150.19     43.85      8.00
@@ -15463,9 +15465,9 @@
   VN1178               0.00   1149.76     42.79      2.06
   IN1179               0.00   1149.75     42.36      2.84
   VN1180               0.00   1149.75     41.92      8.00
-  VN1181               0.00   1150.35     43.48      8.00
+  VN1181               0.00   1150.35     43.48      5.07
   VN1182               0.00   1150.35     43.05      8.00
-  VN1183               0.00   1150.35     43.05      4.83
+  VN1183               0.00   1150.35     43.05      7.98
   IN1184               0.00   1150.35     42.61      8.00
   VN1185               0.00   1150.35     43.05      8.00
   VN1186               0.00   1150.35     43.05      8.00
@@ -15579,7 +15581,7 @@
   IN1296               0.00   1150.27     49.95      8.00
   IN1297               0.00   1150.27     49.95      8.00
   VN1298               0.00   1150.27     49.95      8.00
-  VN1299               0.00   1150.28     50.82      5.14
+  VN1299               0.00   1150.28     50.82      5.11
   VN1300               0.00   1150.28     49.95      8.00
   VN1301               0.00   1150.28     49.95      8.00
   IN1303               0.00   1150.28     49.09      8.00
@@ -15595,9 +15597,9 @@
   VN1314               0.00   1150.26     44.74      8.00
   VN1315               0.00   1150.26     44.74      8.00
   IN1316               0.00   1150.26     43.87      8.00
-  VN1317               0.00   1150.28     48.65      7.33
+  VN1317               0.00   1150.28     48.65      8.00
   IN1318               0.00   1150.28     48.65      8.00
-  VN1319               0.00   1150.27     49.95      7.58
+  VN1319               0.00   1150.27     49.95      7.21
   IN1320               0.00   1150.27     49.95      8.00
   IN1321               0.00   1149.70     47.53      0.38
   VN1322               0.00   1149.75     47.56      0.40
@@ -15710,8 +15712,8 @@
   IN1430               0.00   1150.47     53.07      3.50
   VN1432               0.00   1150.47     53.07      3.54
   VN1433               0.00   1150.47     53.07      3.54
-  VN1434               0.00   1150.47     56.53      4.62
-  VN1435               0.00   1150.47     56.53      4.62
+  VN1434               0.00   1150.47     56.53      4.63
+  VN1435               0.00   1150.47     56.53      4.63
   VN1436               0.00   1150.47     58.27      6.02
   VN1437               0.00   1150.47     58.27      6.02
   VN1438               0.00   1150.47     58.70      6.71
@@ -15729,19 +15731,19 @@
   VN1450               0.00   1150.54     55.26      7.98
   IN1451               0.00   1150.54     56.56      8.00
   VN1452               0.00   1150.54     56.56      8.00
-  VN1453               0.00   1150.54     56.56      7.88
+  VN1453               0.00   1150.54     56.56      7.87
   VN1454               0.00   1150.54     57.86      8.00
   VN1455               0.00   1150.54     57.86      7.87
   IN1456               0.00   1150.54     57.86      8.00
   VN1457               0.00   1150.54     58.29      8.00
-  VN1458               0.00   1150.54     58.29      7.53
+  VN1458               0.00   1150.54     58.29      7.87
   VN1459               0.00   1150.54     58.73      8.00
-  VN1460               0.00   1150.54     58.73      7.03
+  VN1460               0.00   1150.54     58.73      7.98
   IN1461               0.00   1150.54     59.16      8.00
   VN1462               0.00   1150.54     58.73      8.00
-  VN1463               0.00   1150.54     58.73      0.13
+  VN1463               0.00   1150.54     58.73      7.87
   VN1464               0.00   1150.54     57.86      8.00
-  VN1465               0.00   1150.54     57.86      8.00
+  VN1465               0.00   1150.54     57.86      5.23
   IN1466               0.00   1150.54     57.86      8.00
   IN1467               0.00   1150.54     57.86      8.00
   VN1468               0.00   1149.94     49.80      0.09
@@ -15985,7 +15987,7 @@
   TN1663               0.00   1150.44     56.09      8.00
   TN1664               0.51   1150.44     56.09      8.00
   IN1665               0.00   1150.34     47.38      0.75
-  IN1666               0.00   1150.13     47.29      0.80
+  IN1666               0.00   1150.13     47.28      0.80
   IN1667               0.00   1150.25     55.57      7.83
   IN1668               0.00   1150.18     45.14      2.32
   IN1669               0.00   1150.19     52.95      8.00
@@ -16407,7 +16409,7 @@
   TN337                0.00   1151.76     48.86      9.00
   TN338                0.00   1151.76     49.29      7.51
   TN339                0.00   1151.76     48.86      4.88
-  TN340                0.00   1151.76     48.43      5.55
+  TN340                0.00   1151.76     48.42      5.55
   IN341                0.00   1151.77     48.00      3.47
   TN342                0.00   1151.77     48.00      9.00
   TN343                0.00   1151.77     48.43      3.57
@@ -16600,7 +16602,7 @@
   TN622                0.28   1154.05     53.32      1.46
   TN624                0.00   1154.83     54.09      2.62
   TN626                0.00   1153.91     51.09      9.00
-  TN628                0.27   1154.09     52.90      7.17
+  TN628                0.27   1154.09     52.90      7.16
   TN630                0.14   1156.87     54.11      8.98
   TN632                0.00   1153.91     42.86      9.00
   TN634                0.14   1153.91     47.62      9.00
@@ -17024,11 +17026,11 @@
   IN1154               0.00   1153.77     46.70      9.00
   IN1155               0.00   1153.77     46.27      9.00
   IN1156               0.00   1153.07     42.49      9.00
-  VN1157               0.00   1153.07     42.49      7.34
-  VN1158               0.00   1153.07     42.49      5.74
+  VN1157               0.00   1153.07     42.49      9.00
+  VN1158               0.00   1153.07     42.49      8.88
   IN1159               0.00   1153.07     42.93      9.00
   VN1160               0.00   1153.07     43.36      9.00
-  VN1161               0.00   1153.07     43.36      8.64
+  VN1161               0.00   1153.07     43.36      8.88
   IN1162               0.00   1153.07     43.79      9.00
   IN1163               0.00   1153.07     44.66      9.00
   VN1164               0.00   1153.07     45.09      9.00
@@ -17047,12 +17049,12 @@
   VN1178               0.00   1151.11     43.38      2.56
   IN1179               0.00   1151.10     42.94      2.86
   VN1180               0.00   1151.10     42.51      9.00
-  VN1181               0.00   1151.91     44.16      9.00
+  VN1181               0.00   1151.91     44.16      5.08
   VN1182               0.00   1151.91     43.73      9.00
-  VN1183               0.00   1151.91     43.73      4.84
+  VN1183               0.00   1151.91     43.73      8.88
   IN1184               0.00   1151.91     43.29      9.00
   VN1185               0.00   1151.91     43.73      9.00
-  VN1186               0.00   1151.91     43.73      9.00
+  VN1186               0.00   1151.91     43.73      8.88
   IN1187               0.00   1151.91     43.73      9.00
   IN1188               0.00   1151.91     43.73      9.00
   IN1189               0.00   1151.91     43.73      9.00
@@ -17179,9 +17181,9 @@
   VN1314               0.00   1153.91     46.33      9.00
   VN1315               0.00   1153.91     46.33      9.00
   IN1316               0.00   1153.91     45.46      9.00
-  VN1317               0.00   1154.09     50.30      7.35
+  VN1317               0.00   1154.09     50.30      9.00
   IN1318               0.00   1154.09     50.30      9.00
-  VN1319               0.00   1156.87     52.81      8.08
+  VN1319               0.00   1156.87     52.81      7.22
   IN1320               0.00   1156.87     52.81      9.00
   IN1321               0.00   1159.22     51.66      1.07
   VN1322               0.00   1158.43     51.31      1.22
@@ -17245,7 +17247,7 @@
   VN1381               0.00   1151.78     46.70      9.00
   VN1382               0.00   1151.79     46.27      9.00
   VN1383               0.00   1151.79     46.27      9.00
-  IN1384               0.00   1151.80     46.27      9.00
+  IN1384               0.00   1151.79     46.27      9.00
   VN1385               0.00   1151.80     46.27      9.00
   VN1386               0.00   1151.80     46.27      9.00
   VN1387               0.00   1151.80     46.71      2.29
@@ -17308,9 +17310,9 @@
   VN1445               0.00   1150.62     50.97      3.59
   VN1446               0.00   1150.62     50.97      3.59
   VN1447               0.00   1150.67     53.58      9.00
-  VN1448               0.00   1150.67     53.58      8.97
+  VN1448               0.00   1150.67     53.58      8.88
   VN1449               0.00   1150.67     55.32      9.00
-  VN1450               0.00   1150.67     55.32      8.88
+  VN1450               0.00   1150.67     55.32      8.97
   IN1451               0.00   1150.67     56.62      9.00
   VN1452               0.00   1150.67     56.62      9.00
   VN1453               0.00   1150.67     56.62      8.88
@@ -17318,14 +17320,14 @@
   VN1455               0.00   1150.67     57.92      8.88
   IN1456               0.00   1150.67     57.92      9.00
   VN1457               0.00   1150.67     58.35      9.00
-  VN1458               0.00   1150.67     58.35      7.54
+  VN1458               0.00   1150.67     58.35      8.88
   VN1459               0.00   1150.67     58.78      9.00
-  VN1460               0.00   1150.67     58.78      7.04
+  VN1460               0.00   1150.67     58.78      8.88
   IN1461               0.00   1150.67     59.22      9.00
   VN1462               0.00   1150.67     58.78      9.00
-  VN1463               0.00   1150.67     58.78      8.55
+  VN1463               0.00   1150.67     58.78      8.88
   VN1464               0.00   1150.67     57.92      9.00
-  VN1465               0.00   1150.67     57.92      9.00
+  VN1465               0.00   1150.67     57.92      8.64
   IN1466               0.00   1150.67     57.92      9.00
   IN1467               0.00   1150.67     57.92      9.00
   VN1468               0.00   1328.10    127.00      0.27
@@ -17592,7 +17594,7 @@
   IN1686               0.00   1151.73     55.35      7.71
   IN1687               0.00   1151.56     55.71      8.94
   IN1688               0.00   1152.09     47.70      2.36
-  IN1689               0.00   1152.09     48.14      5.16
+  IN1689               0.00   1152.09     48.13      5.16
   IN1690               0.00   1151.99     49.39      6.25
   IN1691               0.00   1151.99     50.69      9.00
   IN1692               0.00   1151.90     51.95      9.00
@@ -17629,7 +17631,7 @@
   TN1723               0.12   1151.17     53.80      3.92
   TN1726               0.12   1151.14     54.22      5.09
   TN1724               0.12   1151.13     52.49      5.38
-  TN1725               0.24   1151.13     54.65      5.38
+  TN1725               0.24   1151.12     54.65      5.38
   TN1727               0.12   1151.11     55.08      6.92
   TN1728               0.00   1151.12     55.08      6.92
   TN1729               0.24   1151.09     55.50      6.69
@@ -17668,7 +17670,7 @@
   TN1762               0.00   1151.92     54.56      9.00
   TN1763               0.12   1151.72     54.91      6.84
   TN1764               0.00   1151.73     55.78      8.96
-  TN1765               0.24   1151.72     55.34      7.59
+  TN1765               0.24   1151.71     55.34      7.59
   TN1766               0.12   1151.72     55.78      6.77
   TN1767               0.12   1151.55     55.70      8.14
   TN1768               0.37   1151.52     56.56      8.89
@@ -17740,7 +17742,7 @@
   TN1834               0.49   1151.70     53.60      9.00
   Aquifer           -176.65    930.00      0.00      0.00  Reservoir
   SurfaceResrvr    -1107.06   1030.00      0.00      0.00  Reservoir
-  Tank               648.72   1149.80     47.58      8.96  Tank
+  Tank               648.73   1149.80     47.58      8.96  Tank
    
    
   Node Results at 10:00:00 hrs:
@@ -18100,7 +18102,7 @@
   TN482                0.00   1150.88     54.54      5.65
   TN484                0.25   1150.70     54.03      8.34
   IN485                0.00   1150.62     53.56      6.80
-  TN486                0.13   1150.62     54.00      8.23
+  TN486                0.13   1150.61     54.00      8.23
   TN488                0.25   1150.54     53.53      8.21
   IN489                0.00   1150.49     52.64      5.86
   TN490                0.00   1150.49     52.64      4.77
@@ -18113,7 +18115,7 @@
   IN502                0.00   1106.55     35.34      4.29
   TN503              156.72   1092.56     29.27      4.28
   IN504                0.00   1110.72     37.14      8.61
-  TN505                0.25   1110.71     37.14      9.58
+  TN505                0.25   1110.72     37.14      9.58
   TN507                0.00   1137.40     48.70     10.00
   IN508                0.00   1126.61     44.03      8.59
   TN509                0.25   1126.61     44.03      9.81
@@ -18608,11 +18610,11 @@
   IN1154               0.00   1153.59     46.62     10.00
   IN1155               0.00   1153.59     46.19     10.00
   IN1156               0.00   1152.85     42.40     10.00
-  VN1157               0.00   1152.85     42.40      7.84
-  VN1158               0.00   1152.85     42.40      5.72
+  VN1157               0.00   1152.85     42.40     10.00
+  VN1158               0.00   1152.85     42.40      9.88
   IN1159               0.00   1152.85     42.83     10.00
   VN1160               0.00   1152.85     43.27     10.00
-  VN1161               0.00   1152.85     43.27      8.62
+  VN1161               0.00   1152.85     43.27      9.88
   IN1162               0.00   1152.85     43.70     10.00
   IN1163               0.00   1152.85     44.57     10.00
   VN1164               0.00   1152.85     45.00     10.00
@@ -18631,17 +18633,17 @@
   VN1178               0.00   1150.61     43.16      2.37
   IN1179               0.00   1150.60     42.72      2.54
   VN1180               0.00   1150.60     42.29     10.00
-  VN1181               0.00   1151.79     44.11     10.00
+  VN1181               0.00   1151.79     44.11      5.07
   VN1182               0.00   1151.79     43.67     10.00
-  VN1183               0.00   1151.79     43.67      9.82
+  VN1183               0.00   1151.79     43.67      9.88
   IN1184               0.00   1151.79     43.24     10.00
   VN1185               0.00   1151.79     43.67     10.00
-  VN1186               0.00   1151.79     43.67     10.00
+  VN1186               0.00   1151.79     43.67      9.88
   IN1187               0.00   1151.79     43.67     10.00
   IN1188               0.00   1151.79     43.67     10.00
   IN1189               0.00   1151.79     43.67     10.00
   VN1190               0.00   1151.79     44.11     10.00
-  VN1191               0.00   1151.79     44.11      4.59
+  VN1191               0.00   1151.79     44.11      9.98
   IN1192               0.00   1151.79     44.11      3.38
   IN1193               0.00   1151.79     44.11      3.29
   IN1194               0.00   1151.79     44.54      3.18
@@ -18763,9 +18765,9 @@
   VN1314               0.00   1153.74     46.25     10.00
   VN1315               0.00   1153.74     46.25     10.00
   IN1316               0.00   1153.74     45.38     10.00
-  VN1317               0.00   1153.92     50.23      9.52
+  VN1317               0.00   1153.92     50.23      9.94
   IN1318               0.00   1153.92     50.23     10.00
-  VN1319               0.00   1156.71     52.74      8.58
+  VN1319               0.00   1156.71     52.74      7.21
   IN1320               0.00   1156.71     52.74     10.00
   IN1321               0.00   1159.86     51.94      0.44
   VN1322               0.00   1159.02     51.57      0.45
@@ -18892,24 +18894,24 @@
   VN1445               0.00   1150.66     50.98      8.91
   VN1446               0.00   1150.66     50.98      8.91
   VN1447               0.00   1150.68     53.59     10.00
-  VN1448               0.00   1150.68     53.59      9.89
+  VN1448               0.00   1150.68     53.59      9.88
   VN1449               0.00   1150.68     55.32     10.00
   VN1450               0.00   1150.68     55.32      9.88
   IN1451               0.00   1150.68     56.62     10.00
   VN1452               0.00   1150.68     56.62     10.00
-  VN1453               0.00   1150.68     56.62      9.88
+  VN1453               0.00   1150.68     56.62      9.98
   VN1454               0.00   1150.68     57.92     10.00
   VN1455               0.00   1150.68     57.92      9.88
   IN1456               0.00   1150.68     57.92     10.00
   VN1457               0.00   1150.68     58.36     10.00
-  VN1458               0.00   1150.68     58.36      7.52
+  VN1458               0.00   1150.68     58.36      9.98
   VN1459               0.00   1150.68     58.79     10.00
-  VN1460               0.00   1150.68     58.79      7.02
+  VN1460               0.00   1150.68     58.79      9.88
   IN1461               0.00   1150.68     59.22     10.00
   VN1462               0.00   1150.68     58.79     10.00
-  VN1463               0.00   1150.68     58.79      8.54
+  VN1463               0.00   1150.68     58.79      9.88
   VN1464               0.00   1150.68     57.92     10.00
-  VN1465               0.00   1150.68     57.92     10.00
+  VN1465               0.00   1150.68     57.92      8.62
   IN1466               0.00   1150.68     57.92     10.00
   IN1467               0.00   1150.68     57.92     10.00
   VN1468               0.00   1328.15    127.02      0.17
@@ -19357,7 +19359,7 @@
   TN31                 0.25   1150.42     51.75      6.68
   TN33                 0.12   1150.43     50.02      6.76
   IN34                 0.00   1150.45     49.59      9.84
-  TN35                 0.13   1150.43     49.58      9.78
+  TN35                 0.12   1150.43     49.58      9.78
   TN37                 0.25   1150.42     49.15      9.63
   TN39                 0.04   1150.44     49.15     10.68
   TN41                 0.00   1150.45     49.16     11.00
@@ -19366,7 +19368,7 @@
   TN45                 0.37   1150.42     49.14     10.78
   TN47                 0.13   1150.46     49.16     10.99
   TN49                 0.00   1150.47     49.60     11.00
-  TN51                 0.13   1150.47     49.60     10.99
+  TN51                 0.12   1150.47     49.60     10.99
   IN52                 0.00   1150.49     50.04     10.99
   TN53                 0.00   1150.49     50.04     10.99
   TN55                 0.12   1150.50     50.91     10.99
@@ -19380,7 +19382,7 @@
   TN67                 0.12   1150.46     49.16     10.99
   IN68                 0.00   1150.48     49.60     10.99
   TN69                 0.00   1150.48     49.60     11.00
-  TN71                 0.13   1150.48     49.60     10.99
+  TN71                 0.12   1150.48     49.60     10.99
   IN72                 0.00   1150.50     50.04     10.99
   TN73                 0.38   1150.47     50.03     10.99
   IN74                 0.00   1150.51     50.92     10.99
@@ -19390,18 +19392,18 @@
   IN80                 0.00   1150.54     54.83     10.81
   TN81                 0.12   1150.53     54.39     10.78
   TN83                 0.12   1150.53     55.26     10.85
-  TN85                 0.13   1150.53     54.39     10.84
+  TN85                 0.12   1150.53     54.39     10.84
   TN87                 0.12   1150.53     55.26     10.86
   TN89                 0.25   1150.55     55.70     10.43
   IN90                 0.00   1150.57     56.58     10.43
   TN91                 0.00   1150.57     56.58     11.00
   TN93                 0.00   1150.57     55.71     11.00
-  TN95                 0.13   1150.56     57.00     10.45
+  TN95                 0.12   1150.56     57.00     10.45
   TN97                 0.00   1150.59     57.45     11.00
   IN98                 0.00   1150.59     57.45     10.50
   TN99                 0.12   1150.58     57.88     10.47
   TN101                0.00   1150.59     57.45     10.95
-  TN103                0.13   1150.58     57.88     10.46
+  TN103                0.12   1150.58     57.88     10.46
   IN104                0.00   1150.62     58.33     10.63
   TN105                0.00   1150.62     58.33     11.00
   TN107                0.00   1150.62     58.33     11.00
@@ -19418,17 +19420,17 @@
   IN122                0.00   1150.45     48.72     10.93
   TN123                0.12   1150.44     48.72     10.93
   TN125                0.12   1150.89     55.41     10.47
-  TN127                0.13   1150.89     54.98     11.00
+  TN127                0.12   1150.89     54.98     11.00
   TN129                0.25   1150.88     54.54     11.00
   TN131                0.13   1150.89     54.98     11.00
-  TN133                0.13   1150.89     54.55     11.00
+  TN133                0.12   1150.89     54.55     11.00
   TN135                0.12   1150.83     53.66     11.00
   TN137                0.12   1150.84     53.66     11.00
   TN139                0.12   1150.84     53.22     11.00
   IN140                0.00   1150.82     52.35     10.99
   TN141                0.00   1150.82     52.78     11.00
   TN143                0.00   1150.82     52.35     11.00
-  TN145                0.13   1150.80     50.18     11.00
+  TN145                0.12   1150.80     50.18     11.00
   TN147                0.12   1150.74     49.72     10.99
   TN149                0.13   1150.74     51.88     10.99
   IN150                0.00   1150.76     49.72     10.99
@@ -19438,7 +19440,7 @@
   TN155                0.25   1150.67     48.82     10.99
   TN157                0.00   1150.69     48.40     11.00
   TN159                0.12   1150.74     49.28     10.99
-  TN161                0.13   1150.68     48.39     10.99
+  TN161                0.12   1150.68     48.39     10.99
   IN162                0.00   1150.67     47.95      5.92
   TN163                0.00   1150.67     47.95      8.00
   IN164                0.00   1150.69     48.40      5.81
@@ -19464,7 +19466,7 @@
   TN187                0.00   1150.04     48.55     11.00
   TN188                0.12   1150.03     48.11      8.94
   TN189                0.38   1150.00     48.53      8.82
-  TN191                0.13   1160.45     52.63      0.60
+  TN191                0.12   1160.45     52.63      0.60
   TN193                0.25   1160.44     52.62      0.43
   TN195                0.12   1159.14     51.62      0.64
   TN197                0.25   1157.25     50.80      0.50
@@ -19474,7 +19476,7 @@
   TN205                0.00   1153.05     48.98      3.28
   TN207                0.00   1152.95     48.94      3.92
   TN209                0.12   1152.93     48.93      0.78
-  TN211                0.13   1152.61     48.80      0.89
+  TN211                0.12   1152.61     48.80      0.89
   TN213                0.25   1152.60     49.22      0.74
   TN215                0.25   1152.61     49.23      0.69
   TN217                0.00   1152.71     48.84      3.79
@@ -19485,8 +19487,8 @@
   TN226                0.00   1152.18     50.34      5.62
   TN227                0.13   1152.17     50.77      1.81
   TN228                0.00   1152.18     50.78      3.71
-  TN230                0.13   1152.30     49.96      1.34
-  TN232                0.13   1151.98     51.56      1.95
+  TN230                0.12   1152.30     49.96      1.34
+  TN232                0.12   1151.98     51.56      1.95
   TN234                0.25   1151.97     51.98      1.68
   TN236                0.25   1151.97     52.42      1.73
   TN238                0.13   1151.76     53.62      1.91
@@ -19498,10 +19500,10 @@
   TN245                0.25   1152.95     48.51      1.02
   IN246                0.00   1152.97     48.52      1.01
   TN247                0.00   1152.97     48.52      4.60
-  TN248                0.13   1152.96     48.95      1.18
+  TN248                0.12   1152.96     48.95      1.18
   TN249                0.00   1152.97     48.95      4.09
   IN250                0.00   1152.76     48.86      1.15
-  TN251                0.13   1152.74     48.85      1.33
+  TN251                0.12   1152.74     48.85      1.33
   TN252                0.13   1152.74     48.85      1.35
   TN253                0.00   1152.76     48.86     10.90
   TN254                0.00   1152.76     48.86      4.73
@@ -19537,7 +19539,7 @@
   TN295                0.12   1151.39     56.93      2.91
   TN297                0.00   1151.37     56.92     10.95
   TN299                0.25   1151.36     57.35      3.32
-  TN300                0.13   1151.37     57.36      3.63
+  TN300                0.12   1151.37     57.36      3.63
   TN302                0.12   1151.78     54.94      2.77
   TN303                0.00   1151.80     55.37     10.99
   TN304                0.00   1151.80     54.94      7.84
@@ -19545,14 +19547,14 @@
   TN307                0.25   1151.74     54.92      3.47
   TN308                0.38   1151.73     55.78      3.12
   TN309                0.00   1151.77     55.80      9.96
-  TN310                0.13   1151.76     54.92      3.63
+  TN310                0.12   1151.76     54.92      3.63
   IN311                0.00   1151.88     54.11     10.72
   TN312                0.38   1151.84     54.09     10.52
   TN313                0.25   1151.85     54.53     10.57
   TN314                0.12   1151.87     54.11     10.72
   TN315                0.00   1151.88     54.11     10.99
   IN316                0.00   1151.89     54.12      8.72
-  TN317                0.13   1151.88     54.11      9.03
+  TN317                0.12   1151.88     54.11      9.03
   TN318                0.00   1151.89     54.55     11.00
   TN319                0.12   1151.88     54.11      9.16
   TN320                0.37   1151.85     53.66      7.96
@@ -19588,7 +19590,7 @@
   IN350                0.00   1151.99     46.79      1.14
   TN351                0.38   1151.95     46.78      1.10
   IN352                0.00   1151.99     46.36      5.73
-  TN353                0.13   1151.98     46.35      6.29
+  TN353                0.12   1151.98     46.35      6.29
   TN354                0.00   1151.99     46.36     11.00
   IN355                0.00   1151.98     46.79      8.49
   TN356                0.00   1151.98     46.79     11.00
@@ -19635,14 +19637,14 @@
   TN416                0.00   1150.64     52.27      9.52
   IN417                0.00   1150.63     50.97      4.60
   TN418                0.12   1150.62     49.67      4.96
-  TN420                0.13   1150.62     49.67      5.04
-  TN422                0.13   1150.62     49.67      5.60
+  TN420                0.12   1150.62     49.67      5.04
+  TN422                0.12   1150.62     49.67      5.60
   IN423                0.00   1150.63     50.10      5.28
   TN424                0.00   1150.63     49.67      5.99
   TN426                0.25   1150.61     49.66      6.06
   IN427                0.00   1150.63     50.10      5.83
   TN428                0.00   1150.63     49.67      7.81
-  TN430                0.13   1150.61     50.96      7.21
+  TN430                0.12   1150.61     50.96      7.21
   IN431                0.00   1150.63     50.97      6.50
   TN432                0.12   1150.62     51.40      7.21
   TN434                0.13   1150.62     51.83      5.96
@@ -19657,8 +19659,8 @@
   IN447                0.00   1150.63     58.77      8.73
   TN448                0.00   1150.63     58.77      9.49
   IN449                0.00   1150.63     57.47      7.52
-  TN450                0.13   1150.62     58.33      7.45
-  TN452                0.13   1150.62     57.46      7.45
+  TN450                0.12   1150.62     58.33      7.45
+  TN452                0.12   1150.62     57.46      7.45
   TN454                0.00   1150.63     56.60      6.38
   IN455                0.00   1150.63     55.74      6.53
   TN456                0.12   1150.62     55.73      6.53
@@ -19677,7 +19679,7 @@
   TN470                0.00   1151.71     54.90      6.01
   TN472                0.12   1151.51     54.82      3.34
   TN474                0.00   1151.27     54.71      4.32
-  TN476                0.13   1151.02     54.61      3.52
+  TN476                0.12   1151.02     54.61      3.52
   TN478                0.25   1151.51     54.82      2.81
   TN479                0.12   1151.27     54.71      3.25
   TN480                0.00   1151.02     54.61     11.00
@@ -19691,11 +19693,11 @@
   TN492                0.72   1150.61     53.99      6.92
   TN494                0.54   1150.48     52.64      6.62
   TN496                0.00   1152.70     54.47     11.00
-  TN498                0.13   1152.43     54.78      2.64
-  TN499                0.13   1152.70     54.47      2.65
+  TN498                0.12   1152.43     54.78      2.64
+  TN499                0.12   1152.70     54.47      2.65
   TN501                0.00   1152.42     54.78      6.54
   IN502                0.00   1099.64     32.34      4.22
-  TN503              167.75   1083.79     25.48      4.21
+  TN503              167.75   1083.79     25.47      4.21
   IN504                0.00   1104.44     34.42      8.31
   TN505                0.25   1104.44     34.42      9.25
   TN507                0.00   1134.67     47.52     11.00
@@ -19715,7 +19717,7 @@
   TN528                0.13   1178.83     64.92      2.78
   TN530                0.12   1161.93     56.73      2.42
   TN532                0.13   1149.92     51.09      2.18
-  TN534                0.13   1149.91     48.92      2.48
+  TN534                0.12   1149.91     48.92      2.48
   TN536                0.00   1207.00     77.56      4.74
   TN537                0.00   1207.00     78.00     10.99
   TN539                0.00   1178.48     64.34      4.04
@@ -19726,45 +19728,45 @@
   TN547                0.13   1152.13     50.75      1.31
   TN549                0.00   1152.19     50.35     11.00
   TN551                0.00   1152.06     52.46     11.00
-  TN552                0.13   1152.05     52.02      1.11
+  TN552                0.12   1152.05     52.02      1.11
   TN554                0.25   1152.02     53.74      1.20
   TN555                0.25   1152.01     53.73      1.19
   TN557                0.12   1152.97     51.98      1.30
   TN559                0.50   1152.93     52.83      0.53
   TN561                0.00   1152.99     54.16      4.16
-  TN562                0.13   1152.97     51.12      1.10
-  TN564                0.13   1152.97     51.98      1.00
+  TN562                0.12   1152.97     51.12      1.10
+  TN564                0.12   1152.97     51.98      1.00
   TN565                0.12   1152.98     52.85      0.73
   TN566                0.25   1152.97     54.15      0.74
   TN568                0.25   1154.25     53.84      0.40
   TN569                0.38   1154.23     53.83      0.37
   TN571                0.25   1153.83     54.09      0.65
-  TN573                0.13   1154.12     53.78      0.88
+  TN573                0.12   1154.12     53.78      0.88
   TN575                0.38   1153.81     53.21      0.52
   TN577                0.12   1151.15     46.00      1.08
   TN579                0.12   1151.50     46.58      1.09
   TN581                0.12   1151.84     47.59      1.13
   TN583                0.38   1152.16     48.16      0.92
-  TN585                0.13   1151.15     46.43      1.15
+  TN585                0.12   1151.15     46.43      1.15
   TN587                0.12   1151.84     48.03      1.12
   TN589                0.00   1152.19     49.04      6.50
   TN591                0.00   1152.75     49.29      7.24
-  TN593                0.13   1152.83     50.19      1.08
+  TN593                0.12   1152.83     50.19      1.08
   TN595                0.00   1152.95     51.11      4.13
-  TN596                0.13   1152.73     48.41      1.24
+  TN596                0.12   1152.73     48.41      1.24
   TN598                0.00   1152.85     49.76      3.51
-  TN599                0.13   1152.94     50.23      1.03
+  TN599                0.12   1152.94     50.23      1.03
   TN601                0.00   1153.68     53.16      1.86
   TN603                0.00   1153.59     52.25      3.37
   TN605                0.12   1153.47     50.90      1.16
-  TN607                0.13   1153.47     50.03      1.04
+  TN607                0.12   1153.47     50.03      1.04
   TN609                0.38   1153.53     53.09      0.76
   TN610                0.13   1153.66     53.58      0.90
   TN612                0.00   1250.35     95.91     11.00
   TN614                0.12   1231.99     87.52      0.56
   TN616                0.12   1215.84     80.09      0.57
   TN618                0.12   1201.57     73.04      0.60
-  TN620                0.13   1153.63     50.97      3.25
+  TN620                0.12   1153.63     50.97      3.25
   TN622                0.25   1153.74     53.18      1.53
   TN624                0.00   1154.52     53.96      4.51
   TN626                0.00   1153.60     50.96     11.00
@@ -19777,13 +19779,13 @@
   TN640                0.12   1153.78     52.33     11.00
   TN642                0.50   1156.57     52.24     11.00
   TN644                0.38   1156.58     53.55      6.96
-  TN646                0.13   1156.58     52.68     11.00
+  TN646                0.12   1156.58     52.68     11.00
   TN648                0.00   1156.58     53.55     11.00
   TN650                0.25   1156.58     53.55      5.91
   TN652                0.00   1156.58     53.98     11.00
-  TN654                0.13   1156.58     53.98      4.67
+  TN654                0.12   1156.58     53.98      4.67
   TN656                0.25   1156.58     54.85      3.49
-  TN658                0.13   1156.58     54.85      3.31
+  TN658                0.12   1156.58     54.85      3.31
   VN659                0.00   1156.58     54.85      0.36
   TN660                0.13   1156.58     54.85      2.74
   TN662                0.12   1327.57    128.07      1.68
@@ -19794,15 +19796,15 @@
   TN670                0.00   1325.87    128.20      6.54
   TN672                0.00   1325.53    128.05      5.30
   TN674                0.00   1325.24    127.93      4.60
-  TN676                0.13   1324.95    128.24      1.71
+  TN676                0.12   1324.95    128.24      1.71
   TN678                0.12   1268.27    103.24      2.20
   TN679                0.12   1325.87    127.77      4.37
   TN681                0.38   1326.72    127.70      1.44
   TN683                0.25   1327.39    127.56      2.31
   TN685              121.00   1133.28     34.79      2.09
   TN687               90.00   1143.65     39.71      2.09
-  TN689                0.13   1150.30     43.46      2.20
-  TN691                0.13   1150.31     43.90      2.12
+  TN689                0.12   1150.30     43.46      2.20
+  TN691                0.12   1150.31     43.90      2.12
   TN693                0.12   1150.32     44.77      2.08
   TN695                0.12   1150.33     45.21      2.11
   TN697                0.00   1151.68     43.63     11.00
@@ -19811,14 +19813,14 @@
   TN703                0.00   1151.68     44.06     11.00
   TN705                0.25   1151.67     44.05      2.57
   TN707                0.12   1151.67     44.49      2.52
-  TN709                0.13   1151.68     47.09      2.29
+  TN709                0.12   1151.68     47.09      2.29
   TN711                0.12   1151.68     47.96      2.13
   TN713                0.12   1150.30     43.89      2.21
   TN715                0.13   1150.32     45.20      2.06
   TN717                0.00   1151.69     48.39      3.92
   TN719                0.00   1151.69     49.26      7.05
   TN721                0.25   1151.67     49.69      1.48
-  TN723                0.13   1151.68     50.56      1.41
+  TN723                0.12   1151.68     50.56      1.41
   TN725                0.12   1151.63     52.27      1.42
   IN726                0.00   1151.56     52.67      1.47
   TN727                0.00   1151.56     52.67      4.14
@@ -19834,7 +19836,7 @@
   TN747                0.00   1152.70     42.77     11.00
   TN749                0.00   1152.70     43.63     11.00
   TN751                0.00   1152.70     44.50     11.00
-  TN753                0.13   1152.68     47.09     11.00
+  TN753                0.12   1152.68     47.09     11.00
   TN755                0.00   1153.46     48.29      7.40
   TN757                0.12   1153.44     49.15      1.81
   TN759                0.00   1153.46     47.86     11.00
@@ -20192,11 +20194,11 @@
   IN1154               0.00   1153.46     46.56     11.00
   IN1155               0.00   1153.46     46.13     11.00
   IN1156               0.00   1152.70     42.33     11.00
-  VN1157               0.00   1152.70     42.33      8.34
-  VN1158               0.00   1152.70     42.33      5.72
+  VN1157               0.00   1152.70     42.33     11.00
+  VN1158               0.00   1152.70     42.33     10.88
   IN1159               0.00   1152.70     42.77     11.00
   VN1160               0.00   1152.70     43.20     11.00
-  VN1161               0.00   1152.70     43.20      8.62
+  VN1161               0.00   1152.70     43.20     10.88
   IN1162               0.00   1152.70     43.63     11.00
   IN1163               0.00   1152.70     44.50     11.00
   VN1164               0.00   1152.70     44.93     11.00
@@ -20215,17 +20217,17 @@
   VN1178               0.00   1150.29     43.02      1.97
   IN1179               0.00   1150.27     42.58      2.08
   VN1180               0.00   1150.27     42.15     11.00
-  VN1181               0.00   1151.68     44.06     11.00
+  VN1181               0.00   1151.68     44.06      5.07
   VN1182               0.00   1151.68     43.63     11.00
-  VN1183               0.00   1151.68     43.63      9.82
+  VN1183               0.00   1151.68     43.63     10.88
   IN1184               0.00   1151.68     43.19     11.00
   VN1185               0.00   1151.68     43.63     11.00
-  VN1186               0.00   1151.68     43.63     11.00
+  VN1186               0.00   1151.68     43.63     10.88
   IN1187               0.00   1151.68     43.63     11.00
   IN1188               0.00   1151.68     43.63     11.00
   IN1189               0.00   1151.68     43.63     11.00
   VN1190               0.00   1151.68     44.06     11.00
-  VN1191               0.00   1151.68     44.06      5.59
+  VN1191               0.00   1151.68     44.06     10.88
   IN1192               0.00   1151.68     44.06      2.57
   IN1193               0.00   1151.68     44.06      2.48
   IN1194               0.00   1151.68     44.49      2.29
@@ -20347,9 +20349,9 @@
   VN1314               0.00   1153.60     46.19     11.00
   VN1315               0.00   1153.60     46.19     11.00
   IN1316               0.00   1153.60     45.32     11.00
-  VN1317               0.00   1153.78     50.17     10.82
+  VN1317               0.00   1153.78     50.17     10.44
   IN1318               0.00   1153.78     50.17     11.00
-  VN1319               0.00   1156.58     52.68      9.08
+  VN1319               0.00   1156.58     52.68      7.21
   IN1320               0.00   1156.58     52.68     11.00
   IN1321               0.00   1160.01     52.00      0.43
   VN1322               0.00   1159.15     51.63      0.44
@@ -20486,14 +20488,14 @@
   VN1455               0.00   1150.64     57.91     10.88
   IN1456               0.00   1150.64     57.91     11.00
   VN1457               0.00   1150.64     58.34     11.00
-  VN1458               0.00   1150.64     58.34      7.52
+  VN1458               0.00   1150.64     58.34     10.88
   VN1459               0.00   1150.64     58.77     11.00
-  VN1460               0.00   1150.64     58.77      7.02
+  VN1460               0.00   1150.64     58.77     10.98
   IN1461               0.00   1150.64     59.21     11.00
   VN1462               0.00   1150.64     58.77     11.00
-  VN1463               0.00   1150.64     58.77      8.54
+  VN1463               0.00   1150.64     58.77     10.88
   VN1464               0.00   1150.64     57.91     11.00
-  VN1465               0.00   1150.64     57.91     10.22
+  VN1465               0.00   1150.64     57.91      8.62
   IN1466               0.00   1150.64     57.91     11.00
   IN1467               0.00   1150.64     57.91     11.00
   VN1468               0.00   1328.15    127.02      0.17
@@ -20559,8 +20561,8 @@
   IN1517               0.00   1152.70     44.07     11.00
   HY37                 0.00   1152.98     51.12      0.00
   HY38                 0.00   1152.99     53.29      0.00
-  IN1518               0.00   1123.69     41.46      7.71
-  HY40                 0.00   1123.69     41.46      0.00
+  IN1518               0.00   1123.68     41.46      7.71
+  HY40                 0.00   1123.68     41.46      0.00
   HY41                 0.00   1150.20     50.78      0.00
   HY42                 0.00   1150.29     48.65      0.00
   HY43                 0.00   1150.45     48.72      0.00
@@ -21281,7 +21283,7 @@
   IN502                0.00   1099.08     32.10      4.59
   TN503              168.50   1083.11     25.18      4.59
   IN504                0.00   1103.94     34.20      8.81
-  TN505                0.25   1103.94     34.20      9.09
+  TN505                0.25   1103.93     34.20      9.09
   TN507                0.00   1134.40     47.40     12.00
   IN508                0.00   1122.47     42.23      8.82
   TN509                0.25   1122.47     42.23      9.00
@@ -21292,7 +21294,7 @@
   TN514                0.72   1124.39     40.46      8.54
   TN516                0.73   1159.33     56.04      0.64
   TN518                0.80   1180.30     65.99      0.64
-  TN520                0.00   1190.61     70.46      5.32
+  TN520                0.00   1190.62     70.46      5.32
   TN522                0.00   1198.16     73.73      5.49
   TN524                0.15   1206.18     77.64      1.99
   TN526                0.00   1214.03     81.04      4.41
@@ -21339,7 +21341,7 @@
   TN598                0.00   1152.75     49.72      4.51
   TN599                0.13   1152.84     50.19      1.03
   TN601                0.00   1153.59     53.12      2.86
-  TN603                0.00   1153.50     52.21      4.37
+  TN603                0.00   1153.49     52.21      4.37
   TN605                0.13   1153.37     50.86      1.15
   TN607                0.13   1153.38     49.99      1.03
   TN609                0.38   1153.43     53.05      0.76
@@ -21425,7 +21427,7 @@
   TN761                0.00   1153.36     46.95     12.00
   TN763                0.00   1153.36     46.52     12.00
   TN765                0.00   1153.36     46.09     12.00
-  TN767                0.25   1153.47     49.60      4.00
+  TN767                0.25   1153.47     49.60      4.01
   TN769                0.00   1153.51     48.32     12.00
   TN771                0.00   1153.51     47.45     12.00
   TN773                0.00   1153.51     46.15     12.00
@@ -21451,7 +21453,7 @@
   TN810                0.25   1268.16    103.63      0.35
   TN812                0.25   1183.06     62.86      0.42
   TN814                7.35   1221.86     80.53      0.55
-  TN816                6.34   1188.10     63.30      0.58
+  TN816                6.34   1188.09     63.30      0.58
   VN817                0.00   1123.18     42.54      8.50
   VN818                0.00   1123.18     42.54      8.50
   VN819                0.00   1123.19     41.68      8.40
@@ -21511,7 +21513,7 @@
   VN874                0.00   1149.84     50.63      0.66
   IN875                0.00   1149.85     51.06      0.48
   IN876                0.00   1187.22     68.99      0.41
-  IN877                0.00   1190.61     70.46      0.40
+  IN877                0.00   1190.62     70.46      0.40
   IN878                0.00   1198.16     73.73      0.40
   VN879                0.00   1199.97     74.51      0.39
   VN880                0.00   1199.97     74.51      0.39
@@ -21565,7 +21567,7 @@
   VN930                0.00   1219.10     83.67      0.58
   VN931                0.00   1219.10     83.67      0.58
   VN932                0.00   1264.68    102.99      0.31
-  VN933                0.00   1168.62     56.17      0.40
+  VN933                0.00   1168.62     56.16      0.40
   IN934                0.00   1160.33     52.57      0.42
   IN935                0.00   1155.58     50.08      0.64
   IN936                0.00   1153.01     48.97      0.73
@@ -21722,11 +21724,11 @@
   IN1097               0.00   1188.86     65.37      0.38
   IN1098               0.00   1183.10     62.87      0.39
   IN1099               0.00   1173.27     58.18      0.39
-  VN1101               0.00   1168.62     56.17      0.40
+  VN1101               0.00   1168.62     56.16      0.40
   IN1102               0.00   1153.59     53.12      0.59
   VN1103               0.00   1153.50     52.65      0.62
   VN1104               0.00   1153.50     52.65      0.62
-  IN1105               0.00   1153.50     52.64      0.64
+  IN1105               0.00   1153.49     52.64      0.64
   IN1106               0.00   1153.40     51.30      0.71
   IN1107               0.00   1153.36     49.55      0.82
   IN1108               0.00   1153.36     49.55      0.82
@@ -21776,11 +21778,11 @@
   IN1154               0.00   1153.36     46.52     12.00
   IN1155               0.00   1153.36     46.09     12.00
   IN1156               0.00   1152.60     42.29     12.00
-  VN1157               0.00   1152.60     42.29      8.84
-  VN1158               0.00   1152.60     42.29      5.72
+  VN1157               0.00   1152.60     42.29     12.00
+  VN1158               0.00   1152.60     42.29     11.88
   IN1159               0.00   1152.60     42.72     12.00
   VN1160               0.00   1152.60     43.16     12.00
-  VN1161               0.00   1152.60     43.16     11.62
+  VN1161               0.00   1152.60     43.16     11.88
   IN1162               0.00   1152.60     43.59     12.00
   IN1163               0.00   1152.60     44.46     12.00
   VN1164               0.00   1152.60     44.89     12.00
@@ -21799,17 +21801,17 @@
   VN1178               0.00   1150.19     42.98      1.71
   IN1179               0.00   1150.17     42.54      1.79
   VN1180               0.00   1150.17     42.10     12.00
-  VN1181               0.00   1151.59     44.02     11.82
+  VN1181               0.00   1151.59     44.02      5.07
   VN1182               0.00   1151.59     43.59     12.00
-  VN1183               0.00   1151.59     43.59      9.82
+  VN1183               0.00   1151.59     43.59     11.88
   IN1184               0.00   1151.59     43.15     12.00
   VN1185               0.00   1151.59     43.59     12.00
-  VN1186               0.00   1151.59     43.59     12.00
+  VN1186               0.00   1151.59     43.59     11.88
   IN1187               0.00   1151.59     43.59     12.00
   IN1188               0.00   1151.59     43.59     12.00
   IN1189               0.00   1151.59     43.59     12.00
   VN1190               0.00   1151.59     44.02     12.00
-  VN1191               0.00   1151.59     44.02      6.59
+  VN1191               0.00   1151.59     44.02     11.88
   IN1192               0.00   1151.59     44.02      2.21
   IN1193               0.00   1151.59     44.02      2.13
   IN1194               0.00   1151.59     44.45      2.05
@@ -21867,8 +21869,8 @@
   VN1246               0.00   1151.59     44.02      2.28
   VN1247               0.00   1151.59     45.32      0.00
   VN1248               0.00   1153.51     50.48      0.91
-  VN1249               0.00   1153.51     50.48      5.62
-  VN1250               0.00   1153.51     50.48      5.62
+  VN1249               0.00   1153.51     50.48      5.63
+  VN1250               0.00   1153.51     50.48      5.63
   IN1251               0.00   1153.51     49.62     12.00
   IN1252               0.00   1325.22    127.92      0.30
   IN1253               0.00   1325.50    128.04      0.29
@@ -21931,9 +21933,9 @@
   VN1314               0.00   1153.51     46.15     12.00
   VN1315               0.00   1153.51     46.15     12.00
   IN1316               0.00   1153.51     45.28     12.00
-  VN1317               0.00   1153.69     50.13     10.85
+  VN1317               0.00   1153.69     50.13     10.94
   IN1318               0.00   1153.69     50.13     12.00
-  VN1319               0.00   1156.48     52.64      9.58
+  VN1319               0.00   1156.48     52.64      7.21
   IN1320               0.00   1156.48     52.64     12.00
   IN1321               0.00   1159.87     51.94      0.44
   VN1322               0.00   1159.02     51.57      0.44
@@ -22029,7 +22031,7 @@
   VN1413               0.00   1150.56     56.57     11.56
   VN1414               0.00   1150.55     57.87     12.00
   VN1415               0.00   1150.55     57.87     12.00
-  VN1416               0.00   1150.17     42.10     12.00
+  VN1416               0.00   1150.17     42.10     11.32
   IN1417               0.00   1150.17     41.67     12.00
   IN1418               0.00   1151.59     44.02     12.00
   VN1419               0.00   1151.59     44.02     12.00
@@ -22060,9 +22062,9 @@
   VN1445               0.00   1150.53     50.93      6.64
   VN1446               0.00   1150.53     50.93      6.64
   VN1447               0.00   1150.55     53.53     12.00
-  VN1448               0.00   1150.55     53.53     11.89
+  VN1448               0.00   1150.55     53.53     11.88
   VN1449               0.00   1150.55     55.27     12.00
-  VN1450               0.00   1150.55     55.27     11.98
+  VN1450               0.00   1150.55     55.27     11.88
   IN1451               0.00   1150.55     56.57     12.00
   VN1452               0.00   1150.55     56.57     12.00
   VN1453               0.00   1150.55     56.57     11.98
@@ -22070,14 +22072,14 @@
   VN1455               0.00   1150.55     57.87     11.88
   IN1456               0.00   1150.55     57.87     12.00
   VN1457               0.00   1150.55     58.30     12.00
-  VN1458               0.00   1150.55     58.30      7.52
+  VN1458               0.00   1150.55     58.30     11.98
   VN1459               0.00   1150.55     58.73     12.00
-  VN1460               0.00   1150.55     58.73      7.02
+  VN1460               0.00   1150.55     58.73     11.88
   IN1461               0.00   1150.55     59.17     12.00
   VN1462               0.00   1150.55     58.73     12.00
-  VN1463               0.00   1150.55     58.73      8.54
+  VN1463               0.00   1150.55     58.73     11.88
   VN1464               0.00   1150.55     57.87     12.00
-  VN1465               0.00   1150.55     57.87     10.22
+  VN1465               0.00   1150.55     57.87      8.62
   IN1466               0.00   1150.55     57.87     12.00
   IN1467               0.00   1150.55     57.87     12.00
   VN1468               0.00   1328.12    127.01      0.17
@@ -22834,7 +22836,7 @@
   TN458               45.13   1147.04     51.14      6.46
   TN459               15.00   1146.76     51.02      6.57
   TN460               15.40   1146.67     50.55      6.53
-  IN461                0.00   1118.36     39.16      8.76
+  IN461                0.00   1118.37     39.16      8.76
   TN462                0.51   1118.34     39.58      8.19
   IN463                0.00   1118.48     39.20      8.74
   TN464                0.75   1118.46     39.20      8.86
@@ -22937,7 +22939,7 @@
   TN624                0.00   1148.80     51.48      6.51
   TN626                0.00   1148.75     48.86     13.00
   TN628                0.27   1148.80     50.61      6.53
-  TN630                0.14   1148.80     50.61      6.49
+  TN630                0.14   1148.80     50.61      6.48
   TN632                0.00   1148.75     40.62     13.00
   TN634                0.14   1148.75     45.39     13.00
   TN636                0.28   1148.75     48.42     13.00
@@ -23360,11 +23362,11 @@
   IN1154               0.00   1148.72     44.51     13.00
   IN1155               0.00   1148.72     44.07     13.00
   IN1156               0.00   1148.51     40.52     13.00
-  VN1157               0.00   1148.51     40.52      9.34
-  VN1158               0.00   1148.51     40.52      5.72
+  VN1157               0.00   1148.51     40.52     13.00
+  VN1158               0.00   1148.51     40.52     12.88
   IN1159               0.00   1148.51     40.95     13.00
   VN1160               0.00   1148.51     41.39     13.00
-  VN1161               0.00   1148.51     41.39     12.41
+  VN1161               0.00   1148.51     41.39     12.88
   IN1162               0.00   1148.51     41.82     13.00
   IN1163               0.00   1148.51     42.69     13.00
   VN1164               0.00   1148.51     43.12     13.00
@@ -23383,17 +23385,17 @@
   VN1178               0.00   1146.93     41.57      1.64
   IN1179               0.00   1146.91     41.13      1.72
   VN1180               0.00   1146.91     40.69     13.00
-  VN1181               0.00   1148.91     42.86     11.82
+  VN1181               0.00   1148.91     42.86      5.07
   VN1182               0.00   1148.91     42.42     13.00
-  VN1183               0.00   1148.91     42.42     12.52
+  VN1183               0.00   1148.91     42.42     12.88
   IN1184               0.00   1148.91     41.99     13.00
   VN1185               0.00   1148.91     42.42     13.00
-  VN1186               0.00   1148.91     42.42     13.00
+  VN1186               0.00   1148.91     42.42     12.88
   IN1187               0.00   1148.91     42.42     13.00
   IN1188               0.00   1148.91     42.42     13.00
   IN1189               0.00   1148.91     42.42     13.00
   VN1190               0.00   1148.91     42.86     13.00
-  VN1191               0.00   1148.91     42.86      7.59
+  VN1191               0.00   1148.91     42.86     12.98
   IN1192               0.00   1148.91     42.86      2.21
   IN1193               0.00   1148.91     42.86      2.21
   IN1194               0.00   1148.92     43.29      2.12
@@ -23513,11 +23515,11 @@
   IN1312               0.00   1148.75     44.52     13.00
   IN1313               0.00   1148.75     44.09     13.00
   VN1314               0.00   1148.75     44.09     13.00
-  VN1315               0.00   1148.75     44.09     13.00
+  VN1315               0.00   1148.75     44.09     12.72
   IN1316               0.00   1148.75     43.22     13.00
-  VN1317               0.00   1148.80     48.01     12.91
+  VN1317               0.00   1148.80     48.01     11.44
   IN1318               0.00   1148.80     48.01     13.00
-  VN1319               0.00   1148.80     49.31     10.08
+  VN1319               0.00   1148.80     49.31      7.21
   IN1320               0.00   1148.80     49.31     13.00
   IN1321               0.00   1148.77     47.13      0.30
   VN1322               0.00   1148.81     47.15      0.32
@@ -23613,7 +23615,7 @@
   VN1413               0.00   1149.33     56.04      9.14
   VN1414               0.00   1149.33     57.34     12.09
   VN1415               0.00   1149.33     57.34     12.09
-  VN1416               0.00   1146.91     40.69     13.00
+  VN1416               0.00   1146.91     40.69     11.32
   IN1417               0.00   1146.91     40.26     13.00
   IN1418               0.00   1148.91     42.86     13.00
   VN1419               0.00   1148.91     42.86     13.00
@@ -23644,7 +23646,7 @@
   VN1445               0.00   1149.32     50.40      6.29
   VN1446               0.00   1149.32     50.40      6.29
   VN1447               0.00   1149.35     53.01     13.00
-  VN1448               0.00   1149.35     53.01     12.98
+  VN1448               0.00   1149.35     53.01     12.88
   VN1449               0.00   1149.35     54.75     13.00
   VN1450               0.00   1149.35     54.75     12.88
   IN1451               0.00   1149.35     56.05     13.00
@@ -23654,14 +23656,14 @@
   VN1455               0.00   1149.35     57.35     12.88
   IN1456               0.00   1149.35     57.35     13.00
   VN1457               0.00   1149.35     57.78     13.00
-  VN1458               0.00   1149.35     57.78      7.52
+  VN1458               0.00   1149.35     57.78     12.88
   VN1459               0.00   1149.35     58.21     13.00
-  VN1460               0.00   1149.35     58.21      7.02
+  VN1460               0.00   1149.35     58.21     12.88
   IN1461               0.00   1149.35     58.65     13.00
   VN1462               0.00   1149.35     58.21     13.00
-  VN1463               0.00   1149.35     58.21      8.54
+  VN1463               0.00   1149.35     58.21     12.88
   VN1464               0.00   1149.35     57.35     13.00
-  VN1465               0.00   1149.35     57.35     12.41
+  VN1465               0.00   1149.35     57.35      8.62
   IN1466               0.00   1149.35     57.35     13.00
   IN1467               0.00   1149.35     57.35     13.00
   VN1468               0.00   1148.61     49.23      0.07
@@ -24075,7 +24077,7 @@
   TN1833               0.37   1149.17     52.50     13.00
   TN1834               0.49   1149.17     52.50     13.00
   Aquifer              0.00    930.00      0.00      0.00  Reservoir
-  SurfaceResrvr        0.00   1030.00      0.00      0.00  Reservoir
+  SurfaceResrvr       -0.00   1030.00      0.00      0.00  Reservoir
   Tank              -687.83   1150.17     47.74     12.89  Tank
    
    
@@ -24369,7 +24371,7 @@
   TN385                6.19   1159.49     52.21      0.47
   TN387                5.91   1159.44     50.02      1.08
   TN389                4.50   1159.49     50.47      0.74
-  TN391                5.63   1159.46     51.33      0.54
+  TN391                5.62   1159.46     51.33      0.54
   TN393                6.19   1159.46     51.76      0.42
   TN395                0.00   1156.74     48.42     14.00
   TN397                0.00   1156.74     48.85     14.00
@@ -24418,7 +24420,7 @@
   TN458               49.23   1148.01     51.57      6.30
   TN459               21.82   1145.72     50.58      6.32
   TN460               16.80   1147.59     50.95      6.30
-  IN461                0.00   1126.05     42.49     10.36
+  IN461                0.00   1126.05     42.49     10.35
   TN462                0.46   1126.02     42.91      9.91
   IN463                0.00   1126.14     42.52     10.33
   TN464                0.73   1126.12     42.52     10.46
@@ -24944,11 +24946,11 @@
   IN1154               0.00   1153.56     46.61     14.00
   IN1155               0.00   1153.56     46.17     14.00
   IN1156               0.00   1152.81     42.38     14.00
-  VN1157               0.00   1152.81     42.38      9.84
-  VN1158               0.00   1152.81     42.38      5.72
+  VN1157               0.00   1152.81     42.38     14.00
+  VN1158               0.00   1152.81     42.38     13.88
   IN1159               0.00   1152.81     42.82     14.00
   VN1160               0.00   1152.81     43.25     14.00
-  VN1161               0.00   1152.81     43.25     12.41
+  VN1161               0.00   1152.81     43.25     13.98
   IN1162               0.00   1152.81     43.68     14.00
   IN1163               0.00   1152.81     44.55     14.00
   VN1164               0.00   1152.81     44.98     14.00
@@ -24967,17 +24969,17 @@
   VN1178               0.00   1150.48     43.11      1.63
   IN1179               0.00   1150.47     42.67      1.71
   VN1180               0.00   1150.47     42.23     14.00
-  VN1181               0.00   1151.78     44.10     11.82
+  VN1181               0.00   1151.78     44.10      5.07
   VN1182               0.00   1151.78     43.67     14.00
-  VN1183               0.00   1151.78     43.67     13.98
+  VN1183               0.00   1151.78     43.67     13.88
   IN1184               0.00   1151.78     43.23     14.00
   VN1185               0.00   1151.78     43.67     14.00
-  VN1186               0.00   1151.78     43.67     14.00
+  VN1186               0.00   1151.78     43.67     13.88
   IN1187               0.00   1151.78     43.67     14.00
   IN1188               0.00   1151.78     43.67     14.00
   IN1189               0.00   1151.78     43.67     14.00
   VN1190               0.00   1151.78     44.10     14.00
-  VN1191               0.00   1151.78     44.10      8.59
+  VN1191               0.00   1151.78     44.10     13.88
   IN1192               0.00   1151.78     44.10      2.08
   IN1193               0.00   1151.78     44.10      2.07
   IN1194               0.00   1151.78     44.54      1.99
@@ -25097,11 +25099,11 @@
   IN1312               0.00   1153.70     46.67     14.00
   IN1313               0.00   1153.70     46.23     14.00
   VN1314               0.00   1153.70     46.23     14.00
-  VN1315               0.00   1153.70     46.23     14.00
+  VN1315               0.00   1153.70     46.23     12.72
   IN1316               0.00   1153.70     45.37     14.00
-  VN1317               0.00   1153.89     50.21     13.12
+  VN1317               0.00   1153.89     50.21     11.94
   IN1318               0.00   1153.89     50.21     14.00
-  VN1319               0.00   1156.68     52.72     10.58
+  VN1319               0.00   1156.68     52.72      7.21
   IN1320               0.00   1156.68     52.72     14.00
   IN1321               0.00   1159.63     51.84      0.30
   VN1322               0.00   1158.80     51.48      0.32
@@ -25197,7 +25199,7 @@
   VN1413               0.00   1150.70     56.63      8.82
   VN1414               0.00   1150.69     57.93     10.62
   VN1415               0.00   1150.69     57.93     10.62
-  VN1416               0.00   1150.47     42.23     13.91
+  VN1416               0.00   1150.47     42.23     11.32
   IN1417               0.00   1150.47     41.80     14.00
   IN1418               0.00   1151.78     44.10     14.00
   VN1419               0.00   1151.78     44.10     14.00
@@ -25228,24 +25230,24 @@
   VN1445               0.00   1150.68     50.99      6.37
   VN1446               0.00   1150.68     50.99      6.37
   VN1447               0.00   1150.71     53.60     14.00
-  VN1448               0.00   1150.71     53.60     13.89
+  VN1448               0.00   1150.71     53.60     13.88
   VN1449               0.00   1150.71     55.34     14.00
   VN1450               0.00   1150.71     55.34     13.88
   IN1451               0.00   1150.71     56.64     14.00
   VN1452               0.00   1150.71     56.64     14.00
   VN1453               0.00   1150.71     56.64     13.88
   VN1454               0.00   1150.71     57.94     14.00
-  VN1455               0.00   1150.71     57.94     13.98
+  VN1455               0.00   1150.71     57.94     13.88
   IN1456               0.00   1150.71     57.94     14.00
   VN1457               0.00   1150.71     58.37     14.00
-  VN1458               0.00   1150.71     58.37      7.52
+  VN1458               0.00   1150.71     58.37     13.88
   VN1459               0.00   1150.71     58.80     14.00
-  VN1460               0.00   1150.71     58.80      7.02
+  VN1460               0.00   1150.71     58.80     13.98
   IN1461               0.00   1150.71     59.24     14.00
   VN1462               0.00   1150.71     58.80     14.00
-  VN1463               0.00   1150.71     58.80      8.54
+  VN1463               0.00   1150.71     58.80     13.88
   VN1464               0.00   1150.71     57.94     14.00
-  VN1465               0.00   1150.71     57.94     12.41
+  VN1465               0.00   1150.71     57.94      8.62
   IN1466               0.00   1150.71     57.94     14.00
   IN1467               0.00   1150.71     57.94     14.00
   VN1468               0.00   1328.12    127.01      0.07
@@ -25579,7 +25581,7 @@
   TN1753               0.00   1152.43     50.45     12.10
   TN1754               0.27   1152.40     50.87      2.35
   TN1755               0.40   1152.18     52.51      2.33
-  TN1756               0.27   1152.19     52.95      2.33
+  TN1756               0.27   1152.19     52.94      2.33
   TN1757               0.00   1152.21     51.65      7.87
   TN1758               0.13   1152.20     52.95     10.62
   TN1759               0.13   1152.02     53.74      2.55
@@ -25712,7 +25714,7 @@
   TN61                 0.00   1150.32     53.44     15.00
   TN63                 0.51   1150.23     48.63     13.64
   IN64                 0.00   1150.27     49.08     13.65
-  TN65                 0.17   1150.26     49.08     14.19
+  TN65                 0.17   1150.26     49.08     14.18
   TN67                 0.00   1150.28     49.08     14.97
   IN68                 0.00   1150.29     49.52     14.95
   TN69                 0.00   1150.29     49.52     15.00
@@ -26004,7 +26006,7 @@
   TN460               21.60   1145.59     50.09      5.34
   IN461                0.00   1129.72     44.08     10.37
   TN462                0.42   1129.70     44.50     10.82
-  IN463                0.00   1129.80     44.11     10.39
+  IN463                0.00   1129.80     44.11     10.38
   TN464                0.66   1129.79     44.10     10.32
   TN466                0.00   1151.83     54.52      3.66
   IN467                0.00   1151.71     54.90      1.13
@@ -26046,7 +26048,7 @@
   TN518                0.71   1180.19     65.95      0.71
   TN520                0.34   1190.51     70.41      0.95
   TN522                0.00   1198.16     73.73      8.49
-  TN524                0.30   1206.28     77.68      1.08
+  TN524                0.30   1206.29     77.68      1.08
   TN526                0.00   1214.20     81.11      7.41
   TN528                0.34   1178.64     64.84      1.12
   TN530                0.17   1161.81     56.68      2.14
@@ -26254,7 +26256,7 @@
   IN865                0.00   1150.39     56.50      7.17
   VN866                0.00   1150.40     56.50      7.11
   VN867                0.00   1150.36     55.18      7.53
-  VN868                0.00   1150.27     48.64      5.21
+  VN868                0.00   1150.26     48.64      5.21
   IN869                0.00   1149.82     48.89     14.85
   VN870                0.00   1149.83     49.32      1.11
   VN871                0.00   1149.83     49.32      1.11
@@ -26528,11 +26530,11 @@
   IN1154               0.00   1153.41     46.54     15.00
   IN1155               0.00   1153.41     46.11     15.00
   IN1156               0.00   1152.69     42.33     15.00
-  VN1157               0.00   1152.69     42.33     14.84
-  VN1158               0.00   1152.69     42.33     14.72
+  VN1157               0.00   1152.69     42.33     15.00
+  VN1158               0.00   1152.69     42.33     14.88
   IN1159               0.00   1152.69     42.76     15.00
   VN1160               0.00   1152.69     43.20     15.00
-  VN1161               0.00   1152.69     43.20     12.41
+  VN1161               0.00   1152.69     43.20     14.88
   IN1162               0.00   1152.69     43.63     15.00
   IN1163               0.00   1152.69     44.50     15.00
   VN1164               0.00   1152.69     44.93     15.00
@@ -26540,7 +26542,7 @@
   IN1166               0.00   1152.69     47.53      4.70
   VN1167               0.00   1152.69     48.40      1.70
   VN1168               0.00   1152.69     48.40      1.70
-  VN1170               0.00   1150.60     45.33      1.57
+  VN1170               0.00   1150.60     45.32      1.57
   IN1171               0.00   1150.60     45.32      1.58
   IN1172               0.00   1150.59     44.89      1.58
   IN1173               0.00   1150.58     44.02      1.54
@@ -26551,12 +26553,12 @@
   VN1178               0.00   1150.55     43.14      1.66
   IN1179               0.00   1150.54     42.70      1.73
   VN1180               0.00   1150.54     42.26     15.00
-  VN1181               0.00   1151.60     44.02     11.82
+  VN1181               0.00   1151.60     44.02      5.19
   VN1182               0.00   1151.60     43.59     15.00
-  VN1183               0.00   1151.60     43.59     14.02
+  VN1183               0.00   1151.60     43.59     14.88
   IN1184               0.00   1151.60     43.16     15.00
   VN1185               0.00   1151.60     43.59     15.00
-  VN1186               0.00   1151.60     43.59     14.42
+  VN1186               0.00   1151.60     43.59     14.88
   IN1187               0.00   1151.60     43.59     15.00
   IN1188               0.00   1151.60     43.59     15.00
   IN1189               0.00   1151.60     43.59     15.00
@@ -26681,11 +26683,11 @@
   IN1312               0.00   1153.54     46.60     15.00
   IN1313               0.00   1153.54     46.17     15.00
   VN1314               0.00   1153.54     46.17     15.00
-  VN1315               0.00   1153.54     46.17     15.00
+  VN1315               0.00   1153.54     46.17     12.72
   IN1316               0.00   1153.54     45.30     15.00
-  VN1317               0.00   1153.73     50.15     13.12
+  VN1317               0.00   1153.73     50.15     12.44
   IN1318               0.00   1153.73     50.15     15.00
-  VN1319               0.00   1156.52     52.66     11.08
+  VN1319               0.00   1156.52     52.66      7.21
   IN1320               0.00   1156.52     52.66     15.00
   IN1321               0.00   1158.64     51.41      0.44
   VN1322               0.00   1157.87     51.07      0.45
@@ -26752,8 +26754,8 @@
   IN1384               0.00   1151.46     46.13      3.40
   VN1385               0.00   1151.47     46.13      3.36
   VN1386               0.00   1151.47     46.13      3.36
-  VN1387               0.00   1151.47     46.57      1.08
-  VN1388               0.00   1151.47     46.57      1.08
+  VN1387               0.00   1151.47     46.56      1.08
+  VN1388               0.00   1151.47     46.56      1.08
   IN1389               0.00   1158.62     51.40      0.42
   IN1390               0.00   1158.60     51.39      0.42
   IN1391               0.00   1158.58     51.38      0.45
@@ -26776,12 +26778,12 @@
   VN1408               0.00   1150.44     55.65      7.99
   VN1409               0.00   1150.44     55.65      7.99
   VN1410               0.00   1150.40     56.50      7.11
-  VN1411               0.00   1150.27     48.64      5.21
+  VN1411               0.00   1150.26     48.64      5.21
   VN1412               0.00   1150.26     48.64     13.37
   VN1413               0.00   1150.43     56.52      9.13
   VN1414               0.00   1150.42     57.81     10.76
   VN1415               0.00   1150.42     57.81     10.76
-  VN1416               0.00   1150.54     42.26     14.62
+  VN1416               0.00   1150.54     42.26     11.32
   IN1417               0.00   1150.54     41.83     15.00
   IN1418               0.00   1151.60     44.02     15.00
   VN1419               0.00   1151.60     44.02     15.00
@@ -26812,9 +26814,9 @@
   VN1445               0.00   1150.40     50.87      5.23
   VN1446               0.00   1150.40     50.87      5.23
   VN1447               0.00   1150.46     53.50     15.00
-  VN1448               0.00   1150.46     53.50     14.89
+  VN1448               0.00   1150.46     53.50     14.88
   VN1449               0.00   1150.46     55.23     15.00
-  VN1450               0.00   1150.46     55.23     14.98
+  VN1450               0.00   1150.46     55.23     14.88
   IN1451               0.00   1150.46     56.53     15.00
   VN1452               0.00   1150.46     56.53     15.00
   VN1453               0.00   1150.46     56.53     14.98
@@ -26822,14 +26824,14 @@
   VN1455               0.00   1150.46     57.83     14.88
   IN1456               0.00   1150.46     57.83     15.00
   VN1457               0.00   1150.46     58.26     15.00
-  VN1458               0.00   1150.46     58.26      7.52
+  VN1458               0.00   1150.46     58.26     14.88
   VN1459               0.00   1150.46     58.70     15.00
-  VN1460               0.00   1150.46     58.70      7.02
+  VN1460               0.00   1150.46     58.70     14.88
   IN1461               0.00   1150.46     59.13     15.00
   VN1462               0.00   1150.46     58.70     15.00
-  VN1463               0.00   1150.46     58.70      8.54
+  VN1463               0.00   1150.46     58.70     14.98
   VN1464               0.00   1150.46     57.83     15.00
-  VN1465               0.00   1150.46     57.83     14.32
+  VN1465               0.00   1150.46     57.83      8.62
   IN1466               0.00   1150.46     57.83     15.00
   IN1467               0.00   1150.46     57.83     15.00
   VN1468               0.00   1327.98    126.95      0.17
@@ -27156,7 +27158,7 @@
   TN1746               0.45   1152.12     48.58      0.81
   TN1747               0.30   1152.12     49.02      2.07
   TN1748               0.00   1152.15     49.46      9.52
-  TN1749               0.30   1152.13     49.02      2.07
+  TN1749               0.30   1152.12     49.02      2.07
   TN1750               0.15   1152.14     49.45      2.13
   TN1751               0.15   1151.94     49.81      2.27
   TN1752               0.15   1151.94     50.24      2.41
@@ -27244,7 +27246,7 @@
   TN1834               0.60   1151.38     53.46     15.00
   Aquifer           -178.60    930.00      0.00      0.00  Reservoir
   SurfaceResrvr    -1107.06   1030.00      0.00      0.00  Reservoir
-  Tank               574.89   1149.76     47.56     14.85  Tank
+  Tank               574.90   1149.76     47.56     14.85  Tank
    
    
   Node Results at 16:00:00 hrs:
@@ -28112,11 +28114,11 @@
   IN1154               0.00   1148.65     44.48     16.00
   IN1155               0.00   1148.65     44.05     16.00
   IN1156               0.00   1148.54     40.53     16.00
-  VN1157               0.00   1148.54     40.53     15.34
-  VN1158               0.00   1148.54     40.53     14.72
+  VN1157               0.00   1148.54     40.53     16.00
+  VN1158               0.00   1148.54     40.53     15.88
   IN1159               0.00   1148.54     40.96     16.00
   VN1160               0.00   1148.54     41.40     16.00
-  VN1161               0.00   1148.54     41.40     15.91
+  VN1161               0.00   1148.54     41.40     15.88
   IN1162               0.00   1148.54     41.83     16.00
   IN1163               0.00   1148.54     42.70     16.00
   VN1164               0.00   1148.54     43.13     16.00
@@ -28135,12 +28137,12 @@
   VN1178               0.00   1147.62     41.87      1.64
   IN1179               0.00   1147.61     41.43      1.72
   VN1180               0.00   1147.61     40.99     16.00
-  VN1181               0.00   1148.81     42.81     11.82
+  VN1181               0.00   1148.81     42.81      5.19
   VN1182               0.00   1148.81     42.38     16.00
-  VN1183               0.00   1148.81     42.38     14.02
+  VN1183               0.00   1148.81     42.38     15.88
   IN1184               0.00   1148.81     41.95     16.00
   VN1185               0.00   1148.81     42.38     16.00
-  VN1186               0.00   1148.81     42.38     14.42
+  VN1186               0.00   1148.81     42.38     15.88
   IN1187               0.00   1148.81     42.38     16.00
   IN1188               0.00   1148.81     42.38     16.00
   IN1189               0.00   1148.81     42.38     16.00
@@ -28265,11 +28267,11 @@
   IN1312               0.00   1148.67     44.49     16.00
   IN1313               0.00   1148.67     44.05     16.00
   VN1314               0.00   1148.67     44.05     16.00
-  VN1315               0.00   1148.67     44.05     16.00
+  VN1315               0.00   1148.67     44.05     12.72
   IN1316               0.00   1148.67     43.19     16.00
-  VN1317               0.00   1148.71     47.97     13.12
+  VN1317               0.00   1148.71     47.97     12.94
   IN1318               0.00   1148.71     47.97     16.00
-  VN1319               0.00   1148.70     49.27     11.58
+  VN1319               0.00   1148.70     49.27      7.21
   IN1320               0.00   1148.70     49.27     16.00
   IN1321               0.00   1148.19     46.88      0.30
   VN1322               0.00   1148.25     46.90      0.32
@@ -28365,7 +28367,7 @@
   VN1413               0.00   1149.05     55.92      8.64
   VN1414               0.00   1149.06     57.22     10.29
   VN1415               0.00   1149.06     57.22     10.29
-  VN1416               0.00   1147.61     40.99     14.62
+  VN1416               0.00   1147.61     40.99     11.32
   IN1417               0.00   1147.61     40.56     16.00
   IN1418               0.00   1148.81     42.81     16.00
   VN1419               0.00   1148.81     42.81     16.00
@@ -28396,24 +28398,24 @@
   VN1445               0.00   1149.04     50.28      4.61
   VN1446               0.00   1149.04     50.28      4.61
   VN1447               0.00   1149.13     52.92     16.00
-  VN1448               0.00   1149.13     52.92     15.89
+  VN1448               0.00   1149.13     52.92     15.88
   VN1449               0.00   1149.13     54.65     16.00
   VN1450               0.00   1149.13     54.65     15.88
   IN1451               0.00   1149.13     55.95     16.00
   VN1452               0.00   1149.13     55.95     16.00
-  VN1453               0.00   1149.13     55.95     15.88
+  VN1453               0.00   1149.13     55.95     15.98
   VN1454               0.00   1149.13     57.25     16.00
-  VN1455               0.00   1149.13     57.25     15.98
+  VN1455               0.00   1149.13     57.25     15.88
   IN1456               0.00   1149.13     57.25     16.00
   VN1457               0.00   1149.13     57.68     16.00
-  VN1458               0.00   1149.13     57.68      7.52
+  VN1458               0.00   1149.13     57.68     15.88
   VN1459               0.00   1149.13     58.12     16.00
-  VN1460               0.00   1149.13     58.12      7.02
+  VN1460               0.00   1149.13     58.12     15.98
   IN1461               0.00   1149.13     58.55     16.00
   VN1462               0.00   1149.13     58.12     16.00
-  VN1463               0.00   1149.13     58.12      8.54
+  VN1463               0.00   1149.13     58.12     15.88
   VN1464               0.00   1149.13     57.25     16.00
-  VN1465               0.00   1149.13     57.25     14.32
+  VN1465               0.00   1149.13     57.25      8.62
   IN1466               0.00   1149.13     57.25     16.00
   IN1467               0.00   1149.13     57.25     16.00
   VN1468               0.00   1148.31     49.10      0.07
@@ -28827,7 +28829,7 @@
   TN1833               0.48   1148.75     52.32     16.00
   TN1834               0.81   1148.75     52.32     16.00
   Aquifer              0.00    930.00      0.00      0.00  Reservoir
-  SurfaceResrvr        0.00   1030.00      0.00      0.00  Reservoir
+  SurfaceResrvr       -0.00   1030.00      0.00      0.00  Reservoir
   Tank              -708.07   1150.01     47.67     15.82  Tank
    
    
@@ -29235,11 +29237,11 @@
   TN555                0.19   1152.43     53.92      1.26
   TN557                0.19   1153.46     52.20      1.13
   TN559                0.75   1153.36     53.02      0.53
-  TN561                0.00   1153.51     54.38     10.16
+  TN561                0.00   1153.50     54.38     10.16
   TN562                0.19   1153.47     51.33      1.00
   TN564                0.19   1153.47     52.20      0.86
   TN565                0.00   1153.50     53.08      3.74
-  TN566                0.00   1153.51     54.38      3.61
+  TN566                0.00   1153.50     54.38      3.61
   TN568                0.38   1154.72     54.04      0.37
   TN569                0.56   1154.70     54.03      0.37
   TN571                0.19   1154.34     54.31      0.69
@@ -29307,7 +29309,7 @@
   TN687               47.58   1149.73     42.35      1.83
   TN689                0.19   1151.83     44.12      1.80
   TN691                0.00   1151.85     44.57      4.73
-  TN693                0.19   1151.84     45.43      1.76
+  TN693                0.19   1151.84     45.43      1.75
   TN695                0.37   1151.82     45.85      1.62
   TN697                0.00   1152.06     43.79     17.00
   TN699                0.37   1152.03     43.77     17.00
@@ -29447,7 +29449,7 @@
   IN890                0.00   1207.81     77.91      0.36
   IN891                0.00   1179.09     64.60      0.36
   IN892                0.00   1154.77     54.06      0.37
-  IN893                0.00   1153.51     54.38      0.58
+  IN893                0.00   1153.50     54.38      0.58
   VN894                0.00   1155.15     55.53      0.74
   VN895                0.00   1155.15     55.53      0.74
   IN896                0.00   1155.30     55.59      0.74
@@ -29696,11 +29698,11 @@
   IN1154               0.00   1153.95     46.78     17.00
   IN1155               0.00   1153.95     46.34     17.00
   IN1156               0.00   1153.31     42.60     17.00
-  VN1157               0.00   1153.31     42.60     15.84
-  VN1158               0.00   1153.31     42.60     14.72
+  VN1157               0.00   1153.31     42.60     17.00
+  VN1158               0.00   1153.31     42.60     16.88
   IN1159               0.00   1153.31     43.03     17.00
   VN1160               0.00   1153.31     43.47     17.00
-  VN1161               0.00   1153.31     43.47     15.92
+  VN1161               0.00   1153.31     43.47     16.88
   IN1162               0.00   1153.31     43.90     17.00
   IN1163               0.00   1153.31     44.77     17.00
   VN1164               0.00   1153.31     45.20     17.00
@@ -29719,12 +29721,12 @@
   VN1178               0.00   1151.84     43.69      1.75
   IN1179               0.00   1151.84     43.26      1.82
   VN1180               0.00   1151.84     42.83     17.00
-  VN1181               0.00   1152.06     44.22     11.82
+  VN1181               0.00   1152.06     44.22      5.19
   VN1182               0.00   1152.06     43.79     17.00
-  VN1183               0.00   1152.06     43.79     14.02
+  VN1183               0.00   1152.06     43.79     16.88
   IN1184               0.00   1152.06     43.36     17.00
   VN1185               0.00   1152.06     43.79     17.00
-  VN1186               0.00   1152.06     43.79     14.42
+  VN1186               0.00   1152.06     43.79     16.88
   IN1187               0.00   1152.06     43.79     17.00
   IN1188               0.00   1152.06     43.79     17.00
   IN1189               0.00   1152.06     43.79     17.00
@@ -29830,7 +29832,7 @@
   IN1291               0.00   1157.03     53.74      7.47
   VN1292               0.00   1157.03     53.74      7.98
   VN1293               0.00   1157.03     53.74      7.98
-  IN1294               0.00   1157.03     53.74      8.72
+  IN1294               0.00   1157.03     53.74      8.71
   IN1295               0.00   1157.03     52.88     10.81
   IN1296               0.00   1157.03     52.88     17.00
   IN1297               0.00   1157.03     52.88     17.00
@@ -29849,11 +29851,11 @@
   IN1312               0.00   1154.07     46.83     17.00
   IN1313               0.00   1154.07     46.39     17.00
   VN1314               0.00   1154.07     46.39     17.00
-  VN1315               0.00   1154.07     46.39     17.00
+  VN1315               0.00   1154.07     46.39     12.75
   IN1316               0.00   1154.07     45.53     17.00
-  VN1317               0.00   1154.27     50.38     16.82
+  VN1317               0.00   1154.27     50.38     13.44
   IN1318               0.00   1154.27     50.38     17.00
-  VN1319               0.00   1157.03     52.88     12.08
+  VN1319               0.00   1157.03     52.88      7.21
   IN1320               0.00   1157.03     52.88     17.00
   IN1321               0.00   1156.68     50.56      0.46
   VN1322               0.00   1156.07     50.29      0.47
@@ -29949,7 +29951,7 @@
   VN1413               0.00   1150.40     56.50      9.29
   VN1414               0.00   1150.38     57.80     10.89
   VN1415               0.00   1150.38     57.80     10.89
-  VN1416               0.00   1151.84     42.83     14.62
+  VN1416               0.00   1151.84     42.83     11.32
   IN1417               0.00   1151.84     42.39     17.00
   IN1418               0.00   1152.06     44.22     17.00
   VN1419               0.00   1152.06     44.22     17.00
@@ -29980,7 +29982,7 @@
   VN1445               0.00   1150.38     50.86      4.56
   VN1446               0.00   1150.38     50.86      4.56
   VN1447               0.00   1150.51     53.51     17.00
-  VN1448               0.00   1150.51     53.51     16.89
+  VN1448               0.00   1150.51     53.51     16.88
   VN1449               0.00   1150.51     55.25     17.00
   VN1450               0.00   1150.51     55.25     16.88
   IN1451               0.00   1150.51     56.55     17.00
@@ -29990,14 +29992,14 @@
   VN1455               0.00   1150.51     57.85     16.88
   IN1456               0.00   1150.51     57.85     17.00
   VN1457               0.00   1150.51     58.28     17.00
-  VN1458               0.00   1150.51     58.28      7.52
+  VN1458               0.00   1150.51     58.28     16.88
   VN1459               0.00   1150.51     58.71     17.00
-  VN1460               0.00   1150.51     58.71      7.02
+  VN1460               0.00   1150.51     58.71     16.88
   IN1461               0.00   1150.51     59.15     17.00
   VN1462               0.00   1150.51     58.71     17.00
-  VN1463               0.00   1150.51     58.71      8.54
+  VN1463               0.00   1150.51     58.71     16.88
   VN1464               0.00   1150.51     57.85     17.00
-  VN1465               0.00   1150.51     57.85     16.52
+  VN1465               0.00   1150.51     57.85     16.72
   IN1466               0.00   1150.51     57.85     17.00
   IN1467               0.00   1150.51     57.85     17.00
   VN1468               0.00   1327.80    126.87      0.17
@@ -30656,7 +30658,7 @@
   TN330                0.19   1148.38     50.00      3.74
   IN331                0.00   1148.40     48.70      3.02
   TN332                0.19   1148.38     48.69     16.69
-  TN333                0.19   1148.37     49.13      3.20
+  TN333                0.19   1148.37     49.12      3.20
   TN334                0.19   1148.38     48.26     17.97
   TN335                0.00   1148.40     48.27     17.34
   IN336                0.00   1148.39     47.40      2.31
@@ -30843,7 +30845,7 @@
   TN598                0.37   1149.03     48.11      0.99
   TN599                0.19   1149.06     48.56      4.99
   TN601                0.19   1149.04     51.15      8.86
-  TN603                1.13   1148.63     50.10      0.67
+  TN603                1.12   1148.63     50.10      0.67
   TN605                0.19   1149.01     48.97      0.97
   TN607                0.00   1149.05     48.12      5.05
   TN609                0.38   1149.00     51.13      0.78
@@ -31280,11 +31282,11 @@
   IN1154               0.00   1149.05     44.65     18.00
   IN1155               0.00   1149.05     44.22     18.00
   IN1156               0.00   1149.05     40.75     18.00
-  VN1157               0.00   1149.05     40.75     16.34
-  VN1158               0.00   1149.05     40.75     14.72
+  VN1157               0.00   1149.05     40.75     18.00
+  VN1158               0.00   1149.05     40.75     17.88
   IN1159               0.00   1149.05     41.18     18.00
   VN1160               0.00   1149.05     41.62     18.00
-  VN1161               0.00   1149.05     41.62     15.92
+  VN1161               0.00   1149.05     41.62     17.88
   IN1162               0.00   1149.05     42.05     18.00
   IN1163               0.00   1149.05     42.92     18.00
   VN1164               0.00   1149.05     43.35     13.26
@@ -31303,12 +31305,12 @@
   VN1178               0.00   1148.94     42.44      1.81
   IN1179               0.00   1148.94     42.00      1.94
   VN1180               0.00   1148.94     41.57     18.00
-  VN1181               0.00   1149.13     42.95     11.82
+  VN1181               0.00   1149.13     42.95      5.19
   VN1182               0.00   1149.13     42.52     18.00
-  VN1183               0.00   1149.13     42.52     14.02
+  VN1183               0.00   1149.13     42.52     17.88
   IN1184               0.00   1149.13     42.09     18.00
   VN1185               0.00   1149.13     42.52     18.00
-  VN1186               0.00   1149.13     42.52     14.42
+  VN1186               0.00   1149.13     42.52     17.88
   IN1187               0.00   1149.13     42.52     18.00
   IN1188               0.00   1149.13     42.52     18.00
   IN1189               0.00   1149.13     42.52     16.76
@@ -31433,11 +31435,11 @@
   IN1312               0.00   1149.05     44.65     18.00
   IN1313               0.00   1149.05     44.22     18.00
   VN1314               0.00   1149.05     44.22     18.00
-  VN1315               0.00   1149.05     44.22     18.00
+  VN1315               0.00   1149.05     44.22     17.32
   IN1316               0.00   1149.05     43.35     18.00
-  VN1317               0.00   1149.07     48.13     16.82
+  VN1317               0.00   1149.07     48.13     17.79
   IN1318               0.00   1149.07     48.13     18.00
-  VN1319               0.00   1149.05     49.42     17.58
+  VN1319               0.00   1149.05     49.42      7.21
   IN1320               0.00   1149.05     49.42     18.00
   IN1321               0.00   1147.46     46.56      0.30
   VN1322               0.00   1147.56     46.61      0.32
@@ -31533,7 +31535,7 @@
   VN1413               0.00   1149.05     55.92     10.23
   VN1414               0.00   1149.05     57.22     10.36
   VN1415               0.00   1149.05     57.22     10.36
-  VN1416               0.00   1148.94     41.57     14.62
+  VN1416               0.00   1148.94     41.57     11.32
   IN1417               0.00   1148.94     41.14     18.00
   IN1418               0.00   1149.13     42.95     18.00
   VN1419               0.00   1149.13     42.95     18.00
@@ -31564,24 +31566,24 @@
   VN1445               0.00   1149.05     50.28      3.71
   VN1446               0.00   1149.05     50.28      3.71
   VN1447               0.00   1149.25     52.97     18.00
-  VN1448               0.00   1149.25     52.97     17.98
+  VN1448               0.00   1149.25     52.97     17.88
   VN1449               0.00   1149.25     54.71     18.00
   VN1450               0.00   1149.25     54.71     17.88
   IN1451               0.00   1149.25     56.01     18.00
   VN1452               0.00   1149.25     56.01     18.00
-  VN1453               0.00   1149.25     56.01     17.98
+  VN1453               0.00   1149.25     56.01     17.88
   VN1454               0.00   1149.25     57.31     18.00
   VN1455               0.00   1149.25     57.31     17.88
   IN1456               0.00   1149.25     57.31     18.00
   VN1457               0.00   1149.25     57.74     18.00
-  VN1458               0.00   1149.25     57.74      7.52
+  VN1458               0.00   1149.25     57.74     17.88
   VN1459               0.00   1149.25     58.17     18.00
-  VN1460               0.00   1149.25     58.17      7.02
+  VN1460               0.00   1149.25     58.17     17.98
   IN1461               0.00   1149.25     58.61     18.00
   VN1462               0.00   1149.25     58.17     18.00
-  VN1463               0.00   1149.25     58.17      8.54
+  VN1463               0.00   1149.25     58.17     17.88
   VN1464               0.00   1149.25     57.31     18.00
-  VN1465               0.00   1149.25     57.31     16.52
+  VN1465               0.00   1149.25     57.31     16.72
   IN1466               0.00   1149.25     57.31     18.00
   IN1467               0.00   1149.25     57.31     18.00
   VN1468               0.00   1148.48     49.17      0.07
@@ -31924,7 +31926,7 @@
   TN1762               0.17   1148.41     53.04      2.91
   TN1763               0.00   1148.47     53.50     11.14
   TN1764               0.33   1148.44     54.36      3.05
-  TN1765               0.50   1148.44     53.92      3.05
+  TN1765               0.50   1148.43     53.92      3.05
   TN1766               0.17   1148.46     54.36      3.09
   TN1767               0.17   1148.52     54.39      6.89
   TN1768               0.33   1148.49     55.24      4.34
@@ -31996,7 +31998,7 @@
   TN1834               0.83   1148.41     52.17     17.99
   Aquifer              0.00    930.00      0.00      0.00  Reservoir
   SurfaceResrvr        0.00   1030.00      0.00      0.00  Reservoir
-  Tank              -690.16   1150.08     47.70     17.76  Tank
+  Tank              -690.15   1150.08     47.70     17.76  Tank
    
    
   Node Results at 19:00:00 hrs:
@@ -32480,7 +32482,7 @@
   TN697                0.17   1152.75     44.09     19.00
   TN699                0.51   1152.72     44.07     19.00
   TN701                0.51   1152.72     44.07     19.00
-  TN703                0.51   1152.71     44.50      7.41
+  TN703                0.51   1152.71     44.50      7.40
   TN705                0.51   1152.73     44.51      2.66
   TN707                0.34   1152.73     44.95      3.92
   TN709                0.51   1152.71     47.54      3.36
@@ -32497,7 +32499,7 @@
   TN729                0.51   1152.28     54.72      1.33
   TN731                0.51   1152.10     54.64      1.39
   TN733                0.51   1151.95     55.01     12.53
-  TN735                0.68   1151.76     54.92      1.47
+  TN735                0.68   1151.75     54.92      1.47
   TN737                0.68   1151.54     54.83      1.50
   TN739                0.68   1151.27     55.58      1.57
   TN741                0.17   1151.17     54.67      1.62
@@ -32636,7 +32638,7 @@
   VN913                0.00   1152.63     55.30      0.86
   IN914                0.00   1152.67     55.32      0.86
   IN915                0.00   1153.10     55.50      0.80
-  IN916                0.00   1153.34     55.61      1.06
+  IN916                0.00   1153.33     55.61      1.06
   IN917                0.00   1153.23     54.70      2.51
   VN918                0.00   1153.23     54.69      2.46
   VN919                0.00   1153.23     54.69      2.46
@@ -32864,11 +32866,11 @@
   IN1154               0.00   1154.72     47.11     18.87
   IN1155               0.00   1154.72     46.68     19.00
   IN1156               0.00   1154.17     42.97     19.00
-  VN1157               0.00   1154.17     42.97     18.99
-  VN1158               0.00   1154.17     42.97     18.98
+  VN1157               0.00   1154.17     42.97     19.00
+  VN1158               0.00   1154.17     42.97     18.88
   IN1159               0.00   1154.17     43.40     19.00
   VN1160               0.00   1154.17     43.84     19.00
-  VN1161               0.00   1154.17     43.84     15.92
+  VN1161               0.00   1154.17     43.84     18.88
   IN1162               0.00   1154.17     44.27     19.00
   IN1163               0.00   1154.17     45.14     19.00
   VN1164               0.00   1154.17     45.57     12.61
@@ -32887,9 +32889,9 @@
   VN1178               0.00   1153.24     44.30      2.41
   IN1179               0.00   1153.24     43.87      2.43
   VN1180               0.00   1153.24     43.43     19.00
-  VN1181               0.00   1152.76     44.53     11.82
+  VN1181               0.00   1152.76     44.53      5.19
   VN1182               0.00   1152.76     44.09     19.00
-  VN1183               0.00   1152.76     44.09     14.02
+  VN1183               0.00   1152.76     44.09     18.88
   IN1184               0.00   1152.76     43.66     19.00
   VN1185               0.00   1152.76     44.09     19.00
   VN1186               0.00   1152.76     44.09     19.00
@@ -33004,8 +33006,8 @@
   IN1297               0.00   1157.77     53.20     16.31
   VN1298               0.00   1157.77     53.20     19.00
   VN1299               0.00   1155.03     52.88      5.92
-  VN1300               0.00   1155.03     52.01     11.65
-  VN1301               0.00   1155.03     52.01     11.65
+  VN1300               0.00   1155.03     52.01     11.64
+  VN1301               0.00   1155.03     52.01     11.64
   IN1303               0.00   1155.03     51.14     19.00
   VN1305               0.00   1155.03     50.71     19.00
   VN1306               0.00   1154.83     50.19     19.00
@@ -33017,11 +33019,11 @@
   IN1312               0.00   1154.83     47.15     19.00
   IN1313               0.00   1154.83     46.72     19.00
   VN1314               0.00   1154.83     46.72     19.00
-  VN1315               0.00   1154.83     46.72     19.00
+  VN1315               0.00   1154.83     46.72     17.32
   IN1316               0.00   1154.83     45.85     19.00
-  VN1317               0.00   1155.03     50.71     16.84
+  VN1317               0.00   1155.03     50.71     18.64
   IN1318               0.00   1155.03     50.71     19.00
-  VN1319               0.00   1157.77     53.20     18.08
+  VN1319               0.00   1157.77     53.20      7.21
   IN1320               0.00   1157.77     53.20     19.00
   IN1321               0.00   1155.40     50.00      0.50
   VN1322               0.00   1154.92     49.79      0.55
@@ -33117,7 +33119,7 @@
   VN1413               0.00   1150.53     56.56     12.50
   VN1414               0.00   1150.52     57.86     11.25
   VN1415               0.00   1150.52     57.86     11.25
-  VN1416               0.00   1153.24     43.43     14.62
+  VN1416               0.00   1153.24     43.43     11.32
   IN1417               0.00   1153.24     43.00     19.00
   IN1418               0.00   1152.76     44.53     19.00
   VN1419               0.00   1152.76     44.53     19.00
@@ -33148,7 +33150,7 @@
   VN1445               0.00   1150.52     50.92      3.51
   VN1446               0.00   1150.52     50.92      3.51
   VN1447               0.00   1150.75     53.62     19.00
-  VN1448               0.00   1150.75     53.62     18.98
+  VN1448               0.00   1150.75     53.62     18.88
   VN1449               0.00   1150.75     55.35     19.00
   VN1450               0.00   1150.75     55.35     18.88
   IN1451               0.00   1150.75     56.65     19.00
@@ -33158,14 +33160,14 @@
   VN1455               0.00   1150.75     57.95     18.88
   IN1456               0.00   1150.75     57.95     19.00
   VN1457               0.00   1150.75     58.39     19.00
-  VN1458               0.00   1150.75     58.39     18.91
+  VN1458               0.00   1150.75     58.39     18.88
   VN1459               0.00   1150.75     58.82     19.00
-  VN1460               0.00   1150.75     58.82     18.12
+  VN1460               0.00   1150.75     58.82     18.88
   IN1461               0.00   1150.75     59.25     19.00
   VN1462               0.00   1150.75     58.82     19.00
-  VN1463               0.00   1150.75     58.82     18.42
+  VN1463               0.00   1150.75     58.82     18.88
   VN1464               0.00   1150.75     57.95     19.00
-  VN1465               0.00   1150.75     57.95     16.52
+  VN1465               0.00   1150.75     57.95     16.72
   IN1466               0.00   1150.75     57.95     19.00
   IN1467               0.00   1150.75     57.95     19.00
   VN1468               0.00   1327.71    126.83      0.17
@@ -33220,7 +33222,7 @@
   IN1512               0.00   1151.24     54.05      1.66
   HY28                 0.00   1152.13     55.08      0.00
   IN1513               0.00   1152.13     55.08      1.07
-  HY29                 0.00   1153.34     55.61      0.00
+  HY29                 0.00   1153.33     55.61      0.00
   HY31                 0.00   1153.25     46.90      0.00
   IN1514               0.00   1153.24     44.73      1.85
   HY33                 0.00   1153.24     43.00      0.00
@@ -33613,8 +33615,8 @@
   TN31                 0.38   1150.58     51.82      5.90
   TN33                 0.38   1150.57     50.08      5.90
   IN34                 0.00   1150.61     49.66      5.96
-  TN35                 0.13   1150.60     49.66      6.00
-  TN37                 0.13   1150.60     49.22      6.00
+  TN35                 0.12   1150.60     49.66      6.00
+  TN37                 0.12   1150.60     49.22      6.00
   TN39                 0.06   1150.60     49.22     15.79
   TN41                 0.12   1150.59     49.22     20.00
   TN43                 0.62   1150.56     49.20     16.02
@@ -33622,7 +33624,7 @@
   TN45                 0.25   1150.58     49.22     16.02
   TN47                 0.50   1150.57     49.21     16.39
   TN49                 0.00   1150.62     49.66     20.00
-  TN51                 0.13   1150.62     49.67     17.93
+  TN51                 0.12   1150.62     49.67     17.93
   IN52                 0.00   1150.64     50.11     17.01
   TN53                 0.38   1150.60     50.09     17.92
   TN55                 0.38   1150.62     50.97     19.18
@@ -33636,7 +33638,7 @@
   TN67                 0.25   1150.60     49.22     16.39
   IN68                 0.00   1150.63     49.67     16.50
   TN69                 0.00   1150.63     49.67     20.00
-  TN71                 0.13   1150.63     49.67     17.94
+  TN71                 0.12   1150.63     49.67     17.94
   IN72                 0.00   1150.65     50.11     18.22
   TN73                 0.50   1150.61     50.09     18.59
   IN74                 0.00   1150.66     50.98     18.92
@@ -33652,12 +33654,12 @@
   IN90                 0.00   1150.72     56.64     19.10
   TN91                 0.00   1150.72     56.64     20.00
   TN93                 0.13   1150.71     55.77     19.10
-  TN95                 0.13   1150.71     57.07     19.10
-  TN97                 0.13   1150.74     57.52     18.53
+  TN95                 0.12   1150.71     57.07     19.10
+  TN97                 0.12   1150.74     57.52     18.53
   IN98                 0.00   1150.75     57.52     18.53
   TN99                 0.00   1150.75     57.95     17.46
   TN101                0.50   1150.71     57.50     18.40
-  TN103                0.13   1150.74     57.95     18.53
+  TN103                0.12   1150.74     57.95     18.53
   IN104                0.00   1150.79     58.40     16.59
   TN105                0.25   1150.77     58.40     16.19
   TN107                0.12   1150.78     58.40     16.39
@@ -33668,7 +33670,7 @@
   TN115                0.50   1150.57     49.21      6.07
   TN117                0.25   1150.59     49.65      6.07
   IN118                0.00   1150.61     48.79     19.78
-  TN119                0.50   1150.57     48.77     19.33
+  TN119                0.50   1150.57     48.77     19.32
   IN120                0.00   1150.61     49.23     17.83
   TN121                0.12   1150.60     49.22     19.70
   IN122                0.00   1150.61     48.79     16.67
@@ -33682,9 +33684,9 @@
   TN137                0.50   1150.77     53.63     16.13
   TN139                0.25   1150.79     53.21     15.90
   IN140                0.00   1150.79     52.34     17.65
-  TN141                0.13   1150.78     52.77     20.00
+  TN141                0.12   1150.78     52.77     20.00
   TN143                0.12   1150.78     52.33     16.61
-  TN145                0.13   1150.78     50.17     17.01
+  TN145                0.12   1150.78     50.17     17.01
   TN147                0.00   1150.75     49.72     19.99
   TN149                0.38   1150.70     51.87     19.23
   IN150                0.00   1150.75     49.72     19.75
@@ -33692,9 +33694,9 @@
   IN152                0.00   1150.71     48.84     19.99
   TN153                0.62   1150.63     48.80     19.97
   TN155                0.50   1150.65     48.81     19.97
-  TN157                0.13   1150.69     48.40     19.99
+  TN157                0.12   1150.69     48.40     19.99
   TN159                0.12   1150.74     49.28     19.21
-  TN161                0.13   1150.69     48.40     19.95
+  TN161                0.12   1150.69     48.40     19.95
   IN162                0.00   1150.70     47.96      4.62
   TN163                0.38   1150.65     47.94      4.53
   IN164                0.00   1150.71     48.40      4.52
@@ -33725,9 +33727,9 @@
   TN195                0.25   1156.20     50.35      0.73
   TN197                0.38   1154.90     49.79      1.08
   TN199                0.38   1154.89     49.78      1.07
-  TN201                0.13   1153.86     49.33      2.04
+  TN201                0.12   1153.86     49.33      2.04
   TN203                0.38   1151.96     48.51      1.09
-  TN205                0.13   1152.07     48.56      1.07
+  TN205                0.12   1152.07     48.56      1.07
   TN207                0.37   1151.96     48.51      1.10
   TN209                0.38   1151.96     48.51      1.10
   TN211                0.25   1151.76     48.43      1.28
@@ -33741,7 +33743,7 @@
   TN226                0.12   1151.49     50.04      2.80
   TN227                0.75   1151.39     50.43      2.84
   TN228                0.38   1151.47     50.47      2.84
-  TN230                0.13   1151.57     49.64      2.73
+  TN230                0.12   1151.57     49.64      2.73
   TN232                0.38   1151.36     51.28      2.96
   TN234                0.62   1151.33     51.70      2.96
   TN236                0.62   1151.32     52.13      2.96
@@ -33749,8 +33751,8 @@
   TN239                0.37   1151.24     52.53      3.41
   TN240                0.38   1151.24     53.40      3.41
   TN242                0.12   1151.18     54.24      3.49
-  TN243                0.13   1151.18     54.67      3.57
-  TN244                0.13   1151.18     55.11      3.48
+  TN243                0.12   1151.18     54.67      3.57
+  TN244                0.12   1151.18     55.11      3.48
   TN245                0.25   1152.00     48.09      1.54
   IN246                0.00   1152.02     48.10      1.58
   TN247                0.12   1152.01     48.10     13.60
@@ -33759,7 +33761,7 @@
   IN250                0.00   1151.86     48.47      1.71
   TN251                0.25   1151.83     48.46      1.64
   TN252                0.38   1151.83     48.45      1.65
-  TN253                0.13   1151.85     48.46      1.71
+  TN253                0.12   1151.85     48.46      1.71
   TN254                0.12   1151.85     48.47     13.73
   IN255                0.00   1151.70     48.84      1.92
   TN256                0.38   1151.67     48.82      1.88
@@ -33768,8 +33770,8 @@
   TN259                0.37   1151.67     48.82      1.88
   TN261                0.25   1151.53     51.36      2.12
   TN262                0.25   1151.54     50.06      2.14
-  TN263                0.13   1151.55     49.63      2.17
-  TN264                0.13   1151.55     50.07      2.21
+  TN263                0.12   1151.55     49.63      2.17
+  TN264                0.12   1151.55     50.07      2.21
   IN265                0.00   1151.42     52.18      2.47
   TN266                0.52   1151.38     52.59      2.40
   TN267                0.50   1151.37     52.16      2.40
@@ -33796,12 +33798,12 @@
   TN300                0.50   1151.04     57.21      8.84
   TN302                0.12   1151.24     54.70      8.11
   TN303                0.25   1151.23     55.13      3.71
-  TN304                0.13   1151.24     54.70      3.76
+  TN304                0.12   1151.24     54.70      3.76
   TN305                0.25   1151.23     54.26      3.71
   TN307                0.38   1151.20     54.68      5.38
   TN308                0.62   1151.17     55.54      5.60
   TN309                0.25   1151.22     55.56      5.60
-  TN310                0.13   1151.23     54.69      5.69
+  TN310                0.12   1151.23     54.69      5.69
   IN311                0.00   1151.28     53.85      7.40
   TN312                0.75   1151.16     53.80      7.46
   TN313                0.38   1151.24     54.27      7.46
@@ -33814,13 +33816,13 @@
   TN320                0.25   1151.25     53.41      9.11
   IN321                0.00   1151.29     52.99      7.01
   TN322                0.25   1151.26     52.98      6.66
-  TN323                0.13   1151.28     52.98      6.65
+  TN323                0.12   1151.28     52.98      6.65
   TN324                0.50   1151.25     52.54      6.69
   TN325                0.50   1151.25     52.54      6.69
   IN326                0.00   1151.30     51.69      5.52
   TN327                0.50   1151.25     51.67      5.33
   TN328                0.50   1151.24     52.10      5.33
-  TN329                0.13   1151.29     51.25      5.36
+  TN329                0.12   1151.29     51.25      5.36
   TN330                0.25   1151.27     51.25      5.33
   IN331                0.00   1151.31     49.96      4.46
   TN332                0.12   1151.29     49.96      4.46
@@ -33844,8 +33846,8 @@
   IN350                0.00   1151.34     46.51      1.72
   TN351                0.50   1151.28     46.49      1.65
   IN352                0.00   1151.34     46.08      5.43
-  TN353                0.13   1151.33     46.07      5.41
-  TN354                0.13   1151.32     46.07     20.00
+  TN353                0.12   1151.33     46.07      5.41
+  TN354                0.12   1151.32     46.07     20.00
   IN355                0.00   1151.33     46.51      6.08
   TN356                0.25   1151.30     46.49      5.85
   TN357                0.12   1151.31     46.50      6.08
@@ -33857,7 +33859,7 @@
   TN363                0.25   1151.28     49.95      7.31
   IN364                0.00   1151.31     51.26      7.82
   TN365                0.38   1151.27     51.25      7.80
-  TN366                0.13   1151.29     51.69      7.83
+  TN366                0.12   1151.29     51.69      7.83
   IN367                0.00   1151.30     52.56      8.53
   TN368                0.25   1151.27     52.11      8.45
   TN369                0.12   1151.29     52.99      8.54
@@ -33891,14 +33893,14 @@
   TN416                0.12   1150.95     52.41      2.65
   IN417                0.00   1150.93     51.10      2.67
   TN418                0.25   1150.90     49.79      2.68
-  TN420                0.13   1150.91     49.79      2.82
+  TN420                0.12   1150.91     49.79      2.82
   TN422                0.63   1150.84     49.76      2.78
   IN423                0.00   1150.90     50.22      2.76
-  TN424                0.13   1150.89     49.78      2.86
+  TN424                0.12   1150.89     49.78      2.86
   TN426                0.50   1150.83     49.76      2.84
   IN427                0.00   1150.88     50.21      2.82
   TN428                0.12   1150.87     49.77      2.93
-  TN430                0.13   1150.84     51.06      3.00
+  TN430                0.12   1150.84     51.06      3.00
   IN431                0.00   1150.86     51.07      2.89
   TN432                0.37   1150.82     51.48      2.91
   TN434                0.50   1150.80     51.91      3.17
@@ -33914,7 +33916,7 @@
   TN448                0.50   1150.80     58.84      5.35
   IN449                0.00   1150.85     57.56      4.80
   TN450                0.50   1150.80     58.41      4.80
-  TN452                0.13   1150.83     57.56      4.80
+  TN452                0.12   1150.83     57.56      4.80
   TN454                0.62   1150.78     56.67      4.45
   IN455                0.00   1150.85     55.83      4.30
   TN456                0.25   1150.82     55.82      4.46
@@ -33971,8 +33973,8 @@
   TN528                0.38   1180.58     65.68      0.84
   TN530                0.12   1162.87     57.14      1.77
   TN532                0.25   1150.00     51.13      1.04
-  TN534                0.13   1149.99     48.96      2.15
-  TN536                0.13   1209.66     78.71      1.53
+  TN534                0.12   1149.99     48.96      2.15
+  TN536                0.12   1209.66     78.71      1.53
   TN537                0.12   1209.66     79.15      1.68
   TN539                0.25   1180.45     65.19      0.99
   TN540                0.38   1180.45     66.06      0.97
@@ -33989,12 +33991,12 @@
   TN559                0.63   1154.63     53.57      0.57
   TN561                0.00   1154.73     54.91     13.16
   TN562                0.25   1154.69     51.86      1.20
-  TN564                0.13   1154.70     52.73      1.07
+  TN564                0.12   1154.70     52.73      1.07
   TN565                0.00   1154.73     53.61      6.74
   TN566                0.00   1154.73     54.91      6.61
   TN568                0.38   1155.94     54.57      0.37
   TN569                0.50   1155.93     54.56      0.37
-  TN571                0.13   1155.58     54.85      0.86
+  TN571                0.12   1155.58     54.85      0.86
   TN573                0.25   1155.80     54.51      0.62
   TN575                0.12   1155.58     53.98      0.73
   TN577                0.37   1153.77     47.13      1.14
@@ -34005,11 +34007,11 @@
   TN587                0.38   1153.86     48.90      1.02
   TN589                0.00   1153.95     49.81     15.50
   TN591                0.12   1154.64     50.11     16.24
-  TN593                0.13   1154.67     50.98      1.16
+  TN593                0.12   1154.67     50.98      1.16
   TN595                0.38   1154.66     51.85      0.92
-  TN596                0.13   1154.64     49.24      1.31
+  TN596                0.12   1154.64     49.24      1.31
   TN598                0.37   1154.64     50.54      0.97
-  TN599                0.13   1154.69     51.00      0.97
+  TN599                0.12   1154.69     51.00      0.97
   TN601                0.12   1155.38     53.89      0.86
   TN603                0.75   1155.16     52.93      0.72
   TN605                0.38   1155.16     51.63      0.91
@@ -34030,8 +34032,8 @@
   TN634                0.50   1155.30     48.23     20.00
   TN636                0.50   1155.30     51.26     20.00
   TN638                0.63   1155.49     51.78     20.00
-  TN640                0.12   1155.49     53.08     14.14
-  TN642                0.25   1158.24     52.97     15.42
+  TN640                0.12   1155.49     53.08     14.13
+  TN642                0.25   1158.24     52.97     15.41
   TN644                0.38   1158.24     54.27      8.60
   TN646                0.50   1158.24     53.40     15.62
   TN648                0.00   1158.24     54.27     20.00
@@ -34050,7 +34052,7 @@
   TN670                0.38   1325.73    128.14      0.87
   TN672                0.25   1325.39    127.99      1.09
   TN674                0.50   1325.10    127.87      0.90
-  TN676                0.13   1324.81    128.18      1.29
+  TN676                0.12   1324.81    128.18      1.29
   TN678                0.12   1267.50    102.91      6.82
   TN679                0.25   1325.73    127.71      2.85
   TN681                0.00   1326.59    127.64      7.37
@@ -34068,7 +34070,7 @@
   TN705                0.38   1153.14     44.69      1.60
   TN707                0.25   1153.14     45.12      2.04
   TN709                0.38   1153.13     47.72      3.73
-  TN711                0.38   1153.13     48.58      4.85
+  TN711                0.38   1153.12     48.58      4.85
   TN713                0.25   1153.75     45.39      2.27
   TN715                0.38   1153.74     46.68      1.76
   TN717                0.38   1153.12     49.01      2.66
@@ -34090,7 +34092,7 @@
   TN747                0.12   1154.63     43.60     20.00
   TN749                0.12   1154.62     44.47     20.00
   TN751                0.12   1154.63     45.34     20.00
-  TN753                0.13   1154.63     47.94      6.56
+  TN753                0.12   1154.63     47.94      6.56
   TN755                0.00   1155.20     49.05     16.40
   TN757                0.37   1155.15     49.89      1.25
   TN759                0.12   1155.18     48.61     20.00
@@ -34103,7 +34105,7 @@
   TN773                0.37   1155.24     46.90     20.00
   TN775                0.38   1155.22     46.89     20.00
   TN777                0.38   1155.23     50.36      2.40
-  TN779                0.13   1155.29     45.62     20.00
+  TN779                0.12   1155.29     45.62     20.00
   TN781                0.25   1155.17     45.57     20.00
   TN783                0.25   1155.16     44.70     20.00
   TN785                0.38   1155.13     44.25     20.00
@@ -34197,7 +34199,7 @@
   VN888                0.00   1216.09     81.93      0.35
   VN889                0.00   1216.09     81.93      0.35
   IN890                0.00   1209.66     78.71      0.37
-  IN891                0.00   1180.46     65.19      0.37
+  IN891                0.00   1180.45     65.19      0.37
   IN892                0.00   1155.99     54.59      0.37
   IN893                0.00   1154.73     54.91      0.90
   VN894                0.00   1158.51     56.98      0.86
@@ -34423,7 +34425,7 @@
   IN1127               0.00   1324.82    128.18      0.31
   VN1129               0.00   1153.16     49.47      1.01
   VN1130               0.00   1153.96     49.81      0.95
-  VN1131               0.00   1155.50     53.08      4.99
+  VN1131               0.00   1155.50     53.08      4.98
   VN1132               0.00   1153.16     46.00      1.41
   VN1133               0.00   1153.82     47.15      1.35
   VN1134               0.00   1153.82     47.15      1.35
@@ -34448,11 +34450,11 @@
   IN1154               0.00   1155.20     47.32     16.27
   IN1155               0.00   1155.20     46.88     20.00
   IN1156               0.00   1154.65     43.18     20.00
-  VN1157               0.00   1154.65     43.18     19.49
-  VN1158               0.00   1154.65     43.18     19.02
+  VN1157               0.00   1154.65     43.18     20.00
+  VN1158               0.00   1154.65     43.18     19.98
   IN1159               0.00   1154.65     43.61     20.00
   VN1160               0.00   1154.65     44.04     20.00
-  VN1161               0.00   1154.65     44.04     15.92
+  VN1161               0.00   1154.65     44.04     19.98
   IN1162               0.00   1154.65     44.48     20.00
   IN1163               0.00   1154.65     45.34     20.00
   VN1164               0.00   1154.65     45.78     13.08
@@ -34471,9 +34473,9 @@
   VN1178               0.00   1153.78     44.53      2.70
   IN1179               0.00   1153.78     44.10      3.10
   VN1180               0.00   1153.78     43.67     20.00
-  VN1181               0.00   1153.16     44.70     11.82
+  VN1181               0.00   1153.16     44.70      5.19
   VN1182               0.00   1153.16     44.27     20.00
-  VN1183               0.00   1153.16     44.27     14.02
+  VN1183               0.00   1153.16     44.27     19.88
   IN1184               0.00   1153.16     43.83     20.00
   VN1185               0.00   1153.16     44.27     20.00
   VN1186               0.00   1153.16     44.27     20.00
@@ -34537,7 +34539,7 @@
   VN1244               0.00   1153.16     49.47      1.01
   VN1245               0.00   1153.16     44.70      1.45
   VN1246               0.00   1153.16     44.70      1.45
-  VN1247               0.00   1153.16     46.00      0.00
+  VN1247               0.00   1153.16     46.00      1.41
   VN1248               0.00   1155.30     51.26      0.73
   VN1249               0.00   1155.30     51.26      2.04
   VN1250               0.00   1155.30     51.26      2.04
@@ -34587,7 +34589,7 @@
   IN1296               0.00   1158.24     53.40     14.27
   IN1297               0.00   1158.24     53.40     15.23
   VN1298               0.00   1158.24     53.40     20.00
-  VN1299               0.00   1155.50     53.08      4.99
+  VN1299               0.00   1155.50     53.08      4.98
   VN1300               0.00   1155.50     52.21     11.07
   VN1301               0.00   1155.50     52.21     11.07
   IN1303               0.00   1155.50     51.34     20.00
@@ -34601,11 +34603,11 @@
   IN1312               0.00   1155.30     47.36     20.00
   IN1313               0.00   1155.30     46.93     20.00
   VN1314               0.00   1155.30     46.93     20.00
-  VN1315               0.00   1155.30     46.93     20.00
+  VN1315               0.00   1155.30     46.93     17.32
   IN1316               0.00   1155.30     46.06     20.00
-  VN1317               0.00   1155.50     50.91     16.85
+  VN1317               0.00   1155.50     50.91     19.14
   IN1318               0.00   1155.50     50.91     20.00
-  VN1319               0.00   1158.24     53.40     18.58
+  VN1319               0.00   1158.24     53.40     19.22
   IN1320               0.00   1158.24     53.40     20.00
   IN1321               0.00   1156.80     50.61      0.70
   VN1322               0.00   1156.22     50.36      0.82
@@ -34701,7 +34703,7 @@
   VN1413               0.00   1150.82     56.69     14.55
   VN1414               0.00   1150.81     57.98     12.04
   VN1415               0.00   1150.81     57.98     12.04
-  VN1416               0.00   1153.78     43.67     14.62
+  VN1416               0.00   1153.78     43.67     11.32
   IN1417               0.00   1153.78     43.23     20.00
   IN1418               0.00   1153.16     44.70     20.00
   VN1419               0.00   1153.16     44.70     20.00
@@ -34732,24 +34734,24 @@
   VN1445               0.00   1150.83     51.06      3.03
   VN1446               0.00   1150.83     51.06      3.03
   VN1447               0.00   1151.00     53.73     20.00
-  VN1448               0.00   1151.00     53.73     19.89
+  VN1448               0.00   1151.00     53.73     19.88
   VN1449               0.00   1151.00     55.46     20.00
-  VN1450               0.00   1151.00     55.46     19.98
+  VN1450               0.00   1151.00     55.46     19.88
   IN1451               0.00   1151.00     56.76     20.00
   VN1452               0.00   1151.00     56.76     20.00
-  VN1453               0.00   1151.00     56.76     19.98
+  VN1453               0.00   1151.00     56.76     19.88
   VN1454               0.00   1151.00     58.06     20.00
-  VN1455               0.00   1151.00     58.06     19.88
+  VN1455               0.00   1151.00     58.06     19.98
   IN1456               0.00   1151.00     58.06     20.00
   VN1457               0.00   1151.00     58.50     20.00
-  VN1458               0.00   1151.00     58.50     18.92
+  VN1458               0.00   1151.00     58.50     19.88
   VN1459               0.00   1151.00     58.93     20.00
-  VN1460               0.00   1151.00     58.93     18.12
+  VN1460               0.00   1151.00     58.93     19.88
   IN1461               0.00   1151.00     59.36     20.00
   VN1462               0.00   1151.00     58.93     20.00
-  VN1463               0.00   1151.00     58.93     18.42
+  VN1463               0.00   1151.00     58.93     19.98
   VN1464               0.00   1151.00     58.06     20.00
-  VN1465               0.00   1151.00     58.06     16.52
+  VN1465               0.00   1151.00     58.06     16.72
   IN1466               0.00   1151.00     58.06     20.00
   IN1467               0.00   1151.00     58.06     20.00
   VN1468               0.00   1328.02    126.97      0.17
@@ -34762,8 +34764,8 @@
   VN1478               0.00   1150.90     54.98     15.64
   VN1481               0.00   1150.90     54.98     14.01
   VN1482               0.00   1150.90     54.98     14.01
-  VN1483               0.00   1150.82     54.52     17.64
-  VN1484               0.00   1150.82     54.52     17.64
+  VN1483               0.00   1150.82     54.52     17.63
+  VN1484               0.00   1150.82     54.52     17.63
   VN1485               0.00   1150.82     55.82     19.98
   VN1486               0.00   1150.82     55.82     19.98
   IN1487               0.00   1150.83     55.82     19.98
@@ -34815,7 +34817,7 @@
   IN1517               0.00   1154.65     44.91     20.00
   HY37                 0.00   1154.71     51.87      0.00
   HY38                 0.00   1154.73     54.04      0.00
-  IN1518               0.00   1154.54     54.83     13.91
+  IN1518               0.00   1154.54     54.83     13.90
   HY40                 0.00   1154.54     54.83      0.00
   HY41                 0.00   1150.43     50.88      0.00
   HY42                 0.00   1150.49     48.74      0.00
@@ -35450,11 +35452,11 @@
   TN372                0.30   1151.48     53.94     10.34
   IN373                0.00   1151.51     53.95     12.05
   TN374                0.20   1151.49     53.94     11.47
-  TN375                0.40   1151.45     53.93     11.64
+  TN375                0.40   1151.45     53.93     11.63
   TN379               15.00   1156.91     48.92      1.11
   TN381                9.00   1157.15     49.46      0.77
   TN383                8.25   1157.21     50.79      0.71
-  TN385               10.13   1157.19     51.21      0.91
+  TN385               10.12   1157.19     51.21      0.91
   TN387                9.19   1157.08     49.00      0.91
   TN389                9.94   1157.04     49.41      0.72
   TN391               10.50   1157.04     50.28      0.77
@@ -35682,7 +35684,7 @@
   TN763                0.50   1155.32     47.37     15.33
   TN765                0.40   1155.32     46.93     21.00
   TN767                0.30   1155.45     50.46      1.65
-  TN769                0.10   1155.48     49.17      5.78
+  TN769                0.10   1155.47     49.17      5.78
   TN771                0.50   1155.42     48.28     14.86
   TN773                0.40   1155.42     46.98     21.00
   TN775                0.30   1155.42     46.98     21.00
@@ -36032,8 +36034,8 @@
   IN1154               0.00   1155.38     47.40     15.29
   IN1155               0.00   1155.38     46.96     21.00
   IN1156               0.00   1154.82     43.25     21.00
-  VN1157               0.00   1154.82     43.25     19.99
-  VN1158               0.00   1154.82     43.25     19.04
+  VN1157               0.00   1154.82     43.25     21.00
+  VN1158               0.00   1154.82     43.25     20.88
   IN1159               0.00   1154.82     43.69     21.00
   VN1160               0.00   1154.82     44.12     21.00
   VN1161               0.00   1154.82     44.12     21.00
@@ -36055,9 +36057,9 @@
   VN1178               0.00   1153.97     44.62      3.61
   IN1179               0.00   1153.97     44.18      3.87
   VN1180               0.00   1153.97     43.75     21.00
-  VN1181               0.00   1153.30     44.76     11.84
+  VN1181               0.00   1153.30     44.76      5.21
   VN1182               0.00   1153.30     44.33     21.00
-  VN1183               0.00   1153.30     44.33     14.04
+  VN1183               0.00   1153.30     44.33     20.88
   IN1184               0.00   1153.30     43.89     21.00
   VN1185               0.00   1153.30     44.33     21.00
   VN1186               0.00   1153.30     44.33     21.00
@@ -36185,11 +36187,11 @@
   IN1312               0.00   1155.49     47.44     21.00
   IN1313               0.00   1155.49     47.01     21.00
   VN1314               0.00   1155.49     47.01     21.00
-  VN1315               0.00   1155.49     47.01     21.00
+  VN1315               0.00   1155.49     47.01     17.34
   IN1316               0.00   1155.49     46.14     21.00
-  VN1317               0.00   1155.67     50.99     16.90
+  VN1317               0.00   1155.67     50.99     19.64
   IN1318               0.00   1155.67     50.99     21.00
-  VN1319               0.00   1158.42     53.48     19.08
+  VN1319               0.00   1158.42     53.48     19.24
   IN1320               0.00   1158.42     53.48     21.00
   IN1321               0.00   1157.54     50.93      1.23
   VN1322               0.00   1156.90     50.65      1.58
@@ -36285,7 +36287,7 @@
   VN1413               0.00   1150.92     56.73     19.60
   VN1414               0.00   1150.91     58.02     13.10
   VN1415               0.00   1150.91     58.02     13.10
-  VN1416               0.00   1153.97     43.75     20.97
+  VN1416               0.00   1153.97     43.75     11.34
   IN1417               0.00   1153.97     43.32     21.00
   IN1418               0.00   1153.30     44.76     21.00
   VN1419               0.00   1153.30     44.76     21.00
@@ -36316,24 +36318,24 @@
   VN1445               0.00   1150.93     51.10      3.08
   VN1446               0.00   1150.93     51.10      3.08
   VN1447               0.00   1151.08     53.76     21.00
-  VN1448               0.00   1151.08     53.76     20.90
+  VN1448               0.00   1151.08     53.76     20.88
   VN1449               0.00   1151.08     55.50     21.00
   VN1450               0.00   1151.08     55.50     20.88
   IN1451               0.00   1151.08     56.80     21.00
   VN1452               0.00   1151.08     56.80     21.00
-  VN1453               0.00   1151.08     56.80     20.88
+  VN1453               0.00   1151.08     56.80     20.97
   VN1454               0.00   1151.08     58.10     21.00
   VN1455               0.00   1151.08     58.10     20.88
   IN1456               0.00   1151.08     58.10     21.00
   VN1457               0.00   1151.08     58.53     21.00
-  VN1458               0.00   1151.08     58.53     18.94
+  VN1458               0.00   1151.08     58.53     20.97
   VN1459               0.00   1151.08     58.96     21.00
-  VN1460               0.00   1151.08     58.96     18.14
+  VN1460               0.00   1151.08     58.96     20.88
   IN1461               0.00   1151.08     59.40     21.00
   VN1462               0.00   1151.08     58.96     21.00
-  VN1463               0.00   1151.08     58.96     20.83
+  VN1463               0.00   1151.08     58.96     20.88
   VN1464               0.00   1151.08     58.10     21.00
-  VN1465               0.00   1151.08     58.10     16.54
+  VN1465               0.00   1151.08     58.10     16.74
   IN1466               0.00   1151.08     58.10     21.00
   IN1467               0.00   1151.08     58.10     21.00
   VN1468               0.00   1328.17    127.03      0.27
@@ -36592,7 +36594,7 @@
   IN1678               0.00   1151.13     56.38     13.46
   IN1679               0.00   1151.13     56.82     13.66
   IN1680               0.00   1152.31     48.23      1.68
-  IN1681               0.00   1152.13     48.59      1.79
+  IN1681               0.00   1152.13     48.58      1.79
   IN1682               0.00   1152.13     49.02      3.46
   IN1683               0.00   1151.97     50.25      3.63
   IN1684               0.00   1151.80     52.34      4.02
@@ -36969,7 +36971,7 @@
   TN307                0.44   1151.85     54.97      9.02
   TN308                0.35   1151.87     55.84      9.02
   TN309                0.00   1151.90     55.85      8.93
-  TN310                0.09   1151.90     54.98      9.38
+  TN310                0.09   1151.89     54.98      9.38
   IN311                0.00   1151.97     54.15     10.90
   TN312                0.52   1151.91     54.12     10.83
   TN313                0.26   1151.94     54.57     10.69
@@ -37035,7 +37037,7 @@
   IN373                0.00   1151.98     54.15     12.64
   TN374                0.09   1151.97     54.15     12.64
   TN375                0.35   1151.94     54.13     12.56
-  TN379               13.13   1157.95     49.38      1.17
+  TN379               13.12   1157.95     49.38      1.17
   TN381                7.38   1158.16     49.90      1.00
   TN383                7.71   1158.18     51.21      0.91
   TN385                8.86   1158.18     51.64      0.62
@@ -37198,7 +37200,7 @@
   TN634                0.52   1155.85     48.46     22.00
   TN636                0.44   1155.85     51.50     22.00
   TN638                0.44   1156.02     52.00     22.00
-  TN640                0.09   1156.02     53.31     14.57
+  TN640                0.09   1156.02     53.31     14.56
   TN642                0.44   1158.77     53.19     15.83
   TN644                0.26   1158.77     54.49      8.84
   TN646                0.44   1158.77     53.63     15.84
@@ -37616,8 +37618,8 @@
   IN1154               0.00   1155.74     47.55     15.69
   IN1155               0.00   1155.74     47.12     22.00
   IN1156               0.00   1155.17     43.40     22.00
-  VN1157               0.00   1155.17     43.40     20.49
-  VN1158               0.00   1155.17     43.40     19.02
+  VN1157               0.00   1155.17     43.40     22.00
+  VN1158               0.00   1155.17     43.40     21.98
   IN1159               0.00   1155.17     43.84     22.00
   VN1160               0.00   1155.17     44.27     22.00
   VN1161               0.00   1155.17     44.27     22.00
@@ -37639,9 +37641,9 @@
   VN1178               0.00   1154.31     44.76      3.65
   IN1179               0.00   1154.31     44.33      4.87
   VN1180               0.00   1154.31     43.90     22.00
-  VN1181               0.00   1153.64     44.91     11.82
+  VN1181               0.00   1153.64     44.91      5.20
   VN1182               0.00   1153.64     44.47     22.00
-  VN1183               0.00   1153.64     44.47     14.02
+  VN1183               0.00   1153.64     44.47     21.98
   IN1184               0.00   1153.64     44.04     22.00
   VN1185               0.00   1153.64     44.47     22.00
   VN1186               0.00   1153.64     44.47     22.00
@@ -37769,11 +37771,11 @@
   IN1312               0.00   1155.85     47.60     22.00
   IN1313               0.00   1155.85     47.16     22.00
   VN1314               0.00   1155.85     47.16     22.00
-  VN1315               0.00   1155.85     47.16     22.00
+  VN1315               0.00   1155.85     47.16     17.32
   IN1316               0.00   1155.85     46.30     22.00
-  VN1317               0.00   1156.02     51.14     21.87
+  VN1317               0.00   1156.02     51.14     20.14
   IN1318               0.00   1156.02     51.14     22.00
-  VN1319               0.00   1158.77     53.63     19.58
+  VN1319               0.00   1158.77     53.63     19.22
   IN1320               0.00   1158.77     53.63     22.00
   IN1321               0.00   1158.46     51.33      0.73
   VN1322               0.00   1157.77     51.03      0.84
@@ -37869,7 +37871,7 @@
   VN1413               0.00   1151.27     56.88     20.63
   VN1414               0.00   1151.25     58.17     15.24
   VN1415               0.00   1151.25     58.17     15.24
-  VN1416               0.00   1154.31     43.90     21.01
+  VN1416               0.00   1154.31     43.90     11.32
   IN1417               0.00   1154.31     43.46     22.00
   IN1418               0.00   1153.64     44.91     22.00
   VN1419               0.00   1153.64     44.91     22.00
@@ -37900,24 +37902,24 @@
   VN1445               0.00   1151.28     51.25      4.01
   VN1446               0.00   1151.28     51.25      4.01
   VN1447               0.00   1151.39     53.90     22.00
-  VN1448               0.00   1151.39     53.90     21.89
+  VN1448               0.00   1151.39     53.90     21.98
   VN1449               0.00   1151.39     55.63     22.00
-  VN1450               0.00   1151.39     55.63     21.98
+  VN1450               0.00   1151.39     55.63     21.88
   IN1451               0.00   1151.39     56.93     22.00
   VN1452               0.00   1151.39     56.93     22.00
-  VN1453               0.00   1151.39     56.93     21.98
+  VN1453               0.00   1151.39     56.93     21.88
   VN1454               0.00   1151.39     58.23     22.00
   VN1455               0.00   1151.39     58.23     21.88
   IN1456               0.00   1151.39     58.23     22.00
   VN1457               0.00   1151.39     58.67     22.00
-  VN1458               0.00   1151.39     58.67     18.92
+  VN1458               0.00   1151.39     58.67     21.88
   VN1459               0.00   1151.39     59.10     22.00
-  VN1460               0.00   1151.39     59.10     18.12
+  VN1460               0.00   1151.39     59.10     21.88
   IN1461               0.00   1151.39     59.53     22.00
   VN1462               0.00   1151.39     59.10     22.00
-  VN1463               0.00   1151.39     59.10     20.82
+  VN1463               0.00   1151.39     59.10     21.88
   VN1464               0.00   1151.39     58.23     22.00
-  VN1465               0.00   1151.39     58.23     21.91
+  VN1465               0.00   1151.39     58.23     16.72
   IN1466               0.00   1151.39     58.23     22.00
   IN1467               0.00   1151.39     58.23     22.00
   VN1468               0.00   1328.32    127.09      0.19
@@ -38040,7 +38042,7 @@
   IN1542               0.00   1151.23     51.23     11.35
   IN1543               0.00   1151.23     52.96     17.56
   IN1544               0.00   1151.24     55.13     18.39
-  IN1545               0.00   1151.25     56.87     20.43
+  IN1545               0.00   1151.24     56.87     20.43
   IN1546               0.00   1151.25     58.61     21.66
   IN1547               0.00   1151.25     59.04     20.69
   IN1548               0.00   1151.26     59.04      5.58
@@ -38225,7 +38227,7 @@
   TN1727               0.31   1151.52     55.25      5.45
   TN1728               0.08   1151.53     55.26      5.46
   TN1729               0.31   1151.51     55.68      5.23
-  TN1732               0.31   1151.51     56.12      9.38
+  TN1732               0.31   1151.51     56.11      9.38
   TN1730               0.47   1151.48     56.10      9.38
   TN1731               0.31   1151.50     56.54      9.38
   TN1734               0.31   1151.50     56.55     14.02
@@ -38451,7 +38453,7 @@
   TN163                0.23   1151.08     48.13      5.48
   IN164                0.00   1151.13     48.59      5.96
   TN165                0.30   1151.11     48.58      5.65
-  TN166                0.15   1151.09     48.14      5.63
+  TN166                0.15   1151.09     48.13      5.63
   TN167                0.15   1151.10     48.14      6.47
   TN169                0.45   1150.76     47.99     16.85
   TN170                0.38   1150.76     47.99     16.85
@@ -38464,7 +38466,7 @@
   TN177                0.22   1150.93     48.07      7.63
   IN178                0.00   1150.99     48.09      8.25
   TN179                0.15   1150.98     48.09      7.19
-  TN181                0.08   1150.48     47.87     16.19
+  TN181                0.08   1150.48     47.87     16.18
   TN182                0.15   1150.47     47.87     20.02
   TN183                0.30   1150.45     48.29     17.60
   TN184                0.00   1150.49     48.31     18.12
@@ -38523,7 +38525,7 @@
   TN263                0.08   1152.46     50.03      3.59
   TN264                0.08   1152.46     50.46      3.55
   IN265                0.00   1152.28     52.55      3.80
-  TN266                0.13   1152.27     52.98      3.80
+  TN266                0.12   1152.27     52.98      3.80
   TN267                0.15   1152.26     52.54      3.80
   TN268                0.30   1152.25     52.97      3.80
   TN269                0.23   1152.25     52.11      3.64
@@ -38776,7 +38778,7 @@
   TN622                0.22   1156.02     54.17      1.18
   TN624                0.00   1156.79     54.94      3.38
   TN626                0.22   1155.89     51.95     23.00
-  TN628                0.15   1156.06     53.75     15.56
+  TN628                0.15   1156.06     53.75     15.55
   TN630                0.22   1158.81     54.95      5.21
   TN632                0.00   1155.89     43.71     23.00
   TN634                0.38   1155.88     48.48     23.00
@@ -38887,8 +38889,8 @@
   VN826                0.00   1164.11     58.11      0.79
   VN827                0.00   1164.11     58.11      0.79
   IN828                0.00   1181.41     66.04      0.77
-  VN829                0.00   1182.89     66.68      0.75
-  VN830                0.00   1182.89     66.68      0.75
+  VN829                0.00   1182.88     66.68      0.75
+  VN830                0.00   1182.88     66.68      0.75
   IN831                0.00   1183.09     66.77      0.75
   IN832                0.00   1151.50     53.51      2.80
   VN833                0.00   1151.50     53.08      2.79
@@ -39189,7 +39191,7 @@
   IN1143               0.00   1155.89     47.18     23.00
   VN1144               0.00   1155.89     48.05     15.46
   VN1145               0.00   1155.89     48.05     15.46
-  IN1146               0.00   1155.89     48.05     12.99
+  IN1146               0.00   1155.89     48.05     13.00
   IN1147               0.00   1155.89     49.35      5.46
   IN1148               0.00   1155.89     50.21      3.06
   IN1149               0.00   1155.89     50.21      2.22
@@ -39200,8 +39202,8 @@
   IN1154               0.00   1155.78     47.57     16.27
   IN1155               0.00   1155.78     47.13     23.00
   IN1156               0.00   1155.20     43.42     23.00
-  VN1157               0.00   1155.20     43.42     20.99
-  VN1158               0.00   1155.20     43.42     19.04
+  VN1157               0.00   1155.20     43.42     23.00
+  VN1158               0.00   1155.20     43.42     22.88
   IN1159               0.00   1155.20     43.85     23.00
   VN1160               0.00   1155.20     44.28     23.00
   VN1161               0.00   1155.20     44.28     23.00
@@ -39223,9 +39225,9 @@
   VN1178               0.00   1154.33     44.77      3.66
   IN1179               0.00   1154.33     44.34      5.87
   VN1180               0.00   1154.33     43.91     23.00
-  VN1181               0.00   1153.65     44.91     11.84
+  VN1181               0.00   1153.65     44.91      5.21
   VN1182               0.00   1153.65     44.48     23.00
-  VN1183               0.00   1153.65     44.48     14.04
+  VN1183               0.00   1153.65     44.48     22.88
   IN1184               0.00   1153.65     44.05     23.00
   VN1185               0.00   1153.65     44.48     23.00
   VN1186               0.00   1153.65     44.48     23.00
@@ -39353,11 +39355,11 @@
   IN1312               0.00   1155.89     47.61     23.00
   IN1313               0.00   1155.89     47.18     23.00
   VN1314               0.00   1155.89     47.18     23.00
-  VN1315               0.00   1155.89     47.18     23.00
+  VN1315               0.00   1155.89     47.18     17.34
   IN1316               0.00   1155.89     46.31     23.00
-  VN1317               0.00   1156.06     51.15     21.89
+  VN1317               0.00   1156.06     51.15     20.64
   IN1318               0.00   1156.06     51.15     23.00
-  VN1319               0.00   1158.81     53.65     22.89
+  VN1319               0.00   1158.81     53.65     19.24
   IN1320               0.00   1158.81     53.65     23.00
   IN1321               0.00   1159.07     51.59      1.38
   VN1322               0.00   1158.33     51.27      1.74
@@ -39453,7 +39455,7 @@
   VN1413               0.00   1151.28     56.88     17.50
   VN1414               0.00   1151.25     58.17     18.67
   VN1415               0.00   1151.25     58.17     18.67
-  VN1416               0.00   1154.33     43.91     21.02
+  VN1416               0.00   1154.33     43.91     11.34
   IN1417               0.00   1154.33     43.47     23.00
   IN1418               0.00   1153.65     44.91     23.00
   VN1419               0.00   1153.65     44.91     23.00
@@ -39484,28 +39486,28 @@
   VN1445               0.00   1151.28     51.25      4.20
   VN1446               0.00   1151.28     51.25      4.20
   VN1447               0.00   1151.38     53.89     23.00
-  VN1448               0.00   1151.38     53.89     22.90
+  VN1448               0.00   1151.38     53.89     22.88
   VN1449               0.00   1151.38     55.63     23.00
-  VN1450               0.00   1151.38     55.63     22.97
+  VN1450               0.00   1151.38     55.63     22.88
   IN1451               0.00   1151.38     56.93     23.00
   VN1452               0.00   1151.38     56.93     23.00
-  VN1453               0.00   1151.38     56.93     22.97
+  VN1453               0.00   1151.38     56.93     22.88
   VN1454               0.00   1151.38     58.23     23.00
   VN1455               0.00   1151.38     58.23     22.88
   IN1456               0.00   1151.38     58.23     23.00
   VN1457               0.00   1151.38     58.66     23.00
-  VN1458               0.00   1151.38     58.66     18.94
+  VN1458               0.00   1151.38     58.66     22.88
   VN1459               0.00   1151.38     59.09     23.00
-  VN1460               0.00   1151.38     59.09     18.14
+  VN1460               0.00   1151.38     59.09     22.97
   IN1461               0.00   1151.38     59.53     23.00
   VN1462               0.00   1151.38     59.09     23.00
-  VN1463               0.00   1151.38     59.09     20.84
+  VN1463               0.00   1151.38     59.09     22.88
   VN1464               0.00   1151.38     58.23     23.00
-  VN1465               0.00   1151.38     58.23     21.94
+  VN1465               0.00   1151.38     58.23     16.74
   IN1466               0.00   1151.38     58.23     23.00
   IN1467               0.00   1151.38     58.23     23.00
   VN1468               0.00   1328.43    127.14      0.32
-  VN1469               0.00   1328.43    127.14      0.20
+  VN1469               0.00   1328.43    127.14      0.29
   IN1470               0.00   1328.94    126.93      0.11
   IN1471               0.00   1074.98     17.33      0.22
   VN1473               0.00   1151.58     55.28     21.43
@@ -39918,4 +39920,4 @@
   SurfaceResrvr    -1107.04   1030.00      0.00      0.00  Reservoir
   Tank               906.82   1149.84     47.60     22.58  Tank
    
-  Analysis ended Fri Oct 14 15:09:43 2022
+  Analysis ended Sun Oct 16 21:52:02 2022

@@ -882,7 +882,7 @@ class ConsumerModel(Model):
         hourly_demand = pd.DataFrame(data=step_demand, index=[0])
         hourly_agents = pd.DataFrame(data=step_agents, index=[0])
         self.daily_demand[self.timestepN:(self.timestepN+1)] = hourly_demand
-        self.agent_matrix[self.timestepN:(self.timestepN+1)] = hourly_agents
+        self.agent_matrix[self.timestep:(self.timestep+1)] = hourly_agents
 
 
     def change_demands(self):
