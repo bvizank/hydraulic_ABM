@@ -18,6 +18,12 @@ inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 
+
+def calc_difference(data_time_1, data_time_2):
+    '''Function to take the difference between two time points '''
+    return (data_time_2 - data_time_1)
+
+
 def make_contour(graph, data, data_type, fig_name,
                  label=False, label_val='', pts=100000, **plots):
     '''Function to make contour plot given a network structure and supplied data'''
