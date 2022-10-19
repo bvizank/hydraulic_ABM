@@ -23,7 +23,7 @@ inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 # wn.options.time.duration = 0
-wn.options.time.duration = 3600 * 23
+wn.options.time.duration = 3600 * 24
 wn.options.time.hydraulic_timestep = 3600
 wn.options.time.pattern_timestep = 3600
 wn.options.quality.parameter = 'AGE'
@@ -867,15 +867,15 @@ class ConsumerModel(Model):
             #     # check how many agents are working from home at current node
             #     # if more than 50%, changes pattern
             #
-            #     if self.res_pat_select == 'lakewood':
-            #         perc_wfh = agents_wfh / agents_at_node
-            #         if perc_wfh > 0.5 and node in self.nodes_resident:
-            #             node_1.demand_timeseries_list[0].pattern_name = 'wk1'
-            #     elif self.res_pat_select == 'pysimdeum':
-            #         if node in self.nodes_resident:
-            #             self.set_patterns(node_1)
-            #     else:
-            #        pass
+                # if self.res_pat_select == 'lakewood':
+                #     perc_wfh = agents_wfh / agents_at_node
+                #     if perc_wfh > 0.5 and node in self.nodes_resident:
+                #         node_1.demand_timeseries_list[0].pattern_name = 'wk1'
+                # elif self.res_pat_select == 'pysimdeum':
+                #     if node in self.nodes_resident:
+                #         self.set_patterns(node_1)
+                # else:
+                #    pass
             # except:
             #     pass
 
@@ -890,8 +890,19 @@ class ConsumerModel(Model):
             curr_node = wn.get_node(node)
             curr_demand = curr_node.demand_timeseries_list[0].base_value
             new_mult = self.daily_demand[node]
+            agents_at_node = self.grid.G.nodes[node]['agent']
+            agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
+            if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
+                perc_wfh = agents_wfh / len(agents_at_node)
+                if perc_wfh > 0.5 and node in self.nodes_resident:
+                    old_pat = wn.get_pattern('wk1')
+            elif self.res_pat_select == 'pysimdeum':
+                if node in self.nodes_resident:
+                    self.set_patterns(node_1)
+            else:
+               old_pat = wn.get_pattern(self.base_pattern[node])
+               pass
             new_pat = wn.get_pattern('node_'+node)
-            old_pat = wn.get_pattern(self.base_pattern[node])
             new_pat.multipliers = old_pat.multipliers * new_mult
             del curr_node.demand_timeseries_list[0]
             curr_node.demand_timeseries_list.append((curr_demand, new_pat))

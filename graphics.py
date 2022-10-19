@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import networkx as nx
 
-output_loc = 'Output Files/2022-10-16_20-57_wfh_current_results/'
-
-'''Import demand, pressure, and age data'''
+output_loc = 'Output Files/2022-10-17_08-15_wfh_dine_current_results/'
 data_file = output_loc + 'datasheet.xlsx'
 
 demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
@@ -76,13 +74,13 @@ times = [12, (24*18)+12, (24*36)+12, (24*54)+12, (24*72)+12]
 
 for time in times:
     make_contour(G, demand.iloc[time], 'demand', output_loc + 'demand_' + str(time), True,
-                  'Demand [ML]', vmin=0)
+                  'Demand [ML]', vmin=0, vmax=0.04)
     make_contour(G, pressure.iloc[time], 'pressure', output_loc + 'pressure_' + str(time), True,
-                'Pressure [m]', vmin=0)
+                'Pressure [m]', vmin=0, vmax=90)
     make_contour(G, age.iloc[time], 'age', output_loc + 'age_' + str(time), True,
                  'Age [sec]', vmin=0)
     make_contour(G, agent.iloc[time], 'agent', output_loc + 'locations_' + str(time), True,
-                 '# of Agents', vmin=0)    
+                 '# of Agents', vmin=0, vmax=750)    
 
 # make_contour(G, pressure.iloc[12], 'pressure', output_loc + 'pressure_' + str(12), True,
 #              'Pressure [m]', vmin=0, vmax=85)
