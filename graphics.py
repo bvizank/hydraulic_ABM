@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 from scipy.interpolate import griddata
 import networkx as nx
 
-output_loc = 'Output Files/2022-10-17_08-15_wfh_dine_current_results/'
+output_loc = 'Output Files/2022-10-18_17-11_all_pb_lakewood_results/'
 data_file = output_loc + 'datasheet.xlsx'
 
+seir = pd.read_excel(data_file, sheet_name='seir_data', index_col=1)
 demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
 pressure = pd.read_excel(data_file, sheet_name='pressure', index_col=0)
 age = pd.read_excel(data_file, sheet_name='age', index_col=0)
@@ -76,17 +77,33 @@ def make_contour(graph, data, data_type, fig_name,
     plt.savefig(fig_name)
     plt.close()
 
-times = [12, (24*18)+12, (24*36)+12, (24*54)+12, (24*72)+12]
+
+max_wfh = seir.wfh.loc[int(seir.wfh.idxmax())]
+times = [12]
+times = times + [seir.wfh.searchsorted(max_wfh/4)]
+times = times + [seir.wfh.searchsorted(max_wfh/2)]
+# print(seir.wfh.searchsorted(max_wfh/2))
+times = times + [seir.wfh.searchsorted(max_wfh*3/4)]
+times = times + [seir.wfh.searchsorted(max_wfh)]
+print(times)
 
 for time in times:
-    make_contour(G, demand.iloc[time], 'demand', output_loc + 'demand_' + str(time), True,
-                  'Demand [ML]', vmin=0, vmax=0.04)
-    make_contour(G, pressure.iloc[time], 'pressure', output_loc + 'pressure_' + str(time), True,
-                'Pressure [m]', vmin=0, vmax=90)
-    make_contour(G, age.iloc[time], 'age', output_loc + 'age_' + str(time), True,
-                 'Age [sec]', vmin=0)
-    make_contour(G, agent.iloc[time], 'agent', output_loc + 'locations_' + str(time), True,
-                 '# of Agents', vmin=0, vmax=750)    
+    if time != times[0]:
+        if time >= len(demand):
+            time = time - 1
+            
+        make_contour(G, calc_difference(demand.iloc[times[0]], demand.iloc[time]),
+                     'demand', output_loc + 'demand_' + str(time), True,
+                     'Demand [ML]', vmin=0, vmax=0.01)
+        make_contour(G, calc_difference(pressure.iloc[times[0]], pressure.iloc[time]),
+                     'pressure', output_loc + 'pressure_' + str(time), True,
+                     'Pressure [m]', vmin=0, vmax=50)
+        make_contour(G, calc_difference(age.iloc[times[0]], age.iloc[time]),
+                     'age', output_loc + 'age_' + str(time), True,
+                     'Age [sec]', vmin=0)
+        make_contour(G, calc_difference(agent.iloc[times[0]], agent.iloc[time]),
+                     'agent', output_loc + 'locations_' + str(time), True,
+                     '# of Agents', vmin=0, vmax=10)
 
 # make_contour(G, pressure.iloc[12], 'pressure', output_loc + 'pressure_' + str(12), True,
 #              'Pressure [m]', vmin=0, vmax=85)
