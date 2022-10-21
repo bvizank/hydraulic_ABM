@@ -77,9 +77,9 @@ class ConsumerModel(Model):
         # self.base_demands_previous = {}
         if 'seed' in kwargs:
             seed = kwargs['seed']
-            self.snw = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = seed)
+            self.swn = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = seed)
         else:
-            self.snw = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = 919)
+            self.swn = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = 919)
         self.snw_agents = {}
         self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
@@ -106,6 +106,7 @@ class ConsumerModel(Model):
         self.wfh_dag = bn.import_DAG('Input Files/data_driven_wfh.bif', verbose=0)
         self.dine_less_dag = bn.import_DAG('Input Files/data_driven_dine.bif', verbose=0)
         self.grocery_dag = bn.import_DAG('Input Files/data_driven_grocery.bif', verbose=0)
+        self.ppe_dag = bn.import_DAG('Input Files/pmt_ppe.bif', verbose=0)
         self.bbn_params = bbn_params # pandas dataframe of bbn parameters
         if 'res_pat_select' in kwargs:
             self.res_pat_select = kwargs['res_pat_select']
@@ -224,6 +225,7 @@ class ConsumerModel(Model):
         self.wfh_nodes = copy.deepcopy(self.wfh_dag['adjmat'].columns)
         self.dine_nodes = copy.deepcopy(self.dine_less_dag['adjmat'].columns)
         self.grocery_nodes = copy.deepcopy(self.grocery_dag['adjmat'].columns)
+        self.ppe_nodes = copy.deepcopy(self.ppe_dag['adjmat'].columns)
 
 
     def base_demand_list(self):
@@ -407,6 +409,10 @@ class ConsumerModel(Model):
                             agent.agent_params[param] = 2
                         else:
                             agent.agent_params[param] = int(agent_set_params[param]) - 1
+                    elif param == "COVIDexp":
+                        agent.agent_params[param] = 7
+                    elif param == "MediaExp_3":
+                        agent.agent_params[param] = 1
                     else:
                         agent.agent_params[param] = int(agent_set_params[param]) - 1
                 except:
@@ -417,18 +423,23 @@ class ConsumerModel(Model):
         CREATING COMMUNICATION NETWORK WITH SWN = SMALL WORLD NETWORK
         Assigning Agents randomly to nodes in SNW
         '''
-        self.snw_agents_node = {}
-        Nodes_in_snw = list(range(1, Micro_pop + 1))
-
-        # Create dictionairy with dict[agents]= Node
         for agent in self.schedule.agents:
-            node_to_agent = self.random.choice(Nodes_in_snw)
-            self.snw_agents_node[agent] = node_to_agent
-            Nodes_in_snw.remove(node_to_agent)
+            agent.friends = self.swn.neighbors(agent.unique_id)
+        # self.snw_agents_node = {}
+        # Nodes_in_snw = list(range(1, Micro_pop + 1))
 
-        # Create dictionairy with dict[Nodes]= agent
-        self.snw_node_agents = {y: x for x, y in self.snw_agents_node.iteritems()}
-        self.snw_node_agents = dict(zip(self.snw_agents_node.values(), self.snw_agents_node.keys()))
+        # # Create dictionairy with dict[agents]= Node
+        # for agent in self.schedule.agents:
+        #     node_to_agent = self.random.choice(Nodes_in_snw)
+        #     self.snw_agents_node[agent] = node_to_agent
+        #     Nodes_in_snw.remove(node_to_agent)
+
+        # # Create dictionairy with dict[Nodes]= agent
+        # self.snw_node_agents = {y: x for x, y in self.snw_agents_node.iteritems()}
+        # self.snw_node_agents = dict(zip(self.snw_agents_node.values(), self.snw_agents_node.keys()))
+        # for key in self.snw_node_agents:
+        #     print(self.snw_node_agents[key])
+        
 
     def num_status(self):
         """
@@ -555,7 +566,7 @@ class ConsumerModel(Model):
             agent.covid = 'infectious'
             self.cumm_infectious += 1
             agent.exp_time = 0
-            agent.agent_params["COVIDexp"] = 2
+            agent.agent_params["COVIDexp"] = 1
         else:
             pass
 
@@ -628,6 +639,7 @@ class ConsumerModel(Model):
             agent.symptomatic = None
         else:
             pass
+        
 
     def check_death(self, agent):
         """
@@ -650,6 +662,7 @@ class ConsumerModel(Model):
         for i, agent in enumerate(self.schedule.agents):
             if self.random.random() < self.wfh_probs[math.floor(agent.agent_params["COVIDeffect_4"])]:
                 agent.wfh = 1
+                
 
     def communication_utility(self):
         ## Communication through TV and Radio
@@ -660,6 +673,7 @@ class ConsumerModel(Model):
         ## Communication through radio
         for i, a in enumerate(self.schedule.agents):
             if self.random.random() < radio_reach:
+                a.agent_params['MediaExp_3'] = 0
                 a.information = 1
                 a.informed_by = 'utility'
                 a.informed_count_u += 1
@@ -669,11 +683,13 @@ class ConsumerModel(Model):
         ## Communication through TV
         for i, a in enumerate(self.schedule.agents):
             if self.random.random() < tv_reach:
+                a.agent_params['MediaExp_3'] = 0
                 a.information = 1
                 a.informed_by = 'utility'
                 a.informed_count_u += 1
             else:
                 pass
+            
 
     def move(self):
         """
@@ -1008,6 +1024,27 @@ class ConsumerModel(Model):
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.less_groceries = 1
 
+    
+    def predict_ppe(self, agent):
+        # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
+        # for agent in agents_not_wfh:
+        agent.adj_covid_change = 0
+        evidence_agent = copy.deepcopy(agent.agent_params)
+        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence = dict()
+        for i, item in enumerate(self.ppe_nodes):
+            if i != 0:
+                if item != 'CanadaQ_1_7' and item != 'CanadaQ_2_7':
+                    evidence[item] = evidence_agent[item]
+
+        query = bn.inference.fit(self.grocery_dag,
+                                 variables = ['shop_groceries_less'],
+                                 evidence = evidence,
+                                 verbose = 0)
+        if self.random.random() < query.df['p'][1]:
+        # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
+            agent.less_groceries = 1
+            
 
     def change_house_adj(self, agent):
         ''' Function to check whether agents in a given agents node have become
@@ -1016,10 +1053,12 @@ class ConsumerModel(Model):
         # agents_at_node = copy.deepcopy(self.grid.G.nodes[node]['agent'])
         # if len(agents_at_node) > 6:
         agents_in_house = copy.deepcopy(agent.housemates)
+        agents_friends = [n for n in self.swn.neighbors(agent.unique_id)]
+        agents_in_network = agents_in_house + agents_friends
         # print(agent)
         # print(agents_in_house)
-        agents_in_house.remove(agent.unique_id)
-        for agent in agents_in_house:
+        agents_in_network.remove(agent.unique_id)
+        for agent in agents_in_network:
             agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
             agent.adj_covid_change = 1
             if agent.agent_params["COVIDeffect_4"] < 6:
@@ -1154,7 +1193,7 @@ class ConsumerModel(Model):
         print('\n')
         print('\tAgents at home: ' + str(len(self.resident_agents())))
         print('\n')
-        print('\tAgents that with close COVID: ' + str(self.check_covid_change()))
+        print('\tAgents with close COVID: ' + str(self.check_covid_change()))
 
     def step(self):
         self.schedule.step()
@@ -1173,7 +1212,7 @@ class ConsumerModel(Model):
         self.check_agent_change()
         if self.res_pat_select == 'pysimdeum':
             self.check_houses()
-        # self.communication_utility()
+        self.communication_utility()
         self.collect_demands()
         self.change_time_model()
         # self.inform_status()
