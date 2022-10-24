@@ -185,6 +185,7 @@ class ConsumerModel(Model):
         self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
+        self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[name for name,link in wn.links()])
 
         # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
         self.susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
@@ -518,7 +519,7 @@ class ConsumerModel(Model):
                         else:
                             pass
                     else:
-                        if self.random.random() < self.exposure_rate_large * ppe_reduction:
+                        if self.random.random() < self.exposure_rate_large * self.ppe_reduction:
                             agent.covid = 'exposed'
                         else:
                             pass
@@ -529,7 +530,7 @@ class ConsumerModel(Model):
                         else:
                             pass
                     else:
-                        if self.random.random() < self.exposure_rate * ppe_reduction:
+                        if self.random.random() < self.exposure_rate * self.ppe_reduction:
                             agent.covid = 'exposed'
                         else:
                             pass
@@ -957,6 +958,9 @@ class ConsumerModel(Model):
         self.demand_matrix[self.timestep-23: self.timestep+1] = results.node['demand'][0:24]
         self.pressure_matrix[self.timestep-23: self.timestep+1] = results.node['pressure'][0:24]
         self.age_matrix[self.timestep-23: self.timestep+1] = results.node['quality'][0:24]
+        flow = results.link['flowrate'][0:24] * 1000000
+        flow = flow.astype('int')
+        self.flow_matrix[self.timestep-23: self.timestep+1] = flow
 
     
     def inform_status(self):
@@ -1054,9 +1058,8 @@ class ConsumerModel(Model):
             if (item != 'protection' and item != 'risk_perception_r' and
                 item != 'Govresponse_7' and item != 'Govresponse_8'):
                 evidence[item] = evidence_agent[item]
-        print(evidence)
 
-        query = bn.inference.fit(self.grocery_dag,
+        query = bn.inference.fit(self.ppe_dag,
                                  variables = ['protection'],
                                  evidence = evidence,
                                  verbose = 0)
