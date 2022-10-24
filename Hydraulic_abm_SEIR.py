@@ -182,6 +182,7 @@ class ConsumerModel(Model):
         self.nodes_w_demand = [node for node in self.grid.G.nodes if hasattr(wn.get_node(node), 'demand_timeseries_list')]
         self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
         self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.mult_matrix = pd.DataFrame(0, index=np.arrange(0, 86400*days, 3600), columns=G.nodes)
         self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
@@ -873,11 +874,11 @@ class ConsumerModel(Model):
         for node in self.nodes_w_demand:
             if node in self.nodes_capacity:
                 Capacity_node = self.nodes_capacity[node]
-                node_1 = wn.get_node(node)
+                # node_1 = wn.get_node(node)
                 agents_at_node_list = self.grid.G.nodes[node]['agent']
                 agents_at_node = len(agents_at_node_list)
                 step_agents[node] = agents_at_node
-                agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
+                # agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
                 if Capacity_node != 0:
                     step_demand[node] = agents_at_node/Capacity_node
                 else:
@@ -931,14 +932,20 @@ class ConsumerModel(Model):
                 perc_wfh = agents_wfh / len(agents_at_node)
                 if perc_wfh > 0.5 and node in self.nodes_resident:
                     old_pat = wn.get_pattern('wk1')
+                else:
+                    old_pat = wn.get_pattern(self.base_pattern[node])
             elif self.res_pat_select == 'pysimdeum':
                 if node in self.nodes_resident:
                     self.set_patterns(node_1)
             else:
-               old_pat = wn.get_pattern(self.base_pattern[node])
-               pass
+                old_pat = wn.get_pattern(self.base_pattern[node])
             new_pat = wn.get_pattern('node_'+node)
-            new_pat.multipliers = old_pat.multipliers * new_mult
+            # new_pat.multipliers = old_pat.multipliers * new_mult
+            
+            '''Need to fix this to run for 90 days'''
+            prev_mults = self.mult_matrix[0:self.timestep+1]
+            # new_mults = 
+            self.mult_matrix.node = old_pat.multipliers * new_mult
             del curr_node.demand_timeseries_list[0]
             curr_node.demand_timeseries_list.append((curr_demand, new_pat))
 
