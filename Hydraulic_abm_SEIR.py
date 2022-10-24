@@ -132,6 +132,10 @@ class ConsumerModel(Model):
             self.verbose = kwargs['verbose']
         else:
             self.verbose = 1
+        if 'ppe_reduction' in kwargs:
+            self.ppe_reduction = kwargs['ppe_reduction']
+        else:
+            self.ppe_reduction = 0.25
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
@@ -171,6 +175,8 @@ class ConsumerModel(Model):
         self.param_out = self.param_out.append(pd.DataFrame([['wfh_lag', self.wfh_lag]],
                                                             columns = ['Param', 'value1']))
         self.param_out = self.param_out.append(pd.DataFrame([['percent ind no wfh', self.no_wfh_perc]],
+                                                            columns = ['Param', 'value1']))
+        self.param_out = self.param_out.append(pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
                                                             columns = ['Param', 'value1']))
 
         self.nodes_w_demand = [node for node in self.grid.G.nodes if hasattr(wn.get_node(node), 'demand_timeseries_list')]
@@ -506,15 +512,27 @@ class ConsumerModel(Model):
 
             if agent.covid == 'susceptible':
                 if node_type == 'workplace':
-                    if self.random.random() < self.exposure_rate_large:
-                        agent.covid = 'exposed'
+                    if agent_to_move.ppe == 0:
+                        if self.random.random() < self.exposure_rate_large:
+                            agent.covid = 'exposed'
+                        else:
+                            pass
                     else:
-                        pass
+                        if self.random.random() < self.exposure_rate_large * ppe_reduction:
+                            agent.covid = 'exposed'
+                        else:
+                            pass
                 elif node_type == 'residential':
-                    if self.random.random() < self.exposure_rate:
-                        agent.covid = 'exposed'
+                    if agent_to_move.ppe == 0:
+                        if self.random.random() < self.exposure_rate:
+                            agent.covid = 'exposed'
+                        else:
+                            pass
                     else:
-                        pass
+                        if self.random.random() < self.exposure_rate * ppe_reduction:
+                            agent.covid = 'exposed'
+                        else:
+                            pass
                 else:
                     print('Warning: node type: ' + str(node_type) + ' does not exist.')
             else:
@@ -1033,17 +1051,18 @@ class ConsumerModel(Model):
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         evidence = dict()
         for i, item in enumerate(self.ppe_nodes):
-            if i != 0:
-                if item != 'CanadaQ_1_7' and item != 'CanadaQ_2_7':
-                    evidence[item] = evidence_agent[item]
+            if (item != 'protection' and item != 'risk_perception_r' and
+                item != 'Govresponse_7' and item != 'Govresponse_8'):
+                evidence[item] = evidence_agent[item]
+        print(evidence)
 
         query = bn.inference.fit(self.grocery_dag,
-                                 variables = ['shop_groceries_less'],
+                                 variables = ['protection'],
                                  evidence = evidence,
                                  verbose = 0)
         if self.random.random() < query.df['p'][1]:
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
-            agent.less_groceries = 1
+            agent.ppe = 1
             
 
     def change_house_adj(self, agent):
@@ -1140,6 +1159,10 @@ class ConsumerModel(Model):
 
                     if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
                         self.predict_grocery(agent)
+                        
+                    if agent.ppe == 0 and 'ppe' in self.bbn_models:
+                        self.predict_ppe(agent)
+                        
             # self.check_social_dist()
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
