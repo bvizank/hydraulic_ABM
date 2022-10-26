@@ -25,7 +25,8 @@ def run_sim(id = 0, **kwargs):
     for t in range(24*days):
         model.step()
 
-    Demands_test = np.zeros(24*days)
+    Demands_test = np.zeros(24 * days + 1)
+    # print(model.demand_matrix)
     for node in All_terminal_nodes:
         add_demands = model.demand_matrix[node]
         Demands_test = np.add(Demands_test, add_demands)
@@ -61,8 +62,8 @@ def run_sim(id = 0, **kwargs):
     model.status_tot['I'] = Micro_pop * model.status_tot['I']
     model.status_tot['sum_I'] = Micro_pop * model.status_tot['sum_I']
 
-    plt.plot('t', 'I', data = model.status_tot, label = 'Infected')
-    plt.plot('t', 'sum_I', data = model.status_tot, label = 'Cumulative I')
+    plt.plot('t', 'I', data=model.status_tot, label='Infected')
+    plt.plot('t', 'sum_I', data=model.status_tot, label='Cumulative I')
     plt.xlabel('Time (days)')
     plt.ylabel('Population')
     plt.legend()

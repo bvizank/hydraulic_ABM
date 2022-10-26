@@ -23,7 +23,6 @@ inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 # wn.options.time.duration = 0
-wn.options.time.duration = 3600 * 24
 wn.options.time.hydraulic_timestep = 3600
 wn.options.time.pattern_timestep = 3600
 wn.options.quality.parameter = 'AGE'
@@ -53,6 +52,7 @@ class ConsumerModel(Model):
                  **kwargs):
 
         init_start = time.perf_counter()
+        self.days = days
         self.id = id
         self.num_agents = N
         self.G = G
@@ -182,7 +182,6 @@ class ConsumerModel(Model):
         self.nodes_w_demand = [node for node in self.grid.G.nodes if hasattr(wn.get_node(node), 'demand_timeseries_list')]
         self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
         self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
-        self.mult_matrix = pd.DataFrame(0, index=np.arrange(0, 86400*days, 3600), columns=G.nodes)
         self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
         self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
@@ -940,18 +939,18 @@ class ConsumerModel(Model):
             else:
                 old_pat = wn.get_pattern(self.base_pattern[node])
             new_pat = wn.get_pattern('node_'+node)
-            # new_pat.multipliers = old_pat.multipliers * new_mult
+            if self.timestep_day == 1:
+                new_pat.multipliers = old_pat.multipliers * new_mult
+            else:
+                new_pat.multipliers = np.concatenate((new_pat.multipliers, old_pat.multipliers * new_mult))
             
-            '''Need to fix this to run for 90 days'''
-            prev_mults = self.mult_matrix[0:self.timestep+1]
-            # new_mults = 
-            self.mult_matrix.node = old_pat.multipliers * new_mult
             del curr_node.demand_timeseries_list[0]
             curr_node.demand_timeseries_list.append((curr_demand, new_pat))
 
 
     def run_hydraulic(self):
         # Simulate hydraulics
+        wn.write_inpfile(str(self.id) + 'out_wn.inp', version=2.2)
         sim = wntr.sim.EpanetSimulator(wn)
         results = sim.run_sim('id' + str(self.id))
 
@@ -962,14 +961,24 @@ class ConsumerModel(Model):
         #     node_1.demand_timeseries_list[0].base_value = base_demand
 
         # SAVING CURRENT DEMAND TIMESTEP IN DEMAND MATRIX
-        self.demand_matrix[self.timestep-23: self.timestep+1] = results.node['demand'][0:24]
-        self.pressure_matrix[self.timestep-23: self.timestep+1] = results.node['pressure'][0:24]
-        self.age_matrix[self.timestep-23: self.timestep+1] = results.node['quality'][0:24]
-        flow = results.link['flowrate'][0:24] * 1000000
-        flow = flow.astype('int')
-        self.flow_matrix[self.timestep-23: self.timestep+1] = flow
+        # self.demand_matrix[self.timestep-23: self.timestep+1] = results.node['demand'][0:24]
+        # self.pressure_matrix[self.timestep-23: self.timestep+1] = results.node['pressure'][0:24]
+        # self.age_matrix[self.timestep-23: self.timestep+1] = results.node['quality'][0:24]
+        # flow = results.link['flowrate'][0:24] * 1000000
+        # flow = flow.astype('int')
+        # self.flow_matrix[self.timestep-23: self.timestep+1] = flow
 
-    
+        demand = results.node['demand'] * 1000000
+        demand = demand.astype('int')
+        self.demand_matrix = demand
+        self.pressure_matrix = results.node['pressure']
+        self.age_matrix = results.node['quality']
+        flow = results.link['flowrate'] * 1000000
+        flow = flow.astype('int')
+        self.flow_matrix = flow
+        results.to_pickle(str(self.id) + 'out_results.pkl')
+
+
     def inform_status(self):
         info_stat_all = 0
         for i, a in enumerate(self.schedule.agents):
@@ -1073,7 +1082,7 @@ class ConsumerModel(Model):
         if self.random.random() < query.df['p'][1]:
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.ppe = 1
-            
+
 
     def change_house_adj(self, agent):
         ''' Function to check whether agents in a given agents node have become
@@ -1140,6 +1149,15 @@ class ConsumerModel(Model):
         return covid_change
 
 
+    def update_patterns(self):
+        for i in range(1,6,1):
+            curr_pat = wn.get_pattern(str(i))
+            curr_mult = copy.deepcopy(curr_pat.multipliers)
+            for j in range(90):
+                curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
+            # print(curr_pat.multipliers)
+
+
     def change_time_model(self):
         self.timestep += 1
         if self.timestep % 24 == 0:
@@ -1176,7 +1194,8 @@ class ConsumerModel(Model):
             # self.check_social_dist()
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
-        elif (self.timestep + 1) % 24 == 0 and self.timestep != 0:
+            self.change_demands()
+        # elif (self.timestep + 1) % 24 == 0 and self.timestep != 0:
             # ''' Clear EPANET files and run hydraulic for the day '''
             # curr_dir = os.getcwd()
             # files_in_dir = os.listdir(curr_dir)
@@ -1184,10 +1203,14 @@ class ConsumerModel(Model):
             # for file in files_in_dir:
             #     if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
             #         os.remove(os.path.join(curr_dir, file))
-            self.change_demands()
+            # self.run_hydraulic()
+        # else:
+            # pass
+        
+        if self.timestep_day == self.days:
+            self.update_patterns()
+            wn.options.time.duration = 3600 * 24 * self.days
             self.run_hydraulic()
-        else:
-            pass
         self.timestepN = self.timestep - self.timestep_day * 24
         # print(self.timestep)
 
