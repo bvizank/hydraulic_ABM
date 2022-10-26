@@ -49,27 +49,21 @@ else:
             flow = pd.read_pickle(output_loc + pkl)
 
     if 'seir_data.pkl' not in pkls:
-        print('YOU MESSED UP: SEIR XOXO')
         seir = pd.read_excel(data_file, sheet_name='seir_data', index_col=1)
         seir.to_pickle(output_loc + 'seir_data.pkl')
     if 'demand.pkl' not in pkls:
-        print('YOU MESSED UP: demand XOXO')
         demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
         demand.to_pickle(output_loc + 'demand.pkl')
     if 'pressure.pkl' not in pkls:
-        print('YOU MESSED UP: pressure XOXO')
         pressure = pd.read_excel(data_file, sheet_name='pressure', index_col=0)
         pressure.to_pickle(output_loc + 'pressure.pkl')
     if 'age.pkl' not in pkls:
-        print('YOU MESSED UP: age XOXO')
         age = pd.read_excel(data_file, sheet_name='age', index_col=0)
         age.to_pickle(output_loc + 'age.pkl')
     if 'agent locations.pkl' not in pkls:
-        print('YOU MESSED UP: agent XOXO')
         agent = pd.read_excel(data_file, sheet_name='agent locations', index_col=0)
         agent.to_pickle(output_loc + 'agent locations.pkl')
     if 'flow.pkl' not in pkls:
-        print('YOU MESSED UP: flow XOXO')
         flow = pd.read_excel(data_file, sheet_name='flow', index_col=0)
         flow.to_pickle(output_loc + 'flow.pkl')
 
@@ -139,11 +133,34 @@ def make_contour(graph, data, data_type, fig_name,
     #     plt.colorbar(label=label_val)
     # plt.savefig(fig_name)
     # plt.close()
+    
+    ax = wntr.graphics.plot_network(wn, node_attribute=data_list,
+                                    node_colorbar_label=label_val)
 
-    nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
-                     node_size=10, node_color=data_list)
+    # nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
+    #                  node_size=10, node_color=data_list)
     plt.savefig(fig_name + 'nodes')
     plt.close()
+
+
+def make_sector_plot(wn, type, data):
+    '''
+    Function to plot the average data for a given sector
+    Sectors include: residential, commercial, industrial
+    '''
+    if type == 'residential':
+        nodes = [name for name,node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '2']
+    elif type == 'industrial':
+        nodes = [name for name,node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '3']
+    elif type == 'commercial':
+        nodes = [name for name,node in wn.junctions()
+                 if (node.demand_timeseries_list[0].pattern_name == '4' or
+                     node.demand_timeseries_list[0].pattern_name == '5' or
+                     node.demand_timeseries_list[0].pattern_name == '6')]
+    y_data = data[nodes].mean(axis=1)
+    print(y_data)        
 
 
 max_wfh = seir.wfh.loc[int(seir.wfh.idxmax())]

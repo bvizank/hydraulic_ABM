@@ -950,7 +950,6 @@ class ConsumerModel(Model):
 
     def run_hydraulic(self):
         # Simulate hydraulics
-        wn.write_inpfile(str(self.id) + 'out_wn.inp', version=2.2)
         sim = wntr.sim.EpanetSimulator(wn)
         results = sim.run_sim('id' + str(self.id))
 
