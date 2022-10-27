@@ -975,7 +975,7 @@ class ConsumerModel(Model):
         flow = results.link['flowrate'] * 1000000
         flow = flow.astype('int')
         self.flow_matrix = flow
-        results.to_pickle(str(self.id) + 'out_results.pkl')
+        # results.to_pickle(str(self.id) + 'out_results.pkl')
 
 
     def inform_status(self):

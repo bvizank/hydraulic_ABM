@@ -79,6 +79,11 @@ def calc_difference(data_time_1, data_time_2):
 
 
 def calc_flow_diff(data_time_1, data_time_2):
+    print(data_time_1)
+    output = dict()
+    for i in range(len(data_time_1)):
+        if data_time_2[i] * data_time_1[i] < 0:
+            print(data_time_2)
     return ([1 if data_time_2[i]*data_time_1[i] < 0 else 0 for i in range(len(data_time_1))])
 
 
@@ -143,7 +148,7 @@ def make_contour(graph, data, data_type, fig_name,
     plt.close()
 
 
-def make_sector_plot(wn, type, data):
+def make_sector_plot(wn, data, ylabel, type=None):
     '''
     Function to plot the average data for a given sector
     Sectors include: residential, commercial, industrial
@@ -159,8 +164,39 @@ def make_sector_plot(wn, type, data):
                  if (node.demand_timeseries_list[0].pattern_name == '4' or
                      node.demand_timeseries_list[0].pattern_name == '5' or
                      node.demand_timeseries_list[0].pattern_name == '6')]
-    y_data = data[nodes].mean(axis=1)
-    print(y_data)        
+    elif type == None:
+        res_nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].pattern_name == '2']
+        ind_nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].pattern_name == '3']
+        com_nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].pattern_name == '4' or
+                     node.demand_timeseries_list[0].pattern_name == '5' or
+                     node.demand_timeseries_list[0].pattern_name == '6']
+
+    if type != None:
+        y_data = data[nodes].mean(axis=1)
+        print(y_data)
+    else:
+        res_data = data[res_nodes].mean(axis=1)
+        ind_data = data[ind_nodes].mean(axis=1)
+        com_data = data[com_nodes].mean(axis=1)
+        res_data.rolling(24).mean().plot()
+        ind_data.rolling(24).mean().plot()
+        com_data.rolling(24).mean().plot()
+        plt.legend(['Residential', 'Industrial', 'Commercial'])
+        plt.xlabel('Time [sec]')
+        plt.ylabel(ylabel)
+        plt.show()
+
+
+def make_flow_plot(wn, data):
+    '''
+    Function to make a plot showing the flow direction change
+    '''
+    ax = wntr.graphics.plot_network(wn, link_attribute=data,
+                                    node_colorbar_label='Change in Direction')
+    plt.show()
 
 
 max_wfh = seir.wfh.loc[int(seir.wfh.idxmax())]
@@ -190,6 +226,7 @@ demand_diff = list()
 pressure_diff = list()
 age_diff = list()
 agent_diff = list()
+flow_diff = list()
 
 for i, time in enumerate(times):
     if time >= len(demand):
@@ -203,20 +240,25 @@ for i, time in enumerate(times):
     age_stats = check_stats(age_diff[i], age_stats)
     agent_stats = check_stats(agent_diff[i], agent_stats)
     print(demand_stats)
-    flow_diff = calc_flow_diff(flow.iloc[times_hour[i]], flow.iloc[time])
-    print(f"Flow at time {time} changed in {sum(flow_diff)} pipes.")
+    flow_diff.append(calc_flow_diff(flow.iloc[times_hour[i]], flow.iloc[time]))
+    print(f"Flow at time {time} changed in {sum(flow_diff[i])} pipes.")
 
 for i, time in enumerate(times):
     if time >= len(demand):
         time = time - 1
-    make_contour(G, demand_diff[i], 'demand', output_loc + 'demand_' + str(time), True,
-                 'Demand [ML]', vmin=demand_stats[1], vmax=demand_stats[0])
-    make_contour(G, pressure_diff[i], 'pressure', output_loc + 'pressure_' + str(time), True,
-                 'Pressure [m]', vmin=pressure_stats[1], vmax=pressure_stats[0])
-    make_contour(G, age_diff[i], 'age', output_loc + 'age_' + str(time), True,
-                 'Age [sec]', vmin=age_stats[1], vmax=age_stats[0])
-    make_contour(G, agent_diff[i], 'agent', output_loc + 'locations_' + str(time), True,
-                 '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
+  # make_contour(G, demand_diff[i], 'demand', output_loc + 'demand_' + str(time), True,
+  #              'Demand [ML]', vmin=demand_stats[1], vmax=demand_stats[0])
+  # make_contour(G, pressure_diff[i], 'pressure', output_loc + 'pressure_' + str(time), True,
+  #              'Pressure [m]', vmin=pressure_stats[1], vmax=pressure_stats[0])
+  # make_contour(G, age_diff[i], 'age', output_loc + 'age_' + str(time), True,
+  #              'Age [sec]', vmin=age_stats[1], vmax=age_stats[0])
+  # make_contour(G, agent_diff[i], 'agent', output_loc + 'locations_' + str(time), True,
+  #              '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
+    make_flow_plot(wn, flow_diff[i])
+
+make_sector_plot(wn, demand*1000000, 'Demand [L]')
+make_sector_plot(wn, age/3600, 'Age [hr]')
+make_sector_plot(wn, pressure, 'Pressure [m]')
 
 seir['I'] = seir['I'] / 4606
 seir.plot(y=['S', 'E', 'I', 'R', 'D', 'wfh'], xlabel='Time (days)',
