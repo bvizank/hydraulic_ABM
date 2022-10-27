@@ -201,10 +201,10 @@ def make_flow_plot(wn, data):
 
 max_wfh = seir.wfh.loc[int(seir.wfh.idxmax())]
 times = []
-times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
+# times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
 times = times + [seir.wfh.searchsorted(max_wfh/2)+12]
 # print(seir.wfh.searchsorted(max_wfh/2))
-times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
+# times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
 times = times + [seir.wfh.searchsorted(max_wfh)-12]
 print(times)
 times_hour = [time % 24 for time in times]
@@ -254,7 +254,7 @@ for i, time in enumerate(times):
   #              'Age [sec]', vmin=age_stats[1], vmax=age_stats[0])
   # make_contour(G, agent_diff[i], 'agent', output_loc + 'locations_' + str(time), True,
   #              '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
-    make_flow_plot(wn, flow_diff[i])
+    # make_flow_plot(wn, flow_diff[i])
 
 make_sector_plot(wn, demand*1000000, 'Demand [L]')
 make_sector_plot(wn, age/3600, 'Age [hr]')
@@ -271,8 +271,8 @@ seir.plot(y=['S', 'E', 'I', 'R', 'D', 'wfh'], xlabel='Time (days)',
 # plt.plot(y='wfh', data=seir, label='WFH', use_index=True)
 plt.axvline(x=times[0]*3600, color='black')
 plt.axvline(x=times[1]*3600, color='black')
-plt.axvline(x=times[2]*3600, color='black')
-plt.axvline(x=times[3]*3600, color='black')
+# plt.axvline(x=times[2]*3600, color='black')
+# plt.axvline(x=times[3]*3600, color='black')
 plt.xlabel('Time (days)')
 plt.ylabel('Percent Population')
 plt.legend()
