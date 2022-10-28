@@ -6,7 +6,7 @@ from scipy.interpolate import griddata
 import networkx as nx
 import os
 
-output_loc = 'Output Files/2022-10-27_13-52_no_pb_current_results/'
+output_loc = 'Output Files/2022-10-27_18-25_all_pb_current_results/'
 data_file = output_loc + 'datasheet.xlsx'
 
 pkls = [file for file in os.listdir(output_loc) if file.endswith(".pkl")]
@@ -186,7 +186,7 @@ def make_sector_plot(wn, data, ylabel, type=None):
         plt.legend(['Residential', 'Industrial', 'Commercial'])
         plt.xlabel('Time [sec]')
         plt.ylabel(ylabel)
-        plt.show()
+        plt.savefig(output_loc + ylabel)
 
 
 def make_flow_plot(wn, data):
@@ -222,7 +222,6 @@ def export_agent_loc(wn, locations):
                            'ind': ind_loc,
                            'com': com_loc,
                            'rest': rest_loc})
-    print(output)
     output.to_csv(output_loc + 'locations.csv')
 
 
@@ -267,8 +266,8 @@ for i, time in enumerate(times):
     age_stats = check_stats(age_diff[i], age_stats)
     agent_stats = check_stats(agent_diff[i], agent_stats)
     print(demand_stats)
-    flow_diff.append(calc_flow_diff(flow.iloc[times_hour[i]], flow.iloc[time]))
-    print(f"Flow at time {time} changed in {sum(flow_diff[i])} pipes.")
+    # flow_diff.append(calc_flow_diff(flow.iloc[times_hour[i]], flow.iloc[time]))
+    # print(f"Flow at time {time} changed in {sum(flow_diff[i])} pipes.")
 
 for i, time in enumerate(times):
     if time >= len(demand):
@@ -283,9 +282,9 @@ for i, time in enumerate(times):
   #              '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
     # make_flow_plot(wn, flow_diff[i])
 
-# make_sector_plot(wn, demand*1000000, 'Demand [L]')
-# make_sector_plot(wn, age/3600, 'Age [hr]')
-# make_sector_plot(wn, pressure, 'Pressure [m]')
+make_sector_plot(wn, demand, 'Demand [L]')
+make_sector_plot(wn, age/3600, 'Age [hr]')
+make_sector_plot(wn, pressure, 'Pressure [m]')
 
 export_agent_loc(wn, agent)
 
