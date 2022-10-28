@@ -73,7 +73,6 @@ for k,v in node_patterns.items():
 
 # Rest of commercial nodes like schools, churches etc.
 Nodes_comm_rest = []
-
 for k,v in node_patterns.items():
     if v == 5 and k[0:2]== 'TN':
         Nodes_comm_rest.append(k)

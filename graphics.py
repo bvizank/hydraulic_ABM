@@ -6,7 +6,7 @@ from scipy.interpolate import griddata
 import networkx as nx
 import os
 
-output_loc = 'Output Files/2022-10-26_07-59_all_pb_current_results/'
+output_loc = 'Output Files/2022-10-27_13-52_no_pb_current_results/'
 data_file = output_loc + 'datasheet.xlsx'
 
 pkls = [file for file in os.listdir(output_loc) if file.endswith(".pkl")]
@@ -68,7 +68,7 @@ else:
         flow.to_pickle(output_loc + 'flow.pkl')
 
 '''Import water network'''
-inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
+inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 
@@ -79,7 +79,6 @@ def calc_difference(data_time_1, data_time_2):
 
 
 def calc_flow_diff(data_time_1, data_time_2):
-    print(data_time_1)
     output = dict()
     for i in range(len(data_time_1)):
         if data_time_2[i] * data_time_1[i] < 0:
@@ -199,6 +198,34 @@ def make_flow_plot(wn, data):
     plt.show()
 
 
+def export_agent_loc(wn, locations):
+    res_nodes = [name for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '2'
+                 and name in locations.columns]
+    ind_nodes = [name for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '3'
+                 and name in locations.columns]
+    com_nodes = [name for name, node in wn.junctions()
+                 if (node.demand_timeseries_list[0].pattern_name == '4' or
+                 node.demand_timeseries_list[0].pattern_name == '5' or
+                 node.demand_timeseries_list[0].pattern_name == '6')
+                 and name in locations.columns]
+    rest_nodes = [name for name, node in wn.junctions()
+                  if node.demand_timeseries_list[0].pattern_name == '1'
+                  and name in locations.columns]
+
+    res_loc = locations[res_nodes].sum(axis=1)
+    ind_loc = locations[ind_nodes].sum(axis=1)
+    com_loc = locations[com_nodes].sum(axis=1)
+    rest_loc = locations[rest_nodes].sum(axis=1)
+    output = pd.DataFrame({'res': res_loc,
+                           'ind': ind_loc,
+                           'com': com_loc,
+                           'rest': rest_loc})
+    print(output)
+    output.to_csv(output_loc + 'locations.csv')
+
+
 max_wfh = seir.wfh.loc[int(seir.wfh.idxmax())]
 times = []
 # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
@@ -256,9 +283,11 @@ for i, time in enumerate(times):
   #              '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
     # make_flow_plot(wn, flow_diff[i])
 
-make_sector_plot(wn, demand*1000000, 'Demand [L]')
-make_sector_plot(wn, age/3600, 'Age [hr]')
-make_sector_plot(wn, pressure, 'Pressure [m]')
+# make_sector_plot(wn, demand*1000000, 'Demand [L]')
+# make_sector_plot(wn, age/3600, 'Age [hr]')
+# make_sector_plot(wn, pressure, 'Pressure [m]')
+
+export_agent_loc(wn, agent)
 
 seir['I'] = seir['I'] / 4606
 seir.plot(y=['S', 'E', 'I', 'R', 'D', 'wfh'], xlabel='Time (days)',
@@ -278,12 +307,3 @@ plt.ylabel('Percent Population')
 plt.legend()
 plt.savefig(output_loc + '/' + 'seir_wfh.png')
 plt.close()
-
-#              'Pressure [m]', vmin=0, vmax=85)
-# make_contour(G, pressure.iloc[12+(24*45)], 'pressure', output_loc + 'pressure_' + str(12+(24*45)), True,
-#              'Pressure [m]', vmin=0, vmax=85)
-
-# make_contour(G, demand.iloc[12], 'demand', output_loc + 'demand_' + str(12), True,
-#              'Demand [ML]', vmin=0, vmax=0.02)
-# make_contour(G, demand.iloc[12+(24*45)], 'demand', output_loc + 'demand_' + str(12+(24*45)), True,
-#              'Demand [ML]', vmin=0, vmax=0.02)
