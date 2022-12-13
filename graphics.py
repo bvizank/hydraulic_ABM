@@ -9,6 +9,7 @@ import os
 
 wfh_loc = 'Output Files/2022-10-27_18-25_all_pb_current_results/'
 no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
+day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 
 
@@ -46,6 +47,7 @@ wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 read_data(wfh_loc, read_list, 'wfh')
 read_data(no_wfh_loc, read_list, 'no_wfh')
+read_data(day200_loc, ['seir', 'demand', 'age'], '200days')
 
 
 def calc_difference(data_time_1, data_time_2):
@@ -153,7 +155,8 @@ def make_contour(graph, data, data_type, fig_name,
 
 
 def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
-                     data2=None, type=None, data_type='node', sub=False):
+                     data2=None, type=None, data_type='node', sub=False,
+                     days=90):
     '''
     Function to plot the average data for a given sector
     Sectors include: residential, commercial, industrial
@@ -187,7 +190,7 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
 
     if type is not None:
         y_data = getattr(data[nodes], op)(axis=1)
-        x_values = np.array([x for x in np.arange(0, 90, 90/len(y_data))])
+        x_values = np.array([x for x in np.arange(0, days, days/len(y_data))])
         if data2 is not None:
             wfh_data = getattr(data2[nodes], op)(axis=1)
             data = pd.DataFrame(data={'primary': y_data, 'wfh': wfh_data,
@@ -206,7 +209,7 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
         res_data = getattr(data[res_nodes], op)(axis=1)
         ind_data = getattr(data[ind_nodes], op)(axis=1)
         com_data = getattr(data[com_nodes], op)(axis=1)
-        x_values = np.array([x for x in np.arange(0, 90, 90/len(res_data))])
+        x_values = np.array([x for x in np.arange(0, days, days/len(res_data))])
         if not sub:
             data = pd.DataFrame(data={'res': res_data, 'com': com_data,
                                       'ind': ind_data, 't': x_values})
@@ -230,10 +233,8 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             data2.rolling(24).mean().plot(x='t', y=['res2', 'com2', 'ind2'],
                                           xlabel='Time (days)',
                                           legend=False, ax=axes[1])
-            lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
-            lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-            
-        plt.legend(lines, ['Residential', 'Commercial', 'Industrial'], loc='upper left')
+
+        plt.legend(['Residential', 'Commercial', 'Industrial'], loc='upper left')
         plt.savefig(output_loc + fig_name)
         plt.close()
 
@@ -359,6 +360,8 @@ no_wfh_flow_diff = list()
 make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
                  data2=age_wfh/3600, sub=True)
 # make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', no_wfh_loc, 'mean', 'mean_age')
+make_sector_plot(wn, age_200days/3600, 'Age (hr)', day200_loc, 'mean',
+                 'mean_age', days=200)
 
 ''' Make age plot comparing base and PM '''
 # make_sector_plot(wn, age_no_wfh/3600, 'Age [hr]', wfh_loc, 'mean', age_wfh/3600, type='all')
