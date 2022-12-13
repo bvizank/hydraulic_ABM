@@ -2,75 +2,50 @@ import wntr
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from scipy.interpolate import griddata
 import networkx as nx
 import os
 
-output_loc = 'Output Files/2022-10-27_18-25_all_pb_current_results/'
-data_file = output_loc + 'datasheet.xlsx'
+wfh_loc = 'Output Files/2022-10-27_18-25_all_pb_current_results/'
+no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
+read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 
-pkls = [file for file in os.listdir(output_loc) if file.endswith(".pkl")]
-print(pkls)
 
-if not pkls:
-    print('Importing data from excel')
-    seir = pd.read_excel(data_file, sheet_name='seir_data', index_col=1)
-    demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
-    pressure = pd.read_excel(data_file, sheet_name='pressure', index_col=0)
-    age = pd.read_excel(data_file, sheet_name='age', index_col=0)
-    agent = pd.read_excel(data_file, sheet_name='agent locations', index_col=0)
-    flow = pd.read_excel(data_file, sheet_name='flow', index_col=0)
-    seir.to_pickle(output_loc + 'seir_data.pkl')
-    demand.to_pickle(output_loc + 'demand.pkl')
-    pressure.to_pickle(output_loc + 'pressure.pkl')
-    age.to_pickle(output_loc + 'age.pkl')
-    agent.to_pickle(output_loc + 'agent locations.pkl')
-    flow.to_pickle(output_loc + 'flow.pkl')
-else:
-    for pkl in pkls:
-        file_name = pkl[:-4]
-        if file_name == 'seir_data':
-            print('Reading seir pickle data')
-            seir = pd.read_pickle(output_loc + pkl)
-        elif file_name == 'demand':
-            print('Reading demand pickle data')
-            demand = pd.read_pickle(output_loc + pkl)
-        elif file_name == 'pressure':
-            print('Reading pressure pickle data')
-            pressure = pd.read_pickle(output_loc + pkl)
-        elif file_name == 'age':
-            print('Reading age pickle data')
-            age = pd.read_pickle(output_loc + pkl)
-        elif file_name == 'agent locations':
-            print('Redaing agent pickle data')
-            agent = pd.read_pickle(output_loc + pkl)
-        elif file_name == 'flow':
-            print('Reading flow pickle data')
-            flow = pd.read_pickle(output_loc + pkl)
+def read_data(loc, read_list, type):
+    ''' Function to read in data from either excel or pickle '''
+    data_file = loc + 'datasheet.xlsx'
+    pkls = [file for file in os.listdir(loc) if file.endswith(".pkl")]
 
-    if 'seir_data.pkl' not in pkls:
-        seir = pd.read_excel(data_file, sheet_name='seir_data', index_col=1)
-        seir.to_pickle(output_loc + 'seir_data.pkl')
-    if 'demand.pkl' not in pkls:
-        demand = pd.read_excel(data_file, sheet_name='demand', index_col=0)
-        demand.to_pickle(output_loc + 'demand.pkl')
-    if 'pressure.pkl' not in pkls:
-        pressure = pd.read_excel(data_file, sheet_name='pressure', index_col=0)
-        pressure.to_pickle(output_loc + 'pressure.pkl')
-    if 'age.pkl' not in pkls:
-        age = pd.read_excel(data_file, sheet_name='age', index_col=0)
-        age.to_pickle(output_loc + 'age.pkl')
-    if 'agent locations.pkl' not in pkls:
-        agent = pd.read_excel(data_file, sheet_name='agent locations', index_col=0)
-        agent.to_pickle(output_loc + 'agent locations.pkl')
-    if 'flow.pkl' not in pkls:
-        flow = pd.read_excel(data_file, sheet_name='flow', index_col=0)
-        flow.to_pickle(output_loc + 'flow.pkl')
+    for name in read_list:
+        index_col = 0
+        print("Reading " + name + " data")
+        if name == 'seir':
+            sheet_name = 'seir_data'
+            index_col = 1
+        elif name == 'agent':
+            sheet_name = 'agent locations'
+        else:
+            sheet_name = name
 
-'''Import water network'''
+        file_name = name + '.pkl'
+        if file_name not in pkls:
+            print("No pickle file found, importing from excel")
+            globals()[name+'_'+type] = pd.read_excel(data_file,
+                                                     sheet_name=sheet_name,
+                                                     index_col=index_col)
+            globals()[name+'_'+type].to_pickle(loc + file_name)
+        else:
+            print("Pickle file found, unpickling")
+            globals()[name+'_'+type] = pd.read_pickle(loc + name + '.pkl')
+
+
+'''Import water network and data'''
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
+read_data(wfh_loc, read_list, 'wfh')
+read_data(no_wfh_loc, read_list, 'no_wfh')
 
 
 def calc_difference(data_time_1, data_time_2):
@@ -78,12 +53,31 @@ def calc_difference(data_time_1, data_time_2):
     return (data_time_2 - data_time_1)
 
 
-def calc_flow_diff(data_time_1, data_time_2):
-    output = dict()
-    for i in range(len(data_time_1)):
-        if data_time_2[i] * data_time_1[i] < 0:
-            print(data_time_2)
-    return ([1 if data_time_2[i]*data_time_1[i] < 0 else 0 for i in range(len(data_time_1))])
+def calc_flow_diff(data):
+    flow_data = dict()
+    for (pipe, colData) in data.iteritems():
+        curr_flow_changes = list()
+        for i in range(len(colData)-1):
+            if colData[(i+1)*3600] * colData[i*3600] < 0:
+                curr_flow_changes.append(1)
+            else:
+                curr_flow_changes.append(0)
+        flow_data[pipe] = curr_flow_changes
+
+    output = pd.DataFrame(flow_data)
+
+    # output = list()
+    # for i in range(len(data_time_1)):
+    #     if ('V' not in data_time_2.index[i]
+    #             and 'TowerPipe' not in data_time_2.index[i]):
+    #         if data_time_2[i] * data_time_1[i] < 0:
+    #             output.append(1)
+    #             print(f"Pipe {data_time_2.index[i]} has flow 2: {data_time_2[i]} and flow 1: {data_time_1[i]}")
+    #         else:
+    #             output.append(0)
+    #     else:
+    #         pass
+    return output
 
 
 def make_contour(graph, data, data_type, fig_name,
@@ -114,40 +108,52 @@ def make_contour(graph, data, data_type, fig_name,
             x_coords.append(x_coord)
             y_coords.append(y_coord)
             data_list.append(curr_data)
-                
+
             pos[node] = x_coord, y_coord
-                
-    # x_mesh = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
-    # y_mesh = np.linspace(np.min(y_coords), np.max(y_coords), int(np.sqrt(pts)))
-    # [x,y] = np.meshgrid(x_mesh, y_mesh)
 
-    # z = griddata((x_coords, y_coords), data_list, (x, y), method='linear')
-    # x = np.matrix.flatten(x); #Gridded longitude
-    # y = np.matrix.flatten(y); #Gridded latitude
-    # z = np.matrix.flatten(z); #Gridded elevation
+    x_mesh = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
+    y_mesh = np.linspace(np.min(y_coords), np.max(y_coords), int(np.sqrt(pts)))
+    [x,y] = np.meshgrid(x_mesh, y_mesh)
 
-    # if 'vmax' in plots:
-    #     plt.scatter(x,y,1,z,vmin=plots['vmin'], vmax=plots['vmax'])
-    # else:
-    #     plt.scatter(x,y,1,z,vmin=plots['vmin'])
+    z = griddata((x_coords, y_coords), data_list, (x, y), method='linear')
+    x = np.matrix.flatten(x); #Gridded longitude
+    y = np.matrix.flatten(y); #Gridded latitude
+    z = np.matrix.flatten(z); #Gridded elevation
 
-    # nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
-    #                  node_size=0)
-    # if label:
-    #     plt.colorbar(label=label_val)
-    # plt.savefig(fig_name)
-    # plt.close()
-    
-    ax = wntr.graphics.plot_network(wn, node_attribute=data_list,
+    if 'vmax' in plots:
+        plt.scatter(x,y,1,z,vmin=plots['vmin'], vmax=plots['vmax'])
+    else:
+        plt.scatter(x,y,1,z,vmin=plots['vmin'])
+
+    nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
+                     node_size=0)
+    if label:
+        plt.colorbar(label=label_val)
+    plt.savefig(fig_name)
+    plt.close()
+
+    ax = wntr.graphics.plot_network(wn, node_attribute='pressure',
                                     node_colorbar_label=label_val)
 
-    # nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
-    #                  node_size=10, node_color=data_list)
+    # fig = go.Figure(data =
+    #     go.Contour(
+    #         z = z,
+    #         x = x,
+    #         y = y
+    #     )
+    # )
+
+    # fig.write_image(fig_name + 'nodes' + '.png')
+
+
+    nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
+                     node_size=10, node_color=data_list)
     plt.savefig(fig_name + 'nodes')
     plt.close()
 
 
-def make_sector_plot(wn, data, ylabel, type=None):
+def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
+                     data2=None, type=None, data_type='node', sub=False):
     '''
     Function to plot the average data for a given sector
     Sectors include: residential, commercial, industrial
@@ -172,21 +178,64 @@ def make_sector_plot(wn, data, ylabel, type=None):
                      if node.demand_timeseries_list[0].pattern_name == '4' or
                      node.demand_timeseries_list[0].pattern_name == '5' or
                      node.demand_timeseries_list[0].pattern_name == '6']
+    elif type == 'all':
+        if data_type == 'node':
+            nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].base_value > 0]
+        elif data_type == 'link':
+            nodes = [name for name,link in wn.links() if 'V' not in name]
 
-    if type != None:
-        y_data = data[nodes].mean(axis=1)
-        print(y_data)
+    if type is not None:
+        y_data = getattr(data[nodes], op)(axis=1)
+        x_values = np.array([x for x in np.arange(0, 90, 90/len(y_data))])
+        if data2 is not None:
+            wfh_data = getattr(data2[nodes], op)(axis=1)
+            data = pd.DataFrame(data={'primary': y_data, 'wfh': wfh_data,
+                                      't': x_values})
+            data.rolling(24).mean().plot(x='t', y=['primary', 'wfh'],
+                                         xlabel='Time (days)', ylabel=ylabel,
+                                         legend=True)
+            plt.legend(['Base', 'PM'])
+        else:
+            data = pd.DataFrame(data={'demand': y_data, 't': x_values})
+            data.plot(x='t', y='demand', xlabel='Time (days)', ylabel=ylabel,
+                      legend=False)
+        plt.savefig(output_loc + fig_name)
+        plt.close()
     else:
-        res_data = data[res_nodes].mean(axis=1)
-        ind_data = data[ind_nodes].mean(axis=1)
-        com_data = data[com_nodes].mean(axis=1)
-        res_data.rolling(24).mean().plot()
-        ind_data.rolling(24).mean().plot()
-        com_data.rolling(24).mean().plot()
-        plt.legend(['Residential', 'Industrial', 'Commercial'])
-        plt.xlabel('Time [sec]')
-        plt.ylabel(ylabel)
-        plt.savefig(output_loc + ylabel)
+        res_data = getattr(data[res_nodes], op)(axis=1)
+        ind_data = getattr(data[ind_nodes], op)(axis=1)
+        com_data = getattr(data[com_nodes], op)(axis=1)
+        x_values = np.array([x for x in np.arange(0, 90, 90/len(res_data))])
+        if not sub:
+            data = pd.DataFrame(data={'res': res_data, 'com': com_data,
+                                      'ind': ind_data, 't': x_values})
+            data.rolling(24).mean().plot(x='t', y=['res', 'com', 'ind'],
+                                         xlabel='Time (days)', ylabel=ylabel,
+                                         legend=True)
+        else:
+            res_data2 = getattr(data2[res_nodes], op)(axis=1)
+            com_data2 = getattr(data2[com_nodes], op)(axis=1)
+            ind_data2 = getattr(data2[ind_nodes], op)(axis=1)
+            data = pd.DataFrame(data={'res': res_data, 'com': com_data,
+                                      'ind': ind_data,
+                                      't': x_values})
+            data2 = pd.DataFrame(data={'res2': res_data2, 'com2': com_data2,
+                                       'ind2': ind_data2,
+                                       't': x_values})
+            fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
+            data.rolling(24).mean().plot(x='t', y=['res', 'com', 'ind'],
+                                         xlabel='Time (days)', ylabel=ylabel,
+                                         legend=False, ax=axes[0])
+            data2.rolling(24).mean().plot(x='t', y=['res2', 'com2', 'ind2'],
+                                          xlabel='Time (days)',
+                                          legend=False, ax=axes[1])
+            lines_labels = [ax.get_legend_handles_labels() for ax in fig.axes]
+            lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
+            
+        plt.legend(lines, ['Residential', 'Commercial', 'Industrial'], loc='upper left')
+        plt.savefig(output_loc + fig_name)
+        plt.close()
 
 
 def make_flow_plot(wn, data):
@@ -198,7 +247,7 @@ def make_flow_plot(wn, data):
     plt.show()
 
 
-def export_agent_loc(wn, locations):
+def export_agent_loc(wn, output_loc, locations):
     res_nodes = [name for name, node in wn.junctions()
                  if node.demand_timeseries_list[0].pattern_name == '2'
                  and name in locations.columns]
@@ -225,13 +274,31 @@ def export_agent_loc(wn, locations):
     output.to_csv(output_loc + 'locations.csv')
 
 
-max_wfh = seir.wfh.loc[int(seir.wfh.idxmax())]
+def make_seir_plot(data, output_loc, input):
+    ''' Function to make the seir plot with S, E, I, R, and WFH  '''
+    data['I'] = data['I'] / 4606
+    # seir.reset_index(inplace=True)
+    # seir['t'] = seir['t'] / 3600 /24
+    x_values = np.array([x for x in np.arange(0, 90, 90/len(data))])
+    data['t_new'] = x_values
+    data.plot(x='t_new', y=input, xlabel='Time (days)',
+              ylabel='Percent Population', legend=True)
+    # plt.axvline(x=times[0]/24, color='black')
+    # plt.axvline(x=times[1]/24, color='black')
+    plt.xlabel('Time (days)')
+    plt.ylabel('Percent Population')
+    plt.legend(['Susceptible', 'Exposed', 'Infected', 'Removed'])
+    plt.savefig(output_loc + '/' + 'seir_wfh.png')
+    plt.close()
+
+
+max_wfh = seir_wfh.wfh.loc[int(seir_wfh.wfh.idxmax())]
 times = []
 # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
-times = times + [seir.wfh.searchsorted(max_wfh/2)+12]
+times = times + [seir_wfh.wfh.searchsorted(max_wfh/2)]
 # print(seir.wfh.searchsorted(max_wfh/2))
 # times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
-times = times + [seir.wfh.searchsorted(max_wfh)-12]
+times = times + [seir_wfh.wfh.searchsorted(max_wfh)]
 print(times)
 times_hour = [time % 24 for time in times]
 print(times_hour)
@@ -241,7 +308,7 @@ def check_stats(new_list, old_stats):
         old_stats[0] = new_list.max()
     if new_list.min() < old_stats[1]:
         old_stats[1] = new_list.min()
-    
+
     return old_stats
 
 demand_stats = [0,0]
@@ -252,57 +319,61 @@ demand_diff = list()
 pressure_diff = list()
 age_diff = list()
 agent_diff = list()
-flow_diff = list()
+wfh_flow_diff = list()
+no_wfh_flow_diff = list()
 
-for i, time in enumerate(times):
-    if time >= len(demand):
-        time = time - 1
-    demand_diff.append(calc_difference(demand.iloc[times_hour[i]], demand.iloc[time]) * 1000)
-    pressure_diff.append(calc_difference(pressure.iloc[times_hour[i]], pressure.iloc[time]))
-    age_diff.append(calc_difference(age.iloc[times_hour[i]], pressure.iloc[time]))
-    agent_diff.append(calc_difference(agent.iloc[times_hour[i]], agent.iloc[time]))
-    demand_stats = check_stats(demand_diff[i], demand_stats)
-    pressure_stats = check_stats(pressure_diff[i], pressure_stats)
-    age_stats = check_stats(age_diff[i], age_stats)
-    agent_stats = check_stats(agent_diff[i], agent_stats)
-    print(demand_stats)
-    # flow_diff.append(calc_flow_diff(flow.iloc[times_hour[i]], flow.iloc[time]))
-    # print(f"Flow at time {time} changed in {sum(flow_diff[i])} pipes.")
-
-for i, time in enumerate(times):
-    if time >= len(demand):
-        time = time - 1
-  # make_contour(G, demand_diff[i], 'demand', output_loc + 'demand_' + str(time), True,
-  #              'Demand [ML]', vmin=demand_stats[1], vmax=demand_stats[0])
-  # make_contour(G, pressure_diff[i], 'pressure', output_loc + 'pressure_' + str(time), True,
-  #              'Pressure [m]', vmin=pressure_stats[1], vmax=pressure_stats[0])
-  # make_contour(G, age_diff[i], 'age', output_loc + 'age_' + str(time), True,
-  #              'Age [sec]', vmin=age_stats[1], vmax=age_stats[0])
-  # make_contour(G, agent_diff[i], 'agent', output_loc + 'locations_' + str(time), True,
-  #              '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
+# for i, time in enumerate(times):
+#     if time >= len(demand_wfh):
+#         time = time - 1
+#     print(time)
+#     demand_diff.append(calc_difference(demand_wfh.iloc[times_hour[i]], demand_wfh.iloc[time]) * 1000)
+#     demand_stats = check_stats(demand_diff[i], demand_stats)
+#     make_contour(G, demand_diff[i], 'demand', wfh_loc + 'demand_' + str(time), True,
+#                  'Demand [ML]', vmin=demand_stats[1], vmax=demand_stats[0])
+#     pressure_diff.append(calc_difference(pressure_wfh.iloc[times_hour[i]], pressure_wfh.iloc[time]))
+#     pressure_stats = check_stats(pressure_diff[i], pressure_stats)
+#     make_contour(G, pressure_diff[i], 'pressure', wfh_loc + 'pressure_' + str(time), True,
+#                  'Pressure [m]', vmin=pressure_stats[1], vmax=pressure_stats[0])
+#     age_diff.append(calc_difference(age_wfh.iloc[times_hour[i]], age_wfh.iloc[time]))
+#     age_stats = check_stats(age_diff[i], age_stats)
+#     make_contour(G, age_diff[i], 'age', wfh_loc + 'age_' + str(time), True,
+#                  'Age [sec]', vmin=age_stats[1], vmax=age_stats[0])
+#     agent_diff.append(calc_difference(agent_wfh.iloc[times_hour[i]], agent_wfh.iloc[time]))
+#     agent_stats = check_stats(agent_diff[i], agent_stats)
+#     make_contour(G, agent_diff[i], 'agent', wfh_loc + 'locations_' + str(time), True,
+#                  '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
     # make_flow_plot(wn, flow_diff[i])
 
-make_sector_plot(wn, demand, 'Demand [L]')
-make_sector_plot(wn, age/3600, 'Age [hr]')
-make_sector_plot(wn, pressure, 'Pressure [m]')
+''' Sector plots '''
 
-export_agent_loc(wn, agent)
+''' Flow direction change plots '''
+# make_sector_plot(wn, calc_flow_diff(flow_wfh), 'Number of Flow Changes', wfh_loc,
+#                  'sum', 'flow_changes', calc_flow_diff(flow_no_wfh), 'all', 'link')
 
-seir['I'] = seir['I'] / 4606
-seir.plot(y=['S', 'E', 'I', 'R', 'D', 'wfh'], xlabel='Time (days)',
-          ylabel='Percent Population', legend=True)
-# plt.plot(y='S', data=seir, label='Susceptible', use_index=True)
-# plt.plot(y='E', data=seir, label='Exposed', use_index=True)
-# plt.plot(y='I', data=seir, label='Infected', use_index=True)
-# plt.plot(y='R', data=seir, label='Recovered', use_index=True)
-# plt.plot(y='D', data=seir, label='Dead', use_index=True)
-# plt.plot(y='wfh', data=seir, label='WFH', use_index=True)
-plt.axvline(x=times[0]*3600, color='black')
-plt.axvline(x=times[1]*3600, color='black')
-# plt.axvline(x=times[2]*3600, color='black')
-# plt.axvline(x=times[3]*3600, color='black')
-plt.xlabel('Time (days)')
-plt.ylabel('Percent Population')
-plt.legend()
-plt.savefig(output_loc + '/' + 'seir_wfh.png')
-plt.close()
+''' Make demand plots for by sector with PM data '''
+# make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand')
+# make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'max', 'max_demand')
+# make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
+
+''' Make age plot by sector for both base and PM '''
+make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
+                 data2=age_wfh/3600, sub=True)
+# make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', no_wfh_loc, 'mean', 'mean_age')
+
+''' Make age plot comparing base and PM '''
+# make_sector_plot(wn, age_no_wfh/3600, 'Age [hr]', wfh_loc, 'mean', age_wfh/3600, type='all')
+
+''' Make plots of aggregate demand data '''
+# make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand_aggregate',
+#                  demand_wfh, type='all')
+# make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
+#                  demand_wfh, type='all')
+# make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
+#                  demand_wfh, type='all')
+# make_sector_plot(wn, pressure, 'Pressure (m)', pressure_wfh, type='all')
+
+''' Export the agent locations '''
+# export_agent_loc(wn, agent)
+
+''' SEIR plot '''
+# make_seir_plot(seir, [S, E, I, R])

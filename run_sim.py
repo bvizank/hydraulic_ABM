@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
 import os
 
-def run_sim(id = 0, **kwargs):
+def run_sim(id = 0, days = 90, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
     output_loc = 'Output Files/' + curr_dt + '_results'
     os.mkdir(output_loc)
@@ -17,7 +17,6 @@ def run_sim(id = 0, **kwargs):
     output_file = 'datasheet.xlsx'
 
     f = Micro_pop
-    days = 90
     model = ConsumerModel(f, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
 
     start = perf_counter()
@@ -38,7 +37,7 @@ def run_sim(id = 0, **kwargs):
     plt.plot(Demands_test)
     # plt.plot(Demands_test, label='Total Demand')
     plt.xlabel("Time (sec)")
-    plt.ylabel("Demand (ML)")
+    plt.ylabel("Demand (L)")
     plt.legend(loc='best')
     plt.savefig(output_loc + '/' + 'demands.png')
     plt.close()
