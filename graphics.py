@@ -7,9 +7,10 @@ from scipy.interpolate import griddata
 import networkx as nx
 import os
 
-wfh_loc = 'Output Files/2022-10-27_18-25_all_pb_current_results/'
+wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
 no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
 day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
+day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 
 
@@ -35,6 +36,9 @@ def read_data(loc, read_list, type):
             globals()[name+'_'+type] = pd.read_excel(data_file,
                                                      sheet_name=sheet_name,
                                                      index_col=index_col)
+            if name == 'seir':
+                globals()[name+'_'+type].index = globals()[name+'_'+type].index.astype("int64")
+
             globals()[name+'_'+type].to_pickle(loc + file_name)
         else:
             print("Pickle file found, unpickling")
@@ -47,7 +51,8 @@ wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 read_data(wfh_loc, read_list, 'wfh')
 read_data(no_wfh_loc, read_list, 'no_wfh')
-read_data(day200_loc, ['seir', 'demand', 'age'], '200days')
+# read_data(day200_loc, ['seir', 'demand', 'age'], '200days')
+# read_data(day400_loc, ['seir', 'demand', 'age'], '400days')
 
 
 def calc_difference(data_time_1, data_time_2):
@@ -293,6 +298,23 @@ def make_seir_plot(data, output_loc, input):
     plt.close()
 
 
+def calc_model_stats(wn, seir, age):
+    '''
+    Function for calculating comparison stats for decision models:
+        - average water age at the end of the simluation
+        - peak infection rate
+        - final susceptible count
+    '''
+    nodes = [name for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].base_value > 0]
+    age_data = getattr(age[nodes], 'mean')(axis=1)
+    final_age = age_data[(len(age_data)-1)*3600]
+    max_inf = seir.I.loc[int(round(seir.I.idxmax(), 0))]
+    final_sus = seir.S[(len(seir.S)-1)*3600]
+
+    return (final_age, max_inf/4606, final_sus)
+
+
 max_wfh = seir_wfh.wfh.loc[int(seir_wfh.wfh.idxmax())]
 times = []
 # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
@@ -357,11 +379,13 @@ no_wfh_flow_diff = list()
 # make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
 
 ''' Make age plot by sector for both base and PM '''
-make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
-                 data2=age_wfh/3600, sub=True)
+# make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
+#                  data2=age_wfh/3600, sub=True)
 # make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', no_wfh_loc, 'mean', 'mean_age')
-make_sector_plot(wn, age_200days/3600, 'Age (hr)', day200_loc, 'mean',
-                 'mean_age', days=200)
+# make_sector_plot(wn, age_200days/3600, 'Age (hr)', day200_loc, 'mean',
+#                  'mean_age', days=200)
+# make_sector_plot(wn, age_400days/3600, 'Age (hr)', day400_loc, 'mean',
+#                  'mean_age', days=400)
 
 ''' Make age plot comparing base and PM '''
 # make_sector_plot(wn, age_no_wfh/3600, 'Age [hr]', wfh_loc, 'mean', age_wfh/3600, type='all')
@@ -380,3 +404,20 @@ make_sector_plot(wn, age_200days/3600, 'Age (hr)', day200_loc, 'mean',
 
 ''' SEIR plot '''
 # make_seir_plot(seir, [S, E, I, R])
+
+''' Export comparison stats '''
+only_wfh_loc = 'Output Files/2022-12-12_11-52_wfh_current_results/'
+dine_loc = 'Output Files/2022-12-12_12-44_dine_current_results/'
+grocery_loc = 'Output Files/2022-12-12_13-18_grocery_current_results/'
+ppe_loc = 'Output Files/2022-12-15_13-00_ppe_current_results/'
+
+read_data(only_wfh_loc, ['seir', 'age'], 'only_wfh')
+read_data(dine_loc, ['seir', 'age'], 'dine')
+read_data(grocery_loc, ['seir', 'age'], 'grocery')
+read_data(ppe_loc, ['seir', 'age'], 'ppe')
+print("WFH model stats: " + str(calc_model_stats(wn, seir_only_wfh, age_only_wfh/3600)))
+print("Dine model stats: " + str(calc_model_stats(wn, seir_dine, age_dine/3600)))
+print("Grocery model stats: " + str(calc_model_stats(wn, seir_grocery, age_grocery/3600)))
+print("PPE model stats: " + str(calc_model_stats(wn, seir_ppe, age_ppe/3600)))
+print("All PM model stats: " + str(calc_model_stats(wn, seir_wfh, age_wfh/3600)))
+print("No PM model stats: " + str(calc_model_stats(wn, seir_no_wfh, age_no_wfh/3600)))

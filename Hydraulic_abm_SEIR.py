@@ -1,10 +1,7 @@
 # Consumer Model WNTR- MESA
 import warnings
-warnings.simplefilter("ignore", UserWarning)
-from mesa import Agent, Model
+from mesa import Model
 from mesa.time import RandomActivation
-from mesa.datacollection import DataCollector
-# from wntr_1 import *
 from Char_micropolis_static_loc import *
 import networkx as nx
 from mesa.space import NetworkGrid
@@ -13,11 +10,11 @@ from agent_model import *
 import math
 import time
 import bnlearn as bn
-import multiprocessing as mp
-import os
 import numpy as np
 # from pysimdeum import pysimdeum
 import copy
+
+warnings.simplefilter("ignore", UserWarning)
 
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
@@ -135,7 +132,15 @@ class ConsumerModel(Model):
         if 'ppe_reduction' in kwargs:
             self.ppe_reduction = kwargs['ppe_reduction']
         else:
-            self.ppe_reduction = 0.25
+            '''
+            This value comes from this paper:
+            https://www.cdc.gov/mmwr/volumes/71/wr/mm7106e1.htm#T3_down
+
+            Odds that you will get get covid if you wear a mask is
+            66% less likely than without a mask, therefore, the new
+            exposure rate is 34% of the original.
+            '''
+            self.ppe_reduction = 0.34
 
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
