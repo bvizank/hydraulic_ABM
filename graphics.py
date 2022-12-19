@@ -2,6 +2,7 @@ import wntr
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+# from matplotlib.pyplot import figure
 import plotly.graph_objects as go
 from scipy.interpolate import griddata
 import networkx as nx
@@ -13,6 +14,13 @@ no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
 day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
 day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
+plt.rcParams['figure.figsize'] = [3.5, 3.5]
+format = 'png'
+publication = True
+if publication:
+    pub_loc = 'Output Files/publication_figures/'
+    plt.rcParams['figure.dpi'] = 800
+    format = 'eps'
 
 
 def read_data(loc, read_list, type):
@@ -118,12 +126,14 @@ def calc_industry_distance(wn):
 
 
 def calc_closest_node(wn):
-    all_nodes = [node for name, node in wn.junctions()
+    res_nodes = [node for name, node in wn.junctions()
                  if node.demand_timeseries_list[0].base_value > 0
                  and node.demand_timeseries_list[0].pattern_name == '2']
+    all_nodes = [node for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].base_value > 0]
 
     closest_distances = dict()
-    for node1 in all_nodes:
+    for node1 in res_nodes:
         curr_node_close = dict()
         for node2 in all_nodes:
             if node1.name != node2.name:
@@ -182,7 +192,12 @@ def make_contour(graph, data, data_type, fig_name,
                      node_size=0)
     if label:
         plt.colorbar(label=label_val)
-    plt.savefig(fig_name)
+
+    if publication:
+        plt.savefig(pub_loc + fig_name + '.' + format, format=format,
+                    bbox_inches='tight')
+    else:
+        plt.savefig(fig_name + '.' + format, format=format, bbox_inches='tight')
     plt.close()
 
     ax = wntr.graphics.plot_network(wn, node_attribute='pressure',
@@ -201,7 +216,12 @@ def make_contour(graph, data, data_type, fig_name,
 
     nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
                      node_size=10, node_color=data_list)
-    plt.savefig(fig_name + 'nodes')
+    if publication:
+        plt.savefig(pub_loc + fig_name + 'nodes.' + format, format=format,
+                    bbox_inches='tight')
+    else:
+        plt.savefig(fig_name + 'nodes.' + format, format=format,
+                    bbox_inches='tight')
     plt.close()
 
 
@@ -254,7 +274,10 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             data = pd.DataFrame(data={'demand': y_data, 't': x_values})
             data.plot(x='t', y='demand', xlabel='Time (days)', ylabel=ylabel,
                       legend=False)
-        plt.savefig(output_loc + fig_name)
+        if publication:
+            output_loc = pub_loc
+        plt.savefig(output_loc + fig_name + '.' + format, format=format,
+                    bbox_inches='tight')
         plt.close()
     else:
         res_data = getattr(data[res_nodes], op)(axis=1)
@@ -268,6 +291,9 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
                                          xlabel='Time (days)', ylabel=ylabel,
                                          legend=True)
             plt.legend(['Residential', 'Commercial', 'Industrial'])
+            if publication:
+                # plt.gcf().set_size_inches(3.5, 3.5)
+                output_loc = pub_loc
         else:
             res_data2 = getattr(data2[res_nodes], op)(axis=1)
             com_data2 = getattr(data2[com_nodes], op)(axis=1)
@@ -286,8 +312,13 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
                                           xlabel='Time (days)',
                                           legend=False, ax=axes[1])
             axes[0].legend(['Residential', 'Commercial', 'Industrial'])
+            if publication:
+                # plt.gcf().set_size_inches(7, 3.5)
+                output_loc = pub_loc
+                plt.gcf().set_size_inches(7, 3.5)
 
-        plt.savefig(output_loc + fig_name)
+        plt.savefig(output_loc + fig_name + '.' + format, format=format,
+                    bbox_inches='tight')
         plt.close()
 
 
@@ -341,7 +372,10 @@ def make_seir_plot(data, output_loc, input):
     plt.xlabel('Time (days)')
     plt.ylabel('Percent Population')
     plt.legend(['Susceptible', 'Exposed', 'Infected', 'Removed'])
-    plt.savefig(output_loc + '/' + 'seir_wfh.png')
+    if publication:
+        output_loc = pub_loc
+    plt.savefig(output_loc + '/' + 'seir_wfh.' + format, format=format,
+                bbox_inches='tight')
     plt.close()
 
 
@@ -350,7 +384,9 @@ def make_distance_plot(x, y, xlabel, ylabel, loc, name):
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.ylim([0,500])
-    plt.savefig(loc + name)
+    if publication:
+        loc = pub_loc
+    plt.savefig(loc + name + '.' + format, format=format, bbox_inches='tight')
     plt.close()
 
 
@@ -426,17 +462,17 @@ no_wfh_flow_diff = list()
 ''' Sector plots '''
 
 ''' Flow direction change plots '''
-# make_sector_plot(wn, calc_flow_diff(flow_wfh), 'Number of Flow Changes', wfh_loc,
-#                  'sum', 'flow_changes', calc_flow_diff(flow_no_wfh), 'all', 'link')
+make_sector_plot(wn, calc_flow_diff(flow_wfh), 'Number of Flow Changes', wfh_loc,
+                 'sum', 'flow_changes', calc_flow_diff(flow_no_wfh), 'all', 'link')
 
 ''' Make demand plots for by sector with PM data '''
-# make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand')
+make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand')
 # make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'max', 'max_demand')
 # make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
 
 ''' Make age plot by sector for both base and PM '''
-# make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
-#                  data2=age_wfh/3600, sub=True)
+make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
+                 data2=age_wfh/3600, sub=True)
 # make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', no_wfh_loc, 'mean', 'mean_age')
 # make_sector_plot(wn, age_200days/3600, 'Age (hr)', day200_loc, 'mean',
 #                  'mean_age', days=200)
@@ -444,12 +480,12 @@ no_wfh_flow_diff = list()
 #                  'mean_age', days=400)
 
 ''' Make age plot comparing base and PM '''
-# make_sector_plot(wn, age_no_wfh/3600, 'Age [hr]', wfh_loc, 'mean', 'mean_age_aggregate',
-#                  age_wfh/3600, type='all')
+make_sector_plot(wn, age_no_wfh/3600, 'Age [hr]', wfh_loc, 'mean', 'mean_age_aggregate',
+                 age_wfh/3600, type='all')
 
 ''' Make plots of aggregate demand data '''
-# make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand_aggregate',
-#                  demand_wfh, type='all')
+make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand_aggregate',
+                 demand_wfh, type='all')
 # make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
 #                  demand_wfh, type='all')
 # make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
@@ -479,17 +515,14 @@ print("PPE model stats: " + str(calc_model_stats(wn, seir_ppe, age_ppe/3600)))
 print("All PM model stats: " + str(calc_model_stats(wn, seir_wfh, age_wfh/3600)))
 print("No PM model stats: " + str(calc_model_stats(wn, seir_no_wfh, age_no_wfh/3600)))
 
-# ind_distances, ind_closest = calc_industry_distance(wn)
-# print(age_wfh.iloc[len(age_wfh)-1])
-# print(ind_distances.keys())
-# age_values = list()
-# curr_age_values = age_wfh.iloc[len(age_wfh)-1]/3600
-# for age in curr_age_values.items():
-#     print(age)
-#     if age[0] in ind_distances.keys():
-#         age_values.append(age[1])
-# make_distance_plot(ind_distances.values(), age_values,
-#                    'Distance (m)', 'Age (hr)', wfh_loc, 'age_ind_distance')
+ind_distances, ind_closest = calc_industry_distance(wn)
+age_values = list()
+curr_age_values = age_wfh.iloc[len(age_wfh)-1]/3600
+for age in curr_age_values.items():
+    if age[0] in ind_distances.keys():
+        age_values.append(age[1])
+make_distance_plot(ind_distances.values(), age_values,
+                   'Distance (m)', 'Age (hr)', wfh_loc, 'age_ind_distance')
 
 closest_distances = calc_closest_node(wn)
 age_values = list()
