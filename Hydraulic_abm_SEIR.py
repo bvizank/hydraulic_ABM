@@ -16,22 +16,11 @@ import copy
 
 warnings.simplefilter("ignore", UserWarning)
 
-inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
-wn = wntr.network.WaterNetworkModel(inp_file)
-G = wn.get_graph()
-# wn.options.time.duration = 0
-wn.options.time.hydraulic_timestep = 3600
-wn.options.time.pattern_timestep = 3600
-wn.options.quality.parameter = 'AGE'
-for i in range(wfh_patterns.shape[1]):
-    wn.add_pattern('wk'+str(i+1), np.array(wfh_patterns.iloc[:,i]))
-
 
 class ConsumerModel(Model):
     """A Model with some number of Agents"""
     def __init__(self,
                  N,
-                 num_nodes = len(G.nodes),
                  nodes_capacity = Max_pop_pnode_resid,
                  nodes_resident = Nodes_resident,
                  nodes_industr = Nodes_industr,
@@ -52,8 +41,6 @@ class ConsumerModel(Model):
         self.days = days
         self.id = id
         self.num_agents = N
-        self.G = G
-        self.num_nodes = num_nodes
         self.nodes_resident = nodes_resident
         self.nodes_industr = nodes_industr
         self.nodes_cafe = nodes_cafe # There is no node assigned to "dairy queen" so it was neglected
@@ -65,7 +52,6 @@ class ConsumerModel(Model):
         self.comm_distr_ph = Comm_distr_ph # commercial-other capacities at each hour
         self.industr_distr_ph = industr_distr_ph # industrial capacities at each hour
         self.sum_distr_ph = Sum_distr_ph
-        self.grid = NetworkGrid(self.G)
         self.t = 0
         self.schedule = RandomActivation(self)
         self.timestep = 0
@@ -142,6 +128,19 @@ class ConsumerModel(Model):
             '''
             self.ppe_reduction = 0.34
 
+        # set up water network
+        inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
+        self.wn = wntr.network.WaterNetworkModel(inp_file)
+        self.G = self.wn.get_graph()
+        self.grid = NetworkGrid(self.G)
+        self.num_nodes = len(self.G.nodes)
+        # wn.options.time.duration = 0
+        self.wn.options.time.hydraulic_timestep = 3600
+        self.wn.options.time.pattern_timestep = 3600
+        self.wn.options.quality.parameter = 'AGE'
+        for i in range(wfh_patterns.shape[1]):
+            self.wn.add_pattern('wk'+str(i+1), np.array(wfh_patterns.iloc[:,i]))
+
         """
         Save parameters to a DataFrame, param_out, to save at the end of the
         simulation. This helps with data organization.
@@ -184,13 +183,13 @@ class ConsumerModel(Model):
         self.param_out = self.param_out.append(pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
                                                             columns = ['Param', 'value1']))
 
-        self.nodes_w_demand = [node for node in self.grid.G.nodes if hasattr(wn.get_node(node), 'demand_timeseries_list')]
+        self.nodes_w_demand = [node for node in self.grid.G.nodes if hasattr(self.wn.get_node(node), 'demand_timeseries_list')]
         self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
-        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
-        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
-        self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = G.nodes)
+        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
+        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
+        self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
         self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
-        self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[name for name,link in wn.links()])
+        self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[name for name,link in self.wn.links()])
 
         # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
         self.susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
@@ -244,13 +243,13 @@ class ConsumerModel(Model):
         self.base_demands = dict()
         self.base_pattern = dict()
         for node in self.nodes_w_demand:
-            node_1 = wn.get_node(node)
+            node_1 = self.wn.get_node(node)
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
 
             ''' Make a pattern for each node for hydraulic simulation '''
             curr_pattern = copy.deepcopy(node_1.demand_timeseries_list[0].pattern)
             # curr_pattern.name = 'node_'+node
-            wn.add_pattern('node_'+node, curr_pattern.multipliers)
+            self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
             self.base_pattern[node] = copy.deepcopy(node_1.demand_timeseries_list[0].pattern_name)
 
 
@@ -870,7 +869,7 @@ class ConsumerModel(Model):
         consumption = house.simulate(num_patterns=10)
         tot_cons = consumption.sum(['enduse', 'user']).mean([ 'patterns'])
         hourly_cons = tot_cons.groupby('time.hour').mean()
-        wn.add_pattern('hs_' + house.id,
+        self.wn.add_pattern('hs_' + house.id,
                        np.array(np.divide(hourly_cons, hourly_cons.mean())))
         node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
 
@@ -881,7 +880,7 @@ class ConsumerModel(Model):
         for node in self.nodes_w_demand:
             if node in self.nodes_capacity:
                 Capacity_node = self.nodes_capacity[node]
-                # node_1 = wn.get_node(node)
+                # node_1 = self.wn.get_node(node)
                 agents_at_node_list = self.grid.G.nodes[node]['agent']
                 agents_at_node = len(agents_at_node_list)
                 step_agents[node] = agents_at_node
@@ -930,7 +929,7 @@ class ConsumerModel(Model):
 
     def change_demands(self):
         for node in self.nodes_w_demand:
-            curr_node = wn.get_node(node)
+            curr_node = self.wn.get_node(node)
             curr_demand = curr_node.demand_timeseries_list[0].base_value
             new_mult = self.daily_demand[node]
             agents_at_node = self.grid.G.nodes[node]['agent']
@@ -938,15 +937,15 @@ class ConsumerModel(Model):
             if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
                 perc_wfh = agents_wfh / len(agents_at_node)
                 if perc_wfh > 0.5 and node in self.nodes_resident:
-                    old_pat = wn.get_pattern('wk1')
+                    old_pat = self.wn.get_pattern('wk1')
                 else:
-                    old_pat = wn.get_pattern(self.base_pattern[node])
+                    old_pat = self.wn.get_pattern(self.base_pattern[node])
             elif self.res_pat_select == 'pysimdeum':
                 if node in self.nodes_resident:
                     self.set_patterns(node_1)
             else:
-                old_pat = wn.get_pattern(self.base_pattern[node])
-            new_pat = wn.get_pattern('node_'+node)
+                old_pat = self.wn.get_pattern(self.base_pattern[node])
+            new_pat = self.wn.get_pattern('node_'+node)
             if self.timestep_day == 1:
                 new_pat.multipliers = old_pat.multipliers * new_mult
             else:
@@ -958,13 +957,13 @@ class ConsumerModel(Model):
 
     def run_hydraulic(self):
         # Simulate hydraulics
-        sim = wntr.sim.EpanetSimulator(wn)
+        sim = wntr.sim.EpanetSimulator(self.wn)
         results = sim.run_sim('id' + str(self.id))
 
         # Assigning first base demand again to individual Nodes so WNTR doesnt add all BD up
         # for node, base_demand in self.base_demands.items():
         #
-        #     node_1 = wn.get_node(node)
+        #     node_1 = self.wn.get_node(node)
         #     node_1.demand_timeseries_list[0].base_value = base_demand
 
         # SAVING CURRENT DEMAND TIMESTEP IN DEMAND MATRIX
@@ -1158,7 +1157,7 @@ class ConsumerModel(Model):
 
     def update_patterns(self):
         for i in range(1,6,1):
-            curr_pat = wn.get_pattern(str(i))
+            curr_pat = self.wn.get_pattern(str(i))
             curr_mult = copy.deepcopy(curr_pat.multipliers)
             for j in range(90):
                 curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
@@ -1168,7 +1167,7 @@ class ConsumerModel(Model):
     def change_time_model(self):
         self.timestep += 1
         if self.timestep % 24 == 0:
-            # wn.options.time.duration = 0
+            # self.wn.options.time.duration = 0
             ''' Increment day time step '''
             self.timestep_day += 1
 
@@ -1216,7 +1215,7 @@ class ConsumerModel(Model):
         
         if self.timestep_day == self.days:
             self.update_patterns()
-            wn.options.time.duration = 3600 * 24 * self.days
+            self.wn.options.time.duration = 3600 * 24 * self.days
             self.run_hydraulic()
         self.timestepN = self.timestep - self.timestep_day * 24
         # print(self.timestep)

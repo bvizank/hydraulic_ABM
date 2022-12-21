@@ -8,7 +8,9 @@ from scipy.interpolate import griddata
 import networkx as nx
 import os
 import math
+from utils import read_data
 
+no_wfh_comp_dir = 'Output Files/no_pb_30/'
 wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
 no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
 day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
@@ -16,52 +18,32 @@ day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
 format = 'png'
-publication = True
+publication = False
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
     format = 'eps'
 
 
-def read_data(loc, read_list, type):
-    ''' Function to read in data from either excel or pickle '''
-    data_file = loc + 'datasheet.xlsx'
-    pkls = [file for file in os.listdir(loc) if file.endswith(".pkl")]
+def read_comp_data(loc, read_list, out_dict):
+    for item in read_list:
+        out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
+        out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
 
-    for name in read_list:
-        index_col = 0
-        print("Reading " + name + " data")
-        if name == 'seir':
-            sheet_name = 'seir_data'
-            index_col = 1
-        elif name == 'agent':
-            sheet_name = 'agent locations'
-        else:
-            sheet_name = name
-
-        file_name = name + '.pkl'
-        if file_name not in pkls:
-            print("No pickle file found, importing from excel")
-            globals()[name+'_'+type] = pd.read_excel(data_file,
-                                                     sheet_name=sheet_name,
-                                                     index_col=index_col)
-            if name == 'seir':
-                globals()[name+'_'+type].index = globals()[name+'_'+type].index.astype("int64")
-
-            globals()[name+'_'+type].to_pickle(loc + file_name)
-        else:
-            print("Pickle file found, unpickling")
-            globals()[name+'_'+type] = pd.read_pickle(loc + name + '.pkl')
+    return out_dict
 
 
 '''Import water network and data'''
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
-read_data(wfh_loc, read_list, 'wfh')
-read_data(no_wfh_loc, read_list, 'no_wfh')
-# read_data(day200_loc, ['seir', 'demand', 'age'], '200days')
-# read_data(day400_loc, ['seir', 'demand', 'age'], '400days')
+# wfh = read_data(wfh_loc, read_list)
+# no_wfh = read_data(no_wfh_loc, read_list)
+wfh = dict()
+comp_list = ['seir', 'demand', 'age']
+no_wfh = read_comp_data(no_wfh_comp_dir, comp_list, wfh)
+# days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
+# days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
 ind_nodes = [node for name, node in wn.junctions()
              if node.demand_timeseries_list[0].pattern_name == '3']
 
@@ -226,7 +208,8 @@ def make_contour(graph, data, data_type, fig_name,
 
 
 def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
-                     data2=None, type=None, data_type='node', sub=False,
+                     data2=None, sd=None, sd2=None,
+                     type=None, data_type='node', sub=False,
                      days=90):
     '''
     Function to plot the average data for a given sector
@@ -283,13 +266,31 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
         res_data = getattr(data[res_nodes], op)(axis=1)
         ind_data = getattr(data[ind_nodes], op)(axis=1)
         com_data = getattr(data[com_nodes], op)(axis=1)
+        if sd is not None:
+            res_sd = getattr(sd[res_nodes], op)(axis=1)
+            ind_sd = getattr(sd[ind_nodes], op)(axis=1)
+            com_sd = getattr(sd[com_nodes], op)(axis=1)
+            sd = pd.DataFrame(data={'res': res_sd, 'com':com_sd,
+                                    'ind': ind_sd})
+            rolling_sd = sd.rolling(24).mean()
+            print(rolling_sd)
+
         x_values = np.array([x for x in np.arange(0, days, days/len(res_data))])
         if not sub:
+            cols = ['res', 'com', 'ind']
             data = pd.DataFrame(data={'res': res_data, 'com': com_data,
                                       'ind': ind_data, 't': x_values})
-            data.rolling(24).mean().plot(x='t', y=['res', 'com', 'ind'],
-                                         xlabel='Time (days)', ylabel=ylabel,
-                                         legend=True)
+            rolling_data = data.rolling(24).mean()
+            for i in range(3):
+                plt.plot(rolling_data.t, rolling_data[cols[i]])
+                if sd is not None:
+                    print(rolling_data[cols[i]] - rolling_sd[cols[i]])
+                    plt.fill_between(rolling_data.t,
+                                     rolling_data[cols[i]] - rolling_sd[cols[i]],
+                                     rolling_data[cols[i]] + rolling_sd[cols[i]],
+                                     alpha=0.5)
+            plt.xlabel('Time (days)')
+            plt.ylabel(ylabel)
             plt.legend(['Residential', 'Commercial', 'Industrial'])
             if publication:
                 # plt.gcf().set_size_inches(3.5, 3.5)
@@ -407,16 +408,16 @@ def calc_model_stats(wn, seir, age):
     return (final_age, max_inf/4606, final_sus)
 
 
-max_wfh = seir_wfh.wfh.loc[int(seir_wfh.wfh.idxmax())]
-times = []
-# times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
-times = times + [seir_wfh.wfh.searchsorted(max_wfh/2)]
-# print(seir.wfh.searchsorted(max_wfh/2))
-# times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
-times = times + [seir_wfh.wfh.searchsorted(max_wfh)]
-print(times)
-times_hour = [time % 24 for time in times]
-print(times_hour)
+# max_wfh = wfh['seir'].wfh.loc[int(wfh['seir'].wfh.idxmax())]
+# times = []
+# # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
+# times = times + [wfh['seir'].wfh.searchsorted(max_wfh/2)]
+# # print(seir.wfh.searchsorted(max_wfh/2))
+# # times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
+# times = times + [wfh['seir'].wfh.searchsorted(max_wfh)]
+# print(times)
+# times_hour = [time % 24 for time in times]
+# print(times_hour)
 
 def check_stats(new_list, old_stats):
     if new_list.max() > old_stats[0]:
@@ -462,34 +463,36 @@ no_wfh_flow_diff = list()
 ''' Sector plots '''
 
 ''' Flow direction change plots '''
-make_sector_plot(wn, calc_flow_diff(flow_wfh), 'Number of Flow Changes', wfh_loc,
-                 'sum', 'flow_changes', calc_flow_diff(flow_no_wfh), 'all', 'link')
+# make_sector_plot(wn, calc_flow_diff(wfh['flow']), 'Number of Flow Changes', wfh_loc,
+#                  'sum', 'flow_changes', calc_flow_diff(no_wfh['flow']), 'all', 'link')
 
 ''' Make demand plots for by sector with PM data '''
-make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand')
-# make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'max', 'max_demand')
-# make_sector_plot(wn, demand_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
+make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', no_wfh_comp_dir,
+                 'sum', 'sum_demand', sd=no_wfh['sd_demand'])
+# make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand')
+# make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
 
 ''' Make age plot by sector for both base and PM '''
-make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
-                 data2=age_wfh/3600, sub=True)
-# make_sector_plot(wn, age_no_wfh/3600, 'Age (hr)', no_wfh_loc, 'mean', 'mean_age')
-# make_sector_plot(wn, age_200days/3600, 'Age (hr)', day200_loc, 'mean',
+# make_sector_plot(wn, no_wfh['age']/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
+#                  data2=wfh['age']/3600, sub=True)
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
+                 'mean', 'mean_age', sd=no_wfh['sd_age']/3600)
+# make_sector_plot(wn, days_200['age']/3600, 'Age (hr)', day200_loc, 'mean',
 #                  'mean_age', days=200)
-# make_sector_plot(wn, age_400days/3600, 'Age (hr)', day400_loc, 'mean',
+# make_sector_plot(wn, days_400['age']/3600, 'Age (hr)', day400_loc, 'mean',
 #                  'mean_age', days=400)
 
 ''' Make age plot comparing base and PM '''
-make_sector_plot(wn, age_no_wfh/3600, 'Age [hr]', wfh_loc, 'mean', 'mean_age_aggregate',
-                 age_wfh/3600, type='all')
+# make_sector_plot(wn, no_wfh['age']/3600, 'Age [hr]', wfh_loc, 'mean', 'mean_age_aggregate',
+#                  wfh['age']/3600, type='all')
 
 ''' Make plots of aggregate demand data '''
-make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'sum', 'sum_demand_aggregate',
-                 demand_wfh, type='all')
-# make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
-#                  demand_wfh, type='all')
-# make_sector_plot(wn, demand_no_wfh, 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
-#                  demand_wfh, type='all')
+# make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'sum', 'sum_demand_aggregate',
+#                  wfh['demand'], type='all')
+# make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
+#                  wfh['demand'], type='all')
+# make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
+#                  wfh['demand'], type='all')
 # make_sector_plot(wn, pressure, 'Pressure (m)', pressure_wfh, type='all')
 
 ''' Export the agent locations '''
@@ -504,31 +507,31 @@ dine_loc = 'Output Files/2022-12-12_12-44_dine_current_results/'
 grocery_loc = 'Output Files/2022-12-12_13-18_grocery_current_results/'
 ppe_loc = 'Output Files/2022-12-15_13-00_ppe_current_results/'
 
-read_data(only_wfh_loc, ['seir', 'age'], 'only_wfh')
-read_data(dine_loc, ['seir', 'age'], 'dine')
-read_data(grocery_loc, ['seir', 'age'], 'grocery')
-read_data(ppe_loc, ['seir', 'age'], 'ppe')
-print("WFH model stats: " + str(calc_model_stats(wn, seir_only_wfh, age_only_wfh/3600)))
-print("Dine model stats: " + str(calc_model_stats(wn, seir_dine, age_dine/3600)))
-print("Grocery model stats: " + str(calc_model_stats(wn, seir_grocery, age_grocery/3600)))
-print("PPE model stats: " + str(calc_model_stats(wn, seir_ppe, age_ppe/3600)))
-print("All PM model stats: " + str(calc_model_stats(wn, seir_wfh, age_wfh/3600)))
-print("No PM model stats: " + str(calc_model_stats(wn, seir_no_wfh, age_no_wfh/3600)))
+only_wfh = read_data(only_wfh_loc, ['seir', 'age'])
+dine = read_data(dine_loc, ['seir', 'age'])
+grocery = read_data(grocery_loc, ['seir', 'age'])
+ppe = read_data(ppe_loc, ['seir', 'age'])
+print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['seir'], only_wfh['age']/3600)))
+print("Dine model stats: " + str(calc_model_stats(wn, dine['seir'], dine['age']/3600)))
+print("Grocery model stats: " + str(calc_model_stats(wn, grocery['seir'], grocery['age']/3600)))
+print("PPE model stats: " + str(calc_model_stats(wn, ppe['seir'], ppe['age']/3600)))
+# print("All PM model stats: " + str(calc_model_stats(wn, wfh['seir'], wfh['age']/3600)))
+print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir'], no_wfh['avg_age']/3600)))
 
-ind_distances, ind_closest = calc_industry_distance(wn)
-age_values = list()
-curr_age_values = age_wfh.iloc[len(age_wfh)-1]/3600
-for age in curr_age_values.items():
-    if age[0] in ind_distances.keys():
-        age_values.append(age[1])
-make_distance_plot(ind_distances.values(), age_values,
-                   'Distance (m)', 'Age (hr)', wfh_loc, 'age_ind_distance')
+# ind_distances, ind_closest = calc_industry_distance(wn)
+# age_values = list()
+# curr_age_values = wfh['age'].iloc[len(wfh['age'])-1]/3600
+# for age in curr_age_values.items():
+#     if age[0] in ind_distances.keys():
+#         age_values.append(age[1])
+# make_distance_plot(ind_distances.values(), age_values,
+#                    'Distance (m)', 'Age (hr)', wfh_loc, 'age_ind_distance')
 
-closest_distances = calc_closest_node(wn)
-age_values = list()
-curr_age_values = age_wfh.iloc[len(age_wfh)-1]/3600
-for age in curr_age_values.items():
-    if age[0] in closest_distances.keys():
-        age_values.append(age[1])
-make_distance_plot(closest_distances.values(), age_values, 'Distance (m)',
-                   'Age (hr)', wfh_loc, 'age_closest_node')
+# closest_distances = calc_closest_node(wn)
+# age_values = list()
+# curr_age_values = wfh['age'].iloc[len(wfh['age'])-1]/3600
+# for age in curr_age_values.items():
+#     if age[0] in closest_distances.keys():
+#         age_values.append(age[1])
+# make_distance_plot(closest_distances.values(), age_values, 'Distance (m)',
+#                    'Age (hr)', wfh_loc, 'age_closest_node')
