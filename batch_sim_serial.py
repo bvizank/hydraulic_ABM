@@ -2,7 +2,7 @@ from run_sim import run_sim
 import os
 
 for i in range(30):
-    run_sim(id=i, days=90, bbn_models=['dine'])
+    run_sim(id=i, days=90, bbn_models=['ppe'])
     curr_dir = os.getcwd()
     files_in_dir = os.listdir(curr_dir)
     
