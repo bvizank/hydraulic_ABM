@@ -10,7 +10,8 @@ import os
 import math
 from utils import read_data
 
-no_wfh_comp_dir = 'Output Files/no_pb_30/'
+no_wfh_comp_dir = 'Output Files/no_pm_30/'
+wfh_comp_dir = 'Output Files/all_pm_30/'
 wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
 no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
 day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
@@ -18,17 +19,28 @@ day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
 format = 'png'
-publication = False
+error = ''
+publication = True
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
-    format = 'eps'
+    format = 'pdf'
+
+# prim_colors = ['#000000', '#686868', '#B2B2B2']
+# sec_colors = ['#454545', '#929292', '#D8D8D8']
 
 
-def read_comp_data(loc, read_list, out_dict):
+def read_comp_data(loc, read_list):
+    out_dict = dict()
     for item in read_list:
         out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
         out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
+        if error == 'ci95':
+            out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
+        elif error == 'se':
+            out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
+        else:
+            pass
 
     return out_dict
 
@@ -39,9 +51,9 @@ wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
-wfh = dict()
 comp_list = ['seir', 'demand', 'age']
-no_wfh = read_comp_data(no_wfh_comp_dir, comp_list, wfh)
+wfh = read_comp_data(wfh_comp_dir, comp_list)
+no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
 # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
 ind_nodes = [node for name, node in wn.junctions()
@@ -244,14 +256,26 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
 
     if type is not None:
         y_data = getattr(data[nodes], op)(axis=1)
+        if sd is not None:
+            sd = getattr(sd[nodes], op)(axis=1)
         x_values = np.array([x for x in np.arange(0, days, days/len(y_data))])
         if data2 is not None:
-            wfh_data = getattr(data2[nodes], op)(axis=1)
-            data = pd.DataFrame(data={'primary': y_data, 'wfh': wfh_data,
-                                      't': x_values})
-            data.rolling(24).mean().plot(x='t', y=['primary', 'wfh'],
-                                         xlabel='Time (days)', ylabel=ylabel,
-                                         legend=True)
+            cols = ['primary', 'wfh']
+            y_data2 = getattr(data2[nodes], op)(axis=1)
+            rolling_data = pd.DataFrame(data={'primary': y_data, 'wfh': y_data2,
+                                           't': x_values})
+            # rolling_data = plot_data.rolling(24).mean()
+            if sd is not None:
+                sd2 = getattr(sd2[nodes], op)(axis=1)
+                rolling_sd = pd.DataFrame(data={'primary': sd, 'wfh': sd2})
+                # rolling_sd = plot_sd.rolling(24).mean()
+            for i in range(2):
+                plt.plot(rolling_data['t'], rolling_data[cols[i]])
+                if sd is not None:
+                    plt.fill_between(rolling_data['t'],
+                                     rolling_data[cols[i]] - rolling_sd[cols[i]],
+                                     rolling_data[cols[i]] + rolling_sd[cols[i]],
+                                     alpha=0.5)
             plt.legend(['Base', 'PM'])
         else:
             data = pd.DataFrame(data={'demand': y_data, 't': x_values})
@@ -259,6 +283,9 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
                       legend=False)
         if publication:
             output_loc = pub_loc
+
+        plt.xlabel('Time (days)')
+        plt.ylabel(ylabel)
         plt.savefig(output_loc + fig_name + '.' + format, format=format,
                     bbox_inches='tight')
         plt.close()
@@ -272,22 +299,20 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             com_sd = getattr(sd[com_nodes], op)(axis=1)
             sd = pd.DataFrame(data={'res': res_sd, 'com':com_sd,
                                     'ind': ind_sd})
-            rolling_sd = sd.rolling(24).mean()
-            print(rolling_sd)
+            roll_sd = sd.rolling(24).mean()
 
         x_values = np.array([x for x in np.arange(0, days, days/len(res_data))])
+        cols = ['res', 'com', 'ind']
         if not sub:
-            cols = ['res', 'com', 'ind']
             data = pd.DataFrame(data={'res': res_data, 'com': com_data,
                                       'ind': ind_data, 't': x_values})
             rolling_data = data.rolling(24).mean()
             for i in range(3):
                 plt.plot(rolling_data.t, rolling_data[cols[i]])
                 if sd is not None:
-                    print(rolling_data[cols[i]] - rolling_sd[cols[i]])
-                    plt.fill_between(rolling_data.t,
-                                     rolling_data[cols[i]] - rolling_sd[cols[i]],
-                                     rolling_data[cols[i]] + rolling_sd[cols[i]],
+                    plt.fill_between(rolling_data['t'],
+                                     rolling_data[cols[i]] - roll_sd[cols[i]],
+                                     rolling_data[cols[i]] + roll_sd[cols[i]],
                                      alpha=0.5)
             plt.xlabel('Time (days)')
             plt.ylabel(ylabel)
@@ -302,21 +327,40 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             data = pd.DataFrame(data={'res': res_data, 'com': com_data,
                                       'ind': ind_data,
                                       't': x_values})
-            data2 = pd.DataFrame(data={'res2': res_data2, 'com2': com_data2,
-                                       'ind2': ind_data2,
+            data2 = pd.DataFrame(data={'res': res_data2, 'com': com_data2,
+                                       'ind': ind_data2,
                                        't': x_values})
+            if sd2 is not None:
+                res_sd2 = getattr(sd2[res_nodes], op)(axis=1)
+                com_sd2 = getattr(sd2[com_nodes], op)(axis=1)
+                ind_sd2 = getattr(sd2[ind_nodes], op)(axis=1)
+                sd2 = pd.DataFrame(data={'res': res_sd2, 'com': com_sd2,
+                                         'ind': ind_sd2})
+                roll_sd2 = sd2.rolling(24).mean()
             fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
-            data.rolling(24).mean().plot(x='t', y=['res', 'com', 'ind'],
-                                         xlabel='Time (days)', ylabel=ylabel,
-                                         legend=False, ax=axes[0])
-            data2.rolling(24).mean().plot(x='t', y=['res2', 'com2', 'ind2'],
-                                          xlabel='Time (days)',
-                                          legend=False, ax=axes[1])
+            roll_data = data.rolling(24).mean()
+            roll_data2 = data2.rolling(24).mean()
+            for i in range(3):
+                axes[0].plot(roll_data['t'], roll_data[cols[i]])
+                axes[1].plot(roll_data['t'], roll_data2[cols[i]])
+                if sd is not None:
+                    axes[0].fill_between(roll_data['t'],
+                                         roll_data[cols[i]] - roll_sd[cols[i]],
+                                         roll_data[cols[i]] + roll_sd[cols[i]],
+                                         alpha=0.5)
+                    axes[1].fill_between(roll_data['t'],
+                                         roll_data2[cols[i]] - roll_sd2[cols[i]],
+                                         roll_data2[cols[i]] + roll_sd2[cols[i]],
+                                         alpha=0.5)
+                elif sd is not None and sd2 is None:
+                    print('Missing standard deviation for second dataset')
             axes[0].legend(['Residential', 'Commercial', 'Industrial'])
             if publication:
                 # plt.gcf().set_size_inches(7, 3.5)
                 output_loc = pub_loc
-                plt.gcf().set_size_inches(7, 3.5)
+            plt.gcf().set_size_inches(7, 3.5)
+            plt.xlabel('Time (days)')
+            plt.ylabel(ylabel)
 
         plt.savefig(output_loc + fig_name + '.' + format, format=format,
                     bbox_inches='tight')
@@ -359,23 +403,29 @@ def export_agent_loc(wn, output_loc, locations):
     output.to_csv(output_loc + 'locations.csv')
 
 
-def make_seir_plot(data, output_loc, input):
-    ''' Function to make the seir plot with S, E, I, R, and WFH  '''
+def make_seir_plot(data, output_loc, input, leg_text, sd=None):
+    ''' Function to make the seir plot with the input columns '''
     data['I'] = data['I'] / 4606
+    if sd is not None:
+        sd['I'] = sd['I'] / 4606
     # seir.reset_index(inplace=True)
     # seir['t'] = seir['t'] / 3600 /24
     x_values = np.array([x for x in np.arange(0, 90, 90/len(data))])
     data['t_new'] = x_values
-    data.plot(x='t_new', y=input, xlabel='Time (days)',
-              ylabel='Percent Population', legend=True)
+    for item in input:
+        plt.plot(data['t_new'], data[item])
+        if sd is not None:
+            plt.fill_between(data['t_new'], data[item] - sd[item],
+                             data[item] + sd[item], alpha=0.5)
     # plt.axvline(x=times[0]/24, color='black')
     # plt.axvline(x=times[1]/24, color='black')
+    plt.ylim(0, 1)
     plt.xlabel('Time (days)')
     plt.ylabel('Percent Population')
-    plt.legend(['Susceptible', 'Exposed', 'Infected', 'Removed'])
+    plt.legend(leg_text)
     if publication:
         output_loc = pub_loc
-    plt.savefig(output_loc + '/' + 'seir_wfh.' + format, format=format,
+    plt.savefig(output_loc + '/' + 'seir_' + error + '.' + format, format=format,
                 bbox_inches='tight')
     plt.close()
 
@@ -467,28 +517,31 @@ no_wfh_flow_diff = list()
 #                  'sum', 'flow_changes', calc_flow_diff(no_wfh['flow']), 'all', 'link')
 
 ''' Make demand plots for by sector with PM data '''
-make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', no_wfh_comp_dir,
-                 'sum', 'sum_demand', sd=no_wfh['sd_demand'])
+make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)', wfh_comp_dir,
+                 'sum', 'sum_demand_'+error, sd=wfh['sd_demand'])
 # make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand')
 # make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
 
 ''' Make age plot by sector for both base and PM '''
-# make_sector_plot(wn, no_wfh['age']/3600, 'Age (hr)', wfh_loc, 'mean', 'mean_age',
-#                  data2=wfh['age']/3600, sub=True)
-make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
-                 'mean', 'mean_age', sd=no_wfh['sd_age']/3600)
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', wfh_comp_dir, 'mean', 'mean_age_'+error,
+                 data2=wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600, sd2=wfh['sd_age']/3600,
+                 sub=True)
+# make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
+#                  'mean', 'mean_age', sd=no_wfh['sd_age']/3600)
 # make_sector_plot(wn, days_200['age']/3600, 'Age (hr)', day200_loc, 'mean',
 #                  'mean_age', days=200)
 # make_sector_plot(wn, days_400['age']/3600, 'Age (hr)', day400_loc, 'mean',
 #                  'mean_age', days=400)
 
 ''' Make age plot comparing base and PM '''
-# make_sector_plot(wn, no_wfh['age']/3600, 'Age [hr]', wfh_loc, 'mean', 'mean_age_aggregate',
-#                  wfh['age']/3600, type='all')
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age [hr]', wfh_comp_dir, 'mean',
+                 'mean_age_aggregate_'+error, wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600,
+                 sd2=wfh['sd_age']/3600, type='all')
 
 ''' Make plots of aggregate demand data '''
-# make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'sum', 'sum_demand_aggregate',
-#                  wfh['demand'], type='all')
+make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', wfh_loc, 'sum',
+                 'sum_demand_aggregate_'+error, wfh['avg_demand'], type='all',
+                 sd=no_wfh['sd_demand'], sd2=wfh['sd_demand'])
 # make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
 #                  wfh['demand'], type='all')
 # make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
@@ -499,7 +552,12 @@ make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
 # export_agent_loc(wn, agent)
 
 ''' SEIR plot '''
-# make_seir_plot(seir, [S, E, I, R])
+make_seir_plot(no_wfh['avg_seir'], no_wfh_comp_dir, ['S', 'E', 'I', 'R'],
+               leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed'],
+               sd=no_wfh['sd_seir'])
+make_seir_plot(wfh['avg_seir'], wfh_comp_dir, ['S', 'E', 'I', 'R', 'wfh'],
+               leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
+               sd=wfh['sd_seir'])
 
 ''' Export comparison stats '''
 only_wfh_loc = 'Output Files/2022-12-12_11-52_wfh_current_results/'
