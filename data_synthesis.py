@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from utils import read_data
 
-data_dir = 'Output Files/wfh_30/'
+data_dir = 'Output Files/ppe_30/'
 read_list = ['seir', 'demand', 'age', 'pressure', 'agent', 'flow']
 
 tot_demand = pd.DataFrame()
@@ -13,6 +13,7 @@ tot_agent = pd.DataFrame()
 tot_flow = pd.DataFrame()
 
 for i, folder in enumerate(next(os.walk(data_dir))[1]):
+    print(f"Reading files for {i} simluation..........")
     output = read_data(data_dir + folder + '/', read_list)
     for item in read_list:
         globals()['tot_' + item] = pd.concat((globals()['tot_' + item], output[item]))
