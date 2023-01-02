@@ -3,10 +3,10 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
-import plotly.graph_objects as go
+# import plotly.graph_objects as go
 from scipy.interpolate import griddata
 import networkx as nx
-import os
+# import os
 import math
 from utils import read_data
 
@@ -19,7 +19,7 @@ day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
 format = 'png'
-error = ''
+error = 'ci95'
 publication = True
 if publication:
     pub_loc = 'Output Files/publication_figures/'
@@ -51,7 +51,7 @@ wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.get_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
-comp_list = ['seir', 'demand', 'age']
+comp_list = ['seir', 'demand', 'age', 'flow']
 wfh = read_comp_data(wfh_comp_dir, comp_list)
 no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
@@ -65,18 +65,23 @@ def calc_difference(data_time_1, data_time_2):
     return (data_time_2 - data_time_1)
 
 
-def calc_flow_diff(data):
+def calc_flow_diff(data, hours):
     flow_data = dict()
-    for (pipe, colData) in data.iteritems():
-        curr_flow_changes = list()
-        for i in range(len(colData)-1):
-            if colData[(i+1)*3600] * colData[i*3600] < 0:
-                curr_flow_changes.append(1)
-            else:
-                curr_flow_changes.append(0)
-        flow_data[pipe] = curr_flow_changes
+    flow_changes_sum = dict()
+    for (pipe, colData) in data.items():
+        if 'MA' in pipe:
+            curr_flow_changes = list()
+            for i in range(len(colData)-1):
+                if colData[(i+1)*3600] * colData[i*3600] < 0:
+                    curr_flow_changes.append(1)
+                else:
+                    curr_flow_changes.append(0)
+        # print(curr_flow_changes[0:hours])
+            flow_changes_sum[pipe] = sum(curr_flow_changes[0:hours])
+            flow_data[pipe] = curr_flow_changes
 
     output = pd.DataFrame(flow_data)
+    change_sum = pd.Series(flow_changes_sum)
 
     # output = list()
     # for i in range(len(data_time_1)):
@@ -89,7 +94,7 @@ def calc_flow_diff(data):
     #             output.append(0)
     #     else:
     #         pass
-    return output
+    return output, change_sum
 
 
 def calc_distance(node1, node2):
@@ -262,17 +267,16 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
         if data2 is not None:
             cols = ['primary', 'wfh']
             y_data2 = getattr(data2[nodes], op)(axis=1)
-            rolling_data = pd.DataFrame(data={'primary': y_data, 'wfh': y_data2,
-                                           't': x_values})
-            # rolling_data = plot_data.rolling(24).mean()
+            plot_data = pd.DataFrame(data={'primary': y_data, 'wfh': y_data2})
+            rolling_data = plot_data.rolling(24).mean()
             if sd is not None:
                 sd2 = getattr(sd2[nodes], op)(axis=1)
-                rolling_sd = pd.DataFrame(data={'primary': sd, 'wfh': sd2})
-                # rolling_sd = plot_sd.rolling(24).mean()
+                plot_sd = pd.DataFrame(data={'primary': sd, 'wfh': sd2})
+                rolling_sd = plot_sd.rolling(24).mean()
             for i in range(2):
-                plt.plot(rolling_data['t'], rolling_data[cols[i]])
+                plt.plot(x_values, rolling_data[cols[i]])
                 if sd is not None:
-                    plt.fill_between(rolling_data['t'],
+                    plt.fill_between(x_values,
                                      rolling_data[cols[i]] - rolling_sd[cols[i]],
                                      rolling_data[cols[i]] + rolling_sd[cols[i]],
                                      alpha=0.5)
@@ -305,12 +309,12 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
         cols = ['res', 'com', 'ind']
         if not sub:
             data = pd.DataFrame(data={'res': res_data, 'com': com_data,
-                                      'ind': ind_data, 't': x_values})
+                                      'ind': ind_data})
             rolling_data = data.rolling(24).mean()
             for i in range(3):
-                plt.plot(rolling_data.t, rolling_data[cols[i]])
+                plt.plot(x_values, rolling_data[cols[i]])
                 if sd is not None:
-                    plt.fill_between(rolling_data['t'],
+                    plt.fill_between(x_values,
                                      rolling_data[cols[i]] - roll_sd[cols[i]],
                                      rolling_data[cols[i]] + roll_sd[cols[i]],
                                      alpha=0.5)
@@ -325,11 +329,9 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             com_data2 = getattr(data2[com_nodes], op)(axis=1)
             ind_data2 = getattr(data2[ind_nodes], op)(axis=1)
             data = pd.DataFrame(data={'res': res_data, 'com': com_data,
-                                      'ind': ind_data,
-                                      't': x_values})
+                                      'ind': ind_data})
             data2 = pd.DataFrame(data={'res': res_data2, 'com': com_data2,
-                                       'ind': ind_data2,
-                                       't': x_values})
+                                       'ind': ind_data2})
             if sd2 is not None:
                 res_sd2 = getattr(sd2[res_nodes], op)(axis=1)
                 com_sd2 = getattr(sd2[com_nodes], op)(axis=1)
@@ -341,14 +343,14 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             roll_data = data.rolling(24).mean()
             roll_data2 = data2.rolling(24).mean()
             for i in range(3):
-                axes[0].plot(roll_data['t'], roll_data[cols[i]])
-                axes[1].plot(roll_data['t'], roll_data2[cols[i]])
+                axes[0].plot(x_values, roll_data[cols[i]])
+                axes[1].plot(x_values, roll_data2[cols[i]])
                 if sd is not None:
-                    axes[0].fill_between(roll_data['t'],
+                    axes[0].fill_between(x_values,
                                          roll_data[cols[i]] - roll_sd[cols[i]],
                                          roll_data[cols[i]] + roll_sd[cols[i]],
                                          alpha=0.5)
-                    axes[1].fill_between(roll_data['t'],
+                    axes[1].fill_between(x_values,
                                          roll_data2[cols[i]] - roll_sd2[cols[i]],
                                          roll_data2[cols[i]] + roll_sd2[cols[i]],
                                          alpha=0.5)
@@ -367,13 +369,27 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
         plt.close()
 
 
-def make_flow_plot(wn, data):
+def make_flow_plot(change_data, sum_data, percent,
+                   loc, title, days=90):
     '''
     Function to make a plot showing the flow direction change
     '''
-    ax = wntr.graphics.plot_network(wn, link_attribute=data,
-                                    node_colorbar_label='Change in Direction')
-    plt.show()
+    roll_change = change_data.rolling(24).mean()
+    percentiles = sum_data.quantile(percent)
+    x_values = np.array([x for x in np.arange(0, days, days/len(roll_change))])
+    
+    y_upper = roll_change[sum_data[sum_data > percentiles[percent[1]]].index]
+    y_lower = roll_change[sum_data[sum_data < percentiles[percent[0]]].index]    
+    print(y_upper)
+    plt.plot(x_values, y_upper.mean(axis=1))
+    plt.plot(x_values, y_lower.mean(axis=1))
+    plt.xlabel('Time (days)')
+    plt.ylabel('Number of Flow Changes')
+    plt.legend(['Top '+str(percent[1]*100)+'%', 'Bottom '+str(percent[0]*100)+'%'])
+    if publication:
+        loc = pub_loc
+    plt.savefig(loc + title + '.' + format, format=format, bbox_inches='tight')
+    plt.close()
 
 
 def export_agent_loc(wn, output_loc, locations):
@@ -458,15 +474,16 @@ def calc_model_stats(wn, seir, age):
     return (final_age, max_inf/4606, final_sus)
 
 
-# max_wfh = wfh['seir'].wfh.loc[int(wfh['seir'].wfh.idxmax())]
-# times = []
+max_wfh = wfh['avg_seir'].wfh.loc[int(wfh['avg_seir'].wfh.idxmax())]
+times = []
 # # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
-# times = times + [wfh['seir'].wfh.searchsorted(max_wfh/2)]
+times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh/10)]
+times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh/2)]
 # # print(seir.wfh.searchsorted(max_wfh/2))
 # # times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
-# times = times + [wfh['seir'].wfh.searchsorted(max_wfh)]
+times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh)]
 # print(times)
-# times_hour = [time % 24 for time in times]
+times_hour = [time % 24 for time in times]
 # print(times_hour)
 
 def check_stats(new_list, old_stats):
@@ -513,8 +530,13 @@ no_wfh_flow_diff = list()
 ''' Sector plots '''
 
 ''' Flow direction change plots '''
-# make_sector_plot(wn, calc_flow_diff(wfh['flow']), 'Number of Flow Changes', wfh_loc,
-#                  'sum', 'flow_changes', calc_flow_diff(no_wfh['flow']), 'all', 'link')
+wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[0])
+no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[0])
+make_flow_plot(wfh_flow_change, wfh_flow_sum, [0.4, 0.9],
+               wfh_comp_dir, 'max-min_wfh_flow_changes')
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.4, 0.9],
+               no_wfh_comp_dir, 'max-min_no_wfh_flow_changes')
+# max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
 
 ''' Make demand plots for by sector with PM data '''
 make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)', wfh_comp_dir,
