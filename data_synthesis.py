@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from utils import read_data
 
-data_dir = 'Output Files/ppe_30/'
+data_dir = 'Output Files/no_pm_30_par/'
 read_list = ['seir', 'demand', 'age', 'pressure', 'agent', 'flow']
 
 tot_demand = pd.DataFrame()

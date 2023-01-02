@@ -722,7 +722,6 @@ class ConsumerModel(Model):
         prev_comm_num = self.comm_distr_ph[self.timestepN - 1]
         delta_agents_comm = round(curr_comm_num - prev_comm_num)
         if delta_agents_comm > 0:
-            print(delta_agents_comm)
             Possible_Agents_to_move = [a for a in self.schedule.agents
                                        if a.pos in self.nodes_resident]
                                        #and a.work_type == 'commercial']
@@ -733,7 +732,7 @@ class ConsumerModel(Model):
                 if avail_spots > 0:
                     for i in range(int(avail_spots)):
                         nodes_comm.append(node)
-            print('Comm nodes: ' + str(len(nodes_comm)))
+            # print('Comm nodes: ' + str(len(nodes_comm)))
 
             # we want all the commercial nodes that have vacancies and how many
             # vacancies...
@@ -799,7 +798,7 @@ class ConsumerModel(Model):
                 if avail_spots > 0:
                     for i in range(int(avail_spots)):
                         nodes_cafe.append(node)
-            print('Cafe nodes: ' + str(len(nodes_cafe)))
+            # print('Cafe nodes: ' + str(len(nodes_cafe)))
 
             for i in range(min(delta_agents_rest,len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
