@@ -1,6 +1,7 @@
 import wntr
 import numpy as np
 import pandas as pd
+import copy
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
@@ -12,8 +13,8 @@ from utils import read_data
 
 no_wfh_comp_dir = 'Output Files/no_pm_30/'
 wfh_comp_dir = 'Output Files/all_pm_30/'
-wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
-no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
+# wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
+# no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
 day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
 day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
@@ -26,8 +27,12 @@ if publication:
     plt.rcParams['figure.dpi'] = 800
     format = 'pdf'
 
-# prim_colors = ['#000000', '#686868', '#B2B2B2']
+prim_colors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#f1f174']
 # sec_colors = ['#454545', '#929292', '#D8D8D8']
+
+plt.rcParams['axes.prop_cycle'] = plt.cycler(color=prim_colors)
+plt.rcParams['font.serif'] = ['Times New Roman']
+plt.rcParams['font.family'] = ['serif']
 
 
 def read_comp_data(loc, read_list):
@@ -224,7 +229,7 @@ def make_contour(graph, data, data_type, fig_name,
     plt.close()
 
 
-def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
+def make_sector_plot(wn, data, ylabel, op, fig_name,
                      data2=None, sd=None, sd2=None,
                      type=None, data_type='node', sub=False,
                      days=90):
@@ -232,6 +237,7 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
     Function to plot the average data for a given sector
     Sectors include: residential, commercial, industrial
     '''
+    output_loc = 'Output Files/png_figures/'
     if type == 'residential':
         nodes = [name for name,node in wn.junctions()
                  if node.demand_timeseries_list[0].pattern_name == '2']
@@ -275,7 +281,8 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
                 rolling_sd = plot_sd.rolling(24).mean()
             for i in range(2):
                 plt.plot(x_values, rolling_data[cols[i]])
-                if sd is not None:
+            if sd is not None:
+                for i in range(2):
                     plt.fill_between(x_values,
                                      rolling_data[cols[i]] - rolling_sd[cols[i]],
                                      rolling_data[cols[i]] + rolling_sd[cols[i]],
@@ -313,7 +320,8 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             rolling_data = data.rolling(24).mean()
             for i in range(3):
                 plt.plot(x_values, rolling_data[cols[i]])
-                if sd is not None:
+            if sd is not None:
+                for i in range(3):
                     plt.fill_between(x_values,
                                      rolling_data[cols[i]] - roll_sd[cols[i]],
                                      rolling_data[cols[i]] + roll_sd[cols[i]],
@@ -345,7 +353,8 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
             for i in range(3):
                 axes[0].plot(x_values, roll_data[cols[i]])
                 axes[1].plot(x_values, roll_data2[cols[i]])
-                if sd is not None:
+            if sd is not None:
+                for i in range(3):
                     axes[0].fill_between(x_values,
                                          roll_data[cols[i]] - roll_sd[cols[i]],
                                          roll_data[cols[i]] + roll_sd[cols[i]],
@@ -354,40 +363,55 @@ def make_sector_plot(wn, data, ylabel, output_loc, op, fig_name,
                                          roll_data2[cols[i]] - roll_sd2[cols[i]],
                                          roll_data2[cols[i]] + roll_sd2[cols[i]],
                                          alpha=0.5)
-                elif sd is not None and sd2 is None:
-                    print('Missing standard deviation for second dataset')
+                # elif sd is not None and sd2 is None:
+                #     print('Missing standard deviation for second dataset')
             axes[0].legend(['Residential', 'Commercial', 'Industrial'])
             if publication:
                 # plt.gcf().set_size_inches(7, 3.5)
                 output_loc = pub_loc
+            axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                         transform=axes[0].transAxes)
+            axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                         transform=axes[1].transAxes)
+            fig.supxlabel('Time (days)', y=-0.03)
+            fig.supylabel(ylabel, x=0.04)
             plt.gcf().set_size_inches(7, 3.5)
-            plt.xlabel('Time (days)')
-            plt.ylabel(ylabel)
 
         plt.savefig(output_loc + fig_name + '.' + format, format=format,
                     bbox_inches='tight')
         plt.close()
 
 
-def make_flow_plot(change_data, sum_data, percent,
-                   loc, title, days=90):
+def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
+                   title, change_data2=None, sum_data2=None, days=90):
     '''
     Function to make a plot showing the flow direction change
     '''
     roll_change = change_data.rolling(24).mean()
     percentiles = sum_data.quantile(percent)
+    if change_data2 is not None:
+        roll_change2 = change_data2.rolling(24).mean()
+        percentiles2 = sum_data2.quantile(percent)
+
+    print(percentiles)
     x_values = np.array([x for x in np.arange(0, days, days/len(roll_change))])
-    
-    y_upper = roll_change[sum_data[sum_data > percentiles[percent[1]]].index]
-    y_lower = roll_change[sum_data[sum_data < percentiles[percent[0]]].index]    
-    print(y_upper)
-    plt.plot(x_values, y_upper.mean(axis=1))
-    plt.plot(x_values, y_lower.mean(axis=1))
+
+    if dir == 'top':
+        y_1 = roll_change[sum_data[sum_data > percentiles].index]
+        y_2 = roll_change2[sum_data2[sum_data2 > percentiles2].index]
+    elif dir == 'bottom':
+        y_1 = roll_change[sum_data[sum_data < percentiles].index]
+        y_2 = roll_change2[sum_data2[sum_data2 < percentiles2].index]
+
+    plt.plot(x_values, y_1.mean(axis=1))
+    plt.plot(x_values, y_2.mean(axis=1))
     plt.xlabel('Time (days)')
-    plt.ylabel('Number of Flow Changes')
-    plt.legend(['Top '+str(percent[1]*100)+'%', 'Bottom '+str(percent[0]*100)+'%'])
+    plt.ylabel('Daily Average Flow Changes')
+    plt.legend(legend_text)
     if publication:
         loc = pub_loc
+    else:
+        loc = 'Output Files/png_figures/'
     plt.savefig(loc + title + '.' + format, format=format, bbox_inches='tight')
     plt.close()
 
@@ -419,30 +443,68 @@ def export_agent_loc(wn, output_loc, locations):
     output.to_csv(output_loc + 'locations.csv')
 
 
-def make_seir_plot(data, output_loc, input, leg_text, sd=None):
+def make_seir_plot(data, input, leg_text, title,
+                   data2=None, sd=None, sd2=None, sub=False):
     ''' Function to make the seir plot with the input columns '''
-    data['I'] = data['I'] / 4606
+    in_data = copy.deepcopy(data)
+    in_data2 = copy.deepcopy(data2)
+    in_data['I'] = in_data['I'] / 4606
+    in_data2['I'] = in_data2['I'] / 4606
+    in_data = in_data * 100
+    in_data2 = in_data2 * 100
+
     if sd is not None:
-        sd['I'] = sd['I'] / 4606
-    # seir.reset_index(inplace=True)
-    # seir['t'] = seir['t'] / 3600 /24
+        in_sd = copy.deepcopy(sd)
+        in_sd2 = copy.deepcopy(sd2)
+        in_sd['I'] = in_sd['I'] / 4606
+        in_sd2['I'] = in_sd2['I'] / 4606
+        in_sd = in_sd * 100
+        in_sd2 = in_sd2 * 100
+
     x_values = np.array([x for x in np.arange(0, 90, 90/len(data))])
-    data['t_new'] = x_values
+
+    if sub:
+        fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
     for item in input:
-        plt.plot(data['t_new'], data[item])
-        if sd is not None:
-            plt.fill_between(data['t_new'], data[item] - sd[item],
-                             data[item] + sd[item], alpha=0.5)
+        if sub:
+            axes[0].plot(x_values, in_data[item])
+            axes[1].plot(x_values, in_data2[item])
+        else:
+            plt.plot(in_data['t_new'], in_data[item])
+    if sd is not None:
+        for item in input:
+                if sub:
+                    axes[0].fill_between(x_values, in_data[item]-in_sd[item],
+                                         in_data[item]+in_sd[item], alpha=0.5)
+                    axes[1].fill_between(x_values, in_data2[item]-in_sd2[item],
+                                         in_data2[item]+in_sd2[item], alpha=0.5)
+                else:
+                    plt.fill_between(x_values, in_data[item] - in_sd[item],
+                                     in_data[item] + in_sd[item], alpha=0.5)
     # plt.axvline(x=times[0]/24, color='black')
     # plt.axvline(x=times[1]/24, color='black')
-    plt.ylim(0, 1)
-    plt.xlabel('Time (days)')
-    plt.ylabel('Percent Population')
-    plt.legend(leg_text)
+    if sub:
+        plt.gcf().set_size_inches(7, 3.5)
+        axes[0].legend(leg_text, loc='upper left')
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        fig.supxlabel('Time (days)', y=-0.03)
+        fig.supylabel('Percent Population', x=0.04)
+    else:
+        plt.legend(leg_text, loc='upper left')
+        plt.ylabel('Percent Population')
+        plt.xlabel('Time (days)')
+
+    plt.ylim(0, 100)
+
     if publication:
         output_loc = pub_loc
-    plt.savefig(output_loc + '/' + 'seir_' + error + '.' + format, format=format,
-                bbox_inches='tight')
+    else:
+        output_loc = 'Output Files/png_figures/'
+    plt.savefig(output_loc + '/' + 'seir_' + title + '_' + error + '.' + format,
+                format=format, bbox_inches='tight')
     plt.close()
 
 
@@ -532,20 +594,25 @@ no_wfh_flow_diff = list()
 ''' Flow direction change plots '''
 wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[0])
 no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[0])
-make_flow_plot(wfh_flow_change, wfh_flow_sum, [0.4, 0.9],
-               wfh_comp_dir, 'max-min_wfh_flow_changes')
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.4, 0.9],
-               no_wfh_comp_dir, 'max-min_no_wfh_flow_changes')
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.9, 'top', ['Base', 'PM'],
+               'top10_flow_changes', wfh_flow_change,
+               wfh_flow_sum)
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.4, 'bottom', ['Base', 'PM'],
+               'bottom40_flow_changes', wfh_flow_change,
+               wfh_flow_sum)
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0, 'top', ['Base', 'PM'],
+               'all_flow_changes', wfh_flow_change,
+               wfh_flow_sum)
 # max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
 
 ''' Make demand plots for by sector with PM data '''
-make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)', wfh_comp_dir,
+make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)',
                  'sum', 'sum_demand_'+error, sd=wfh['sd_demand'])
 # make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand')
 # make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
 
 ''' Make age plot by sector for both base and PM '''
-make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', wfh_comp_dir, 'mean', 'mean_age_'+error,
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean', 'mean_age_'+error,
                  data2=wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600, sd2=wfh['sd_age']/3600,
                  sub=True)
 # make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
@@ -556,12 +623,12 @@ make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', wfh_comp_dir, 'mean', '
 #                  'mean_age', days=400)
 
 ''' Make age plot comparing base and PM '''
-make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age [hr]', wfh_comp_dir, 'mean',
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean',
                  'mean_age_aggregate_'+error, wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600,
                  sd2=wfh['sd_age']/3600, type='all')
 
 ''' Make plots of aggregate demand data '''
-make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', wfh_loc, 'sum',
+make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
                  'sum_demand_aggregate_'+error, wfh['avg_demand'], type='all',
                  sd=no_wfh['sd_demand'], sd2=wfh['sd_demand'])
 # make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
@@ -574,28 +641,29 @@ make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', wfh_loc, 'sum',
 # export_agent_loc(wn, agent)
 
 ''' SEIR plot '''
-make_seir_plot(no_wfh['avg_seir'], no_wfh_comp_dir, ['S', 'E', 'I', 'R'],
-               leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed'],
-               sd=no_wfh['sd_seir'])
-make_seir_plot(wfh['avg_seir'], wfh_comp_dir, ['S', 'E', 'I', 'R', 'wfh'],
+make_seir_plot(no_wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
-               sd=wfh['sd_seir'])
+               title='combined', data2=wfh['avg_seir'], sd=no_wfh['sd_seir'],
+               sd2=wfh['sd_seir'], sub=True)
+# make_seir_plot(wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
+#                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
+#                title='wfh', sd=wfh['sd_seir'])
 
 ''' Export comparison stats '''
-only_wfh_loc = 'Output Files/2022-12-12_11-52_wfh_current_results/'
-dine_loc = 'Output Files/2022-12-12_12-44_dine_current_results/'
-grocery_loc = 'Output Files/2022-12-12_13-18_grocery_current_results/'
-ppe_loc = 'Output Files/2022-12-15_13-00_ppe_current_results/'
+only_wfh_loc = 'Output Files/wfh_30/'
+dine_loc = 'Output Files/dine_30/'
+grocery_loc = 'Output Files/grocery_30/'
+ppe_loc = 'Output Files/ppe_30/'
 
-only_wfh = read_data(only_wfh_loc, ['seir', 'age'])
-dine = read_data(dine_loc, ['seir', 'age'])
-grocery = read_data(grocery_loc, ['seir', 'age'])
-ppe = read_data(ppe_loc, ['seir', 'age'])
-print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['seir'], only_wfh['age']/3600)))
-print("Dine model stats: " + str(calc_model_stats(wn, dine['seir'], dine['age']/3600)))
-print("Grocery model stats: " + str(calc_model_stats(wn, grocery['seir'], grocery['age']/3600)))
-print("PPE model stats: " + str(calc_model_stats(wn, ppe['seir'], ppe['age']/3600)))
-# print("All PM model stats: " + str(calc_model_stats(wn, wfh['seir'], wfh['age']/3600)))
+only_wfh = read_comp_data(only_wfh_loc, ['seir', 'age'])
+dine = read_comp_data(dine_loc, ['seir', 'age'])
+grocery = read_comp_data(grocery_loc, ['seir', 'age'])
+ppe = read_comp_data(ppe_loc, ['seir', 'age'])
+print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir'], only_wfh['avg_age']/3600)))
+print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir'], dine['avg_age']/3600)))
+print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir'], grocery['avg_age']/3600)))
+print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir'], ppe['avg_age']/3600)))
+print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir'], wfh['avg_age']/3600)))
 print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir'], no_wfh['avg_age']/3600)))
 
 # ind_distances, ind_closest = calc_industry_distance(wn)
