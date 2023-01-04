@@ -33,6 +33,16 @@ prim_colors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#f1f174']
 plt.rcParams['axes.prop_cycle'] = plt.cycler(color=prim_colors)
 plt.rcParams['font.serif'] = ['Times New Roman']
 plt.rcParams['font.family'] = ['serif']
+plt.rcParams['xtick.top'] = True
+plt.rcParams['xtick.bottom'] = True
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.left'] = True
+plt.rcParams['ytick.right'] = True
+plt.rcParams['ytick.direction'] = 'in'
+plt.rcParams['xtick.major.width'] = 0.7
+plt.rcParams['ytick.major.width'] = 0.7
+plt.rcParams['xtick.major.size'] = 3.0
+plt.rcParams['ytick.major.size'] = 3.0
 
 
 def read_comp_data(loc, read_list):
@@ -383,10 +393,17 @@ def make_sector_plot(wn, data, ylabel, op, fig_name,
 
 
 def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
-                   title, change_data2=None, sum_data2=None, days=90):
+                   title, change_data2=None, sum_data2=None, days=90,
+                   ax=None):
     '''
     Function to make a plot showing the flow direction change
     '''
+    
+    # filter out zero values from sum_data
+    sum_data = sum_data[sum_data != 0]
+    if sum_data2 is not None:
+        sum_data2 = sum_data2[sum_data2 != 0]
+
     roll_change = change_data.rolling(24).mean()
     percentiles = sum_data.quantile(percent)
     if change_data2 is not None:
@@ -402,18 +419,27 @@ def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
     elif dir == 'bottom':
         y_1 = roll_change[sum_data[sum_data < percentiles].index]
         y_2 = roll_change2[sum_data2[sum_data2 < percentiles2].index]
+    elif dir == 'middle':
+        pipes = sum_data[sum_data > percentiles[percent[0]]]
+        pipes = sum_data[sum_data < percentiles[percent[1]]]
+        y_1 = roll_change[pipes.index]
+        y_2 = roll_change2[pipes.index]
 
-    plt.plot(x_values, y_1.mean(axis=1))
-    plt.plot(x_values, y_2.mean(axis=1))
-    plt.xlabel('Time (days)')
-    plt.ylabel('Daily Average Flow Changes')
-    plt.legend(legend_text)
-    if publication:
-        loc = pub_loc
+    if ax is None:
+        plt.plot(x_values, y_1.mean(axis=1))
+        plt.plot(x_values, y_2.mean(axis=1))
+        plt.xlabel('Time (days)')
+        plt.ylabel('Daily Average Flow Changes')
+        plt.legend(legend_text)
+        if publication:
+            loc = pub_loc
+        else:
+            loc = 'Output Files/png_figures/'
+        plt.savefig(loc + title + '.' + format, format=format, bbox_inches='tight')
+        plt.close()
     else:
-        loc = 'Output Files/png_figures/'
-    plt.savefig(loc + title + '.' + format, format=format, bbox_inches='tight')
-    plt.close()
+        ax.plot(x_values, y_1.mean(axis=1))
+        ax.plot(x_values, y_2.mean(axis=1))
 
 
 def export_agent_loc(wn, output_loc, locations):
@@ -594,16 +620,42 @@ no_wfh_flow_diff = list()
 ''' Flow direction change plots '''
 wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[0])
 no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[0])
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.9, 'top', ['Base', 'PM'],
+
+fig, axes = plt.subplots(nrows=3, ncols=1, sharex=True)
+
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.8, 'top', ['Base', 'PM'],
                'top10_flow_changes', wfh_flow_change,
-               wfh_flow_sum)
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.4, 'bottom', ['Base', 'PM'],
-               'bottom40_flow_changes', wfh_flow_change,
-               wfh_flow_sum)
+               wfh_flow_sum, ax=axes[0])
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.2, 'bottom', ['Base', 'PM'],
+               'bottom10_flow_changes', wfh_flow_change,
+               wfh_flow_sum, ax=axes[2])
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.2, 0.8], 'middle', ['Base', 'PM'],
+               'middle80_flow_changes', wfh_flow_change,
+               wfh_flow_sum, ax=axes[1])
+# max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
+
+plt.gcf().set_size_inches(3.5, 6)
+fig.supxlabel('Time (days)', y=0.01)
+fig.supylabel('Daily Average Flow Changes', x=-0.04)
+axes[0].text(0.5, -0.15, "(a)", size=12, ha="center",
+             transform=axes[0].transAxes)
+axes[1].text(0.5, -0.15, "(b)", size=12, ha="center",
+             transform=axes[1].transAxes)
+axes[2].text(0.5, -0.23, "(c)", size=12, ha="center",
+             transform=axes[2].transAxes)
+# plt.xlabel('Time (days)')
+# plt.ylabel('Daily Average Flow Changes')
+axes[0].legend(['Base', 'PM'], loc='lower left')
+if publication:
+    loc = pub_loc
+else:
+    loc = 'Output Files/png_figures/'
+plt.savefig(loc + 'flow_change_mid60.' + format, format=format, bbox_inches='tight')
+plt.close()
+
 make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0, 'top', ['Base', 'PM'],
                'all_flow_changes', wfh_flow_change,
                wfh_flow_sum)
-# max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
 
 ''' Make demand plots for by sector with PM data '''
 make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)',
