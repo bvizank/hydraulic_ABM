@@ -290,13 +290,13 @@ def make_sector_plot(wn, data, ylabel, op, fig_name,
                 plot_sd = pd.DataFrame(data={'primary': sd, 'wfh': sd2})
                 rolling_sd = plot_sd.rolling(24).mean()
             for i in range(2):
-                plt.plot(x_values, rolling_data[cols[i]])
+                plt.plot(x_values, rolling_data[cols[i]], color='C'+str(i*2))
             if sd is not None:
                 for i in range(2):
                     plt.fill_between(x_values,
                                      rolling_data[cols[i]] - rolling_sd[cols[i]],
                                      rolling_data[cols[i]] + rolling_sd[cols[i]],
-                                     alpha=0.5)
+                                     color='C'+str(i*2), alpha=0.5)
             plt.legend(['Base', 'PM'])
         else:
             data = pd.DataFrame(data={'demand': y_data, 't': x_values})
@@ -329,13 +329,13 @@ def make_sector_plot(wn, data, ylabel, op, fig_name,
                                       'ind': ind_data})
             rolling_data = data.rolling(24).mean()
             for i in range(3):
-                plt.plot(x_values, rolling_data[cols[i]])
+                plt.plot(x_values, rolling_data[cols[i]], color='C'+str(i*2))
             if sd is not None:
                 for i in range(3):
                     plt.fill_between(x_values,
                                      rolling_data[cols[i]] - roll_sd[cols[i]],
                                      rolling_data[cols[i]] + roll_sd[cols[i]],
-                                     alpha=0.5)
+                                     alpha=0.5, color='C'+str(i*2))
             plt.xlabel('Time (days)')
             plt.ylabel(ylabel)
             plt.legend(['Residential', 'Commercial', 'Industrial'])
@@ -361,18 +361,18 @@ def make_sector_plot(wn, data, ylabel, op, fig_name,
             roll_data = data.rolling(24).mean()
             roll_data2 = data2.rolling(24).mean()
             for i in range(3):
-                axes[0].plot(x_values, roll_data[cols[i]])
-                axes[1].plot(x_values, roll_data2[cols[i]])
+                axes[0].plot(x_values, roll_data[cols[i]], color='C'+str(i*2))
+                axes[1].plot(x_values, roll_data2[cols[i]], color='C'+str(i*2))
             if sd is not None:
                 for i in range(3):
                     axes[0].fill_between(x_values,
                                          roll_data[cols[i]] - roll_sd[cols[i]],
                                          roll_data[cols[i]] + roll_sd[cols[i]],
-                                         alpha=0.5)
+                                         alpha=0.5, color='C'+str(i*2))
                     axes[1].fill_between(x_values,
                                          roll_data2[cols[i]] - roll_sd2[cols[i]],
                                          roll_data2[cols[i]] + roll_sd2[cols[i]],
-                                         alpha=0.5)
+                                         alpha=0.5, color='C'+str(i*2))
                 # elif sd is not None and sd2 is None:
                 #     print('Missing standard deviation for second dataset')
             axes[0].legend(['Residential', 'Commercial', 'Industrial'])
@@ -398,7 +398,7 @@ def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
     '''
     Function to make a plot showing the flow direction change
     '''
-    
+
     # filter out zero values from sum_data
     sum_data = sum_data[sum_data != 0]
     if sum_data2 is not None:
@@ -426,8 +426,8 @@ def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
         y_2 = roll_change2[pipes.index]
 
     if ax is None:
-        plt.plot(x_values, y_1.mean(axis=1))
-        plt.plot(x_values, y_2.mean(axis=1))
+        plt.plot(x_values, y_1.mean(axis=1), color='C'+str(0))
+        plt.plot(x_values, y_2.mean(axis=1), color='C'+str(2))
         plt.xlabel('Time (days)')
         plt.ylabel('Daily Average Flow Changes')
         plt.legend(legend_text)
@@ -438,8 +438,8 @@ def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
         plt.savefig(loc + title + '.' + format, format=format, bbox_inches='tight')
         plt.close()
     else:
-        ax.plot(x_values, y_1.mean(axis=1))
-        ax.plot(x_values, y_2.mean(axis=1))
+        ax.plot(x_values, y_1.mean(axis=1), color=prim_colors[0])
+        ax.plot(x_values, y_2.mean(axis=1), color=prim_colors[2])
 
 
 def export_agent_loc(wn, output_loc, locations):
