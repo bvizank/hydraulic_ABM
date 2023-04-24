@@ -10,15 +10,21 @@ import os
 warnings.simplefilter("ignore", UserWarning)
 
 
-def run_sim(id=0, days=90, **kwargs):
+def run_sim(city, id=0, days=90, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
     output_loc = 'Output Files/' + curr_dt + '_results'
     os.mkdir(output_loc)
 
     output_file = 'datasheet.xlsx'
 
-    f = Micro_pop
-    model = ConsumerModel(f, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+    if city = 'micropolis':
+        pop = 4606
+    elif city = 'mesopolis':
+        pop = 146716
+    else:
+        print(f"City {city} not implemented.")
+
+    model = ConsumerModel(pop, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
 
     start = perf_counter()
 
@@ -46,7 +52,7 @@ def run_sim(id=0, days=90, **kwargs):
 
     # print(Demands_test[:,0])
 
-    model.status_tot['t'] = Micro_pop * model.status_tot['t'] / 24
+    model.status_tot['t'] = pop * model.status_tot['t'] / 24
 
     plt.plot('t', 'S', data = model.status_tot, label = 'Susceptible')
     plt.plot('t', 'E', data = model.status_tot, label = 'Exposed')
@@ -59,8 +65,8 @@ def run_sim(id=0, days=90, **kwargs):
     plt.savefig(output_loc + '/' + 'seir.png')
     plt.close()
 
-    model.status_tot['I'] = Micro_pop * model.status_tot['I']
-    model.status_tot['sum_I'] = Micro_pop * model.status_tot['sum_I']
+    model.status_tot['I'] = pop * model.status_tot['I']
+    model.status_tot['sum_I'] = pop * model.status_tot['sum_I']
 
     plt.plot('t', 'I', data=model.status_tot, label='Infected')
     plt.plot('t', 'sum_I', data=model.status_tot, label='Cumulative I')

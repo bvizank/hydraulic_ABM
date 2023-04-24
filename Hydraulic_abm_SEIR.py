@@ -21,6 +21,7 @@ class ConsumerModel(Model):
     """A Model with some number of Agents"""
     def __init__(self,
                  N,
+                 city,
                  nodes_capacity = Max_pop_pnode_resid,
                  nodes_resident = Nodes_resident,
                  nodes_industr = Nodes_industr,
@@ -128,6 +129,11 @@ class ConsumerModel(Model):
             '''
             self.ppe_reduction = 0.34
 
+        if city == 'micropolis':
+            micro_setup()
+        elif city == 'mesopolis':
+            meso_setup()
+
         # set up water network
         inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
         self.wn = wntr.network.WaterNetworkModel(inp_file)
@@ -231,13 +237,11 @@ class ConsumerModel(Model):
         if self.verbose == 1:
             print('Time to initialize: ', init_stop - init_start)
 
-
     def dag_nodes(self):
         self.wfh_nodes = copy.deepcopy(self.wfh_dag['adjmat'].columns)
         self.dine_nodes = copy.deepcopy(self.dine_less_dag['adjmat'].columns)
         self.grocery_nodes = copy.deepcopy(self.grocery_dag['adjmat'].columns)
         self.ppe_nodes = copy.deepcopy(self.ppe_dag['adjmat'].columns)
-
 
     def base_demand_list(self):
         self.base_demands = dict()
@@ -252,7 +256,6 @@ class ConsumerModel(Model):
             self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
             self.base_pattern[node] = copy.deepcopy(node_1.demand_timeseries_list[0].pattern_name)
 
-
     def node_list(self, list, nodes):
         list_out = []
         for node in nodes:
@@ -260,14 +263,12 @@ class ConsumerModel(Model):
                 list_out.append(node)
         return list_out
 
-
     def create_node_list(self):
         nodes_industr_2x = self.nodes_industr + self.nodes_industr + self.nodes_industr
         self.ind_loc_list = self.node_list(self.nodes_capacity, nodes_industr_2x)
         self.res_loc_list = self.node_list(self.nodes_capacity, self.nodes_resident)
         # self.rest_loc_list = node_list(self.nodes_capacity, self.nodes_cafe)
         # self.comm_loc_list = node_list(self.nodes_capacity, self.nodes_rest)
-
 
     def create_agents(self):
         ''' Creating lists of nodes where employers have decided not to allow
