@@ -73,7 +73,6 @@ for k,v in node_patterns.items():
 
 # Rest of commercial nodes like schools, churches etc.
 Nodes_comm_rest = []
-
 for k,v in node_patterns.items():
     if v == 5 and k[0:2]== 'TN':
         Nodes_comm_rest.append(k)
@@ -164,4 +163,7 @@ TV_data = pd.read_excel(r'Input Files/TV_data.xlsx')
 TV_distr = TV_data['tv_data'].tolist()
 
 # Load agent parameters for BBN predictions
-bbn_params = pd.read_csv(r'Input Files/wfh_db.csv')
+bbn_params = pd.read_csv(r'Input Files/all_bbn_data.csv')
+
+# Load in the new residential patterns from Lakewood data
+wfh_patterns = pd.read_csv(r'Input Files/res_patterns/normalized_res_patterns.csv')

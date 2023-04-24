@@ -1,14 +1,9 @@
 import warnings
 warnings.simplefilter("ignore", UserWarning)
-from mesa import Agent, Model
-from mesa.time import RandomActivation
+from mesa import Agent
 from mesa.datacollection import DataCollector
 from wntr_1 import *
 from Char_micropolis_static_loc import *
-import networkx as nx
-from mesa.space import NetworkGrid
-import random
-import time
 
 class ConsumerAgent(Agent):
 
@@ -35,12 +30,13 @@ class ConsumerAgent(Agent):
         self.symptomatic = None  # 0 is asymptomatic, 1 symptomatic
         self.inf_severity = 0    # 0: asymptomatic, 1: mild, 2: severe, 3: critical
         self.adj_covid_change = 0     # 0: no change in housemates having covid, 1: recently a housemate became infectious
-        self.wfh = 0
-
-        '''
-        BBN parameters for predicting work from home.
-        '''
-        self.agent_params = {}
+        self.wfh = 0  # working from home decision status
+        self.no_dine = 0  # not dining out
+        self.less_groceries = 0  # shopping for groceries less
+        self.ppe = 0  # wearing ppe
+        self.can_wfh = True   # bool based on workplace decision to allow work from home
+        self.agent_params = {}  # BBN parameters for predicting work from home
+        self.housemates = list()
 
     def complying(self):
         if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:

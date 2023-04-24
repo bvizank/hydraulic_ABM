@@ -5,7 +5,7 @@ import warnings
 warnings.simplefilter("ignore", UserWarning)
 
 # Create a water network model
-inp_file = 'Input Files/MICROPOLIS_v1_orig_consumers.inp'
+inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 # MICROPOLIS_v1_orig_consumers.inp
 wn = wntr.network.WaterNetworkModel(inp_file)
 

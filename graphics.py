@@ -1,0 +1,737 @@
+import wntr
+import numpy as np
+import pandas as pd
+import copy
+import matplotlib.pyplot as plt
+# from matplotlib.pyplot import figure
+# import plotly.graph_objects as go
+from scipy.interpolate import griddata
+import networkx as nx
+# import os
+import math
+from utils import read_data
+
+no_wfh_comp_dir = 'Output Files/no_pm_30/'
+wfh_comp_dir = 'Output Files/all_pm_30/'
+# wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
+# no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
+day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
+day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
+read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
+plt.rcParams['figure.figsize'] = [3.5, 3.5]
+format = 'png'
+error = 'ci95'
+publication = True
+if publication:
+    pub_loc = 'Output Files/publication_figures/'
+    plt.rcParams['figure.dpi'] = 800
+    format = 'pdf'
+
+prim_colors = ['#253494', '#2c7fb8', '#41b6c4', '#a1dab4', '#f1f174']
+# sec_colors = ['#454545', '#929292', '#D8D8D8']
+
+plt.rcParams['axes.prop_cycle'] = plt.cycler(color=prim_colors)
+plt.rcParams['font.serif'] = ['Times New Roman']
+plt.rcParams['font.family'] = ['serif']
+plt.rcParams['xtick.top'] = True
+plt.rcParams['xtick.bottom'] = True
+plt.rcParams['xtick.direction'] = 'in'
+plt.rcParams['ytick.left'] = True
+plt.rcParams['ytick.right'] = True
+plt.rcParams['ytick.direction'] = 'in'
+plt.rcParams['xtick.major.width'] = 0.7
+plt.rcParams['ytick.major.width'] = 0.7
+plt.rcParams['xtick.major.size'] = 3.0
+plt.rcParams['ytick.major.size'] = 3.0
+
+
+def read_comp_data(loc, read_list):
+    out_dict = dict()
+    for item in read_list:
+        out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
+        out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
+        if error == 'ci95':
+            out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
+        elif error == 'se':
+            out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
+        else:
+            pass
+
+    return out_dict
+
+
+'''Import water network and data'''
+inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
+wn = wntr.network.WaterNetworkModel(inp_file)
+G = wn.get_graph()
+# wfh = read_data(wfh_loc, read_list)
+# no_wfh = read_data(no_wfh_loc, read_list)
+comp_list = ['seir', 'demand', 'age', 'flow']
+wfh = read_comp_data(wfh_comp_dir, comp_list)
+no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
+# days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
+# days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
+ind_nodes = [node for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].pattern_name == '3']
+
+
+def calc_difference(data_time_1, data_time_2):
+    '''Function to take the difference between two time points '''
+    return (data_time_2 - data_time_1)
+
+
+def calc_flow_diff(data, hours):
+    flow_data = dict()
+    flow_changes_sum = dict()
+    for (pipe, colData) in data.items():
+        if 'MA' in pipe:
+            curr_flow_changes = list()
+            for i in range(len(colData)-1):
+                if colData[(i+1)*3600] * colData[i*3600] < 0:
+                    curr_flow_changes.append(1)
+                else:
+                    curr_flow_changes.append(0)
+        # print(curr_flow_changes[0:hours])
+            flow_changes_sum[pipe] = sum(curr_flow_changes[0:hours])
+            flow_data[pipe] = curr_flow_changes
+
+    output = pd.DataFrame(flow_data)
+    change_sum = pd.Series(flow_changes_sum)
+
+    # output = list()
+    # for i in range(len(data_time_1)):
+    #     if ('V' not in data_time_2.index[i]
+    #             and 'TowerPipe' not in data_time_2.index[i]):
+    #         if data_time_2[i] * data_time_1[i] < 0:
+    #             output.append(1)
+    #             print(f"Pipe {data_time_2.index[i]} has flow 2: {data_time_2[i]} and flow 1: {data_time_1[i]}")
+    #         else:
+    #             output.append(0)
+    #     else:
+    #         pass
+    return output, change_sum
+
+
+def calc_distance(node1, node2):
+    p1x, p1y = node1.coordinates
+    p2x, p2y = node2.coordinates
+
+    return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
+
+
+def calc_industry_distance(wn):
+    '''
+    Function to calculate the distance to the nearest industrial node.
+    '''
+    all_nodes = [node for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name != '3']
+
+    ind_distances = dict()
+    close_node = dict()
+    for node in all_nodes:
+        curr_node_dis = dict()
+        for ind_node in ind_nodes:
+            curr_node_dis[ind_node.name] = calc_distance(node, ind_node)
+        # find the key with the min value, i.e. the node with the lowest distance
+        ind_distances[node.name] = min(curr_node_dis.values())
+        close_node[node.name] = min(curr_node_dis, key=curr_node_dis.get)
+
+    return (ind_distances, close_node)
+
+
+def calc_closest_node(wn):
+    res_nodes = [node for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].base_value > 0
+                 and node.demand_timeseries_list[0].pattern_name == '2']
+    all_nodes = [node for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].base_value > 0]
+
+    closest_distances = dict()
+    for node1 in res_nodes:
+        curr_node_close = dict()
+        for node2 in all_nodes:
+            if node1.name != node2.name:
+                curr_node_close[node2.name] = calc_distance(node1, node2)
+        closest_distances[node1.name] = min(curr_node_close.values())
+
+    return closest_distances
+
+
+def make_contour(graph, data, data_type, fig_name,
+                 label=False, label_val='', pts=100000, **plots):
+    '''Function to make contour plot given a network structure and supplied data'''
+    x_coords = list()
+    y_coords = list()
+    data_list = list()
+    pos = dict()
+    if data_type != 'agent':
+        for node in graph.nodes:
+            x_coord = graph.nodes[node]['pos'][0]
+            y_coord = graph.nodes[node]['pos'][1]
+            curr_data = data[node]
+            x_coords.append(x_coord)
+            y_coords.append(y_coord)
+            data_list.append(curr_data)
+
+            pos[node] = x_coord, y_coord
+    else:
+        for node in graph.nodes:
+            x_coord = graph.nodes[node]['pos'][0]
+            y_coord = graph.nodes[node]['pos'][1]
+            if node in data:
+                curr_data = data[node]
+            else:
+                curr_data = 0
+            x_coords.append(x_coord)
+            y_coords.append(y_coord)
+            data_list.append(curr_data)
+
+            pos[node] = x_coord, y_coord
+
+    x_mesh = np.linspace(np.min(x_coords), np.max(x_coords), int(np.sqrt(pts)))
+    y_mesh = np.linspace(np.min(y_coords), np.max(y_coords), int(np.sqrt(pts)))
+    [x,y] = np.meshgrid(x_mesh, y_mesh)
+
+    z = griddata((x_coords, y_coords), data_list, (x, y), method='linear')
+    x = np.matrix.flatten(x); #Gridded longitude
+    y = np.matrix.flatten(y); #Gridded latitude
+    z = np.matrix.flatten(z); #Gridded elevation
+
+    if 'vmax' in plots:
+        plt.scatter(x,y,1,z,vmin=plots['vmin'], vmax=plots['vmax'])
+    else:
+        plt.scatter(x,y,1,z,vmin=plots['vmin'])
+
+    nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
+                     node_size=0)
+    if label:
+        plt.colorbar(label=label_val)
+
+    if publication:
+        plt.savefig(pub_loc + fig_name + '.' + format, format=format,
+                    bbox_inches='tight')
+    else:
+        plt.savefig(fig_name + '.' + format, format=format, bbox_inches='tight')
+    plt.close()
+
+    ax = wntr.graphics.plot_network(wn, node_attribute='pressure',
+                                    node_colorbar_label=label_val)
+
+    # fig = go.Figure(data =
+    #     go.Contour(
+    #         z = z,
+    #         x = x,
+    #         y = y
+    #     )
+    # )
+
+    # fig.write_image(fig_name + 'nodes' + '.png')
+
+
+    nx.draw_networkx(graph, pos=pos, with_labels=False, arrowstyle='-',
+                     node_size=10, node_color=data_list)
+    if publication:
+        plt.savefig(pub_loc + fig_name + 'nodes.' + format, format=format,
+                    bbox_inches='tight')
+    else:
+        plt.savefig(fig_name + 'nodes.' + format, format=format,
+                    bbox_inches='tight')
+    plt.close()
+
+
+def make_sector_plot(wn, data, ylabel, op, fig_name,
+                     data2=None, sd=None, sd2=None,
+                     type=None, data_type='node', sub=False,
+                     days=90):
+    '''
+    Function to plot the average data for a given sector
+    Sectors include: residential, commercial, industrial
+    '''
+    output_loc = 'Output Files/png_figures/'
+    if type == 'residential':
+        nodes = [name for name,node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '2']
+    elif type == 'industrial':
+        nodes = [name for name,node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '3']
+    elif type == 'commercial':
+        nodes = [name for name,node in wn.junctions()
+                 if (node.demand_timeseries_list[0].pattern_name == '4' or
+                     node.demand_timeseries_list[0].pattern_name == '5' or
+                     node.demand_timeseries_list[0].pattern_name == '6')]
+    elif type == None:
+        res_nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].pattern_name == '2']
+        ind_nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].pattern_name == '3']
+        com_nodes = [name for name,node in wn.junctions()
+                     if node.demand_timeseries_list[0].pattern_name == '4' or
+                     node.demand_timeseries_list[0].pattern_name == '5' or
+                     node.demand_timeseries_list[0].pattern_name == '6']
+    elif type == 'all':
+        if data_type == 'node':
+            nodes = [name for name, node in wn.junctions()
+                     if node.demand_timeseries_list[0].base_value > 0]
+        elif data_type == 'link':
+            nodes = [name for name,link in wn.links() if 'V' not in name]
+
+    if type is not None:
+        y_data = getattr(data[nodes], op)(axis=1)
+        if sd is not None:
+            sd = getattr(sd[nodes], op)(axis=1)
+        x_values = np.array([x for x in np.arange(0, days, days/len(y_data))])
+        if data2 is not None:
+            cols = ['primary', 'wfh']
+            y_data2 = getattr(data2[nodes], op)(axis=1)
+            plot_data = pd.DataFrame(data={'primary': y_data, 'wfh': y_data2})
+            rolling_data = plot_data.rolling(24).mean()
+            if sd is not None:
+                sd2 = getattr(sd2[nodes], op)(axis=1)
+                plot_sd = pd.DataFrame(data={'primary': sd, 'wfh': sd2})
+                rolling_sd = plot_sd.rolling(24).mean()
+            for i in range(2):
+                plt.plot(x_values, rolling_data[cols[i]], color='C'+str(i*2))
+            if sd is not None:
+                for i in range(2):
+                    plt.fill_between(x_values,
+                                     rolling_data[cols[i]] - rolling_sd[cols[i]],
+                                     rolling_data[cols[i]] + rolling_sd[cols[i]],
+                                     color='C'+str(i*2), alpha=0.5)
+            plt.legend(['Base', 'PM'])
+        else:
+            data = pd.DataFrame(data={'demand': y_data, 't': x_values})
+            data.plot(x='t', y='demand', xlabel='Time (days)', ylabel=ylabel,
+                      legend=False)
+        if publication:
+            output_loc = pub_loc
+
+        plt.xlabel('Time (days)')
+        plt.ylabel(ylabel)
+        plt.savefig(output_loc + fig_name + '.' + format, format=format,
+                    bbox_inches='tight')
+        plt.close()
+    else:
+        res_data = getattr(data[res_nodes], op)(axis=1)
+        ind_data = getattr(data[ind_nodes], op)(axis=1)
+        com_data = getattr(data[com_nodes], op)(axis=1)
+        if sd is not None:
+            res_sd = getattr(sd[res_nodes], op)(axis=1)
+            ind_sd = getattr(sd[ind_nodes], op)(axis=1)
+            com_sd = getattr(sd[com_nodes], op)(axis=1)
+            sd = pd.DataFrame(data={'res': res_sd, 'com':com_sd,
+                                    'ind': ind_sd})
+            roll_sd = sd.rolling(24).mean()
+
+        x_values = np.array([x for x in np.arange(0, days, days/len(res_data))])
+        cols = ['res', 'com', 'ind']
+        if not sub:
+            data = pd.DataFrame(data={'res': res_data, 'com': com_data,
+                                      'ind': ind_data})
+            rolling_data = data.rolling(24).mean()
+            for i in range(3):
+                plt.plot(x_values, rolling_data[cols[i]], color='C'+str(i*2))
+            if sd is not None:
+                for i in range(3):
+                    plt.fill_between(x_values,
+                                     rolling_data[cols[i]] - roll_sd[cols[i]],
+                                     rolling_data[cols[i]] + roll_sd[cols[i]],
+                                     alpha=0.5, color='C'+str(i*2))
+            plt.xlabel('Time (days)')
+            plt.ylabel(ylabel)
+            plt.legend(['Residential', 'Commercial', 'Industrial'])
+            if publication:
+                # plt.gcf().set_size_inches(3.5, 3.5)
+                output_loc = pub_loc
+        else:
+            res_data2 = getattr(data2[res_nodes], op)(axis=1)
+            com_data2 = getattr(data2[com_nodes], op)(axis=1)
+            ind_data2 = getattr(data2[ind_nodes], op)(axis=1)
+            data = pd.DataFrame(data={'res': res_data, 'com': com_data,
+                                      'ind': ind_data})
+            data2 = pd.DataFrame(data={'res': res_data2, 'com': com_data2,
+                                       'ind': ind_data2})
+            if sd2 is not None:
+                res_sd2 = getattr(sd2[res_nodes], op)(axis=1)
+                com_sd2 = getattr(sd2[com_nodes], op)(axis=1)
+                ind_sd2 = getattr(sd2[ind_nodes], op)(axis=1)
+                sd2 = pd.DataFrame(data={'res': res_sd2, 'com': com_sd2,
+                                         'ind': ind_sd2})
+                roll_sd2 = sd2.rolling(24).mean()
+            fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
+            roll_data = data.rolling(24).mean()
+            roll_data2 = data2.rolling(24).mean()
+            for i in range(3):
+                axes[0].plot(x_values, roll_data[cols[i]], color='C'+str(i*2))
+                axes[1].plot(x_values, roll_data2[cols[i]], color='C'+str(i*2))
+            if sd is not None:
+                for i in range(3):
+                    axes[0].fill_between(x_values,
+                                         roll_data[cols[i]] - roll_sd[cols[i]],
+                                         roll_data[cols[i]] + roll_sd[cols[i]],
+                                         alpha=0.5, color='C'+str(i*2))
+                    axes[1].fill_between(x_values,
+                                         roll_data2[cols[i]] - roll_sd2[cols[i]],
+                                         roll_data2[cols[i]] + roll_sd2[cols[i]],
+                                         alpha=0.5, color='C'+str(i*2))
+                # elif sd is not None and sd2 is None:
+                #     print('Missing standard deviation for second dataset')
+            axes[0].legend(['Residential', 'Commercial', 'Industrial'])
+            if publication:
+                # plt.gcf().set_size_inches(7, 3.5)
+                output_loc = pub_loc
+            axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                         transform=axes[0].transAxes)
+            axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                         transform=axes[1].transAxes)
+            fig.supxlabel('Time (days)', y=-0.03)
+            fig.supylabel(ylabel, x=0.04)
+            plt.gcf().set_size_inches(7, 3.5)
+
+        plt.savefig(output_loc + fig_name + '.' + format, format=format,
+                    bbox_inches='tight')
+        plt.close()
+
+
+def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
+                   title, change_data2=None, sum_data2=None, days=90,
+                   ax=None):
+    '''
+    Function to make a plot showing the flow direction change
+    '''
+
+    # filter out zero values from sum_data
+    sum_data = sum_data[sum_data != 0]
+    if sum_data2 is not None:
+        sum_data2 = sum_data2[sum_data2 != 0]
+
+    roll_change = change_data.rolling(24).mean()
+    percentiles = sum_data.quantile(percent)
+    if change_data2 is not None:
+        roll_change2 = change_data2.rolling(24).mean()
+        percentiles2 = sum_data2.quantile(percent)
+
+    print(percentiles)
+    x_values = np.array([x for x in np.arange(0, days, days/len(roll_change))])
+
+    if dir == 'top':
+        y_1 = roll_change[sum_data[sum_data > percentiles].index]
+        y_2 = roll_change2[sum_data2[sum_data2 > percentiles2].index]
+    elif dir == 'bottom':
+        y_1 = roll_change[sum_data[sum_data < percentiles].index]
+        y_2 = roll_change2[sum_data2[sum_data2 < percentiles2].index]
+    elif dir == 'middle':
+        pipes = sum_data[sum_data > percentiles[percent[0]]]
+        pipes = sum_data[sum_data < percentiles[percent[1]]]
+        y_1 = roll_change[pipes.index]
+        y_2 = roll_change2[pipes.index]
+
+    if ax is None:
+        plt.plot(x_values, y_1.mean(axis=1), color='C'+str(0))
+        plt.plot(x_values, y_2.mean(axis=1), color='C'+str(2))
+        plt.xlabel('Time (days)')
+        plt.ylabel('Daily Average Flow Changes')
+        plt.legend(legend_text)
+        if publication:
+            loc = pub_loc
+        else:
+            loc = 'Output Files/png_figures/'
+        plt.savefig(loc + title + '.' + format, format=format, bbox_inches='tight')
+        plt.close()
+    else:
+        ax.plot(x_values, y_1.mean(axis=1), color=prim_colors[0])
+        ax.plot(x_values, y_2.mean(axis=1), color=prim_colors[2])
+
+
+def export_agent_loc(wn, output_loc, locations):
+    res_nodes = [name for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '2'
+                 and name in locations.columns]
+    ind_nodes = [name for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name == '3'
+                 and name in locations.columns]
+    com_nodes = [name for name, node in wn.junctions()
+                 if (node.demand_timeseries_list[0].pattern_name == '4' or
+                 node.demand_timeseries_list[0].pattern_name == '5' or
+                 node.demand_timeseries_list[0].pattern_name == '6')
+                 and name in locations.columns]
+    rest_nodes = [name for name, node in wn.junctions()
+                  if node.demand_timeseries_list[0].pattern_name == '1'
+                  and name in locations.columns]
+
+    res_loc = locations[res_nodes].sum(axis=1)
+    ind_loc = locations[ind_nodes].sum(axis=1)
+    com_loc = locations[com_nodes].sum(axis=1)
+    rest_loc = locations[rest_nodes].sum(axis=1)
+    output = pd.DataFrame({'res': res_loc,
+                           'ind': ind_loc,
+                           'com': com_loc,
+                           'rest': rest_loc})
+    output.to_csv(output_loc + 'locations.csv')
+
+
+def make_seir_plot(data, input, leg_text, title,
+                   data2=None, sd=None, sd2=None, sub=False):
+    ''' Function to make the seir plot with the input columns '''
+    in_data = copy.deepcopy(data)
+    in_data2 = copy.deepcopy(data2)
+    in_data['I'] = in_data['I'] / 4606
+    in_data2['I'] = in_data2['I'] / 4606
+    in_data = in_data * 100
+    in_data2 = in_data2 * 100
+
+    if sd is not None:
+        in_sd = copy.deepcopy(sd)
+        in_sd2 = copy.deepcopy(sd2)
+        in_sd['I'] = in_sd['I'] / 4606
+        in_sd2['I'] = in_sd2['I'] / 4606
+        in_sd = in_sd * 100
+        in_sd2 = in_sd2 * 100
+
+    x_values = np.array([x for x in np.arange(0, 90, 90/len(data))])
+
+    if sub:
+        fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
+    for item in input:
+        if sub:
+            axes[0].plot(x_values, in_data[item])
+            axes[1].plot(x_values, in_data2[item])
+        else:
+            plt.plot(in_data['t_new'], in_data[item])
+    if sd is not None:
+        for item in input:
+                if sub:
+                    axes[0].fill_between(x_values, in_data[item]-in_sd[item],
+                                         in_data[item]+in_sd[item], alpha=0.5)
+                    axes[1].fill_between(x_values, in_data2[item]-in_sd2[item],
+                                         in_data2[item]+in_sd2[item], alpha=0.5)
+                else:
+                    plt.fill_between(x_values, in_data[item] - in_sd[item],
+                                     in_data[item] + in_sd[item], alpha=0.5)
+    # plt.axvline(x=times[0]/24, color='black')
+    # plt.axvline(x=times[1]/24, color='black')
+    if sub:
+        plt.gcf().set_size_inches(7, 3.5)
+        axes[0].legend(leg_text, loc='upper left')
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        fig.supxlabel('Time (days)', y=-0.03)
+        fig.supylabel('Percent Population', x=0.04)
+    else:
+        plt.legend(leg_text, loc='upper left')
+        plt.ylabel('Percent Population')
+        plt.xlabel('Time (days)')
+
+    plt.ylim(0, 100)
+
+    if publication:
+        output_loc = pub_loc
+    else:
+        output_loc = 'Output Files/png_figures/'
+    plt.savefig(output_loc + '/' + 'seir_' + title + '_' + error + '.' + format,
+                format=format, bbox_inches='tight')
+    plt.close()
+
+
+def make_distance_plot(x, y, xlabel, ylabel, loc, name):
+    plt.scatter(x, y)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.ylim([0,500])
+    if publication:
+        loc = pub_loc
+    plt.savefig(loc + name + '.' + format, format=format, bbox_inches='tight')
+    plt.close()
+
+
+def calc_model_stats(wn, seir, age):
+    '''
+    Function for calculating comparison stats for decision models:
+        - average water age at the end of the simluation
+        - peak infection rate
+        - final susceptible count
+    '''
+    nodes = [name for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].base_value > 0]
+    age_data = getattr(age[nodes], 'mean')(axis=1)
+    final_age = age_data[(len(age_data)-1)*3600]
+    max_inf = seir.I.loc[int(round(seir.I.idxmax(), 0))]
+    final_sus = seir.S[(len(seir.S)-1)*3600]
+
+    return (final_age, max_inf/4606, final_sus)
+
+
+max_wfh = wfh['avg_seir'].wfh.loc[int(wfh['avg_seir'].wfh.idxmax())]
+times = []
+# # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
+times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh/10)]
+times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh/2)]
+# # print(seir.wfh.searchsorted(max_wfh/2))
+# # times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
+times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh)]
+# print(times)
+times_hour = [time % 24 for time in times]
+# print(times_hour)
+
+def check_stats(new_list, old_stats):
+    if new_list.max() > old_stats[0]:
+        old_stats[0] = new_list.max()
+    if new_list.min() < old_stats[1]:
+        old_stats[1] = new_list.min()
+
+    return old_stats
+
+demand_stats = [0,0]
+pressure_stats = [0,0]
+age_stats = [0,0]
+agent_stats = [0,0]
+demand_diff = list()
+pressure_diff = list()
+age_diff = list()
+agent_diff = list()
+wfh_flow_diff = list()
+no_wfh_flow_diff = list()
+
+# for i, time in enumerate(times):
+#     if time >= len(demand_wfh):
+#         time = time - 1
+#     print(time)
+#     demand_diff.append(calc_difference(demand_wfh.iloc[times_hour[i]], demand_wfh.iloc[time]) * 1000)
+#     demand_stats = check_stats(demand_diff[i], demand_stats)
+#     make_contour(G, demand_diff[i], 'demand', wfh_loc + 'demand_' + str(time), True,
+#                  'Demand [ML]', vmin=demand_stats[1], vmax=demand_stats[0])
+#     pressure_diff.append(calc_difference(pressure_wfh.iloc[times_hour[i]], pressure_wfh.iloc[time]))
+#     pressure_stats = check_stats(pressure_diff[i], pressure_stats)
+#     make_contour(G, pressure_diff[i], 'pressure', wfh_loc + 'pressure_' + str(time), True,
+#                  'Pressure [m]', vmin=pressure_stats[1], vmax=pressure_stats[0])
+#     age_diff.append(calc_difference(age_wfh.iloc[times_hour[i]], age_wfh.iloc[time]))
+#     age_stats = check_stats(age_diff[i], age_stats)
+#     make_contour(G, age_diff[i], 'age', wfh_loc + 'age_' + str(time), True,
+#                  'Age [sec]', vmin=age_stats[1], vmax=age_stats[0])
+#     agent_diff.append(calc_difference(agent_wfh.iloc[times_hour[i]], agent_wfh.iloc[time]))
+#     agent_stats = check_stats(agent_diff[i], agent_stats)
+#     make_contour(G, agent_diff[i], 'agent', wfh_loc + 'locations_' + str(time), True,
+#                  '# of Agents', vmin=agent_stats[1], vmax=agent_stats[0])
+    # make_flow_plot(wn, flow_diff[i])
+
+''' Sector plots '''
+
+''' Flow direction change plots '''
+wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[0])
+no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[0])
+
+fig, axes = plt.subplots(nrows=3, ncols=1, sharex=True)
+
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.8, 'top', ['Base', 'PM'],
+               'top10_flow_changes', wfh_flow_change,
+               wfh_flow_sum, ax=axes[0])
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.2, 'bottom', ['Base', 'PM'],
+               'bottom10_flow_changes', wfh_flow_change,
+               wfh_flow_sum, ax=axes[2])
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.2, 0.8], 'middle', ['Base', 'PM'],
+               'middle80_flow_changes', wfh_flow_change,
+               wfh_flow_sum, ax=axes[1])
+# max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
+
+plt.gcf().set_size_inches(3.5, 6)
+fig.supxlabel('Time (days)', y=0.01)
+fig.supylabel('Daily Average Flow Changes', x=-0.04)
+axes[0].text(0.5, -0.15, "(a)", size=12, ha="center",
+             transform=axes[0].transAxes)
+axes[1].text(0.5, -0.15, "(b)", size=12, ha="center",
+             transform=axes[1].transAxes)
+axes[2].text(0.5, -0.23, "(c)", size=12, ha="center",
+             transform=axes[2].transAxes)
+# plt.xlabel('Time (days)')
+# plt.ylabel('Daily Average Flow Changes')
+axes[0].legend(['Base', 'PM'], loc='lower left')
+if publication:
+    loc = pub_loc
+else:
+    loc = 'Output Files/png_figures/'
+plt.savefig(loc + 'flow_change_mid60.' + format, format=format, bbox_inches='tight')
+plt.close()
+
+make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0, 'top', ['Base', 'PM'],
+               'all_flow_changes', wfh_flow_change,
+               wfh_flow_sum)
+
+''' Make demand plots for by sector with PM data '''
+make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)',
+                 'sum', 'sum_demand_'+error, sd=wfh['sd_demand'])
+# make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand')
+# make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
+
+''' Make age plot by sector for both base and PM '''
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean', 'mean_age_'+error,
+                 data2=wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600, sd2=wfh['sd_age']/3600,
+                 sub=True)
+# make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
+#                  'mean', 'mean_age', sd=no_wfh['sd_age']/3600)
+# make_sector_plot(wn, days_200['age']/3600, 'Age (hr)', day200_loc, 'mean',
+#                  'mean_age', days=200)
+# make_sector_plot(wn, days_400['age']/3600, 'Age (hr)', day400_loc, 'mean',
+#                  'mean_age', days=400)
+
+''' Make age plot comparing base and PM '''
+make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean',
+                 'mean_age_aggregate_'+error, wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600,
+                 sd2=wfh['sd_age']/3600, type='all')
+
+''' Make plots of aggregate demand data '''
+make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
+                 'sum_demand_aggregate_'+error, wfh['avg_demand'], type='all',
+                 sd=no_wfh['sd_demand'], sd2=wfh['sd_demand'])
+# make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
+#                  wfh['demand'], type='all')
+# make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
+#                  wfh['demand'], type='all')
+# make_sector_plot(wn, pressure, 'Pressure (m)', pressure_wfh, type='all')
+
+''' Export the agent locations '''
+# export_agent_loc(wn, agent)
+
+''' SEIR plot '''
+make_seir_plot(no_wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
+               leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
+               title='combined', data2=wfh['avg_seir'], sd=no_wfh['sd_seir'],
+               sd2=wfh['sd_seir'], sub=True)
+# make_seir_plot(wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
+#                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
+#                title='wfh', sd=wfh['sd_seir'])
+
+''' Export comparison stats '''
+only_wfh_loc = 'Output Files/wfh_30/'
+dine_loc = 'Output Files/dine_30/'
+grocery_loc = 'Output Files/grocery_30/'
+ppe_loc = 'Output Files/ppe_30/'
+
+only_wfh = read_comp_data(only_wfh_loc, ['seir', 'age'])
+dine = read_comp_data(dine_loc, ['seir', 'age'])
+grocery = read_comp_data(grocery_loc, ['seir', 'age'])
+ppe = read_comp_data(ppe_loc, ['seir', 'age'])
+print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir'], only_wfh['avg_age']/3600)))
+print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir'], dine['avg_age']/3600)))
+print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir'], grocery['avg_age']/3600)))
+print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir'], ppe['avg_age']/3600)))
+print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir'], wfh['avg_age']/3600)))
+print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir'], no_wfh['avg_age']/3600)))
+
+# ind_distances, ind_closest = calc_industry_distance(wn)
+# age_values = list()
+# curr_age_values = wfh['age'].iloc[len(wfh['age'])-1]/3600
+# for age in curr_age_values.items():
+#     if age[0] in ind_distances.keys():
+#         age_values.append(age[1])
+# make_distance_plot(ind_distances.values(), age_values,
+#                    'Distance (m)', 'Age (hr)', wfh_loc, 'age_ind_distance')
+
+# closest_distances = calc_closest_node(wn)
+# age_values = list()
+# curr_age_values = wfh['age'].iloc[len(wfh['age'])-1]/3600
+# for age in curr_age_values.items():
+#     if age[0] in closest_distances.keys():
+#         age_values.append(age[1])
+# make_distance_plot(closest_distances.values(), age_values, 'Distance (m)',
+#                    'Age (hr)', wfh_loc, 'age_closest_node')
