@@ -9,7 +9,7 @@ from scipy.interpolate import griddata
 import networkx as nx
 # import os
 import math
-from utils import read_data
+
 
 no_wfh_comp_dir = 'Output Files/no_pm_30/'
 wfh_comp_dir = 'Output Files/all_pm_30/'
@@ -19,9 +19,10 @@ day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
 day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
+plt.rcParams['figure.dpi'] = 500
 format = 'png'
 error = 'ci95'
-publication = True
+publication = False
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
@@ -63,7 +64,7 @@ def read_comp_data(loc, read_list):
 '''Import water network and data'''
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
-G = wn.get_graph()
+G = wn.to_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
 comp_list = ['seir', 'demand', 'age', 'flow']
@@ -621,7 +622,7 @@ no_wfh_flow_diff = list()
 wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[0])
 no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[0])
 
-fig, axes = plt.subplots(nrows=3, ncols=1, sharex=True)
+fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
 
 make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.8, 'top', ['Base', 'PM'],
                'top10_flow_changes', wfh_flow_change,
@@ -634,14 +635,14 @@ make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.2, 0.8], 'middle', ['Base
                wfh_flow_sum, ax=axes[1])
 # max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
 
-plt.gcf().set_size_inches(3.5, 6)
-fig.supxlabel('Time (days)', y=0.01)
-fig.supylabel('Daily Average Flow Changes', x=-0.04)
-axes[0].text(0.5, -0.15, "(a)", size=12, ha="center",
+plt.gcf().set_size_inches(6, 3.5)
+fig.supxlabel('Time (days)', y=-0.05)
+fig.supylabel('Daily Average Flow Changes')
+axes[0].text(0.5, -0.12, "Top 20%", size=12, ha="center",
              transform=axes[0].transAxes)
-axes[1].text(0.5, -0.15, "(b)", size=12, ha="center",
+axes[1].text(0.5, -0.12, "Middle 60%", size=12, ha="center",
              transform=axes[1].transAxes)
-axes[2].text(0.5, -0.23, "(c)", size=12, ha="center",
+axes[2].text(0.5, -0.12, "Bottom 20%", size=12, ha="center",
              transform=axes[2].transAxes)
 # plt.xlabel('Time (days)')
 # plt.ylabel('Daily Average Flow Changes')
