@@ -54,7 +54,7 @@ class ConsumerAgent(Agent):
             pass
 
     def communcation(self):
-        household_members = [a for i, a in enumerate(self.model.schedule.agents)
+       household_members = [a for i, a in enumerate(self.model.schedule.agents)
                              if a.home_node == self.home_node]
         if self.compliance == 1:
             f = 0
