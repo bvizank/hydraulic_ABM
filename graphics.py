@@ -21,7 +21,7 @@ read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
 format = 'png'
 error = 'ci95'
-publication = True
+publication = False
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
