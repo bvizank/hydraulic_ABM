@@ -23,7 +23,7 @@ wn = wntr.network.WaterNetworkModel(inp_file)
 
 # List of nodes
 lst_nodes = wn.node_name_list
- #creating list of base demands
+# creating list of base demands
 lst_base_demands = []
 for node in lst_nodes:
     junction = wn.get_node(node)

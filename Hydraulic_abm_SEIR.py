@@ -2,10 +2,9 @@
 import warnings
 from mesa import Model
 from mesa.time import RandomActivation
-from Char_micropolis_static_loc import *
+from Char_micropolis_static_loc import setup
 import networkx as nx
 from mesa.space import NetworkGrid
-import random
 from agent_model import *
 import math
 import time
@@ -13,6 +12,7 @@ import bnlearn as bn
 import numpy as np
 # from pysimdeum import pysimdeum
 import copy
+import wntr
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -42,11 +42,10 @@ class ConsumerModel(Model):
         self.days = days
         self.id = id
         self.num_agents = N
-        self.nodes_resident = nodes_resident
+        self.nodes_resident = nodes_resident  # very important
         self.nodes_industr = nodes_industr
         self.nodes_cafe = nodes_cafe # There is no node assigned to "dairy queen" so it was neglected
         self.nodes_rest = nodes_rest
-        self.terminal_nodes = All_terminal_nodes
         self.nodes_capacity = nodes_capacity
         self.resid_distr_ph = Resident_distr_ph # residential capacities at each hour
         self.comm_rest_distr_ph = Comm_rest_distr_ph # restaurant capacities at each hour
@@ -61,9 +60,9 @@ class ConsumerModel(Model):
         # self.base_demands_previous = {}
         if 'seed' in kwargs:
             seed = kwargs['seed']
-            self.swn = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = seed)
+            self.swn = nx.watts_strogatz_graph(n=self.num_agents, p=0.2, k=6, seed=seed)
         else:
-            self.swn = nx.watts_strogatz_graph(n = Micro_pop, p = 0.2, k = 6, seed = 919)
+            self.swn = nx.watts_strogatz_graph(n=self.num_agents, p=0.2, k=6, seed=919)
         self.snw_agents = {}
         self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
@@ -129,13 +128,14 @@ class ConsumerModel(Model):
             '''
             self.ppe_reduction = 0.34
 
-        if city == 'micropolis':
-            micro_setup()
-        elif city == 'mesopolis':
-            meso_setup()
+        node_dict, node_capacity, house_num, pop_dict, media, bbn_params, wfh_patterns = setup(city)
 
         # set up water network
-        inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
+        if city == 'micropolis':
+            inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
+        elif city == 'mesopolis':
+            inp_file = 'Input Files/Mesopolis.inp'
+
         self.wn = wntr.network.WaterNetworkModel(inp_file)
         self.G = self.wn.get_graph()
         self.grid = NetworkGrid(self.G)
@@ -344,7 +344,6 @@ class ConsumerModel(Model):
                     agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
                     agent.housemates = copy.deepcopy(curr_node)
 
-
     def create_demand_houses(self):
         ''' Create houses using pysimdeum for stochastic demand simulation '''
         self.res_houses = list()
@@ -367,7 +366,6 @@ class ConsumerModel(Model):
                     user.job = True
                 self.res_houses.append(house)
 
-
     def check_houses(self):
         for house in self.res_houses:
             node = house.id
@@ -376,7 +374,6 @@ class ConsumerModel(Model):
                 if agent.wfh == 1 or agent.work_node == None:
                     user.age = 'home_ad'
                     user.job = True
-
 
     def set_attributes(self):
         '''
@@ -451,7 +448,6 @@ class ConsumerModel(Model):
         # self.snw_node_agents = dict(zip(self.snw_agents_node.values(), self.snw_agents_node.keys()))
         # for key in self.snw_node_agents:
         #     print(self.snw_node_agents[key])
-        
 
     def num_status(self):
         """
@@ -666,7 +662,6 @@ class ConsumerModel(Model):
             agent.symptomatic = None
         else:
             pass
-        
 
     def check_death(self, agent):
         """
@@ -689,7 +684,6 @@ class ConsumerModel(Model):
         for i, agent in enumerate(self.schedule.agents):
             if self.random.random() < self.wfh_probs[math.floor(agent.agent_params["COVIDeffect_4"])]:
                 agent.wfh = 1
-                
 
     def communication_utility(self):
         ## Communication through TV and Radio
@@ -716,7 +710,6 @@ class ConsumerModel(Model):
                 a.informed_count_u += 1
             else:
                 pass
-            
 
     def move(self):
         """
@@ -773,7 +766,6 @@ class ConsumerModel(Model):
                         self.infect_agent(Agent_to_move, 'workplace')
                     else:
                         pass
-
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
             Possible_Agents_to_move = self.commercial_agents()
