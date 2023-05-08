@@ -1,9 +1,5 @@
-import warnings
-warnings.simplefilter("ignore", UserWarning)
 from mesa import Agent
-from mesa.datacollection import DataCollector
-from wntr_1 import *
-from Char_micropolis_static_loc import *
+
 
 class ConsumerAgent(Agent):
 

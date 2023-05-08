@@ -1,7 +1,5 @@
 import warnings
 from Hydraulic_abm_SEIR import ConsumerModel
-from wntr_1 import *
-from Char_micropolis_static_loc import *
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,14 +15,14 @@ def run_sim(city, id=0, days=90, **kwargs):
 
     output_file = 'datasheet.xlsx'
 
-    if city = 'micropolis':
+    if city == 'micropolis':
         pop = 4606
-    elif city = 'mesopolis':
+    elif city == 'mesopolis':
         pop = 146716
     else:
         print(f"City {city} not implemented.")
 
-    model = ConsumerModel(pop, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+    model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
 
     start = perf_counter()
 
@@ -33,7 +31,7 @@ def run_sim(city, id=0, days=90, **kwargs):
 
     Demands_test = np.zeros(24 * days + 1)
     # print(model.demand_matrix)
-    for node in All_terminal_nodes:
+    for node in model.terminal_nodes:
         add_demands = model.demand_matrix[node]
         Demands_test = np.add(Demands_test, add_demands)
 
