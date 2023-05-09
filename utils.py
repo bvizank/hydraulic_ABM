@@ -37,22 +37,22 @@ def setup(network):
         # Only terminal nodes count. So only nodes with prefix 'TN'
 
         # Cafe nodes (only 1)
-        node_dict['cafe'] = find_nodes(1, pattern_list)
+        node_dict['cafe'] = find_nodes(1, pattern_list, network)
         # residential nodes
-        node_dict['res'] = find_nodes(2, pattern_list)
+        node_dict['res'] = find_nodes(2, pattern_list, network)
         # Industrial nodes
-        node_dict['ind'] = find_nodes(3, pattern_list)
+        node_dict['ind'] = find_nodes(3, pattern_list, network)
         # Nodes dairy queen
-        node_dict['dq'] = find_nodes(4, pattern_list)
+        node_dict['dq'] = find_nodes(4, pattern_list, network)
         # Rest of commercial nodes like schools, churches etc.
-        node_dict['com'] = find_nodes(5, pattern_list)
+        node_dict['com'] = find_nodes(5, pattern_list, network)
     elif network == "mesopolis":
         # pattern types: air, com, res, ind, nav
-        node_dict['air'] = find_nodes('air', pattern_list)
-        node_dict['com'] = find_nodes('com', pattern_list)
-        node_dict['res'] = find_nodes('res', pattern_list)
-        node_dict['ind'] = find_nodes('ind', pattern_list)
-        node_dict['nav'] = find_nodes('nav', pattern_list)
+        node_dict['air'] = find_nodes('air', pattern_list, network)
+        node_dict['com'] = find_nodes('com', pattern_list, network)
+        node_dict['res'] = find_nodes('res', pattern_list, network)
+        node_dict['ind'] = find_nodes('ind', pattern_list, network)
+        node_dict['nav'] = find_nodes('nav', pattern_list, network)
 
     terminal_nodes = list()
     for key in node_dict:
@@ -90,15 +90,18 @@ def init_wntr(inp_file):
     return (lst_base_demands, node_patterns, wn)
 
 
-def find_nodes(type, pattern_list):
+def find_nodes(type, pattern_list, network):
     output = list()
     for k, v in pattern_list.items():
-        if v != 'DefPat':
+        if v != 'DefPat' and network == "micropolis":
             # print(f"v: {v}; type: {type}; are they equal {int(v) == int(type)}")
             if int(v) == int(type) and k[0:2] == 'TN':
                 output.append(k)
             else:
                 continue
+        elif network == "mesopolis":
+            if v == type and k[0:2] == 'TN':
+                output.append(k)
 
     return output
 
