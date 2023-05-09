@@ -31,6 +31,7 @@ class ConsumerModel(Model):
         self.days = days
         self.id = id
         self.num_agents = N
+        self.network = city
         self.t = 0
         self.schedule = RandomActivation(self)
         self.timestep = 0
@@ -368,24 +369,50 @@ class ConsumerModel(Model):
                 curr_node.append(a.unique_id)
                 ids += 1
 
-            ''' If the residential node is larger than 6, then we need to
-            artificially make households of 6 or less. '''
-            if len(curr_node) > 6:  # multifamily housing
-                while len(curr_node) > 6:
-                    home_size = self.random.choice(range(1, 7))
-                    curr_housemates = self.random.choices(curr_node, k=home_size)
-                    curr_node = [a for a in curr_node if a not in curr_housemates]
-                    for mate in curr_housemates:
-                        agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
-                        agent.housemates = copy.deepcopy(curr_housemates)  # this includes current agent
+                if self.network == 'micropolis':
+                    self.micro_household(curr_node)
+                elif self.network == 'mesopolis':
+                    self.meso_household(curr_node)
 
-                for mate in curr_node:
-                    agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
-                    agent.housemates = copy.deepcopy(curr_node)
-            else:
-                for agent in curr_node:
-                    agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
-                    agent.housemates = copy.deepcopy(curr_node)
+    def micro_household(self, curr_node):
+        ''' Assigns each agent's housemates based on the number
+        of agents at the current node.
+
+        If the residential node is larger than 6, then we need to
+        artificially make households of 6 or less. '''
+        if len(curr_node) > 6:  # multifamily housing
+            ''' Iterate through the agents at the current res node
+            and add them to households of 1 to 6 agents '''
+            while len(curr_node) > 6:
+                # pick a random size for current household
+                home_size = self.random.choice(range(1, 7))
+                # pick the agents that will occupy this household
+                curr_housemates = self.random.choices(curr_node, k=home_size)
+                # remake the curr_node variable without the agents just chosen
+                curr_node = [a for a in curr_node if a not in curr_housemates]
+                ''' Assign the current list of housemates to each agent
+                so they each know who their housemates are '''
+                for mate in curr_housemates:
+                    agent = self.schedule._agents[mate]
+                    # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+                    agent.housemates = copy.deepcopy(curr_housemates)  # this includes current agent
+
+            for mate in curr_node:
+                agent = self.schedule._agents[mate]
+                # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+                agent.housemates = copy.deepcopy(curr_node)
+        else:
+            for agent in curr_node:
+                curr_agent = self.schedule._agents[agent.unique_id]
+                # agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
+                curr_agent.housemates = copy.deepcopy(curr_node)
+
+    def meso_household(self, curr_node):
+        ''' Assign each agent's housemates based on the current
+        node. '''
+        # need to rectify the difference between the number of
+        # residential spots (139,654) and the total population
+        # (146,716)
 
     def create_demand_houses(self):
         ''' Create houses using pysimdeum for stochastic demand simulation '''
@@ -901,7 +928,6 @@ class ConsumerModel(Model):
                 Possible_Agents_to_move_to_work.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'workplace')
 
-
     def set_patterns(self, node):
         house = [house for house in self.res_houses if house.id == node.name][0]
         consumption = house.simulate(num_patterns=10)
@@ -910,7 +936,6 @@ class ConsumerModel(Model):
         self.wn.add_pattern('hs_' + house.id,
                        np.array(np.divide(hourly_cons, hourly_cons.mean())))
         node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
-
 
     def collect_demands(self):
         step_demand = dict()
@@ -1020,7 +1045,6 @@ class ConsumerModel(Model):
         self.flow_matrix = flow
         # results.to_pickle(str(self.id) + 'out_results.pkl')
 
-
     def inform_status(self):
         info_stat_all = 0
         for i, a in enumerate(self.schedule.agents):
@@ -1030,7 +1054,6 @@ class ConsumerModel(Model):
                 pass
         if self.verbose == 1:
             print('\tPeople informed: ' + str(info_stat_all))
-
 
     def compliance_status(self):
         compl_stat_all = 0
@@ -1042,7 +1065,6 @@ class ConsumerModel(Model):
 
         if self.verbose == 1:
             print('\tPeople complying: ' + str(compl_stat_all))
-
 
     def predict_wfh(self, agent):
         # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
@@ -1063,7 +1085,6 @@ class ConsumerModel(Model):
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.wfh = 1
 
-
     def predict_dine_less(self, agent):
         # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
         # for agent in agents_not_wfh:
@@ -1082,7 +1103,6 @@ class ConsumerModel(Model):
         if self.random.random() < query.df['p'][1]:
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.no_dine = 1
-
 
     def predict_grocery(self, agent):
         # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
@@ -1104,7 +1124,6 @@ class ConsumerModel(Model):
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.less_groceries = 1
 
-    
     def predict_ppe(self, agent):
         # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
         # for agent in agents_not_wfh:
@@ -1125,24 +1144,25 @@ class ConsumerModel(Model):
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.ppe = 1
 
-
     def change_house_adj(self, agent):
         ''' Function to check whether agents in a given agents node have become
         infected with COVID '''
         # node = agent.home_node
         # agents_at_node = copy.deepcopy(self.grid.G.nodes[node]['agent'])
         # if len(agents_at_node) > 6:
+        print(agent.housemates)
         agents_in_house = copy.deepcopy(agent.housemates)
         agents_friends = [n for n in self.swn.neighbors(agent.unique_id)]
         agents_in_network = agents_in_house + agents_friends
         # print(agent)
         # print(agents_in_house)
         agents_in_network.remove(agent.unique_id)
-        for agent in agents_in_network:
-            agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
-            agent.adj_covid_change = 1
-            if agent.agent_params["COVIDeffect_4"] < 6:
-                agent.agent_params["COVIDeffect_4"] += 1
+        for name in agents_in_network:
+            adj_agent = self.schedule._agents[name.unique_id]
+            # agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
+            adj_agent.adj_covid_change = 1
+            if adj_agent.agent_params["COVIDeffect_4"] < 6:
+                adj_agent.agent_params["COVIDeffect_4"] += 1
             else:
                 pass
         # else:
@@ -1153,7 +1173,6 @@ class ConsumerModel(Model):
         #             a.agent_params["COVIDeffect_4"] += 0.1
         #         else:
         #             pass
-
 
     def check_agent_change(self):
         ''' Function to check each agent for a change in household COVID '''
