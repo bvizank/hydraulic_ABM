@@ -19,11 +19,12 @@ def setup(network):
     maxpop_node = data['Max Population'].tolist()
     if network == "mesopolis":
         house_num = data['HOUSE'].tolist()
+        # create dictionary with the number of houses per node
+        house_num = dict(zip(node_id, house_num))
     else:
         house_num = None
 
-    # Creating dictionary with max pop at each terminal (resid?) node
-
+    # Creating dictionary with max pop at each terminal node
     node_capacity = dict(zip(node_id, maxpop_node))
 
     node_dict = dict()

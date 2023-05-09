@@ -369,10 +369,23 @@ class ConsumerModel(Model):
                 curr_node.append(a.unique_id)
                 ids += 1
 
-                if self.network == 'micropolis':
-                    self.micro_household(curr_node)
-                elif self.network == 'mesopolis':
-                    self.meso_household(curr_node)
+            if self.network == 'micropolis':
+                self.micro_household(curr_node)
+            elif self.network == 'mesopolis':
+                self.meso_household(curr_node)
+
+        if self.network == 'mesopolis':
+            '''
+            Need to initialize the rest of the agents because there are only
+            139,654 residential spots. Currently we are assuming that the
+            remaining 7062 agents are at the airport, but this is a bad
+            assumption because the max capacity of the airport is 429.
+            '''
+            for pop in range(self.num_agents - ids):
+                a = ConsumerAgent(ids, self)
+                self.schedule.add(a)
+                a.home_node = 'TN1372'
+                ids += 1
 
     def micro_household(self, curr_node):
         ''' Assigns each agent's housemates based on the number
@@ -408,11 +421,34 @@ class ConsumerModel(Model):
                 curr_agent.housemates = copy.deepcopy(curr_node)
 
     def meso_household(self, curr_node):
-        ''' Assign each agent's housemates based on the current
-        node. '''
+        ''' Assign each agent's housemates based on the current node.
+
+        The current plan is to fill all residential node spots and then
+        the rest of the agents are travellers at the airport. '''
         # need to rectify the difference between the number of
         # residential spots (139,654) and the total population
         # (146,716)
+        ''' Iterate through the agents at the current res node
+        and add them to households of 1 to 6 agents '''
+        while len(curr_node) > 6:
+            # pick a random size for current household
+            # a uniform distribution between 1 and 7 will average to 4
+            home_size = int(self.random.uniform(1, 8))
+            # pick the agents that will occupy this household
+            curr_housemates = self.random.choices(curr_node, k=home_size)
+            # remake the curr_node variable without the agents just chosen
+            curr_node = [a for a in curr_node if a not in curr_housemates]
+            ''' Assign the current list of housemates to each agent
+            so they each know who their housemates are '''
+            for mate in curr_housemates:
+                agent = self.schedule._agents[mate]
+                # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+                agent.housemates = copy.deepcopy(curr_housemates)  # this includes current agent
+
+        for mate in curr_node:
+            agent = self.schedule._agents[mate]
+            # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+            agent.housemates = copy.deepcopy(curr_node)
 
     def create_demand_houses(self):
         ''' Create houses using pysimdeum for stochastic demand simulation '''
@@ -1158,7 +1194,7 @@ class ConsumerModel(Model):
         # print(agents_in_house)
         agents_in_network.remove(agent.unique_id)
         for name in agents_in_network:
-            adj_agent = self.schedule._agents[name.unique_id]
+            adj_agent = self.schedule._agents[name]
             # agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
             adj_agent.adj_covid_change = 1
             if adj_agent.agent_params["COVIDeffect_4"] < 6:
@@ -1182,8 +1218,8 @@ class ConsumerModel(Model):
             if agent.infectious_time == 0:
                 pass
             elif agent.infectious_time == 1 or agent.infectious_time % (24*5) == 0:
-                self.change_house_adj(agent)
-
+                if agent.home_node != 'TN1372':
+                    self.change_house_adj(agent)
 
     def check_agent_loc(self):
         self.wrong_node = 0
@@ -1200,7 +1236,6 @@ class ConsumerModel(Model):
 
         print(self.wrong_node)
 
-
     def check_covid_change(self):
         covid_change = 0
         for agent in self.schedule.agents:
@@ -1209,15 +1244,13 @@ class ConsumerModel(Model):
 
         return covid_change
 
-
     def update_patterns(self):
-        for i in range(1,6,1):
+        for i in range(1, 6, 1):
             curr_pat = self.wn.get_pattern(str(i))
             curr_mult = copy.deepcopy(curr_pat.multipliers)
             for j in range(90):
                 curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
             # print(curr_pat.multipliers)
-
 
     def change_time_model(self):
         self.timestep += 1
@@ -1248,10 +1281,10 @@ class ConsumerModel(Model):
 
                     if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
                         self.predict_grocery(agent)
-                        
+
                     if agent.ppe == 0 and 'ppe' in self.bbn_models:
                         self.predict_ppe(agent)
-                        
+
             # self.check_social_dist()
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
