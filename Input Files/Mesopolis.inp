@@ -48,7 +48,7 @@
  TN0043          	17.879936   	6.5         	com             	;
  TN0044          	24.335335   	19.6        	res             	;
  TN0045          	30.182735   	13.4        	com             	;
- TN0046          	31.699005   	11.3        	com             	;
+ TN0046          	31.699005   	11.3        	cafe             	;
  TN0047          	23.349791   	8.2         	com             	;
  TN0048          	28.399279   	19.9        	com             	;
  TN0049          	23.847979   	21.7        	com             	;
@@ -85,7 +85,7 @@
  TN0080          	8.697587    	11.7        	com             	;
  TN0081          	5.44028     	16.8        	com             	;
  TN0082          	2.83246     	13.7        	com             	;
- TN0083          	0.50614     	7.9         	com             	;
+ TN0083          	0.50614     	7.9         	cafe             	;
  TN0084          	2.320598    	61.5        	com             	;
  TN0085          	4.521284    	29.2        	com             	;
  TN0086          	5.771236    	11.5        	com             	;
@@ -184,7 +184,7 @@
  IN0179          	3.197844    	0           	                	;
  IN0180          	4.237859    	0           	                	;
  IN0181          	0.03631     	0           	                	;
- TN0182          	1.652022    	31.4        	com             	;
+ TN0182          	1.652022    	31.4        	cafe             	;
  TN0183          	3.237861    	35.3        	com             	;
  TN0184          	4.632472    	28          	res             	;
  TN0185          	5.629447    	27          	com             	;
@@ -216,7 +216,7 @@
  TN0211          	7.102467    	10.2        	com             	;
  TN0212          	7.863011    	28.4        	res             	;
  TN0213          	8.438748    	19.7        	res             	;
- TN0214          	9.041644    	23.5        	com             	;
+ TN0214          	9.041644    	23.5        	cafe             	;
  TN0215          	9.873487    	18.2        	com             	;
  TN0216          	10.61092    	12.9        	com             	;
  IN0217          	0           	0           	                	;
@@ -519,7 +519,7 @@
  TN0515          	40.897659   	3.8         	ind             	;
  TN0516          	46.260612   	4.7         	ind             	;
  TN0517          	56.563805   	4.9         	ind             	;
- TN0518          	67.805389   	20.9        	com             	;
+ TN0518          	67.805389   	20.9        	cafe             	;
  TN0519          	83.035156   	3.7         	ind             	;
  TN0520          	73.990303   	4.6         	ind             	;
  TN0521          	63.422287   	4.4         	ind             	;
@@ -682,7 +682,7 @@
  TN0687          	204.31778   	28.5        	res             	;
  TN0688          	158.923309  	6.8         	com             	;
  TN0689          	57.467247   	15.6        	res             	;
- TN0690          	77.505898   	14.8        	com             	;
+ TN0690          	77.505898   	14.8        	cafe             	;
  TN0691          	121.665573  	14.8        	com             	;
  TN0692          	169.597427  	33.3        	res             	;
  TN0693          	187.202179  	22.2        	res             	;
@@ -711,7 +711,7 @@
  TN0716          	88.16581    	14.9        	res             	;
  TN0717          	60.455624   	32.2        	res             	;
  TN0718          	19.744011   	33.3        	res             	;
- TN0719          	32.220467   	25.9        	com             	;
+ TN0719          	32.220467   	25.9        	cafe             	;
  TN0720          	64.440933   	25.9        	com             	;
  TN0721          	91.425903   	7.5         	res             	;
  TN0722          	114.716377  	28.9        	res             	;
@@ -1139,7 +1139,7 @@
  TN1150          	71.723724   	4.8         	com             	;
  TN1151          	62.585964   	4.1         	com             	;
  TN1152          	57.975967   	3.6         	com             	;
- TN1153          	58.393326   	3.5         	com             	;
+ TN1153          	58.393326   	3.5         	cafe             	;
  TN1154          	63.203548   	4.4         	com             	;
  TN1155          	70.083038   	3.6         	com             	;
  TN1156          	77.698685   	1.4         	com             	;
@@ -1197,7 +1197,7 @@
  TN1208          	59.177448   	7.3         	com             	;
  TN1209          	66.737732   	8.9         	com             	;
  TN1210          	74.04071    	5.3         	com             	;
- TN1211          	80.145065   	1.5         	com             	;
+ TN1211          	80.145065   	1.5         	cafe             	;
  TN1212          	64.205261   	2.5         	com             	;
  TN1213          	55.760925   	6.5         	com             	;
  TN1214          	48.65699    	7.5         	com             	;
@@ -1341,7 +1341,7 @@
  TN1354          	54.16766    	52.3        	res             	;
  TN1355          	39.292023   	32.8        	res             	;
  TN1356          	15.488435   	42          	res             	;
- TN1357          	86.685036   	61          	com             	;
+ TN1357          	86.685036   	61          	cafe             	;
  TN1358          	64.745644   	40.1        	res             	;
  TN1359          	42.537479   	39.4        	res             	;
  TN1360          	12.847214   	30.9        	res             	;
@@ -1449,7 +1449,7 @@
  TN1475          	302.812042  	32.5        	res             	;
  TN1476          	340.947693  	33.3        	res             	;
  TN1477          	313.78064   	38.9        	com             	;
- TN1478          	287.132263  	19.5        	com             	;
+ TN1478          	287.132263  	19.5        	cafe             	;
  TN1479          	229.209     	103.7       	res             	;
  IN1480          	415.807739  	0           	                	;
  IN1481          	393.228485  	0           	                	;
@@ -3810,7 +3810,7 @@
  NODE 	TN0043          	coml
  NODE 	TN0044          	resm
  NODE 	TN0045          	coml
- NODE 	TN0046          	coml
+ NODE 	TN0046          	cafe
  NODE 	TN0047          	coml
  NODE 	TN0048          	comm
  NODE 	TN0049          	comm
@@ -3842,7 +3842,7 @@
  NODE 	TN0080          	coml
  NODE 	TN0081          	comm
  NODE 	TN0082          	comm
- NODE 	TN0083          	comm
+ NODE 	TN0083          	cafe
  NODE 	TN0084          	comm
  NODE 	TN0085          	comm
  NODE 	TN0086          	coml
@@ -3860,7 +3860,7 @@
  NODE 	TN0134          	coml
  NODE 	TN0135          	coml
  NODE 	TN0136          	comm
- NODE 	TN0182          	comm
+ NODE 	TN0182          	cafe
  NODE 	TN0183          	comm
  NODE 	TN0184          	resm
  NODE 	TN0185          	comm
@@ -3892,7 +3892,7 @@
  NODE 	TN0211          	coml
  NODE 	TN0212          	resm
  NODE 	TN0213          	resm
- NODE 	TN0214          	comm
+ NODE 	TN0214          	cafe
  NODE 	TN0215          	comm
  NODE 	TN0216          	coml
  NODE 	TN0282          	resm
@@ -4016,7 +4016,7 @@
  NODE 	TN0515          	indm
  NODE 	TN0516          	indl
  NODE 	TN0517          	indl
- NODE 	TN0518          	coml
+ NODE 	TN0518          	cafe
  NODE 	TN0519          	indl
  NODE 	TN0520          	indl
  NODE 	TN0521          	indl
@@ -4065,7 +4065,7 @@
  NODE 	TN0687          	resl
  NODE 	TN0688          	coml
  NODE 	TN0689          	resm
- NODE 	TN0690          	coml
+ NODE 	TN0690          	cafe
  NODE 	TN0691          	coml
  NODE 	TN0692          	resm
  NODE 	TN0693          	resl
@@ -4094,7 +4094,7 @@
  NODE 	TN0716          	resm
  NODE 	TN0717          	resm
  NODE 	TN0718          	resm
- NODE 	TN0719          	comm
+ NODE 	TN0719          	cafe
  NODE 	TN0720          	comm
  NODE 	TN0721          	resm
  NODE 	TN0722          	resm
@@ -4293,7 +4293,7 @@
  NODE 	TN1150          	coml
  NODE 	TN1151          	coml
  NODE 	TN1152          	coml
- NODE 	TN1153          	coml
+ NODE 	TN1153          	cafe
  NODE 	TN1154          	coml
  NODE 	TN1155          	coml
  NODE 	TN1156          	coml
@@ -4351,7 +4351,7 @@
  NODE 	TN1208          	coml
  NODE 	TN1209          	coml
  NODE 	TN1210          	coml
- NODE 	TN1211          	coml
+ NODE 	TN1211          	cafe
  NODE 	TN1212          	coml
  NODE 	TN1213          	coml
  NODE 	TN1214          	coml
@@ -4413,7 +4413,7 @@
  NODE 	TN1354          	resl
  NODE 	TN1355          	resl
  NODE 	TN1356          	resl
- NODE 	TN1357          	coml
+ NODE 	TN1357          	cafe
  NODE 	TN1358          	resl
  NODE 	TN1359          	resl
  NODE 	TN1360          	resl
@@ -4473,7 +4473,7 @@
  NODE 	TN1475          	resl
  NODE 	TN1476          	resm
  NODE 	TN1477          	comm
- NODE 	TN1478          	comm
+ NODE 	TN1478          	cafe
  NODE 	TN1479          	resl
  NODE 	TN1515          	resl
  NODE 	TN1516          	resl
@@ -6576,6 +6576,11 @@
  com             	0.66        	1.15        	1.61        	2           	2.16        	2.25        
  com             	2.25        	2.25        	2.2         	2.11        	1.95        	1.61        
  com             	1.16        	0.73        	0.4         	0.2         	0.11        	0.1         
+;Commercial - Elsie's Cafe (restaurant)
+ cafe              	0.2         	0.2         	0.3         	0.5         	0.7         	0.7
+ cafe              	0.9         	1           	0.9         	0.8         	1           	1.83
+ cafe              	1.75        	1.5         	1.42        	1.3         	1.4         	1.47
+ cafe              	1.8         	1.81        	1.5         	1           	0.5         	0.2
 ;Commercial - Dairy Queen
  com2            	0.2         	0.2         	0.3         	0.5         	0.7         	0.7         
  com2            	0.8         	0.9         	1           	0.9         	1.42        	1.85        

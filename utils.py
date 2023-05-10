@@ -54,6 +54,7 @@ def setup(network):
         node_dict['res'] = find_nodes('res', pattern_list, network)
         node_dict['ind'] = find_nodes('ind', pattern_list, network)
         node_dict['nav'] = find_nodes('nav', pattern_list, network)
+        node_dict['cafe'] = find_nodes('cafe', pattern_list, network)
 
     terminal_nodes = list()
     for key in node_dict:
@@ -125,9 +126,8 @@ def load_distributions(network):
     pop_dict['ind'] = node_pop['indust.'].tolist()
     pop_dict['res'] = node_pop['resident'].tolist()
     pop_dict['com'] = node_pop['comm.'].tolist()
-    if network == 'micropolis':
-        pop_dict['cafe'] = node_pop['rest.'].tolist()
-    elif network == "mesopolis":
+    pop_dict['cafe'] = node_pop['rest.'].tolist()
+    if network == "mesopolis":
         pop_dict['nav'] = node_pop['navy'].tolist()
         pop_dict['air'] = node_pop['air'].tolist()
     pop_dict['sum'] = node_pop['sum'].tolist()
