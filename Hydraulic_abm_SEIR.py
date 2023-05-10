@@ -1338,7 +1338,8 @@ class ConsumerModel(Model):
         print('Time step: ' + str(self.timestep))
         print('Day step: ' + str(self.timestep_day))
         print('\n')
-        print(self.stat_tot)
+        for i in self.stat_tot:
+            print(i)
         # print('\tStatus (%): ', ['{:.2f}'.format(i) for i in self.stat_tot])
         # print('\tStatus (#): ', ['{:.3f}'.format(i) * self.num_agents for i in self.stat_tot])
         print('\n')
