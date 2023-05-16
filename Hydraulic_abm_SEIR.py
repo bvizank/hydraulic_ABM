@@ -818,7 +818,7 @@ class ConsumerModel(Model):
     def move_indust(self):
         # Moving Agents from Industrial nodes back home to residential home nodes
         Possible_Agents_to_move_home = self.industry_agents()
-        Agents_to_home = int(min(1092, len(Possible_Agents_to_move_home)))
+        Agents_to_home = int(min(1092/2, len(Possible_Agents_to_move_home)))
 
         for i in range(Agents_to_home):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_home)
@@ -831,7 +831,7 @@ class ConsumerModel(Model):
                                            if a.pos in self.nodes_resident
                                            and a.work_type == 'industrial']
 
-        Agents_to_work = 1092 # int(1092/2) if self.timestep != 0 else 1092
+        Agents_to_work = int(1092/2) if self.timestep != 0 else 1092
         self.agents_moved = list()
         for i in range(Agents_to_work):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
