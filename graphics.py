@@ -536,13 +536,27 @@ def make_seir_plot(data, input, leg_text, title,
     plt.close()
 
 
-def make_distance_plot(x, y, xlabel, ylabel, name, c=1, leg=None):
-    plt.scatter(x, y, s=3, c=c)
+def make_distance_plot(x, y, xlabel, ylabel, name, y2=None, leg=None):
+    '''
+    Make scatter plot plus binned levels of input data. Accepts one x
+    vector and two y vectors.
+    '''
+    mean_y = binned_statistic(x, y, statistic='mean',
+                              bins=[0, 500, 1500, 2000, 2500, 3000, 3500])
+    mean_y2 = binned_statistic(x, y2, statistic='mean',
+                               bins=[0, 500, 1500, 2000, 2500, 3000, 3500])
+
+    plt.figure()
+    plt.plot(x, y, '.', c=prim_colors[0], lw=2)
+    if y2 is not None:
+        plt.plot(x, y2, '.', c=prim_colors[2], lw=2)
+        plt.hlines(mean_y2.statistic, mean_y2.bin_edges[:-1],
+                   mean_y2.bin_edges[1:], colors=prim_colors[2], lw=3)
+    plt.hlines(mean_y.statistic, mean_y.bin_edges[:-1],
+               mean_y.bin_edges[1:], colors=prim_colors[0], lw=3)
+    plt.legend(leg)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.ylim([0, 500])
-    if c != 1:
-        plt.legend(leg)
 
     if publication:
         loc = pub_loc
@@ -735,19 +749,16 @@ print(pm_curr_age_values)
 for age in pm_curr_age_values.items():
     no_pm_age = no_pm_curr_age_values[age[0]]
     if age[0] in ind_distances.keys():
-        pm_age_values.append(age[1])
-        no_pm_age_values.append(no_pm_age)
+        if age[1] < 500:
+            pm_age_values.append(age[1])
+            no_pm_age_values.append(no_pm_age)
+        else:
+            del ind_distances[age[0]]
 
 dist_values = [i for i in ind_distances.values()]
-mean_no_pm = binned_statistic(dist_values, no_pm_age_values)
-print(mean_no_pm.statistic)
-print(mean_no_pm.bin_edges)
-print(mean_no_pm.binnumber)
-x_vals = [(mean_no_pm.bin_edges[i] + mean_no_pm.bin_edges[i-1])/2 for i in range(len(mean_no_pm.bin_edges)) if i != 0]
-
-plt.rcParams.update(plt.rcParamsDefault)
-plt.bar([str(i) for i in range(10)], mean_no_pm.statistic)
-plt.show()
+make_distance_plot(dist_values, no_pm_age_values,
+                   'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
+                   y2=pm_age_values, leg=['Base - Data', 'Base - Binned', 'PM - Data', 'PM - Binned'])
 
 # dist_values = [i for i in ind_distances.values()]
 # no_pm_db = pd.DataFrame(data={'dist': dist_values, 'age': no_pm_age_values})
