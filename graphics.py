@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
 from scipy.interpolate import griddata
+from scipy.stats import binned_statistic
 import networkx as nx
 # import os
 import math
@@ -535,13 +536,19 @@ def make_seir_plot(data, input, leg_text, title,
     plt.close()
 
 
-def make_distance_plot(x, y, xlabel, ylabel, loc, name):
-    plt.scatter(x, y)
+def make_distance_plot(x, y, xlabel, ylabel, name, c=1, leg=None):
+    plt.scatter(x, y, s=3, c=c)
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.ylim([0,500])
+    plt.ylim([0, 500])
+    if c != 1:
+        plt.legend(leg)
+
     if publication:
         loc = pub_loc
+    else:
+        loc = 'Output Files/png_figures/'
+
     plt.savefig(loc + name + '.' + format, format=format, bbox_inches='tight')
     plt.close()
 
@@ -719,14 +726,53 @@ print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir'], ppe['avg_a
 print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir'], wfh['avg_age']/3600)))
 print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir'], no_wfh['avg_age']/3600)))
 
-# ind_distances, ind_closest = calc_industry_distance(wn)
-# age_values = list()
-# curr_age_values = wfh['age'].iloc[len(wfh['age'])-1]/3600
-# for age in curr_age_values.items():
-#     if age[0] in ind_distances.keys():
-#         age_values.append(age[1])
-# make_distance_plot(ind_distances.values(), age_values,
-#                    'Distance (m)', 'Age (hr)', wfh_loc, 'age_ind_distance')
+ind_distances, ind_closest = calc_industry_distance(wn)
+pm_age_values = list()
+no_pm_age_values = list()
+pm_curr_age_values = wfh['avg_age'].iloc[len(wfh['avg_age'])-1]/3600
+no_pm_curr_age_values = no_wfh['avg_age'].iloc[len(no_wfh['avg_age'])-1]/3600
+print(pm_curr_age_values)
+for age in pm_curr_age_values.items():
+    no_pm_age = no_pm_curr_age_values[age[0]]
+    if age[0] in ind_distances.keys():
+        pm_age_values.append(age[1])
+        no_pm_age_values.append(no_pm_age)
+
+dist_values = [i for i in ind_distances.values()]
+mean_no_pm = binned_statistic(dist_values, no_pm_age_values)
+print(mean_no_pm.statistic)
+print(mean_no_pm.bin_edges)
+print(mean_no_pm.binnumber)
+x_vals = [(mean_no_pm.bin_edges[i] + mean_no_pm.bin_edges[i-1])/2 for i in range(len(mean_no_pm.bin_edges)) if i != 0]
+
+plt.rcParams.update(plt.rcParamsDefault)
+plt.bar([str(i) for i in range(10)], mean_no_pm.statistic)
+plt.show()
+
+# dist_values = [i for i in ind_distances.values()]
+# no_pm_db = pd.DataFrame(data={'dist': dist_values, 'age': no_pm_age_values})
+# bins = np.linspace(no_pm_db['age'].min(), no_pm_db['age'].max(), 10)
+# labels = [str(i) for i in range(9)]
+# no_pm_db['bins'] = pd.cut(no_pm_db['age'], bins=bins, labels=labels,
+#                           include_lowest=True)
+# print(no_pm_db['bins'])
+
+# need to average the age by bin and plot those as the heights in the bar chart.
+# plt.bar(no_pm_db['dist'], )
+
+# make the y value list that combines both the base and pm values
+# then make a color list that has the same number of color 1 as the base
+# list and the same number of color 2 as the pm list. This will make
+# them apear differently on the plot.
+age_values = no_pm_age_values + pm_age_values
+dist_values = ([i for i in ind_distances.values()] +
+               [i for i in ind_distances.values()])
+colors = ([prim_colors[0] for i in no_pm_age_values] +
+          [prim_colors[2] for i in pm_age_values])
+
+# make_distance_plot(dist_values, age_values,
+#                    'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
+#                    c=colors, leg=["Base", "PM"])
 
 # closest_distances = calc_closest_node(wn)
 # age_values = list()
