@@ -536,27 +536,49 @@ def make_seir_plot(data, input, leg_text, title,
     plt.close()
 
 
-def make_distance_plot(x, y, xlabel, ylabel, name, y2=None, leg=None):
+def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
     '''
     Make scatter plot plus binned levels of input data. Accepts one x
     vector and two y vectors.
     '''
-    mean_y = binned_statistic(x, y, statistic='mean',
-                              bins=[0, 500, 1500, 2000, 2500, 3000, 3500])
+    mean_y1 = binned_statistic(x, y1, statistic='mean',
+                               bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
     mean_y2 = binned_statistic(x, y2, statistic='mean',
-                               bins=[0, 500, 1500, 2000, 2500, 3000, 3500])
+                               bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
+    print(mean_y1.bin_edges)
 
-    plt.figure()
-    plt.plot(x, y, '.', c=prim_colors[0], lw=2)
-    if y2 is not None:
-        plt.plot(x, y2, '.', c=prim_colors[2], lw=2)
-        plt.hlines(mean_y2.statistic, mean_y2.bin_edges[:-1],
-                   mean_y2.bin_edges[1:], colors=prim_colors[2], lw=3)
-    plt.hlines(mean_y.statistic, mean_y.bin_edges[:-1],
-               mean_y.bin_edges[1:], colors=prim_colors[0], lw=3)
-    plt.legend(leg)
-    plt.xlabel(xlabel)
-    plt.ylabel(ylabel)
+    bin_names = ['0-500', '500-1000', '1000-1500', '1500-2000', '2000-2500',
+                 '2500-3000', '3000-3500']
+
+    data_dict = {data_names[0]: mean_y1.statistic,
+                 data_names[1]: mean_y2.statistic}
+
+    bar_x = np.arange(len(bin_names))
+    width = 0.25  # width of the bars
+    multiplier = 0  # iterator
+
+    # plt.figure()
+    # plt.plot(x, y, '.', c=prim_colors[0], lw=2)
+    # if y2 is not None:
+        # plt.plot(x, y2, '.', c=prim_colors[2], lw=2)
+        # plt.hlines(mean_y2.statistic, mean_y2.bin_edges[:-1],
+                   # mean_y2.bin_edges[1:], colors=prim_colors[2], lw=3)
+    # plt.hlines(mean_y.statistic, mean_y.bin_edges[:-1],
+               # mean_y.bin_edges[1:], colors=prim_colors[0], lw=3)
+    fig, ax = plt.subplots(layout='constrained')
+
+    for attribute, measurement in data_dict.items():
+        print(measurement)
+        offset = width * multiplier
+        ax.bar(bar_x + offset, measurement, width, label=attribute,
+               color='C'+str(multiplier*2))
+        # ax.bar_label(rects, padding=3)
+        multiplier += 1
+
+    ax.legend()
+    ax.set_xticks(bar_x + width, bin_names, rotation=45)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
 
     if publication:
         loc = pub_loc
@@ -756,9 +778,9 @@ for age in pm_curr_age_values.items():
             del ind_distances[age[0]]
 
 dist_values = [i for i in ind_distances.values()]
-make_distance_plot(dist_values, no_pm_age_values,
+make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
                    'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
-                   y2=pm_age_values, leg=['Base - Data', 'Base - Binned', 'PM - Data', 'PM - Binned'])
+                   ['Base', 'PM'])
 
 # dist_values = [i for i in ind_distances.values()]
 # no_pm_db = pd.DataFrame(data={'dist': dist_values, 'age': no_pm_age_values})
