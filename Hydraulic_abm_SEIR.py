@@ -115,8 +115,8 @@ class ConsumerModel(Model):
         self.res_nodes = setup_out[0]['res']
         self.ind_nodes = setup_out[0]['ind']
         self.com_nodes = setup_out[0]['com']
+        self.cafe_nodes = setup_out[0]['cafe']  # There is no node assigned to "dairy queen" so it was neglected
         if city == 'micropolis':
-            self.cafe_nodes = setup_out[0]['cafe']  # There is no node assigned to "dairy queen" so it was neglected
             self.nav_nodes = []  # placeholder for agent assignment
         if city == 'mesopolis':
             self.air_nodes = setup_out[0]['air']
@@ -129,9 +129,9 @@ class ConsumerModel(Model):
         self.com_dist = setup_out[3]['com']  # commercial capacities at each hour
         self.ind_dist = setup_out[3]['ind']  # industrial capacities at each hour
         self.sum_dist = setup_out[3]['sum']  # sum of capacities
+        self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
         if city == 'micropolis':
             # self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
-            self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
             self.nav_dist = [0]  # placeholder for agent assignment
         if city == 'mesopolis':
             self.air_dist = setup_out[3]['air']
@@ -933,7 +933,12 @@ class ConsumerModel(Model):
     def move_indust(self):
         # Moving Agents from Industrial nodes back home to residential home nodes
         Possible_Agents_to_move_home = self.industry_agents()
-        Agents_to_home = int(min(1092, len(Possible_Agents_to_move_home)))
+        if self.network == 'micropolis':
+            Agents_to_home = int(min(1092/2, len(Possible_Agents_to_move_home)))
+            Agents_to_work = int(1092/2) if self.timestep != 0 else 1092
+        elif self.network == 'mesopolis':
+            Agents_to_home = int(min(65228/2, len(Possible_Agents_to_move_home)))
+            Agents_to_work = int(65228/2) if self.timestep != 0 else 65228
 
         for i in range(Agents_to_home):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_home)
@@ -946,7 +951,6 @@ class ConsumerModel(Model):
                                            if a.pos in self.res_nodes
                                            and a.work_type == 'industrial']
 
-        Agents_to_work = 1092 # int(1092/2) if self.timestep != 0 else 1092
         self.agents_moved = list()
         for i in range(Agents_to_work):
             Agent_to_move = self.random.choice(Possible_Agents_to_move_to_work)
@@ -1186,7 +1190,7 @@ class ConsumerModel(Model):
         # node = agent.home_node
         # agents_at_node = copy.deepcopy(self.grid.G.nodes[node]['agent'])
         # if len(agents_at_node) > 6:
-        print(agent.housemates)
+        # print(agent.housemates)
         agents_in_house = copy.deepcopy(agent.housemates)
         agents_friends = [n for n in self.swn.neighbors(agent.unique_id)]
         agents_in_network = agents_in_house + agents_friends
@@ -1334,8 +1338,10 @@ class ConsumerModel(Model):
         print('Time step: ' + str(self.timestep))
         print('Day step: ' + str(self.timestep_day))
         print('\n')
-        print('\tStatus (%): ' + str(self.stat_tot))
-        print('\tStatus (#): ' + str(np.multiply(self.stat_tot, self.num_agents)))
+        for i in self.stat_tot:
+            print(i)
+        # print('\tStatus (%): ', ['{:.2f}'.format(i) for i in self.stat_tot])
+        # print('\tStatus (#): ', ['{:.3f}'.format(i) * self.num_agents for i in self.stat_tot])
         print('\n')
         print('\tAgents at industrial nodes: ' + str(len(self.industry_agents())))
         print('\tAgents at commercial nodes: ' + str(len(self.commercial_agents())))
