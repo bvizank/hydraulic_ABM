@@ -1,13 +1,5 @@
-import warnings
-warnings.simplefilter("ignore", UserWarning)
-from mesa import Agent, Model
-from mesa.time import RandomActivation
-from mesa.datacollection import DataCollector
-from wntr_1 import *
-from Char_micropolis_static_loc import *
-import networkx as nx
-from mesa.space import NetworkGrid
-import random
+from mesa import Agent
+
 
 class ConsumerAgent(Agent):
 
