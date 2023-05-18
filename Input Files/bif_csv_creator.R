@@ -35,12 +35,13 @@ db_x <- subset(db_x, Survey_round == 1)
 names(db_x)[names(db_x) == "Ethnic.min"] = "Ethnicmin"
 
 setwd("C:/Users/squar/Documents/hydraulic_ABM/Input Files/")
-dine <- read.bif('data_driven_dine.bif')
-wfh <- read.bif('data_driven_wfh.bif')
-grocery <- read.bif('data_driven_grocery.bif')
+dine <- read.bif('./pmt_models/dine_out_less_pmt-6.bif')
+grocery <- read.bif('./pmt_models/shop_groceries_less_pmt-6.bif')
+ppe <- read.bif('./data_driven_models/mask.bif')
+wfh <- read.bif('./data_driven_models/work_from_home.bif')
 
-all_nodes <- c(nodes(dine), nodes(wfh), nodes(grocery))
-all_nodes <- all_nodes[!all_nodes %in% c("dine_out_less", "work_from_home", "shop_groceries_less")]
+all_nodes <- c(nodes(dine), nodes(wfh), nodes(grocery), nodes(ppe))
+all_nodes <- all_nodes[!all_nodes %in% c("dine_out_less", "work_from_home", "shop_groceries_less", "mask")]
 all_nodes <- all_nodes[!duplicated(all_nodes)]
 
 abm_out <- db_x[all_nodes]
