@@ -1,4 +1,6 @@
 import sciris as sc
+import numpy as np
+import numba as nb
 
 
 __all__ = ['ParsObj', 'BaseParams', 'BaseSim', 'BasePop']
@@ -78,3 +80,41 @@ class BasePop:
             raise AttributeError(errormsg)
         self.__dict__[key] = value
         return
+
+    def true(self, key):
+        ''' Return indices matching the condition '''
+        return self[key].nonzero()[0]
+
+    def false(self, key):
+        ''' Return indices not matching the condition '''
+        return (~self[key]).nonzero()[0]
+
+    def defined(self, key):
+        ''' Return indices of people who are not-nan '''
+        return (~np.isnan(self[key])).nonzero()[0]
+
+    def undefined(self, key):
+        ''' Return indices of people who are nan '''
+        return np.isnan(self[key]).nonzero()[0]
+
+    def count(self, key):
+        ''' Count the number of people for a given key '''
+        return np.count_nonzero(self[key])
+
+    @nb.njit
+    def count_node(self, key, nodes):
+        ''' Count the number of agents at a given node type '''
+        output = list()
+        for ind, item in np.ndenumerate(self[key]):
+            if item in nodes:
+                output.append(ind)
+        return np.array(output)
+
+    @nb.njit
+    def count_node_if(self, key, nodes, key2, type):
+        ''' Count the number of agents at a given node type '''
+        output = list()
+        for ind, item in np.ndenumerate(self[key]):
+            if item in nodes and self[key][ind] == type:
+                output.append(ind)
+        return np.array(output)

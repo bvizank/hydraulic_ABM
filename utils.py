@@ -6,10 +6,29 @@ import wntr
 import copy
 
 
-__all__ = ['setup', 'read_data', 'choose']
+__all__ = ['initialize', 'read_data', 'choose', 'sample']
 
 
-def setup(network):
+def node_list(list, nodes):
+    '''
+    Create a list that includes all of the available spots at the
+    input nodes list.
+
+    Args:
+        list  (list): list of capacities that correspond to input nodes
+        nodes (list): nodes to add to list
+
+    Returns:
+        list_out (np.array): list containing all available spots at the input nodes
+    '''
+    list_out = []
+    for node in nodes:
+        for i in range(int(list[node])):
+            list_out.append(node)
+    return np.array(list_out)
+
+
+def initialize(network):
     # Create a water network model
     if network == "micropolis":
         inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
@@ -208,7 +227,7 @@ def read_data(loc, read_list):
     return output
 
 
-@nb.njit((nb.int32, nb.int32)) # Numba hugely increases performance
+@nb.njit((nb.int32, nb.int32))  # Numba hugely increases performance
 def choose(max_n, n):
     '''
     Choose a subset of items (e.g., people) without replacement.
@@ -219,7 +238,7 @@ def choose(max_n, n):
 
     **Example**::
 
-        choices = cv.choose(5, 2) # choose 2 out of 5 people with equal probability (without repeats)
+        choices = choose(5, 2) # choose 2 out of 5 people with equal probability (without repeats)
     '''
 
     return np.random.choice(max_n, n, replace=False)
