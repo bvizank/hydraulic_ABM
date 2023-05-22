@@ -45,5 +45,5 @@ all_nodes <- all_nodes[!all_nodes %in% c("dine_out_less", "work_from_home", "sho
 all_nodes <- all_nodes[!duplicated(all_nodes)]
 
 abm_out <- db_x[all_nodes]
-abm_out <- cleaning(abm_out)
+abm_out <- cleaning(abm_out, threshold=0.12)
 write.csv(abm_out, 'all_bbn_data.csv')

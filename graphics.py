@@ -12,13 +12,12 @@ import networkx as nx
 import math
 
 
-no_wfh_comp_dir = 'Output Files/no_pm_30/'
-wfh_comp_dir = 'Output Files/all_pm_30/'
+no_wfh_comp_dir = 'Output Files/30_no_pm/'
+wfh_comp_dir = 'Output Files/30_all_pm/'
 # wfh_loc = 'Output Files/2022-12-15_12-09_all_pm_current_results/'
 # no_wfh_loc = 'Output Files/2022-10-27_17-53_no_pb_current_results/'
 day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
 day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
-read_list = ['seir', 'demand', 'pressure', 'age', 'agent', 'flow']
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
 plt.rcParams['figure.dpi'] = 500
 format = 'png'
@@ -68,13 +67,18 @@ wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.to_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
-comp_list = ['seir', 'demand', 'age', 'flow']
-wfh = read_comp_data(wfh_comp_dir, comp_list)
-no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
+# comp_list = ['seir', 'demand', 'age', 'flow']
+comp_list_pm = ['seir_data', 'demand', 'age', 'flow', 'ppe']
+comp_list_np = ['seir', 'demand', 'age', 'flow']
+wfh = read_comp_data(wfh_comp_dir, comp_list_pm)
+no_wfh = read_comp_data(no_wfh_comp_dir, comp_list_np)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
 # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
 ind_nodes = [node for name, node in wn.junctions()
              if node.demand_timeseries_list[0].pattern_name == '3']
+print(wfh['sd_seir_data'])
+print(wfh['avg_age'])
+print(wfh['avg_ppe'])
 
 
 def calc_difference(data_time_1, data_time_2):
@@ -606,17 +610,24 @@ def calc_model_stats(wn, seir, age):
     return (final_age, max_inf/4606, final_sus)
 
 
-max_wfh = wfh['avg_seir'].wfh.loc[int(wfh['avg_seir'].wfh.idxmax())]
+print(wfh['avg_seir_data'])
+# index_vals = wfh['avg_seir_data'].index
+# for i, item in enumerate(wfh['avg_seir_data'].wfh):
+#     print(index_vals[i])
+#     print(item)
+
+max_wfh = wfh['avg_seir_data'].wfh.loc[int(wfh['avg_seir_data'].wfh.idxmax())]
 times = []
 # # times = times + [seir.wfh.searchsorted(max_wfh/4)+12]
-times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh/10)]
-times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh/2)]
+times = times + [wfh['avg_seir_data'].wfh.searchsorted(max_wfh/10)]
+times = times + [wfh['avg_seir_data'].wfh.searchsorted(max_wfh/2)]
 # # print(seir.wfh.searchsorted(max_wfh/2))
 # # times = times + [seir.wfh.searchsorted(max_wfh*3/4)+12]
-times = times + [wfh['avg_seir'].wfh.searchsorted(max_wfh)]
+times = times + [wfh['avg_seir_data'].wfh.searchsorted(max_wfh)]
 # print(times)
 times_hour = [time % 24 for time in times]
 # print(times_hour)
+
 
 def check_stats(new_list, old_stats):
     if new_list.max() > old_stats[0]:
@@ -625,6 +636,7 @@ def check_stats(new_list, old_stats):
         old_stats[1] = new_list.min()
 
     return old_stats
+
 
 demand_stats = [0,0]
 pressure_stats = [0,0]
@@ -739,17 +751,17 @@ make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
 ''' SEIR plot '''
 make_seir_plot(no_wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
-               title='combined', data2=wfh['avg_seir'], sd=no_wfh['sd_seir'],
-               sd2=wfh['sd_seir'], sub=True)
+               title='combined', data2=wfh['avg_seir_data'], sd=no_wfh['sd_seir'],
+               sd2=wfh['sd_seir_data'], sub=True)
 # make_seir_plot(wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
 #                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
 #                title='wfh', sd=wfh['sd_seir'])
 
 ''' Export comparison stats '''
-only_wfh_loc = 'Output Files/wfh_30/'
-dine_loc = 'Output Files/dine_30/'
-grocery_loc = 'Output Files/grocery_30/'
-ppe_loc = 'Output Files/ppe_30/'
+only_wfh_loc = 'Output Files/30_wfh/'
+dine_loc = 'Output Files/30_dine/'
+grocery_loc = 'Output Files/30_grocery/'
+ppe_loc = 'Output Files/30_ppe/'
 
 only_wfh = read_comp_data(only_wfh_loc, ['seir', 'age'])
 dine = read_comp_data(dine_loc, ['seir', 'age'])
@@ -759,7 +771,7 @@ print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir'], only_
 print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir'], dine['avg_age']/3600)))
 print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir'], grocery['avg_age']/3600)))
 print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir'], ppe['avg_age']/3600)))
-print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir'], wfh['avg_age']/3600)))
+print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
 print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir'], no_wfh['avg_age']/3600)))
 
 ind_distances, ind_closest = calc_industry_distance(wn)

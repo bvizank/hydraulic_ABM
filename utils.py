@@ -216,10 +216,10 @@ def load_media():
     return (media, bbn_params, wfh_patterns)
 
 
-def read_data(loc, read_list):
+def read_data(loc, read_list, data_file=None):
     ''' Function to read in data from either excel or pickle '''
     output = dict()
-    data_file = loc + 'datasheet.xlsx'
+    # data_file = loc + 'datasheet.xlsx'
     pkls = [file for file in os.listdir(loc) if file.endswith(".pkl")]
 
     for name in read_list:
@@ -250,3 +250,16 @@ def read_data(loc, read_list):
         output[name] = locals()[name]
 
     return output
+
+
+def clean_epanet(folder):
+    '''
+    Clean all input, bin, and rpt files from given folder.
+    '''
+
+    files = os.listdir(folder)
+    for file in files:
+        if file.endswith('.bin') or \
+           file.endswith('.rpt') or \
+           file.endswith('.inp'):
+            os.remove(os.path.join(folder, file))

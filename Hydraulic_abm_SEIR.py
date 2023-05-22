@@ -66,10 +66,12 @@ class ConsumerModel(Model):
         else:
             self.daily_contacts = 10
         self.cumm_infectious = self.covid_exposed
-        self.wfh_dag = bn.import_DAG('Input Files/data_driven_wfh.bif', verbose=0)
-        self.dine_less_dag = bn.import_DAG('Input Files/data_driven_dine.bif', verbose=0)
-        self.grocery_dag = bn.import_DAG('Input Files/data_driven_grocery.bif', verbose=0)
-        self.ppe_dag = bn.import_DAG('Input Files/pmt_ppe.bif', verbose=0)
+
+        ''' Import the four DAGs for the BBNs '''
+        self.wfh_dag = bn.import_DAG('Input Files/data_driven_models/work_from_home.bif', verbose=0)
+        self.dine_less_dag = bn.import_DAG('Input Files/pmt_models/dine_out_less_pmt-6.bif', verbose=0)
+        self.grocery_dag = bn.import_DAG('Input Files/pmt_models/shop_groceries_less_pmt-6.bif', verbose=0)
+        self.ppe_dag = bn.import_DAG('Input Files/data_driven_models/mask.bif', verbose=0)
         if 'res_pat_select' in kwargs:
             self.res_pat_select = kwargs['res_pat_select']
         else:
@@ -220,13 +222,42 @@ class ConsumerModel(Model):
                                    crit_rec_time, daily_cont, bbn_mod, res_pat,
                                    wfh_lag, no_wfh, ppe_reduc])
 
-        self.nodes_w_demand = [node for node in self.grid.G.nodes if hasattr(self.wn.get_node(node), 'demand_timeseries_list')]
+        ''' Initialize the hydraulic information collectors '''
+        self.nodes_w_demand = [
+            node for node in self.grid.G.nodes
+            if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
+        ]
         self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
-        self.demand_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
-        self.pressure_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
-        self.age_matrix = pd.DataFrame(0, index = np.arange(0, 86400*days, 3600), columns = self.G.nodes)
-        self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
-        self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[name for name,link in self.wn.links()])
+        self.demand_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                          columns=self.G.nodes)
+        # self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
+        self.pressure_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                            columns=self.G.nodes)
+        self.age_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                       columns=self.G.nodes)
+        self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                        columns=[name for name, link in self.wn.links()])
+        # self.daily_demand = list()
+        # self.demand_matrix = dict()
+        self.agent_matrix = dict()
+
+        ''' Initialize the COVID state variable collectors '''
+        # self.cov_pers = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        # self.cov_ff = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        # self.media_exp = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        self.cov_pers = dict()
+        self.cov_ff = dict()
+        self.media_exp = dict()
+
+        ''' Initialize the PM adoption collectors '''
+        # self.wfh_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        # self.dine_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        # self.groc_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        # self.ppe_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+        self.wfh_dec = dict()
+        self.dine_dec = dict()
+        self.groc_dec = dict()
+        self.ppe_dec = dict()
 
         # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
         self.susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
@@ -239,9 +270,25 @@ class ConsumerModel(Model):
                         8: [0.9, 0.2457, 0.1742, 0.08292],
                         9: [0.9, 0.2457, 0.1742, 0.1619]}
 
-        self.status_tot = [0,self.num_agents-self.covid_exposed,0,self.covid_exposed,0,0,0,0,0,0,0,self.cumm_infectious, len(self.agents_wfh())]
-        self.status_tot = np.divide(self.status_tot, self.num_agents)
-        self.status_tot = pd.DataFrame([self.status_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
+        status_tot = [
+            0,
+            self.num_agents-self.covid_exposed,
+            0,
+            self.covid_exposed,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            self.cumm_infectious,
+            len(self.agents_wfh())
+        ]
+        status_tot = [i / self.num_agents for i in status_tot]
+        self.status_tot = {0: status_tot}
+        # self.status_tot = np.array([self.status_tot])
+        #  ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
 
         self.base_demand_list()
         self.create_node_list()
@@ -416,7 +463,7 @@ class ConsumerModel(Model):
                 agent.housemates = copy.deepcopy(curr_node)
         else:
             for agent in curr_node:
-                curr_agent = self.schedule._agents[agent.unique_id]
+                curr_agent = self.schedule._agents[agent]
                 # agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
                 curr_agent.housemates = copy.deepcopy(curr_node)
 
@@ -450,7 +497,6 @@ class ConsumerModel(Model):
             # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
             agent.housemates = copy.deepcopy(curr_node)
 
->>>>>>> Mesopolis
     def create_demand_houses(self):
         ''' Create houses using pysimdeum for stochastic demand simulation '''
         self.res_houses = list()
@@ -598,9 +644,9 @@ class ConsumerModel(Model):
 
         self.stat_tot[12] = int(len(self.agents_wfh()))
 
-        self.stat_tot = np.divide(self.stat_tot, self.num_agents)
-        step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
-        self.status_tot = pd.concat([self.status_tot, step_status])
+        self.stat_tot = [i / self.num_agents for i in self.stat_tot]
+        # step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
+        self.status_tot[self.timestep] = copy.deepcopy(self.stat_tot)
 
     def contact(self, agent_to_move, node_type):
         """
@@ -979,7 +1025,7 @@ class ConsumerModel(Model):
         node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
 
     def collect_demands(self):
-        step_demand = dict()
+        step_demand = list()
         step_agents = dict()
         for node in self.nodes_w_demand:
             if node in self.nodes_capacity:
@@ -990,11 +1036,11 @@ class ConsumerModel(Model):
                 step_agents[node] = agents_at_node
                 # agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
                 if Capacity_node != 0:
-                    step_demand[node] = agents_at_node/Capacity_node
+                    step_demand.append(agents_at_node/Capacity_node)
                 else:
-                    step_demand[node] = 0
+                    step_demand.append(0)
             else:
-                step_demand[node] = 0
+                step_demand.append(0)
 
             # try:
             #     # determine demand reduction
@@ -1025,10 +1071,10 @@ class ConsumerModel(Model):
             # except:
             #     pass
 
-        hourly_demand = pd.DataFrame(data=step_demand, index=[0])
-        hourly_agents = pd.DataFrame(data=step_agents, index=[0])
-        self.daily_demand[self.timestepN:(self.timestepN+1)] = hourly_demand
-        self.agent_matrix[self.timestep:(self.timestep+1)] = hourly_agents
+        hourly_agents = [agent for key, agent in step_agents.items()]
+        hourly_demands = pd.DataFrame(data=[step_demand], index=[0])
+        self.daily_demand[self.timestepN:(self.timestepN+1)] = hourly_demands
+        self.agent_matrix[self.timestep] = hourly_agents
 
     def change_demands(self):
         for node in self.nodes_w_demand:
@@ -1115,7 +1161,7 @@ class ConsumerModel(Model):
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         evidence = dict()
         for i, item in enumerate(self.wfh_nodes):
-            if i != 0:
+            if item != 'work_from_home':
                 evidence[item] = evidence_agent[item]
 
         query = bn.inference.fit(self.wfh_dag,
@@ -1134,7 +1180,7 @@ class ConsumerModel(Model):
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         evidence = dict()
         for i, item in enumerate(self.dine_nodes):
-            if i != 0:
+            if item != 'dine_out_less':
                 evidence[item] = evidence_agent[item]
 
         query = bn.inference.fit(self.dine_less_dag,
@@ -1153,14 +1199,13 @@ class ConsumerModel(Model):
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         evidence = dict()
         for i, item in enumerate(self.grocery_nodes):
-            if i != 0:
-                if item != 'CanadaQ_1_7' and item != 'CanadaQ_2_7':
-                    evidence[item] = evidence_agent[item]
+            if item != 'shop_groceries_less':
+                evidence[item] = evidence_agent[item]
 
         query = bn.inference.fit(self.grocery_dag,
-                                 variables = ['shop_groceries_less'],
-                                 evidence = evidence,
-                                 verbose = 0)
+                                 variables=['shop_groceries_less'],
+                                 evidence=evidence,
+                                 verbose=0)
         if self.random.random() < query.df['p'][1]:
         # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.less_groceries = 1
@@ -1173,12 +1218,12 @@ class ConsumerModel(Model):
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         evidence = dict()
         for i, item in enumerate(self.ppe_nodes):
-            if (item != 'protection' and item != 'risk_perception_r' and
-                item != 'Govresponse_7' and item != 'Govresponse_8'):
-                evidence[item] = evidence_agent[item]
+            if item != 'mask':
+                if evidence_agent[item] < 10 and evidence_agent[item] >= 0:
+                    evidence[item] = evidence_agent[item]
 
         query = bn.inference.fit(self.ppe_dag,
-                                 variables = ['protection'],
+                                 variables = ['mask'],
                                  evidence = evidence,
                                  verbose = 0)
         if self.random.random() < query.df['p'][1]:
@@ -1256,6 +1301,36 @@ class ConsumerModel(Model):
             for j in range(90):
                 curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
             # print(curr_pat.multipliers)
+
+    def collect_agent_data(self):
+        ''' BBN input containers '''
+        step_cov_pers = list()
+        step_cov_ff = list()
+        step_media = list()
+
+        ''' BBN output containers '''
+        step_wfh = list()
+        step_dine = list()
+        step_groc = list()
+        step_ppe = list()
+        for agent in self.schedule.agents:
+            step_cov_pers.append(copy.deepcopy(agent.agent_params['COVIDexp']))
+            step_cov_ff.append(copy.deepcopy(agent.agent_params['COVIDeffect_4']))
+            step_media.append(copy.deepcopy(agent.agent_params['MediaExp_3']))
+
+            step_wfh.append(copy.deepcopy(agent.wfh))
+            step_dine.append(copy.deepcopy(agent.no_dine))
+            step_groc.append(copy.deepcopy(agent.less_groceries))
+            step_ppe.append(copy.deepcopy(agent.ppe))
+
+        self.cov_pers[self.timestep] = step_cov_pers
+        self.cov_ff[self.timestep] = step_cov_ff
+        self.media_exp[self.timestep] = step_media
+
+        self.wfh_dec[self.timestep] = step_wfh
+        self.dine_dec[self.timestep] = step_dine
+        self.groc_dec[self.timestep] = step_groc
+        self.ppe_dec[self.timestep] = step_ppe
 
     def change_time_model(self):
         self.timestep += 1
@@ -1335,12 +1410,24 @@ class ConsumerModel(Model):
         return [a for a in self.schedule.agents if a.wfh == 1]
 
     def print_func(self):
+        p1 = ['t', 'S', 'E', 'I', 'R', 'D']
+        p2 = ['Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh']
         print('Hour step: ' + str(self.timestepN))
         print('Time step: ' + str(self.timestep))
         print('Day step: ' + str(self.timestep_day))
         print('\n')
-        for i in self.stat_tot:
-            print(i)
+        out_1 = ''
+        out_2 = ''
+        counter = 0
+        for i, item in enumerate(self.stat_tot):
+            if i < 6:
+                out_1 = out_1 + ' ' + p1[i] + ': ' + '{:.2f}'.format(item)
+            else:
+                out_2 = out_2 + ' ' + p2[counter] + ': ' + '{:.2f}'.format(item)
+                counter += 1
+
+        print('\t', out_1)
+        print('\t', out_2)
         # print('\tStatus (%): ', ['{:.2f}'.format(i) for i in self.stat_tot])
         # print('\tStatus (#): ', ['{:.3f}'.format(i) * self.num_agents for i in self.stat_tot])
         print('\n')
@@ -1371,6 +1458,7 @@ class ConsumerModel(Model):
             self.check_houses()
         self.communication_utility()
         self.collect_demands()
+        self.collect_agent_data()
         self.change_time_model()
         # self.inform_status()
         # self.compliance_status()
