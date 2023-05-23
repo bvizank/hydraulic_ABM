@@ -1,6 +1,7 @@
 import sciris as sc
 import numpy as np
 import numba as nb
+import operator as op
 
 
 __all__ = ['ParsObj', 'BaseParams', 'BaseSim', 'BasePop']
@@ -102,8 +103,17 @@ class BasePop:
         return np.count_nonzero(self[key])
 
     @nb.njit
+    def node_cap(self, key, nodes, f):
+        ''' Return inds of agents at a given node type '''
+        output = list()
+        for ind, item in np.ndenumerate(self[key]):
+            if op.f(nodes[item], 6):
+                output.append(ind)
+        return np.array(output)
+
+    @nb.njit
     def count_node(self, key, nodes):
-        ''' Count the number of agents at a given node type '''
+        ''' Return inds of agents at a node with a certain capacity '''
         output = list()
         for ind, item in np.ndenumerate(self[key]):
             if item in nodes:
@@ -112,7 +122,7 @@ class BasePop:
 
     @nb.njit
     def count_node_if(self, key, nodes, key2, type):
-        ''' Count the number of agents at a given node type '''
+        ''' Return inds of agents at a given node type '''
         output = list()
         for ind, item in np.ndenumerate(self[key]):
             if item in nodes and self[key][ind] == type:

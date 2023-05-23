@@ -2,9 +2,11 @@ import numpy as np
 import pandas as pd
 from parameters import agent_pars
 from utils import choose, sample, node_list
+from base import BasePop
+import operator as op
 
 
-class Population():
+class Population(BasePop):
     '''
     Class for holding dictionary of lists that contains the agent parameters.
     '''
@@ -24,10 +26,9 @@ class Population():
                 self[key] = np.arange(pars['pop_size'], dtype=np.int32)
             elif key == 'home_node' or \
                  key == 'work_node' or \
-                 key == 'curr_node':
+                 key == 'curr_node' or \
+                 key == 'housemates':
                 self[key] = np.full(pars['pop_size'], np.nan)
-            elif key == 'housemates':
-                self[key] = np.full((6, pars['pop_size']), 0, dtype=np.int32)
             elif 'time' in key or \
                  key == 'covid' or \
                  key == 'symp_status' or \
@@ -112,13 +113,22 @@ class Population():
         self.curr_node = self.home_node
 
         ''' Set households '''
-        # need an algorithm to pick housemates for 
-        # WIP
+        inds6 = self.node_cap('home_node', self.model.nodes_capacity, op.lt)
+        inds = self.node_cap('home_node', self.model.nodes_capacity, op.gt)
+        self.assign_mates(inds6, False)
+        self.assign_mates(inds, True)
+
+    def assign_mates(self, inds, above6):
+        ''' Assign housemates based on the number of agents at the given
+        node '''
+        if above6:
+            for agent in self.housemates[inds]:
+                mates_ind = choose(len())
 
     def move_agents(self, ind2res, res2ind,
-                          caf2res=0, res2caf=0,
-                          com2res=0, res2com=0,
-                          nav2res=None, res2nav=None):
+                    caf2res=0, res2caf=0,
+                    com2res=0, res2com=0,
+                    nav2res=None, res2nav=None):
         '''
         Main method to move agents around the network.
         '''
@@ -145,7 +155,7 @@ class Population():
         nodes_available = self.count_nodes('cafe_nodes')
         inds_ag = choose(len(agents2caf), res2caf)
         inds_caf = choose(len(agents2caf), res2caf)
-        self.curr_node[inds_ag] = 
+        # self.curr_node[inds_ag] = 
 
         ''' Next move agents to and from com nodes '''
         agents2res = self.count_node('curr_nodes', self.model.com_nodes)
@@ -155,7 +165,7 @@ class Population():
         agents2com = self.count_nodes('')
         inds_ag = choose(len(agents2com), res2com)
         inds_com = choose(len(agents2com), res2com)
-        self.curr_node[inds] = self.
+        # self.curr_node[inds] = self.
 
         ''' If navy nodes exist, move similarly to industrial nodes '''
         if nav2res is not None:
