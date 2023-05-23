@@ -127,7 +127,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     #     model.groc_dec.to_excel(writer, sheet_name='groc')
     #     model.ppe_dec.to_excel(writer, sheet_name='ppe')
 
-    clean_epanet('.')  # clean all input, bin, and rpt files
+    #  clean_epanet('.')  # clean all input, bin, and rpt files
 
 
 def convert_to_pd(in_list, columns):
