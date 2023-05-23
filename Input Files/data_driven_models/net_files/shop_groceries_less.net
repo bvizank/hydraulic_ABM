@@ -1,0 +1,131 @@
+net 
+{ 
+}
+node shop_groceries_less 
+{
+  states = ( "1" "2" );
+}
+node FinitePool_2 
+{
+  states = ( "1" "2" "3" "4" "5" "6" "7" );
+}
+node prosocial 
+{
+  states = ( "1" "2" "3" "4" "5" "6" "7" );
+}
+node COVIDeffect_2 
+{
+  states = ( "1" "2" "3" "4" "5" "6" "7" );
+}
+node DemGen 
+{
+  states = ( "1" "2" "3" "4" );
+}
+node Longitude_3 
+{
+  states = ( "1" "2" "3" "4" "5" "6" "7" );
+}
+node MediaExp_7 
+{
+  states = ( "1" "2" );
+}
+node quota_age 
+{
+  states = ( "1" "2" "3" "4" "5" "6" );
+}
+node Trustingroups_5 
+{
+  states = ( "1" "2" "3" "4" "5" );
+}
+node Vaccine_1 
+{
+  states = ( "1" "2" );
+}
+node MediaExp_2 
+{
+  states = ( "1" "2" );
+}
+node DemHealthcare 
+{
+  states = ( "1" "2" );
+}
+node Trustingroups_4 
+{
+  states = ( "1" "2" "3" "4" "5" );
+}
+node Soughtinfo 
+{
+  states = ( "1" "2" );
+}
+node Friends_3 
+{
+  states = ( "1" "2" "3" "4" "5" "6" "7" );
+}
+node Trustingroups_6 
+{
+  states = ( "1" "2" "3" "4" "5" );
+}
+potential ( shop_groceries_less ) 
+{
+  data = ( 0.4619662 0.5380338 );
+}
+potential ( FinitePool_2 | shop_groceries_less ) 
+{
+  data = ((0.02610244 0.04071981 0.06307579 0.13960201 0.20538017 0.23891414 0.28620563)(0.009861309 0.013921848 0.025734325 0.069661973 0.148288773 0.244634288 0.487897485)) ;
+}
+potential ( prosocial | shop_groceries_less ) 
+{
+  data = ((0.02352291 0.02524260 0.07468370 0.20194079 0.30211276 0.22472669 0.14777054)(0.01613669 0.02056637 0.04308390 0.15271845 0.25054053 0.25607762 0.26087644)) ;
+}
+potential ( COVIDeffect_2 | shop_groceries_less ) 
+{
+  data = ((0.17700528 0.13057364 0.11810588 0.17184621 0.17700528 0.13315318 0.09231053)(0.15308759 0.08553499 0.10251542 0.14681221 0.19701524 0.16563835 0.14939619)) ;
+}
+potential ( DemGen | shop_groceries_less ) 
+{
+  data = ((0.4442175408 0.5534178848 0.0018271711 0.0005374033)(0.5493724621 0.4493355482 0.0008305648 0.0004614249)) ;
+}
+potential ( Longitude_3 | shop_groceries_less ) 
+{
+  data = ((0.44570692 0.14648078 0.09059084 0.11595627 0.08973099 0.04931827 0.06221594)(0.36423562 0.14570479 0.09550177 0.11691188 0.10103887 0.06117176 0.11543532)) ;
+}
+potential ( MediaExp_7 | shop_groceries_less ) 
+{
+  data = ((0.7039983 0.2960017)(0.8130306 0.1869694)) ;
+}
+potential ( quota_age | shop_groceries_less ) 
+{
+  data = ((0.1250358 0.2054314 0.2071510 0.1899541 0.1723273 0.1001003)(0.1032976 0.1715885 0.1738034 0.2055494 0.1800787 0.1656823)) ;
+}
+potential ( Trustingroups_5 | shop_groceries_less ) 
+{
+  data = ((0.20421324 0.32631126 0.36328461 0.08598452 0.02020636)(0.24215578 0.33665559 0.33591731 0.07345884 0.01181248)) ;
+}
+potential ( Vaccine_1 | shop_groceries_less ) 
+{
+  data = ((0.7590284 0.2409716)(0.8495755 0.1504245)) ;
+}
+potential ( MediaExp_2 | shop_groceries_less ) 
+{
+  data = ((0.710877 0.289123)(0.7923588 0.2076412)) ;
+}
+potential ( DemHealthcare | shop_groceries_less ) 
+{
+  data = ((0.08061049 0.91938951)(0.054079 0.945921)) ;
+}
+potential ( Trustingroups_4 | shop_groceries_less ) 
+{
+  data = ((0.04557180 0.16552021 0.49570077 0.23258813 0.06061909)(0.06127722 0.14064230 0.50756737 0.24031008 0.05020303)) ;
+}
+potential ( Soughtinfo | shop_groceries_less ) 
+{
+  data = ((0.6571367 0.3428633)(0.7613511 0.2386489)) ;
+}
+potential ( Friends_3 | shop_groceries_less ) 
+{
+  data = ((0.19291242 0.18732342 0.15722884 0.23332514 0.13100356 0.05490726 0.04329935)(0.21362654 0.19295470 0.14053683 0.22027105 0.11801930 0.05969520 0.05489638)) ;
+}
+potential ( Trustingroups_6 | shop_groceries_less ) 
+{
+  data = ((0.1152193 0.2201204 0.4380911 0.1809974 0.0455718)(0.13399779 0.22185308 0.43152455 0.17644887 0.03617571)) ;
+}
