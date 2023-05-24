@@ -74,8 +74,6 @@ wfh = read_comp_data(wfh_comp_dir, comp_list)
 no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
 # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
-ind_nodes = [node for name, node in wn.junctions()
-             if node.demand_timeseries_list[0].pattern_name == '3']
 # print(wfh['sd_seir_data'])
 # print(wfh['avg_age'])
 # print(wfh['avg_ppe'])
@@ -641,6 +639,29 @@ def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
     plt.close()
 
 
+def make_heatmap(data, xlabel, ylabel, name, vmax):
+    ''' heatmap plot of all agents '''
+    fig, ax = plt.subplots()
+    im = ax.imshow(data, aspect=0.55, vmax=vmax)  # for 100 agents: 0.03, for 1000 agents: 0.003
+    ax.figure.colorbar(im, ax=ax)
+    plt.xlim(1, data.shape[1])
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    x_tick_labels = [0, 20, 40, 60, 80]
+    ax.set_xticks([i*24 for i in x_tick_labels])
+    ax.set_xticklabels(x_tick_labels)
+
+    if publication:
+        loc = pub_loc
+    else:
+        loc = 'Output Files/png_figures/'
+
+    plt.savefig(loc + name + '.' + format,
+                format=format,
+                bbox_inches='tight')
+    plt.close()
+
+
 def calc_model_stats(wn, seir, age):
     '''
     Function for calculating comparison stats for decision models:
@@ -868,22 +889,24 @@ make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
                sd2=wfh['sd_seir_data'], sub=True)
 
 ''' Export comparison stats '''
-only_wfh_loc = 'Output Files/30_wfh/'
-dine_loc = 'Output Files/30_dine/'
-grocery_loc = 'Output Files/30_grocery/'
-ppe_loc = 'Output Files/30_ppe/'
+# only_wfh_loc = 'Output Files/30_wfh/'
+# dine_loc = 'Output Files/30_dine/'
+# grocery_loc = 'Output Files/30_grocery/'
+# ppe_loc = 'Output Files/30_ppe/'
 
-only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'])
-dine = read_comp_data(dine_loc, ['seir_data', 'age'])
-grocery = read_comp_data(grocery_loc, ['seir_data', 'age'])
-ppe = read_comp_data(ppe_loc, ['seir_data', 'age'])
-print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
-print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
-print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
-print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir_data'], ppe['avg_age']/3600)))
-print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
-print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir_data'], no_wfh['avg_age']/3600)))
+# only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'])
+# dine = read_comp_data(dine_loc, ['seir_data', 'age'])
+# grocery = read_comp_data(grocery_loc, ['seir_data', 'age'])
+# ppe = read_comp_data(ppe_loc, ['seir_data', 'age'])
+# print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
+# print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
+# print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
+# print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir_data'], ppe['avg_age']/3600)))
+# print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
+# print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir_data'], no_wfh['avg_age']/3600)))
 
+ind_nodes = [node for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].pattern_name == '3']
 ind_distances, ind_closest = calc_industry_distance(wn)
 pm_age_values = list()
 no_pm_age_values = list()
@@ -915,14 +938,27 @@ make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
 
 
 ''' Make agent state variable plots '''
-all_pm_sv = read_data('Output Files/30_all_pm/2023-05-24_11-32_0_results',
+all_pm_sv = read_data('Output Files/30_all_pm/2023-05-24_11-32_0_results/',
                       ['cov_pers', 'cov_ff', 'media'])
-no_pm_sv = read_data('Output Files/30_no_pm/2023-05-23_21-41_0_results',
+no_pm_sv = read_data('Output Files/30_no_pm/2023-05-23_21-41_0_results/',
                      ['cov_pers', 'cov_ff', 'media'])
 
-agent = 3294
-cols = ['Personal', 'Friends-Family]', 'Media']
+agent = '124'
+cols = ['Personal', 'Friends-Family', 'Media']
 data = pd.concat([all_pm_sv['cov_pers'][agent],
                   all_pm_sv['cov_ff'][agent],
                   all_pm_sv['media'][agent]],
-                 axis=1, cols=cols)
+                 axis=1, keys=cols)
+plt.plot(np.delete(x_values, 0), data)
+plt.xlabel('Time (day)')
+plt.ylabel('Value')
+loc = 'Output Files/png_figures/'
+
+plt.savefig(loc + 'state_variable_plot.' + format, format=format,
+            bbox_inches='tight')
+plt.close()
+
+make_heatmap(all_pm_sv['cov_ff'].T,
+             'Time (day)', 'Agent', 'ff_heatmap_all_pm', 6)
+make_heatmap(no_pm_sv['cov_ff'].T,
+             'Time (day)', 'Agent', 'ff_heatmap_no_pm', 6)
