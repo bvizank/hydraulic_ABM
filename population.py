@@ -20,6 +20,8 @@ class Population(BasePop):
         self.pars = pars
         self.model = sim
         self.nodes = dict()
+        # allow for addition of keys to pars
+        self._lock = False
 
         for key in agent_pars:
             if key == 'uid':
@@ -36,7 +38,18 @@ class Population(BasePop):
                  key == 'work_nav':
                 self[key] = np.full(pars['pop_size'], 0, dtype=np.int32)
             else:
-                self[key] = np.full(pars['pop_size'], np.nan, dtyp=np.float32)
+                self[key] = np.full(pars['pop_size'], np.nan, dtype=np.float32)
+
+        ''' Initialize the cafe nodes that agents can travel to '''
+        self['cafe_nodes_nam'] = node_list(self.model.nodes_capacity,
+                                           self.model.cafe_nodes)
+        self['cafe_nodes_bin'] = np.ones(len(self['cafe_nodes_nam']),
+                                         dtype=np.int32)
+        ''' Initialize the com nodes that agents can travel to '''
+        self['com_nodes_nam'] = node_list(self.model.nodes_capacity,
+                                          self.model.com_nodes)
+        self['com_nodes_bin'] = np.ones(len(self['com_nodes_nam']),
+                                        dtype=np.int32)
 
         self.set_covid_attrs()
         self.set_bbn_attrs()
@@ -50,21 +63,30 @@ class Population(BasePop):
 
         ''' Set the e2i, i2s, s2sev, sev2c, s2d. These are personal
         parameters that are compared to the time each agent is  '''
-        self.e2i = sample(dist='lognormal', par1=4.5, par2=1.5)
-        self.i2s = sample(dist='lognormal', par1=1.1, par2=0.9)
-        self.s2sev = sample(dist='lognormal', par1=6.6, par2=4.9)
-        self.sev2c = sample(dist='lognormal', par1=1.5, par2=2.0)
-        self.c2d = sample(dist='lognormal', par1=10.7, par2=4.8)
+        self['e2i'] = sample(dist='lognormal', par1=4.5, par2=1.5,
+                             size=self.pars['pop_size'])
+        self['i2s'] = sample(dist='lognormal', par1=1.1, par2=0.9,
+                             size=self.pars['pop_size'])
+        self['s2sev'] = sample(dist='lognormal', par1=6.6, par2=4.9,
+                               size=self.pars['pop_size'])
+        self['sev2c'] = sample(dist='lognormal', par1=1.5, par2=2.0,
+                               size=self.pars['pop_size'])
+        self['c2d'] = sample(dist='lognormal', par1=10.7, par2=4.8,
+                             size=self.pars['pop_size'])
 
         ''' Set the recovery time values for each agent and state  '''
-        self.asym_rec = sample(dist='lognormal', par1=8.0, par2=2.0)
-        self.mild_rec = sample(dist='lognormal', par1=8.0, par2=2.0)
-        self.sev_rec = sample(dist='lognormal', par1=18.1, par2=6.3)
-        self.crit_rec = sample(dist='lognormal', par1=18.1, part2=6.3)
+        self['asym_rec'] = sample(dist='lognormal', par1=8.0, par2=2.0,
+                                  size=self.pars['pop_size'])
+        self['mild_rec'] = sample(dist='lognormal', par1=8.0, par2=2.0,
+                                  size=self.pars['pop_size'])
+        self['sev_rec'] = sample(dist='lognormal', par1=18.1, par2=6.3,
+                                 size=self.pars['pop_size'])
+        self['crit_rec'] = sample(dist='lognormal', par1=18.1, par2=6.3,
+                                  size=self.pars['pop_size'])
 
         ''' Set the initial number of infectious '''
         inds = choose(self.pars['pop_size'], self.pars['int_infectious'])
-        self.covid[inds] = 2
+        self['covid'][inds] = 2
 
     def set_bbn_attrs(self):
         '''
@@ -75,7 +97,7 @@ class Population(BasePop):
         bbn_list = all_bbn.columns.to_numpy()  # list of bbn parameter names
         # create dictionary with each bbn param name as key and a numeric
         # index as the value. For looking up bbn params in the numpy array.
-        self.bbn_dict = dict((key, i) for i, key in enumerate(bbn_list))
+        self['bbn_dict'] = dict((key, i) for i, key in enumerate(bbn_list))
 
         # need to convert pandas dataframe to numpy to store in pop dictionary
         all_bbn = all_bbn.to_numpy()
@@ -90,6 +112,7 @@ class Population(BasePop):
         ''' Set residential nodes by making a list of available res nodes, then
         picking indices '''
         res_nodes = node_list(self.model.nodes_capacity, self.model.res_nodes)
+        # print(type(res_nodes))
         res_inds = choose(len(res_nodes), self.pars['pop_size'])
         self['home_node'] = res_nodes[res_inds]
 
@@ -106,26 +129,40 @@ class Population(BasePop):
         work node '''
         inds = self.count_node('work_node', self.model.ind_nodes)
         self.work_ind[inds] = 1
-        inds = self.count_node('work_node', self.model.nav_nodes)
-        self.work_nav[inds] = 1
+        if self.model['city'] == 'mesopolis':
+            inds = self.count_node('work_node', self.model.nav_nodes)
+            self['work_nav'][inds] = 1
 
         ''' Set all agent's current node to their home node '''
-        self.curr_node = self.home_node
+        self['curr_node'] = self['home_node']
 
         ''' Set households '''
-        inds6 = self.node_cap('home_node', self.model.nodes_capacity, op.lt)
-        inds = self.node_cap('home_node', self.model.nodes_capacity, op.gt)
-        self.assign_mates(inds6, False)
-        self.assign_mates(inds, True)
+        self.assign_mates()
 
-    def assign_mates(self, inds, above6):
+    def assign_mates(self):
         ''' Assign housemates based on the number of agents at the given
         node '''
-        if above6:
-            for agent in self.housemates[inds]:
-                mates_ind = choose(len())
+        for node in self.model.res_nodes:
+            # inds of the agents with the current node as home node
+            # print(node)
+            # print(self['home_node'])
+            inds = np.where(self['home_node'] == node)[0]
+            if len(inds) > 6:
+                while len(inds) > 6:
+                    # pick a household size between 1 and 6.
+                    house_size = np.random.randint(1, 6, size=1)[0]
+                    # choose the agent inds that will be in that house
+                    # these are the indices of the original inds var
+                    curr_house_inds = choose(len(inds), house_size)
+                    # assign those inds to those agents
+                    self['housemates'][inds[curr_house_inds]] = inds[curr_house_inds]
+                    inds = np.delete(inds, curr_house_inds, axis=0)
+            else:
+                # if the household already has 6 or less agents, assign those
+                # indexes to each agent.
+                self['housemates'][inds] = inds
 
-    def move_agents(self, ind2res, res2ind,
+    def move_agents(self, ind2res=0, res2ind=0,
                     caf2res=0, res2caf=0,
                     com2res=0, res2com=0,
                     nav2res=None, res2nav=None):
@@ -139,46 +176,69 @@ class Population(BasePop):
         agents2res = self.count_node('curr_node',
                                      self.model.ind_nodes)
         inds = choose(len(agents2res), ind2res)
-        self.curr_node[inds] = self.home_node[inds]
+        self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
 
         agents2ind = self.count_node_if('curr_node', self.model.res_nodes,
                                         'work_ind', 1)
         inds = choose(len(agents2ind), res2ind)
-        self.curr_node[inds] = self.work_nodes[inds]
+        self['curr_node'][agents2ind[inds]] = self['work_nodes'][agents2ind[inds]]
 
-        ''' Next move agents to and from caf nodes '''
+        ''' Next move agents to and from cafe nodes '''
         agents2res = self.count_node('curr_nodes', self.model.cafe_nodes)
         inds = choose(len(agents2res), caf2res)
-        self.curr_node[inds] = self.home_node[inds]
 
+        ''' Update the cafe_nodes_bin list to ensure nodes are now open '''
+        nodes = self['curr_node'][agents2res[inds]]
+        self['cafe_nodes_bin'][self.node_in_cap(self['cafe_nodes_nam'], nodes)] = 1
+        self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
+
+        # first find the agents that are at home that could move
         agents2caf = self.count_nodes('curr_nodes', self.model.res_nodes)
-        nodes_available = self.count_nodes('cafe_nodes')
+        # next find the available cafe node spots
+        nodes = self.true('cafe_nodes_bin')
+        # choose the agents that will move
         inds_ag = choose(len(agents2caf), res2caf)
-        inds_caf = choose(len(agents2caf), res2caf)
-        # self.curr_node[inds_ag] = 
+        # choose the nodes they will go to
+        inds_caf = choose(len(nodes), res2caf)
+        # set their nodes
+        self['curr_node'][agents2caf[inds_ag]] = self['cafe_nodes_nam'][nodes[inds_caf]]
+        # finally set nodes in cafe_nodes_bin to 0
+        self['cafe_nodes_bin'][nodes[inds_caf]] = 0
 
         ''' Next move agents to and from com nodes '''
         agents2res = self.count_node('curr_nodes', self.model.com_nodes)
         inds = choose(len(agents2res), com2res)
-        self.curr_node[inds] = self.home_node[inds]
 
-        agents2com = self.count_nodes('')
+        ''' Update the com_nodes_bin list to ensure nodes are now open '''
+        nodes = self['curr_node'][agents2res[inds]]
+        self['com_nodes_bin'][self.node_in_cap(self['com_nodes_nam'], nodes)] = 1
+        self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
+
+        # first find the agents that are at home that could move
+        agents2com = self.count_nodes('curr_nodes', self.model.res_nodes)
+        # next find the available cafe node spots
+        nodes = self.true('com_nodes_bin')
+        # choose the agents that will move
         inds_ag = choose(len(agents2com), res2com)
-        inds_com = choose(len(agents2com), res2com)
-        # self.curr_node[inds] = self.
+        # choose the nodes they will go to
+        inds_com = choose(len(nodes), res2com)
+        # set their nodes
+        self['curr_node'][agents2com[inds_ag]] = self['com_nodes_nam'][nodes[inds_com]]
+        # finally set nodes in cafe_nodes_bin to 0
+        self['com_nodes_bin'][nodes[inds_com]] = 0
 
         ''' If navy nodes exist, move similarly to industrial nodes '''
         if nav2res is not None:
             agents2res = self.count_node('curr_node',
                                          self.model.nav_nodes)
             inds = choose(len(agents2res), nav2res)
-            self.curr_node[inds] = self.home_node[inds]
+            self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
 
         if res2nav is not None:
             agents2nav = self.count_node_if('curr_node', self.model.res_nodes,
                                             'work_nav', 1)
             inds = choose(len(agents2nav), res2nav)
-            self.curr_node[inds] = self.work_nodes[inds]
+            self['curr_node'][agents2nav[inds]] = self['work_nodes'][agents2nav[inds]]
 
     def infect(self, inds):
         '''

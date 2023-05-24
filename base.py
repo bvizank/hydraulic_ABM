@@ -68,11 +68,8 @@ class BasePop:
         try:
             return self.__dict__[key]
         except: # pragma: no cover
-            if isinstance(key, int):
-                return self.person(key)
-            else:
-                errormsg = f'Key "{key}" is not a valid attribute of people'
-                raise AttributeError(errormsg)
+            errormsg = f'Key "{key}" is not a valid attribute of the population'
+            raise AttributeError(errormsg)
 
     def __setitem__(self, key, value):
         ''' Ditto '''
@@ -102,29 +99,36 @@ class BasePop:
         ''' Count the number of people for a given key '''
         return np.count_nonzero(self[key])
 
-    @nb.njit
+    def node_in_cap(self, list, nodes):
+        ''' Return inds of the first instance of each node in nodes '''
+        output = list()
+        for node in nodes:
+            output.append(np.where(list == node)[0][0])
+        return np.array(output, dtype=np.int32)
+
+    # @nb.njit
     def node_cap(self, key, nodes, f):
         ''' Return inds of agents at a given node type '''
         output = list()
         for ind, item in np.ndenumerate(self[key]):
             if op.f(nodes[item], 6):
                 output.append(ind)
-        return np.array(output)
+        return np.array(output, dtype=np.int32)
 
-    @nb.njit
+    # @nb.njit
     def count_node(self, key, nodes):
         ''' Return inds of agents at a node with a certain capacity '''
         output = list()
         for ind, item in np.ndenumerate(self[key]):
             if item in nodes:
-                output.append(ind)
-        return np.array(output)
+                output.append(ind[0])
+        return np.array(output, dtype=np.int32)
 
-    @nb.njit
+    # @nb.njit
     def count_node_if(self, key, nodes, key2, type):
         ''' Return inds of agents at a given node type '''
         output = list()
         for ind, item in np.ndenumerate(self[key]):
             if item in nodes and self[key][ind] == type:
                 output.append(ind)
-        return np.array(output)
+        return np.array(output, dtype=np.int32)

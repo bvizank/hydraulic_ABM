@@ -3,6 +3,9 @@ from base import BaseSim
 from parameters import set_defaults
 from population import Population
 from utils import initialize
+import time
+import copy
+import numpy as np
 
 
 __all__ = ['Sim']
@@ -16,11 +19,14 @@ class Sim(BaseSim):
 
     def __init__(self, **kwargs):
 
-        self.pars = set_defaults()
+        self.pars = set_defaults(**kwargs)
         super().__init__(self.pars)
 
+        start = time.perf_counter()
         # setup the simulation
         self.setup()
+        end = time.perf_counter()
+        print(end-start)
 
     def setup(self):
         '''
@@ -29,7 +35,7 @@ class Sim(BaseSim):
         '''
 
         ''' Setup function initializes wntr and loads various datasets '''
-        setup_out = initialize(self.city)
+        setup_out = initialize(self['city'])
 
         ''' Parse the output of setup. See the setup function in utils.py
         for more details on the specific outputs. '''
@@ -37,9 +43,9 @@ class Sim(BaseSim):
         self.ind_nodes = setup_out[0]['ind']
         self.com_nodes = setup_out[0]['com']
         self.cafe_nodes = setup_out[0]['cafe']  # There is no node assigned to "dairy queen" so it was neglected
-        if self.city == 'micropolis':
+        if self['city'] == 'micropolis':
             self.nav_nodes = []  # placeholder for agent assignment
-        if self.city == 'mesopolis':
+        if self['city'] == 'mesopolis':
             self.air_nodes = setup_out[0]['air']
             self.nav_nodes = setup_out[0]['nav']
 
@@ -51,10 +57,10 @@ class Sim(BaseSim):
         self.ind_dist = setup_out[3]['ind']  # industrial capacities at each hour
         self.sum_dist = setup_out[3]['sum']  # sum of capacities
         self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
-        if self.city == 'micropolis':
+        if self['city'] == 'micropolis':
             # self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
             self.nav_dist = [0]  # placeholder for agent assignment
-        if self.city == 'mesopolis':
+        if self['city'] == 'mesopolis':
             self.air_dist = setup_out[3]['air']
             self.nav_dist = setup_out[3]['nav']
 
@@ -70,7 +76,38 @@ class Sim(BaseSim):
         in parameters.py. '''
         self.pop = Population(self, self.pars)
 
+        ''' Move the initial number of industrial agents '''
+        self.pop.move_agents(res2ind=np.amax(self.ind_dist))
+
     def step(self):
         '''
         Complete one time step of the simulation.
         '''
+
+        ''' Move the correct number of industrial agents '''
+        self.pop.move_agents(ind2res=self.ind_dist[self.timestep % 24]/2,
+                             res2ind=self.ind_dist[self.timestep % 24]/2)
+
+        ''' Move the correct number of cafe agents '''
+        if self.cafe_dist[self.timestep] > 0:
+            self.pop.move_agents(res2caf=self.cafe_dist[self.timestep % 24])
+        else:
+            self.pop.move_agents(caf2res=self.cafe_dist[self.timestep % 24])
+
+        ''' Move the correct number of com agents '''
+        if self.cafe_dist[self.timestep % 24] > 0:
+            self.pop.move_agents(res2com=self.com_dist[self.timestep % 24])
+        else:
+            self.pop.move_agents(com2res=self.com_dist[self.timestep % 24])
+
+        ''' Need to add air and nav movements '''
+
+    def run(self, steps):
+        '''
+        Run the full simulation.
+        '''
+
+        self.timestep = 0
+        for s in steps:
+            self.step()
+            self.timestep += 1

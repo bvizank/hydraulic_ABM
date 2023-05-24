@@ -4,6 +4,7 @@ import numba as nb
 import os
 import wntr
 import copy
+import warnings
 
 
 __all__ = ['initialize', 'read_data', 'choose', 'sample']
@@ -94,6 +95,7 @@ def initialize(network):
 
 
 def init_wntr(inp_file):
+    warnings.simplefilter("ignore", UserWarning)
     # initialize the water network model with wntr
     wn = wntr.network.WaterNetworkModel(inp_file)
 
