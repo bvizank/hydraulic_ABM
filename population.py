@@ -3,7 +3,7 @@ import pandas as pd
 from parameters import agent_pars
 from utils import choose, sample, node_list
 from base import BasePop
-import operator as op
+from copy import deepcopy as dc
 
 
 class Population(BasePop):
@@ -27,9 +27,9 @@ class Population(BasePop):
             if key == 'uid':
                 self[key] = np.arange(pars['pop_size'], dtype=np.int32)
             elif key == 'home_node' or \
-                 key == 'work_node' or \
-                 key == 'curr_node' or \
-                 key == 'housemates':
+                 key == 'work_node':
+                self[key] = np.full(pars['pop_size'], np.nan, dtype="<U6")
+            elif key == 'housemates':
                 self[key] = np.full(pars['pop_size'], np.nan)
             elif 'time' in key or \
                  key == 'covid' or \
@@ -39,6 +39,11 @@ class Population(BasePop):
                 self[key] = np.full(pars['pop_size'], 0, dtype=np.int32)
             else:
                 self[key] = np.full(pars['pop_size'], np.nan, dtype=np.float32)
+
+        ''' Add to object dict the nodes as keys and list of bools
+        for values representing the location of each agent '''
+        for key in self.model.all_nodes:
+            self[key] = np.zeros(self.pars['pop_size'])
 
         ''' Initialize the cafe nodes that agents can travel to '''
         self['cafe_nodes_nam'] = node_list(self.model.nodes_capacity,
@@ -123,18 +128,20 @@ class Population(BasePop):
         work_nodes = node_list(self.model.nodes_capacity, ind_node_list + nav_node_list)
         work_agents = (max(self.model.ind_dist) + max(self.model.nav_dist)) * 2
         work_inds = choose(len(work_nodes), work_agents)
-        self['work_node'] = work_nodes[work_inds]
+        ag_inds = choose(self.pars['pop_size'], work_agents)
+        self['work_node'][ag_inds] = work_nodes[work_inds]
 
         ''' Set the work type for each agent that has an industrial or navy
         work node '''
         inds = self.count_node('work_node', self.model.ind_nodes)
-        self.work_ind[inds] = 1
+        self['work_ind'][inds] = 1
         if self.model['city'] == 'mesopolis':
             inds = self.count_node('work_node', self.model.nav_nodes)
             self['work_nav'][inds] = 1
 
         ''' Set all agent's current node to their home node '''
-        self['curr_node'] = self['home_node']
+        for i, node in enumerate(self['home_node']):
+            self[node][i] = 1
 
         ''' Set households '''
         self.assign_mates()
@@ -162,9 +169,9 @@ class Population(BasePop):
                 # indexes to each agent.
                 self['housemates'][inds] = inds
 
-    def move_agents(self, ind2res=0, res2ind=0,
-                    caf2res=0, res2caf=0,
-                    com2res=0, res2com=0,
+    def move_agents(self, ind2res=None, res2ind=None,
+                    caf2res=None, res2caf=None,
+                    com2res=None, res2com=None,
                     nav2res=None, res2nav=None):
         '''
         Main method to move agents around the network.
@@ -173,59 +180,75 @@ class Population(BasePop):
         ''' First move agents to and from industrial nodes '''
         ''' Need to remove agents from the agents2ind if they are working
         from home '''
-        agents2res = self.count_node('curr_node',
-                                     self.model.ind_nodes)
-        inds = choose(len(agents2res), ind2res)
-        self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
+        if ind2res is not None:
+            ''' Move agents from industrial to residential '''
+            agents2res = self.count_node(self.model.ind_nodes)
+            inds = choose(len(agents2res), ind2res)
+            homes = self['home_node'][agents2res[inds]]
+            for home in homes:
+                self[home][agents2res[inds]] = 1
+                self[]
+            # self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
 
-        agents2ind = self.count_node_if('curr_node', self.model.res_nodes,
-                                        'work_ind', 1)
-        inds = choose(len(agents2ind), res2ind)
-        self['curr_node'][agents2ind[inds]] = self['work_nodes'][agents2ind[inds]]
+        if res2ind is not None:
+            agents2ind = self.count_node_if('curr_node', self.model.res_nodes,
+                                            'work_ind', 1)
+            print(len(agents2ind))
+            inds = choose(len(agents2ind), res2ind)
+            self['curr_node'][agents2ind[inds]] = self['work_node'][agents2ind[inds]]
 
         ''' Next move agents to and from cafe nodes '''
-        agents2res = self.count_node('curr_nodes', self.model.cafe_nodes)
-        inds = choose(len(agents2res), caf2res)
+        if caf2res is not None:
+            agents2res = self.count_node('curr_node', self.model.cafe_nodes)
+            inds = choose(len(agents2res), caf2res)
+            homes = self['home_node'][agents2res[inds]]
+            for home in homes:
+                self[home][agents2res[inds]] = 1
 
-        ''' Update the cafe_nodes_bin list to ensure nodes are now open '''
-        nodes = self['curr_node'][agents2res[inds]]
-        self['cafe_nodes_bin'][self.node_in_cap(self['cafe_nodes_nam'], nodes)] = 1
-        self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
+            ''' Update the cafe_nodes_bin list to ensure nodes are now open '''
+            nodes = self['curr_node'][agents2res[inds]]
+            nodes_u = self.node_in_cap(self['cafe_nodes_nam'], nodes)
+            self['cafe_nodes_bin'][nodes_u] = 1
+            self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
 
-        # first find the agents that are at home that could move
-        agents2caf = self.count_nodes('curr_nodes', self.model.res_nodes)
-        # next find the available cafe node spots
-        nodes = self.true('cafe_nodes_bin')
-        # choose the agents that will move
-        inds_ag = choose(len(agents2caf), res2caf)
-        # choose the nodes they will go to
-        inds_caf = choose(len(nodes), res2caf)
-        # set their nodes
-        self['curr_node'][agents2caf[inds_ag]] = self['cafe_nodes_nam'][nodes[inds_caf]]
-        # finally set nodes in cafe_nodes_bin to 0
-        self['cafe_nodes_bin'][nodes[inds_caf]] = 0
+        if res2caf is not None:
+            # first find the agents that are at home that could move
+            agents2caf = self.count_node('curr_node', self.model.res_nodes)
+            # next find the available cafe node spots
+            nodes = self.true('cafe_nodes_bin')
+            # choose the agents that will move
+            inds_ag = choose(len(agents2caf), res2caf)
+            # choose the nodes they will go to
+            inds_caf = choose(len(nodes), res2caf)
+            # set their nodes
+            self['curr_node'][agents2caf[inds_ag]] = self['cafe_nodes_nam'][nodes[inds_caf]]
+            # finally set nodes in cafe_nodes_bin to 0
+            self['cafe_nodes_bin'][nodes[inds_caf]] = 0
 
-        ''' Next move agents to and from com nodes '''
-        agents2res = self.count_node('curr_nodes', self.model.com_nodes)
-        inds = choose(len(agents2res), com2res)
+        if com2res is not None:
+            ''' Next move agents to and from com nodes '''
+            agents2res = self.count_node('curr_node', self.model.com_nodes)
+            inds = choose(len(agents2res), com2res)
 
-        ''' Update the com_nodes_bin list to ensure nodes are now open '''
-        nodes = self['curr_node'][agents2res[inds]]
-        self['com_nodes_bin'][self.node_in_cap(self['com_nodes_nam'], nodes)] = 1
-        self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
+            ''' Update the com_nodes_bin list to ensure nodes are now open '''
+            nodes = self['curr_node'][agents2res[inds]]
+            nodes_u = self.node_in_cap(self['com_nodes_nam'], nodes)
+            self['com_nodes_bin'][nodes_u] = 1
+            self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
 
-        # first find the agents that are at home that could move
-        agents2com = self.count_nodes('curr_nodes', self.model.res_nodes)
-        # next find the available cafe node spots
-        nodes = self.true('com_nodes_bin')
-        # choose the agents that will move
-        inds_ag = choose(len(agents2com), res2com)
-        # choose the nodes they will go to
-        inds_com = choose(len(nodes), res2com)
-        # set their nodes
-        self['curr_node'][agents2com[inds_ag]] = self['com_nodes_nam'][nodes[inds_com]]
-        # finally set nodes in cafe_nodes_bin to 0
-        self['com_nodes_bin'][nodes[inds_com]] = 0
+        if res2com is not None:
+            # first find the agents that are at home that could move
+            agents2com = self.count_node('curr_node', self.model.res_nodes)
+            # next find the available cafe node spots
+            nodes = self.true('com_nodes_bin')
+            # choose the agents that will move
+            inds_ag = choose(len(agents2com), res2com)
+            # choose the nodes they will go to
+            inds_com = choose(len(nodes), res2com)
+            # set their nodes
+            self['curr_node'][agents2com[inds_ag]] = self['com_nodes_nam'][nodes[inds_com]]
+            # finally set nodes in cafe_nodes_bin to 0
+            self['com_nodes_bin'][nodes[inds_com]] = 0
 
         ''' If navy nodes exist, move similarly to industrial nodes '''
         if nav2res is not None:

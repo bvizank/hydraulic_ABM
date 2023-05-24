@@ -9,7 +9,6 @@ agent_pars = [
     'work_node',
     'work_ind',
     'work_nav',
-    'curr_node',
     'demand',
     'base_demand',
     'age',

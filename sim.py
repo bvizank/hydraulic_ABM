@@ -43,11 +43,14 @@ class Sim(BaseSim):
         self.ind_nodes = setup_out[0]['ind']
         self.com_nodes = setup_out[0]['com']
         self.cafe_nodes = setup_out[0]['cafe']  # There is no node assigned to "dairy queen" so it was neglected
+        self.all_nodes = self.res_nodes + self.ind_nodes + self.com_nodes + \
+                         self.cafe_nodes
         if self['city'] == 'micropolis':
             self.nav_nodes = []  # placeholder for agent assignment
         if self['city'] == 'mesopolis':
             self.air_nodes = setup_out[0]['air']
             self.nav_nodes = setup_out[0]['nav']
+            self.all_nodes = self.all_nodes + self.air_nodes + self.nav_nodes
 
         self.nodes_capacity = setup_out[1]
         self.house_num = setup_out[2]
@@ -85,8 +88,11 @@ class Sim(BaseSim):
         '''
 
         ''' Move the correct number of industrial agents '''
-        self.pop.move_agents(ind2res=self.ind_dist[self.timestep % 24]/2,
-                             res2ind=self.ind_dist[self.timestep % 24]/2)
+        if self.timestep % 24 == 6 or \
+           self.timestep % 24 == 14 or \
+           self.timestep % 25 == 22:
+            self.pop.move_agents(ind2res=self.ind_dist[self.timestep % 24]/2,
+                                 res2ind=self.ind_dist[self.timestep % 24]/2)
 
         ''' Move the correct number of cafe agents '''
         if self.cafe_dist[self.timestep] > 0:
@@ -107,7 +113,12 @@ class Sim(BaseSim):
         Run the full simulation.
         '''
 
+        start_model = time.perf_counter()
         self.timestep = 0
-        for s in steps:
+        for s in range(steps):
+            print(f"Step {s}..............")
             self.step()
             self.timestep += 1
+
+        end_model = time.perf_counter()
+        print(end_model - start_model)

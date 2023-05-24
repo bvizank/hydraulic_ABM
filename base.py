@@ -99,36 +99,33 @@ class BasePop:
         ''' Count the number of people for a given key '''
         return np.count_nonzero(self[key])
 
-    def node_in_cap(self, list, nodes):
+    def node_in_cap(self, in_list, nodes):
         ''' Return inds of the first instance of each node in nodes '''
         output = list()
         for node in nodes:
-            output.append(np.where(list == node)[0][0])
+            output.append(np.where(in_list == node)[0][0])
         return np.array(output, dtype=np.int32)
 
     # @nb.njit
-    def node_cap(self, key, nodes, f):
+    def node_ag(self, key, nodes, f):
         ''' Return inds of agents at a given node type '''
         output = list()
-        for ind, item in np.ndenumerate(self[key]):
+        for ind, item in enumerate(self[key]):
             if op.f(nodes[item], 6):
                 output.append(ind)
         return np.array(output, dtype=np.int32)
 
     # @nb.njit
-    def count_node(self, key, nodes):
+    def count_node(self, nodes):
         ''' Return inds of agents at a node with a certain capacity '''
-        output = list()
-        for ind, item in np.ndenumerate(self[key]):
-            if item in nodes:
-                output.append(ind[0])
-        return np.array(output, dtype=np.int32)
+        output = np.zeros(self.pars['pop_size'])
+        for agents in nodes:
+            output += agents
+        return np.where(output == 1)[0]
 
     # @nb.njit
-    def count_node_if(self, key, nodes, key2, type):
+    def count_node_if(self, nodes, key2, type):
         ''' Return inds of agents at a given node type '''
-        output = list()
-        for ind, item in np.ndenumerate(self[key]):
-            if item in nodes and self[key][ind] == type:
-                output.append(ind)
-        return np.array(output, dtype=np.int32)
+        out_nodes = self.count_node(nodes)
+        output = np.logical_and(out_nodes, self[key2])
+        return output.astype(np.int32)
