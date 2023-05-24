@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from utils import read_data
 
-data_dir = 'Output Files/30_no_pm/'
+data_dir = 'Output Files/30_wfh/'
 # data_dir = '../../OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/dine_30/'
 read_list = [
     'seir_data',
