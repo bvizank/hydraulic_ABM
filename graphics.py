@@ -2,6 +2,7 @@ import wntr
 import numpy as np
 import pandas as pd
 import copy
+from utils import read_data
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
@@ -68,17 +69,16 @@ G = wn.to_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
 # comp_list = ['seir', 'demand', 'age', 'flow']
-comp_list_pm = ['seir_data', 'demand', 'age', 'flow', 'ppe']
-comp_list_np = ['seir', 'demand', 'age', 'flow']
-wfh = read_comp_data(wfh_comp_dir, comp_list_pm)
-no_wfh = read_comp_data(no_wfh_comp_dir, comp_list_np)
+comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe']
+wfh = read_comp_data(wfh_comp_dir, comp_list)
+no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
 # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
 ind_nodes = [node for name, node in wn.junctions()
              if node.demand_timeseries_list[0].pattern_name == '3']
-print(wfh['sd_seir_data'])
-print(wfh['avg_age'])
-print(wfh['avg_ppe'])
+# print(wfh['sd_seir_data'])
+# print(wfh['avg_age'])
+# print(wfh['avg_ppe'])
 
 
 def calc_difference(data_time_1, data_time_2):
@@ -104,17 +104,6 @@ def calc_flow_diff(data, hours):
     output = pd.DataFrame(flow_data)
     change_sum = pd.Series(flow_changes_sum)
 
-    # output = list()
-    # for i in range(len(data_time_1)):
-    #     if ('V' not in data_time_2.index[i]
-    #             and 'TowerPipe' not in data_time_2.index[i]):
-    #         if data_time_2[i] * data_time_1[i] < 0:
-    #             output.append(1)
-    #             print(f"Pipe {data_time_2.index[i]} has flow 2: {data_time_2[i]} and flow 1: {data_time_1[i]}")
-    #         else:
-    #             output.append(0)
-    #     else:
-    #         pass
     return output, change_sum
 
 
@@ -398,6 +387,69 @@ def make_sector_plot(wn, data, ylabel, op, fig_name,
         plt.close()
 
 
+def make_avg_plot(data, sd, cols, xlabel, ylabel, fig_name, x_values,
+                  logx=False, sub=False, data2=None, sd2=None):
+    '''
+    Function to plot data with error.
+
+    Parameters:
+        data (pd.DataFrame): data to be plotted
+        sd (pd.DataFrame): error of data to be plotted
+        xlabel (string): x label for figure
+        ylabel (string): y label for figure
+        fig_name (string): save name for figure
+        x_values (list): x values for the plot
+    '''
+    if publication:
+        output_loc = pub_loc
+    else:
+        output_loc = 'Output Files/png_figures/'
+
+    if not sub:
+        ''' Plot a single figure with the input data '''
+        # plot each column of data
+        for i, col in enumerate(cols):
+            plt.plot(x_values, data[col], color='C'+str(i*2))
+
+        #  need to separate so that the legend fills correctly
+        for i, col in enumerate(cols):
+            plt.fill_between(x_values, data[col] - sd[col],
+                             data[col] + sd[col],
+                             color='C'+str(i*2), alpha=0.5)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.legend(cols)
+        if logx:
+            plt.xscale('log')
+    else:
+        ''' Sub refers to a subplot with two columns of figures '''
+        fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
+        for i, col in enumerate(cols):
+            axes[0].plot(x_values, data[col], color='C'+str(i*2))
+            axes[1].plot(x_values, data2[col], color='C'+str(i*2))
+
+        # again need to separate sd so that legend fills correctly
+        for i, col in enumerate(cols):
+            axes[0].fill_between(x_values, data[col] - sd[col],
+                                 data[col] + sd[col],
+                                 color='C'+str(i*2), alpha=0.5)
+            axes[1].fill_between(x_values, data2[col] - sd2[col],
+                                 data2[col] + sd2[col],
+                                 color='C'+str(i*2), alpha=0.5)
+        axes[0].legend(cols)
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        fig.supxlabel(xlabel, y=-0.03)
+        fig.supylabel(ylabel, x=0.04)
+        plt.gcf().set_size_inches(7, 3.5)
+
+    plt.savefig(output_loc + fig_name + '.' + format, format=format,
+                bbox_inches='tight')
+    plt.close()
+
+
 def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
                    title, change_data2=None, sum_data2=None, days=90,
                    ax=None):
@@ -416,7 +468,7 @@ def make_flow_plot(change_data, sum_data, percent, dir, legend_text,
         roll_change2 = change_data2.rolling(24).mean()
         percentiles2 = sum_data2.quantile(percent)
 
-    print(percentiles)
+    # print(percentiles)
     x_values = np.array([x for x in np.arange(0, days, days/len(roll_change))])
 
     if dir == 'top':
@@ -480,16 +532,12 @@ def make_seir_plot(data, input, leg_text, title,
     ''' Function to make the seir plot with the input columns '''
     in_data = copy.deepcopy(data)
     in_data2 = copy.deepcopy(data2)
-    in_data['I'] = in_data['I'] / 4606
-    in_data2['I'] = in_data2['I'] / 4606
     in_data = in_data * 100
     in_data2 = in_data2 * 100
 
     if sd is not None:
         in_sd = copy.deepcopy(sd)
         in_sd2 = copy.deepcopy(sd2)
-        in_sd['I'] = in_sd['I'] / 4606
-        in_sd2['I'] = in_sd2['I'] / 4606
         in_sd = in_sd * 100
         in_sd2 = in_sd2 * 100
 
@@ -505,14 +553,14 @@ def make_seir_plot(data, input, leg_text, title,
             plt.plot(in_data['t_new'], in_data[item])
     if sd is not None:
         for item in input:
-                if sub:
-                    axes[0].fill_between(x_values, in_data[item]-in_sd[item],
-                                         in_data[item]+in_sd[item], alpha=0.5)
-                    axes[1].fill_between(x_values, in_data2[item]-in_sd2[item],
-                                         in_data2[item]+in_sd2[item], alpha=0.5)
-                else:
-                    plt.fill_between(x_values, in_data[item] - in_sd[item],
-                                     in_data[item] + in_sd[item], alpha=0.5)
+            if sub:
+                axes[0].fill_between(x_values, in_data[item]-in_sd[item],
+                                     in_data[item]+in_sd[item], alpha=0.5)
+                axes[1].fill_between(x_values, in_data2[item]-in_sd2[item],
+                                     in_data2[item]+in_sd2[item], alpha=0.5)
+            else:
+                plt.fill_between(x_values, in_data[item] - in_sd[item],
+                                 in_data[item] + in_sd[item], alpha=0.5)
     # plt.axvline(x=times[0]/24, color='black')
     # plt.axvline(x=times[1]/24, color='black')
     if sub:
@@ -549,7 +597,7 @@ def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
                                bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
     mean_y2 = binned_statistic(x, y2, statistic='mean',
                                bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
-    print(mean_y1.bin_edges)
+    # print(mean_y1.bin_edges)
 
     bin_names = ['0-500', '500-1000', '1000-1500', '1500-2000', '2000-2500',
                  '2500-3000', '3000-3500']
@@ -572,7 +620,7 @@ def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
     fig, ax = plt.subplots(layout='constrained')
 
     for attribute, measurement in data_dict.items():
-        print(measurement)
+        # print(measurement)
         offset = width * multiplier
         ax.bar(bar_x + offset, measurement, width, label=attribute,
                color='C'+str(multiplier*2))
@@ -610,7 +658,7 @@ def calc_model_stats(wn, seir, age):
     return (final_age, max_inf/4606, final_sus)
 
 
-print(wfh['avg_seir_data'])
+# print(wfh['avg_seir_data'])
 # index_vals = wfh['avg_seir_data'].index
 # for i, item in enumerate(wfh['avg_seir_data'].wfh):
 #     print(index_vals[i])
@@ -714,15 +762,80 @@ make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0, 'top', ['Base', 'PM'],
                wfh_flow_sum)
 
 ''' Make demand plots for by sector with PM data '''
-make_sector_plot(wn, wfh['avg_demand'], 'Demand (L)',
-                 'sum', 'sum_demand_'+error, sd=wfh['sd_demand'])
-# make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand')
-# make_sector_plot(wn, wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand')
+# make lists of sector nodes
+res_nodes = [name for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].pattern_name == '2']
+ind_nodes = [name for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].pattern_name == '3']
+com_nodes = [name for name, node in wn.junctions()
+             if node.demand_timeseries_list[0].pattern_name == '4' or
+             node.demand_timeseries_list[0].pattern_name == '5' or
+             node.demand_timeseries_list[0].pattern_name == '6']
+
+# define the columns of the input data and the x_values
+cols = ['Residential', 'Industrial', 'Commercial']
+x_values = np.array([x for x in np.arange(0, 90, 90/len(wfh['avg_demand']))])
+
+# collect demands
+res_dem = wfh['avg_demand'][res_nodes]
+com_dem = wfh['avg_demand'][com_nodes]
+ind_dem = wfh['avg_demand'][ind_nodes]
+
+res_sd = wfh['sd_demand'][res_nodes]
+com_sd = wfh['sd_demand'][com_nodes]
+ind_sd = wfh['sd_demand'][ind_nodes]
+
+# make input data and sd
+sector_dem = pd.concat([res_dem.sum(axis=1).rolling(24).mean(),
+                        com_dem.sum(axis=1).rolling(24).mean(),
+                        ind_dem.sum(axis=1).rolling(24).mean()],
+                       axis=1, keys=cols)
+sector_dem_sd = pd.concat([res_sd.sum(axis=1).rolling(24).mean(),
+                           com_sd.sum(axis=1).rolling(24).mean(),
+                           ind_sd.sum(axis=1).rolling(24).mean()],
+                          axis=1, keys=cols)
+
+# plot demand by sector
+make_avg_plot(sector_dem, sector_dem_sd, cols, 'Time (days)', 'Demand (L)',
+              'sum_demand_'+error, x_values)
 
 ''' Make age plot by sector for both base and PM '''
-make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean', 'mean_age_'+error,
-                 data2=wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600, sd2=wfh['sd_age']/3600,
-                 sub=True)
+res_age_all_pm = wfh['avg_age'][res_nodes].mean(axis=1)
+com_age_all_pm = wfh['avg_age'][com_nodes].mean(axis=1)
+ind_age_all_pm = wfh['avg_age'][ind_nodes].mean(axis=1)
+
+res_sd_all_pm = wfh['sd_age'][res_nodes].mean(axis=1)
+com_sd_all_pm = wfh['sd_age'][com_nodes].mean(axis=1)
+ind_sd_all_pm = wfh['sd_age'][ind_nodes].mean(axis=1)
+
+res_age_no_pm = no_wfh['avg_age'][res_nodes].mean(axis=1)
+com_age_no_pm = no_wfh['avg_age'][com_nodes].mean(axis=1)
+ind_age_no_pm = no_wfh['avg_age'][ind_nodes].mean(axis=1)
+
+res_sd_no_pm = no_wfh['sd_age'][res_nodes].mean(axis=1)
+com_sd_no_pm = no_wfh['sd_age'][com_nodes].mean(axis=1)
+ind_sd_no_pm = no_wfh['sd_age'][ind_nodes].mean(axis=1)
+
+# make input data and sd
+all_pm_age = pd.concat([res_age_all_pm.rolling(24).mean(),
+                        com_age_all_pm.rolling(24).mean(),
+                        ind_age_all_pm.rolling(24).mean()],
+                       axis=1, keys=cols)
+all_pm_age_sd = pd.concat([res_sd_all_pm.rolling(24).mean(),
+                           com_sd_all_pm.rolling(24).mean(),
+                           ind_sd_all_pm.rolling(24).mean()],
+                          axis=1, keys=cols)
+non_pm_age = pd.concat([res_age_no_pm.rolling(24).mean(),
+                        com_age_no_pm.rolling(24).mean(),
+                        ind_age_no_pm.rolling(24).mean()],
+                       axis=1, keys=cols)
+non_pm_age_sd = pd.concat([res_sd_no_pm.rolling(24).mean(),
+                           com_sd_no_pm.rolling(24).mean(),
+                           ind_sd_no_pm.rolling(24).mean()],
+                          axis=1, keys=cols)
+make_avg_plot(non_pm_age/3600, non_pm_age_sd/3600,
+              cols, 'Time (days)', 'Age (hr)', 'mean_age_'+error,
+              x_values, data2=all_pm_age/3600, sd2=all_pm_age_sd/3600, sub=True)
 # make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
 #                  'mean', 'mean_age', sd=no_wfh['sd_age']/3600)
 # make_sector_plot(wn, days_200['age']/3600, 'Age (hr)', day200_loc, 'mean',
@@ -749,13 +862,10 @@ make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
 # export_agent_loc(wn, agent)
 
 ''' SEIR plot '''
-make_seir_plot(no_wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
+make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
-               title='combined', data2=wfh['avg_seir_data'], sd=no_wfh['sd_seir'],
+               title='combined', data2=wfh['avg_seir_data'], sd=no_wfh['sd_seir_data'],
                sd2=wfh['sd_seir_data'], sub=True)
-# make_seir_plot(wfh['avg_seir'], ['S', 'E', 'I', 'R', 'wfh'],
-#                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
-#                title='wfh', sd=wfh['sd_seir'])
 
 ''' Export comparison stats '''
 only_wfh_loc = 'Output Files/30_wfh/'
@@ -763,23 +873,23 @@ dine_loc = 'Output Files/30_dine/'
 grocery_loc = 'Output Files/30_grocery/'
 ppe_loc = 'Output Files/30_ppe/'
 
-only_wfh = read_comp_data(only_wfh_loc, ['seir', 'age'])
-dine = read_comp_data(dine_loc, ['seir', 'age'])
-grocery = read_comp_data(grocery_loc, ['seir', 'age'])
-ppe = read_comp_data(ppe_loc, ['seir', 'age'])
-print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir'], only_wfh['avg_age']/3600)))
-print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir'], dine['avg_age']/3600)))
-print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir'], grocery['avg_age']/3600)))
-print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir'], ppe['avg_age']/3600)))
+only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'])
+dine = read_comp_data(dine_loc, ['seir_data', 'age'])
+grocery = read_comp_data(grocery_loc, ['seir_data', 'age'])
+ppe = read_comp_data(ppe_loc, ['seir_data', 'age'])
+print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
+print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
+print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
+print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir_data'], ppe['avg_age']/3600)))
 print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
-print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir'], no_wfh['avg_age']/3600)))
+print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir_data'], no_wfh['avg_age']/3600)))
 
 ind_distances, ind_closest = calc_industry_distance(wn)
 pm_age_values = list()
 no_pm_age_values = list()
 pm_curr_age_values = wfh['avg_age'].iloc[len(wfh['avg_age'])-1]/3600
 no_pm_curr_age_values = no_wfh['avg_age'].iloc[len(no_wfh['avg_age'])-1]/3600
-print(pm_curr_age_values)
+# print(pm_curr_age_values)
 for age in pm_curr_age_values.items():
     no_pm_age = no_pm_curr_age_values[age[0]]
     if age[0] in ind_distances.keys():
@@ -794,31 +904,6 @@ make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
                    'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
                    ['Base', 'PM'])
 
-# dist_values = [i for i in ind_distances.values()]
-# no_pm_db = pd.DataFrame(data={'dist': dist_values, 'age': no_pm_age_values})
-# bins = np.linspace(no_pm_db['age'].min(), no_pm_db['age'].max(), 10)
-# labels = [str(i) for i in range(9)]
-# no_pm_db['bins'] = pd.cut(no_pm_db['age'], bins=bins, labels=labels,
-#                           include_lowest=True)
-# print(no_pm_db['bins'])
-
-# need to average the age by bin and plot those as the heights in the bar chart.
-# plt.bar(no_pm_db['dist'], )
-
-# make the y value list that combines both the base and pm values
-# then make a color list that has the same number of color 1 as the base
-# list and the same number of color 2 as the pm list. This will make
-# them apear differently on the plot.
-age_values = no_pm_age_values + pm_age_values
-dist_values = ([i for i in ind_distances.values()] +
-               [i for i in ind_distances.values()])
-colors = ([prim_colors[0] for i in no_pm_age_values] +
-          [prim_colors[2] for i in pm_age_values])
-
-# make_distance_plot(dist_values, age_values,
-#                    'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
-#                    c=colors, leg=["Base", "PM"])
-
 # closest_distances = calc_closest_node(wn)
 # age_values = list()
 # curr_age_values = wfh['age'].iloc[len(wfh['age'])-1]/3600
@@ -827,3 +912,17 @@ colors = ([prim_colors[0] for i in no_pm_age_values] +
 #         age_values.append(age[1])
 # make_distance_plot(closest_distances.values(), age_values, 'Distance (m)',
 #                    'Age (hr)', wfh_loc, 'age_closest_node')
+
+
+''' Make agent state variable plots '''
+all_pm_sv = read_data('Output Files/30_all_pm/2023-05-24_11-32_0_results',
+                      ['cov_pers', 'cov_ff', 'media'])
+no_pm_sv = read_data('Output Files/30_no_pm/2023-05-23_21-41_0_results',
+                     ['cov_pers', 'cov_ff', 'media'])
+
+agent = 3294
+cols = ['Personal', 'Friends-Family]', 'Media']
+data = pd.concat([all_pm_sv['cov_pers'][agent],
+                  all_pm_sv['cov_ff'][agent],
+                  all_pm_sv['media'][agent]],
+                 axis=1, cols=cols)
