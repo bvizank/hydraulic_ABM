@@ -117,15 +117,20 @@ class BasePop:
 
     # @nb.njit
     def count_node(self, nodes):
-        ''' Return inds of agents at a node with a certain capacity '''
-        output = np.zeros(self.pars['pop_size'])
-        for agents in nodes:
-            output += agents
-        return np.where(output == 1)[0]
+        ''' Returns both a list of inds that correspond to the agents at the
+        nodes given and a dictionary of the nodes and the indices that are at
+        those nodes '''
+        output = np.zeros(len(nodes), (self.pars['pop_size']), dtype=np.int32)
+        out_dict = dict()
+        for i, node in enumerate(nodes):
+            out_dict[node] = np.where(self[node] == 1)[0]
+            output += self[node]
+        return (np.where(output == 1)[0], out_dict)
 
     # @nb.njit
     def count_node_if(self, nodes, key2, type):
-        ''' Return inds of agents at a given node type '''
+        ''' Return inds of agents at a given node type and a dictionary of
+        nodes and agents at those nodes '''
         out_nodes = self.count_node(nodes)
-        output = np.logical_and(out_nodes, self[key2])
-        return output.astype(np.int32)
+        output = np.logical_and(out_nodes[0], self[key2])
+        return (output.astype(np.int32), out_nodes[1])

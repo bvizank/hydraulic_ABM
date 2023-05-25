@@ -182,12 +182,13 @@ class Population(BasePop):
         from home '''
         if ind2res is not None:
             ''' Move agents from industrial to residential '''
-            agents2res = self.count_node(self.model.ind_nodes)
+            agents2res, node_dict = self.count_node(self.model.ind_nodes)
             inds = choose(len(agents2res), ind2res)
             homes = self['home_node'][agents2res[inds]]
             for home in homes:
                 self[home][agents2res[inds]] = 1
-                self[]
+            for node, inds in node_dict.items():
+                
             # self['curr_node'][agents2res[inds]] = self['home_node'][agents2res[inds]]
 
         if res2ind is not None:
