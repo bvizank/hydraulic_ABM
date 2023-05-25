@@ -2,8 +2,8 @@ import os
 import pandas as pd
 from utils import read_data
 
-data_dir = 'Output Files/30_wfh/'
-# data_dir = '../../OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/dine_30/'
+# data_dir = 'Output Files/30_wfh/'
+data_dir = '../../OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/no_pm_30/'
 read_list = [
     'seir_data',
     'demand',
@@ -41,6 +41,7 @@ for i, folder in enumerate(next(os.walk(data_dir))[1]):
         # if file.endswith('.pkl'):
         #     os.remove(os.path.join(data_dir, folder, file))
     output = read_data(data_dir + folder + '/', read_list)
+    output['cov_pers'] = output['cov_pers'].replace([7, 1], [0, 1])
     for item in read_list:
         globals()['tot_' + item] = pd.concat((globals()['tot_' + item], output[item]))
 

@@ -69,7 +69,7 @@ G = wn.to_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
 # comp_list = ['seir', 'demand', 'age', 'flow']
-comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe']
+comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers']
 wfh = read_comp_data(wfh_comp_dir, comp_list)
 no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
@@ -99,10 +99,11 @@ def calc_flow_diff(data, hours):
             flow_changes_sum[pipe] = sum(curr_flow_changes[0:hours])
             flow_data[pipe] = curr_flow_changes
 
-    output = pd.DataFrame(flow_data)
-    change_sum = pd.Series(flow_changes_sum)
+    # output = pd.DataFrame(flow_data)
+    # change_sum = pd.Series(flow_changes_sum)
 
-    return output, change_sum
+    return flow_data, flow_changes_sum
+    # return output, change_sum
 
 
 def calc_distance(node1, node2):
@@ -707,16 +708,16 @@ def check_stats(new_list, old_stats):
     return old_stats
 
 
-demand_stats = [0,0]
-pressure_stats = [0,0]
-age_stats = [0,0]
-agent_stats = [0,0]
-demand_diff = list()
-pressure_diff = list()
-age_diff = list()
-agent_diff = list()
-wfh_flow_diff = list()
-no_wfh_flow_diff = list()
+# demand_stats = [0,0]
+# pressure_stats = [0,0]
+# age_stats = [0,0]
+# agent_stats = [0,0]
+# demand_diff = list()
+# pressure_diff = list()
+# age_diff = list()
+# agent_diff = list()
+# wfh_flow_diff = list()
+# no_wfh_flow_diff = list()
 
 # for i, time in enumerate(times):
 #     if time >= len(demand_wfh):
@@ -743,44 +744,46 @@ no_wfh_flow_diff = list()
 ''' Sector plots '''
 
 ''' Flow direction change plots '''
-wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[0])
-no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[0])
+wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[len(times)-1])
+no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[len(times)-1])
 
-fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
+data_wfh = 
 
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.8, 'top', ['Base', 'PM'],
-               'top10_flow_changes', wfh_flow_change,
-               wfh_flow_sum, ax=axes[0])
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.2, 'bottom', ['Base', 'PM'],
-               'bottom10_flow_changes', wfh_flow_change,
-               wfh_flow_sum, ax=axes[2])
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.2, 0.8], 'middle', ['Base', 'PM'],
-               'middle80_flow_changes', wfh_flow_change,
-               wfh_flow_sum, ax=axes[1])
-# max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
+# fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
 
-plt.gcf().set_size_inches(6, 3.5)
-fig.supxlabel('Time (days)', y=-0.05)
-fig.supylabel('Daily Average Flow Changes')
-axes[0].text(0.5, -0.12, "Top 20%", size=12, ha="center",
-             transform=axes[0].transAxes)
-axes[1].text(0.5, -0.12, "Middle 60%", size=12, ha="center",
-             transform=axes[1].transAxes)
-axes[2].text(0.5, -0.12, "Bottom 20%", size=12, ha="center",
-             transform=axes[2].transAxes)
-# plt.xlabel('Time (days)')
-# plt.ylabel('Daily Average Flow Changes')
-axes[0].legend(['Base', 'PM'], loc='lower left')
-if publication:
-    loc = pub_loc
-else:
-    loc = 'Output Files/png_figures/'
-plt.savefig(loc + 'flow_change_mid60.' + format, format=format, bbox_inches='tight')
-plt.close()
+# make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.8, 'top', ['Base', 'PM'],
+#                'top10_flow_changes', wfh_flow_change,
+#                wfh_flow_sum, ax=axes[0])
+# make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.2, 'bottom', ['Base', 'PM'],
+#                'bottom10_flow_changes', wfh_flow_change,
+#                wfh_flow_sum, ax=axes[2])
+# make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, [0.2, 0.8], 'middle', ['Base', 'PM'],
+#                'middle80_flow_changes', wfh_flow_change,
+#                wfh_flow_sum, ax=axes[1])
+# # max_flow_change = wfh_flow_sum.loc[int(wfh_flow_sum.idxmax())]
 
-make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0, 'top', ['Base', 'PM'],
-               'all_flow_changes', wfh_flow_change,
-               wfh_flow_sum)
+# plt.gcf().set_size_inches(6, 3.5)
+# fig.supxlabel('Time (days)', y=-0.05)
+# fig.supylabel('Daily Average Flow Changes')
+# axes[0].text(0.5, -0.12, "Top 20%", size=12, ha="center",
+#              transform=axes[0].transAxes)
+# axes[1].text(0.5, -0.12, "Middle 60%", size=12, ha="center",
+#              transform=axes[1].transAxes)
+# axes[2].text(0.5, -0.12, "Bottom 20%", size=12, ha="center",
+#              transform=axes[2].transAxes)
+# # plt.xlabel('Time (days)')
+# # plt.ylabel('Daily Average Flow Changes')
+# axes[0].legend(['Base', 'PM'], loc='lower left')
+# if publication:
+#     loc = pub_loc
+# else:
+#     loc = 'Output Files/png_figures/'
+# plt.savefig(loc + 'flow_change_mid60.' + format, format=format, bbox_inches='tight')
+# plt.close()
+
+# make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0, 'top', ['Base', 'PM'],
+#                'all_flow_changes', wfh_flow_change,
+#                wfh_flow_sum)
 
 ''' Make demand plots for by sector with PM data '''
 # make lists of sector nodes
@@ -962,3 +965,22 @@ make_heatmap(all_pm_sv['cov_ff'].T,
              'Time (day)', 'Agent', 'ff_heatmap_all_pm', 6)
 make_heatmap(no_pm_sv['cov_ff'].T,
              'Time (day)', 'Agent', 'ff_heatmap_no_pm', 6)
+
+data = pd.concat([no_wfh['avg_cov_ff'].mean(axis=1),
+                  wfh['avg_cov_ff'].mean(axis=1)],
+                 axis=1, keys=['Base', 'PM'])
+sd = pd.concat([no_wfh['sd_cov_ff'].mean(axis=1),
+                wfh['sd_cov_ff'].mean(axis=1)],
+               axis=1, keys=['Base', 'PM'])
+make_avg_plot(data, sd, ['Base', 'PM'],
+              'Time (day)', 'Average Value', 'ff_avg',
+              np.delete(x_values, 0))
+data = pd.concat([no_wfh['avg_cov_pers'].mean(axis=1),
+                  wfh['avg_cov_pers'].mean(axis=1)],
+                 axis=1, keys=['Base', 'PM'])
+sd = pd.concat([no_wfh['sd_cov_pers'].mean(axis=1),
+                wfh['sd_cov_pers'].mean(axis=1)],
+               axis=1, keys=['Base', 'PM'])
+make_avg_plot(data, sd, ['Base', 'PM'],
+              'Time (day)', 'Average Value', 'pers_avg',
+              np.delete(x_values, 0))
