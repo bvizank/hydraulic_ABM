@@ -96,7 +96,7 @@ def calc_flow_diff(data, hours):
                 else:
                     curr_flow_changes.append(0)
         # print(curr_flow_changes[0:hours])
-            flow_changes_sum[pipe] = sum(curr_flow_changes[0:hours])
+            flow_changes_sum[pipe] = sum(curr_flow_changes[0:hours])/24
             flow_data[pipe] = curr_flow_changes
 
     # output = pd.DataFrame(flow_data)
@@ -747,8 +747,17 @@ def check_stats(new_list, old_stats):
 wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[len(times)-1])
 no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[len(times)-1])
 
-data_wfh = 
+ax = wntr.graphics.plot_network(wn, link_attribute=wfh_flow_sum,
+                                link_colorbar_label='Average Flow Changes',
+                                node_size=0, link_width=1)
+if publication:
+    loc = pub_loc
+else:
+    loc = 'Output Files/png_figures/'
 
+plt.savefig(loc + 'flow_network.' + format, format=format,
+            bbox_inches='tight')
+plt.close()
 # fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
 
 # make_flow_plot(no_wfh_flow_change, no_wfh_flow_sum, 0.8, 'top', ['Base', 'PM'],
