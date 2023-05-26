@@ -196,6 +196,7 @@ class Population(BasePop):
             self.set_nodes(homes, node_dict, uids, agents2res, ind2res, inds,
                            True)
 
+        ''' Move agents to industrial nodes from residential '''
         if res2ind is not None:
             agents2ind, node_dict = self.count_node_if(self.model.res_nodes,
                                                        'work_ind')
@@ -298,8 +299,15 @@ class Population(BasePop):
             self[home][uids[i]] = res
 
         ''' Nodes can be either a dictionary of nodes or an np.array '''
-        for i, node in enumerate(nodes):
-            self[node][uids[i]] = non_res
+        ''' If nodes is a dictionary, need to chekc if uid was at that node '''
+        if isinstance(nodes, dict):
+            for i, (node, values) in enumerate(nodes.items()):
+                print(node, values)
+                if uids[i] in values:
+                    self[node][uids[i]] = non_res
+        elif isinstance(nodes, np.ndarray):
+            for i, node in enumerate(nodes):
+                self[node][uids[i]] = non_res
 
         ''' Update the com/caf_nodes_bin list to ensure nodes are now open '''
         if origin == 'com':
