@@ -95,6 +95,14 @@ class BasePop:
         ''' Return indices of people who are nan '''
         return np.isnan(self[key]).nonzero()[0]
 
+    def defined_str(self, key):
+        ''' Return indices of people who are not-nan '''
+        return (~np.equal(self[key], 'nan')).nonzero()[0]
+
+    def undefined_str(self, key):
+        ''' Return indices of people who are nan '''
+        return np.equal(self[key], 'nan').nonzero()[0]
+
     def count(self, key):
         ''' Count the number of people for a given key '''
         return np.count_nonzero(self[key])
@@ -120,7 +128,7 @@ class BasePop:
         ''' Returns both a list of inds that correspond to the agents at the
         nodes given and a dictionary of the nodes and the indices that are at
         those nodes '''
-        output = np.zeros(len(nodes), (self.pars['pop_size']), dtype=np.int32)
+        output = np.zeros(self.pars['pop_size'], dtype=np.int32)
         out_dict = dict()
         for i, node in enumerate(nodes):
             out_dict[node] = np.where(self[node] == 1)[0]
@@ -128,9 +136,13 @@ class BasePop:
         return (np.where(output == 1)[0], out_dict)
 
     # @nb.njit
-    def count_node_if(self, nodes, key2, type):
+    def count_node_if(self, nodes, key2):
         ''' Return inds of agents at a given node type and a dictionary of
         nodes and agents at those nodes '''
-        out_nodes = self.count_node(nodes)
-        output = np.logical_and(out_nodes[0], self[key2])
-        return (output.astype(np.int32), out_nodes[1])
+        out_nodes, out_dict = self.count_node(nodes)
+        # print(out_nodes)
+        # print(self[key2][out_nodes])
+        output = np.multiply(out_nodes, self[key2][out_nodes])
+        # print(output)
+        out_ind = output.nonzero()[0]
+        return (output[out_ind].astype(np.int32), out_dict)

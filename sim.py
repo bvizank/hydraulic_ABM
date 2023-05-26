@@ -82,11 +82,7 @@ class Sim(BaseSim):
         ''' Move the initial number of industrial agents '''
         self.pop.move_agents(res2ind=np.amax(self.ind_dist))
 
-    def step(self):
-        '''
-        Complete one time step of the simulation.
-        '''
-
+    def move(self):
         ''' Move the correct number of industrial agents '''
         if self.timestep % 24 == 6 or \
            self.timestep % 24 == 14 or \
@@ -95,18 +91,37 @@ class Sim(BaseSim):
                                  res2ind=self.ind_dist[self.timestep % 24]/2)
 
         ''' Move the correct number of cafe agents '''
-        if self.cafe_dist[self.timestep] > 0:
-            self.pop.move_agents(res2caf=self.cafe_dist[self.timestep % 24])
-        else:
-            self.pop.move_agents(caf2res=self.cafe_dist[self.timestep % 24])
+        caf2move = (self.cafe_dist[self.timestep % 24] -
+                    self.cafe_dist[self.timestep % 24 - 1])
+        if caf2move > 0:
+            self.pop.move_agents(res2caf=abs(caf2move))
+        elif caf2move < 0:
+            self.pop.move_agents(caf2res=abs(caf2move))
 
         ''' Move the correct number of com agents '''
-        if self.cafe_dist[self.timestep % 24] > 0:
-            self.pop.move_agents(res2com=self.com_dist[self.timestep % 24])
-        else:
-            self.pop.move_agents(com2res=self.com_dist[self.timestep % 24])
+        com2move = (self.com_dist[self.timestep % 24] -
+                    self.com_dist[self.timestep % 24 - 1])
+        if com2move > 0:
+            self.pop.move_agents(res2com=abs(com2move))
+        elif com2move < 0:
+            self.pop.move_agents(com2res=abs(com2move))
 
         ''' Need to add air and nav movements '''
+
+    def count_agents(self):
+        print("Res nodes: ", len(self.pop.count_node(self.res_nodes)[0]))
+        print("Cafe nodes: ", len(self.pop.count_node(self.cafe_nodes)[0]))
+        print("Com nodes: ", len(self.pop.count_node(self.com_nodes)[0]))
+        print("Ind nodes: ", len(self.pop.count_node(self.ind_nodes)[0]))
+        print("All nodes: ", len(self.pop.count_node(self.all_nodes)[0]))
+
+    def step(self):
+        '''
+        Complete one time step of the simulation.
+        '''
+        self.count_agents()
+        if self.timestep != 0:
+            self.move()
 
     def run(self, steps):
         '''
