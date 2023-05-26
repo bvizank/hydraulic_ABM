@@ -193,7 +193,8 @@ class Population(BasePop):
             inds = choose(len(agents2res), ind2res)
             homes = self['home_node'][agents2res[inds]]
             uids = self['uid'][agents2res[inds]]
-            self.set_nodes(homes, node_dict, uids, agents2res, ind2res, inds,
+            nodes = np.array([self.find_node(i, self.model.ind_nodes) for i in uids])
+            self.set_nodes(homes, nodes, uids, agents2res, ind2res, inds,
                            True)
 
         ''' Move agents to industrial nodes from residential '''
@@ -214,7 +215,8 @@ class Population(BasePop):
             inds = choose(len(agents2res), caf2res)
             homes = self['home_node'][agents2res[inds]]
             uids = self['uid'][agents2res[inds]]
-            self.set_nodes(homes, node_dict, uids, agents2res, caf2res, inds,
+            nodes = np.array([self.find_node(i, self.model.cafe_nodes) for i in uids])
+            self.set_nodes(homes, nodes, uids, agents2res, caf2res, inds,
                            True, 'caf')
 
         if res2caf is not None:
@@ -233,6 +235,7 @@ class Population(BasePop):
             self.set_nodes(homes, nodes, uids, agents2caf, res2caf, inds_ag,
                            False)
             # finally set nodes in cafe_nodes_bin to 0
+            inds_caf = self.node_in_cap(self['cafe_nodes_nam'], homes)
             self['cafe_nodes_bin'][inds_caf] = 0
 
         if com2res is not None:
@@ -241,7 +244,8 @@ class Population(BasePop):
             inds = choose(len(agents2res), com2res)
             homes = self['home_node'][agents2res[inds]]
             uids = self['uid'][agents2res[inds]]
-            self.set_nodes(homes, node_dict, uids, agents2res, com2res, inds,
+            nodes = np.array([self.find_node(i, self.model.com_nodes) for i in uids])
+            self.set_nodes(homes, nodes, uids, agents2res, com2res, inds,
                            True, 'com')
 
         if res2com is not None:
@@ -260,6 +264,7 @@ class Population(BasePop):
             self.set_nodes(homes, nodes, uids, agents2com, res2com, inds_ag,
                            False)
             # finally set nodes in cafe_nodes_bin to 0
+            inds_com = self.node_in_cap(self['com_nodes_nam'], homes)
             self['com_nodes_bin'][inds_com] = 0
 
         ''' If navy nodes exist, move similarly to industrial nodes '''
@@ -268,7 +273,8 @@ class Population(BasePop):
             inds = choose(len(agents2res), nav2res)
             homes = self['home_node'][agents2res[inds]]
             uids = self['uid'][agents2res[inds]]
-            self.set_nodes(homes, node_dict, uids, agents2res, nav2res, inds,
+            nodes = np.array([self.find_node(i, self.model.nav_nodes) for i in uids])
+            self.set_nodes(homes, nodes, uids, agents2res, nav2res, inds,
                            True)
 
         if res2nav is not None:
@@ -298,16 +304,9 @@ class Population(BasePop):
         for i, home in enumerate(homes):
             self[home][uids[i]] = res
 
-        ''' Nodes can be either a dictionary of nodes or an np.array '''
-        ''' If nodes is a dictionary, need to chekc if uid was at that node '''
-        if isinstance(nodes, dict):
-            for i, (node, values) in enumerate(nodes.items()):
-                print(node, values)
-                if uids[i] in values:
-                    self[node][uids[i]] = non_res
-        elif isinstance(nodes, np.ndarray):
-            for i, node in enumerate(nodes):
-                self[node][uids[i]] = non_res
+        ''' Set the agents non_res node '''
+        for i, node in enumerate(nodes):
+            self[node][uids[i]] = non_res
 
         ''' Update the com/caf_nodes_bin list to ensure nodes are now open '''
         if origin == 'com':
@@ -316,6 +315,8 @@ class Population(BasePop):
         elif origin == 'cafe':
             nodes_u = self.node_in_cap(self['caf_nodes_nam'], nodes)
             self['caf_nodes_bin'][nodes_u] = 1
+        elif origin is None:
+            pass
 
     def infect(self, inds):
         '''

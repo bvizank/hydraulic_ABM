@@ -110,11 +110,13 @@ class BasePop:
     def node_in_cap(self, in_list, nodes):
         ''' Return inds of the first instance of each node in nodes '''
         output = list()
-        for node in nodes:
-            output.append(np.where(in_list == node)[0][0])
+        unique_nodes, num_unique = np.unique(nodes, return_counts=True)
+        for i, node in enumerate(unique_nodes):
+            curr_inds = np.where(in_list == node)[0]
+            for i in curr_inds[0:num_unique[i]]:
+                output.append(i)
         return np.array(output, dtype=np.int32)
 
-    # @nb.njit
     def node_ag(self, key, nodes, f):
         ''' Return inds of agents at a given node type '''
         output = list()
@@ -123,7 +125,6 @@ class BasePop:
                 output.append(ind)
         return np.array(output, dtype=np.int32)
 
-    # @nb.njit
     def count_node(self, nodes):
         ''' Returns both a list of inds that correspond to the agents at the
         nodes given and a dictionary of the nodes and the indices that are at
@@ -135,14 +136,17 @@ class BasePop:
             output += self[node]
         return (np.where(output == 1)[0], out_dict)
 
-    # @nb.njit
     def count_node_if(self, nodes, key2):
         ''' Return inds of agents at a given node type and a dictionary of
         nodes and agents at those nodes '''
         out_nodes, out_dict = self.count_node(nodes)
-        # print(out_nodes)
-        # print(self[key2][out_nodes])
         output = np.multiply(out_nodes, self[key2][out_nodes])
-        # print(output)
         out_ind = output.nonzero()[0]
         return (output[out_ind].astype(np.int32), out_dict)
+
+    def find_node(self, agent, nodes):
+        ''' Find the node that the agent currently occupies '''
+        for node in nodes:
+            if self[node][agent] == 1:
+                return node
+        raise ValueError(f"Agent {agent} not found in given nodes.")

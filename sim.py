@@ -119,7 +119,7 @@ class Sim(BaseSim):
         '''
         Complete one time step of the simulation.
         '''
-        self.count_agents()
+        # self.count_agents()
         if self.timestep != 0:
             self.move()
 
@@ -131,7 +131,7 @@ class Sim(BaseSim):
         start_model = time.perf_counter()
         self.timestep = 0
         for s in range(steps):
-            print(f"Step {s}..............")
+            # print(f"Step {s}..............")
             self.step()
             self.timestep += 1
 
