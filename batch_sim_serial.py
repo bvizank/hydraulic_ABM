@@ -1,7 +1,7 @@
 from run_sim import run_sim
 import os
 
-for i in range(30):
+for i in range(26):
     print(f"running sim: {i}.................")
     run_sim(city='micropolis', id=i, days=90, verbose=0, bbn_models=['dine'])
     curr_dir = os.getcwd()
