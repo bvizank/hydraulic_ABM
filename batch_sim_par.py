@@ -1,5 +1,7 @@
 from run_sim import run_sim
 from mpi4py import MPI
+import os
+
 
 comm = MPI.COMM_WORLD
 nprocs = comm.Get_size()
@@ -7,3 +9,6 @@ rank = comm.Get_rank()
 
 for i in range(0+rank, 30, nprocs):
     run_sim('micropolis', id=i, days=90, bbn_models=[], verbose=0)
+    os.remove('id' + str(i) + '.bin')
+    os.remove('id' + str(i) + '.rpt')
+    os.remove('id' + str(i) + '.inp')
