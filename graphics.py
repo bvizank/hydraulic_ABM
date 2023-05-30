@@ -952,7 +952,7 @@ make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
 ''' Make agent state variable plots '''
 all_pm_sv = read_data('Output Files/30_all_pm/2023-05-24_11-32_0_results/',
                       ['cov_pers', 'cov_ff', 'media'])
-no_pm_sv = read_data('Output Files/30_no_pm/2023-05-23_21-41_0_results/',
+no_pm_sv = read_data('Output Files/30_no_pm/2023-05-26_08-33_0_results/',
                      ['cov_pers', 'cov_ff', 'media'])
 
 agent = '124'
