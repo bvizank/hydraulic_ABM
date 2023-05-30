@@ -47,9 +47,12 @@ class Sim(BaseSim):
                          self.cafe_nodes
         if self['city'] == 'micropolis':
             self.nav_nodes = []  # placeholder for agent assignment
+            self.nonres_nodes = self.ind_nodes + self.com_nodes + self.cafe_nodes
         if self['city'] == 'mesopolis':
             self.air_nodes = setup_out[0]['air']
             self.nav_nodes = setup_out[0]['nav']
+            self.nonres_nodes = self.ind_nodes + self.com_nodes + \
+                                self.cafe_nodes + self.air_nodes + self.nav_nodes
             self.all_nodes = self.all_nodes + self.air_nodes + self.nav_nodes
 
         self.nodes_capacity = setup_out[1]
@@ -122,6 +125,8 @@ class Sim(BaseSim):
         # self.count_agents()
         if self.timestep != 0:
             self.move()
+            self.pop.contact()
+            self.pop.reset_move()
 
     def run(self, steps):
         '''

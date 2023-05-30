@@ -324,3 +324,37 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
 
     return samples
 
+
+def n_binomial(prob, n):
+    '''
+    Perform multiple binomial (Bernolli) trials
+
+    Args:
+        prob (float): probability of each trial succeeding
+        n (int): number of trials (size of array)
+
+    Returns:
+        Boolean array of which trials succeeded
+
+    **Example**::
+
+        outcomes = cv.n_binomial(0.5, 100) # Perform 100 coin-flips
+    '''
+    return np.random.random(n) < prob
+
+
+def binomial_arr(prob_arr):
+    '''
+    Binomial (Bernoulli) trials each with different probabilities.
+
+    Args:
+        prob_arr (array): array of probabilities
+
+    Returns:
+         Boolean array of which trials on the input array succeeded
+
+    **Example**::
+
+        outcomes = cv.binomial_arr([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]) # Perform 6 trials with different probabilities
+    '''
+    return np.random.random(len(prob_arr)) < prob_arr

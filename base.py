@@ -83,6 +83,11 @@ class BasePop:
         ''' Return indices matching the condition '''
         return self[key].nonzero()[0]
 
+    def true_and(self, key, key2):
+        ''' Return indices that are true for both keys '''
+        output = np.logical_and(self[key], self[key2])
+        return output.nonzero()[0]
+
     def false(self, key):
         ''' Return indices not matching the condition '''
         return (~self[key]).nonzero()[0]
@@ -106,6 +111,118 @@ class BasePop:
     def count(self, key):
         ''' Count the number of people for a given key '''
         return np.count_nonzero(self[key])
+
+    def itrue(self, arr, inds):
+        '''
+        Returns the indices that are true in the array -- name is short for indices[true]
+
+        Args:
+            arr (array): a Boolean array, used as a filter
+            inds (array): any other array (usually, an array of indices) of the same size
+
+        **Example**::
+
+            inds = cv.itrue(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
+        '''
+        return inds[arr]
+
+    def ifalse(self, arr, inds):
+        '''
+        Returns the indices that are true in the array -- name is short for indices[false]
+
+        Args:
+            arr (array): a Boolean array, used as a filter
+            inds (array): any other array (usually, an array of indices) of the same size
+
+        **Example**::
+
+            inds = cv.ifalse(np.array([True,False,True,True]), inds=np.array([5,22,47,93]))
+        '''
+        return inds[np.logical_not(arr)]
+
+    def idefined(self, arr, inds):
+        '''
+        Returns the indices that are defined in the array -- name is short for indices[defined]
+
+        Args:
+            arr (array): any array, used as a filter
+            inds (array): any other array (usually, an array of indices) of the same size
+
+        **Example**::
+
+            inds = cv.idefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
+        '''
+        return inds[~np.isnan(arr)]
+
+    def iundefined(self, arr, inds):
+        '''
+        Returns the indices that are undefined in the array -- name is short for indices[undefined]
+
+        Args:
+            arr (array): any array, used as a filter
+            inds (array): any other array (usually, an array of indices) of the same size
+
+        **Example**::
+
+            inds = cv.iundefined(np.array([3,np.nan,np.nan,4]), inds=np.array([5,22,47,93]))
+        '''
+        return inds[np.isnan(arr)]
+
+    def itruei(self, arr, inds):
+        '''
+        Returns the indices that are true in the array -- name is short for indices[true[indices]]
+
+        Args:
+            arr (array): a Boolean array, used as a filter
+            inds (array): an array of indices for the original array
+
+        **Example**::
+
+            inds = cv.itruei(np.array([True,False,True,True,False,False,True,False]), inds=np.array([0,1,3,5]))
+        '''
+        return inds[arr[inds]]
+
+    def ifalsei(self, arr, inds):
+        '''
+        Returns the indices that are false in the array -- name is short for indices[false[indices]]
+
+        Args:
+            arr (array): a Boolean array, used as a filter
+            inds (array): an array of indices for the original array
+
+        **Example**::
+
+            inds = cv.ifalsei(np.array([True,False,True,True,False,False,True,False]), inds=np.array([0,1,3,5]))
+        '''
+        return inds[np.logical_not(arr[inds])]
+
+    def idefinedi(self, arr, inds):
+        '''
+        Returns the indices that are defined in the array -- name is short for indices[defined[indices]]
+
+        Args:
+            arr (array): any array, used as a filter
+            inds (array): an array of indices for the original array
+
+        **Example**::
+
+            inds = cv.idefinedi(np.array([4,np.nan,0,np.nan,np.nan,4,7,4,np.nan]), inds=np.array([0,1,3,5]))
+        '''
+        return inds[~np.isnan(arr[inds])]
+
+    def iundefinedi(self, arr, inds):
+        '''
+        Returns the indices that are undefined in the array -- name is short for indices[defined[indices]]
+
+        Args:
+            arr (array): any array, used as a filter
+            inds (array): an array of indices for the original array
+
+        **Example**::
+
+            inds = cv.iundefinedi(np.array([4,np.nan,0,np.nan,np.nan,4,7,4,np.nan]), inds=np.array([0,1,3,5]))
+        '''
+        return inds[np.isnan(arr[inds])]
 
     def node_in_cap(self, in_list, nodes):
         ''' Return inds of the first instance of each node in nodes '''
