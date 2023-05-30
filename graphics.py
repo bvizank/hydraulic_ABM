@@ -22,8 +22,8 @@ day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
 plt.rcParams['figure.figsize'] = [3.5, 3.5]
 plt.rcParams['figure.dpi'] = 500
 format = 'png'
-error = 'ci95'
-publication = False
+error = 'se'
+publication = True
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
@@ -69,7 +69,8 @@ G = wn.to_graph()
 # wfh = read_data(wfh_loc, read_list)
 # no_wfh = read_data(no_wfh_loc, read_list)
 # comp_list = ['seir', 'demand', 'age', 'flow']
-comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers']
+comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers',
+             'wfh', 'dine', 'groc', 'ppe']
 wfh = read_comp_data(wfh_comp_dir, comp_list)
 no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
@@ -749,13 +750,25 @@ no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[l
 
 ax = wntr.graphics.plot_network(wn, link_attribute=wfh_flow_sum,
                                 link_colorbar_label='Average Flow Changes',
-                                node_size=0, link_width=1)
+                                node_size=0, link_width=2)
 if publication:
     loc = pub_loc
 else:
     loc = 'Output Files/png_figures/'
 
-plt.savefig(loc + 'flow_network.' + format, format=format,
+plt.savefig(loc + 'flow_network_all_pm.' + format, format=format,
+            bbox_inches='tight')
+plt.close()
+
+ax = wntr.graphics.plot_network(wn, link_attribute=no_wfh_flow_sum,
+                                link_colorbar_label='Average Flow Changes',
+                                node_size=0, link_width=2)
+if publication:
+    loc = pub_loc
+else:
+    loc = 'Output Files/png_figures/'
+
+plt.savefig(loc + 'flow_network_no_pm.' + format, format=format,
             bbox_inches='tight')
 plt.close()
 # fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
@@ -975,6 +988,7 @@ make_heatmap(all_pm_sv['cov_ff'].T,
 make_heatmap(no_pm_sv['cov_ff'].T,
              'Time (day)', 'Agent', 'ff_heatmap_no_pm', 6)
 
+''' State variable scenario comparisons '''
 data = pd.concat([no_wfh['avg_cov_ff'].mean(axis=1),
                   wfh['avg_cov_ff'].mean(axis=1)],
                  axis=1, keys=['Base', 'PM'])
@@ -992,4 +1006,20 @@ sd = pd.concat([no_wfh['sd_cov_pers'].mean(axis=1),
                axis=1, keys=['Base', 'PM'])
 make_avg_plot(data, sd, ['Base', 'PM'],
               'Time (day)', 'Average Value', 'pers_avg',
+              np.delete(x_values, 0))
+
+''' BBN decisions scenario comparisons '''
+cols = ['WFH', 'Dine out less', 'Grocery shop less', 'Wear PPE']
+data = pd.concat([wfh['avg_wfh'].mean(axis=1),
+                  wfh['avg_dine'].mean(axis=1),
+                  wfh['avg_groc'].mean(axis=1),
+                  wfh['avg_ppe'].mean(axis=1)],
+                 axis=1, keys=cols)
+sd = pd.concat([wfh['sd_wfh'].mean(axis=1),
+                wfh['sd_dine'].mean(axis=1),
+                wfh['sd_groc'].mean(axis=1),
+                wfh['sd_ppe'].mean(axis=1)],
+               axis=1, keys=cols)
+make_avg_plot(data, sd, cols,
+              'Time (day)', 'Average Value', 'bbn_decision_all_pm',
               np.delete(x_values, 0))
