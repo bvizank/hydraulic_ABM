@@ -588,7 +588,7 @@ def make_seir_plot(data, input, leg_text, title,
     plt.close()
 
 
-def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
+def make_distance_plot(x, y1, y2, sd1, sd2, xlabel, ylabel, name, data_names):
     '''
     Make scatter plot plus binned levels of input data. Accepts one x
     vector and two y vectors.
@@ -597,6 +597,11 @@ def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
                                bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
     mean_y2 = binned_statistic(x, y2, statistic='mean',
                                bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
+
+    sd_y1 = binned_statistic(x, sd1, statistic='mean',
+                             bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
+    sd_y2 = binned_statistic(x, sd2, statistic='mean',
+                             bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
     # print(mean_y1.bin_edges)
 
     bin_names = ['0-500', '500-1000', '1000-1500', '1500-2000', '2000-2500',
@@ -604,6 +609,9 @@ def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
 
     data_dict = {data_names[0]: mean_y1.statistic,
                  data_names[1]: mean_y2.statistic}
+
+    sd_dict = {data_names[0]: sd_y1.statistic,
+               data_names[1]: sd_y2.statistic}
 
     bar_x = np.arange(len(bin_names))
     width = 0.25  # width of the bars
@@ -623,7 +631,8 @@ def make_distance_plot(x, y1, y2, xlabel, ylabel, name, data_names):
         # print(measurement)
         offset = width * multiplier
         ax.bar(bar_x + offset, measurement, width, label=attribute,
-               color='C'+str(multiplier*2))
+               color='C'+str(multiplier*2), yerr=sd_dict[attribute],
+               error_kw=dict(lw=0.5, capsize=2, capthick=0.5))
         # ax.bar_label(rects, padding=3)
         multiplier += 1
 
@@ -749,7 +758,7 @@ wfh_flow_change, wfh_flow_sum = calc_flow_diff(wfh['avg_flow'], times[len(times)
 no_wfh_flow_change, no_wfh_flow_sum = calc_flow_diff(no_wfh['avg_flow'], times[len(times)-1])
 
 ax = wntr.graphics.plot_network(wn, link_attribute=wfh_flow_sum,
-                                link_colorbar_label='Average Flow Changes',
+                                link_colorbar_label='Flow Changes',
                                 node_size=0, link_width=2)
 if publication:
     loc = pub_loc
@@ -761,8 +770,7 @@ plt.savefig(loc + 'flow_network_all_pm.' + format, format=format,
 plt.close()
 
 ax = wntr.graphics.plot_network(wn, link_attribute=no_wfh_flow_sum,
-                                link_colorbar_label='Average Flow Changes',
-                                node_size=0, link_width=2)
+                                node_size=0, link_width=2, add_colorbar=False)
 if publication:
     loc = pub_loc
 else:
@@ -935,20 +943,32 @@ ind_nodes = [node for name, node in wn.junctions()
 ind_distances, ind_closest = calc_industry_distance(wn)
 pm_age_values = list()
 no_pm_age_values = list()
+pm_age_sd = list()
+no_pm_age_sd = list()
 pm_curr_age_values = wfh['avg_age'].iloc[len(wfh['avg_age'])-1]/3600
 no_pm_curr_age_values = no_wfh['avg_age'].iloc[len(no_wfh['avg_age'])-1]/3600
+pm_curr_age_sd = wfh['sd_age'].iloc[len(wfh['sd_age'])-1]/3600
+no_pm_curr_age_sd = no_wfh['sd_age'].iloc[len(no_wfh['sd_age'])-1]/3600
 # print(pm_curr_age_values)
-for age in pm_curr_age_values.items():
-    no_pm_age = no_pm_curr_age_values[age[0]]
-    if age[0] in ind_distances.keys():
-        if age[1] < 500:
-            pm_age_values.append(age[1])
+''' Collect the age for each residential node '''
+for i, age in pm_curr_age_values.items():
+    no_pm_age = no_pm_curr_age_values[i]
+    pm_sd = pm_curr_age_sd[i]
+    no_pm_sd = no_pm_curr_age_sd[i]
+    # if the node is in the distance list, add the age
+    # otherwise delete the node from the distance list
+    if i in ind_distances.keys():
+        if age < 500:
+            pm_age_values.append(age)
             no_pm_age_values.append(no_pm_age)
+            pm_age_sd.append(pm_sd)
+            no_pm_age_sd.append(no_pm_sd)
         else:
-            del ind_distances[age[0]]
+            del ind_distances[i]
 
 dist_values = [i for i in ind_distances.values()]
 make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
+                   no_pm_age_sd, pm_age_sd,
                    'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
                    ['Base', 'PM'])
 
@@ -963,7 +983,7 @@ make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
 
 
 ''' Make agent state variable plots '''
-all_pm_sv = read_data('Output Files/30_all_pm/2023-05-24_11-32_0_results/',
+all_pm_sv = read_data('Output Files/30_all_pm/2023-05-30_15-29_0_results/',
                       ['cov_pers', 'cov_ff', 'media'])
 no_pm_sv = read_data('Output Files/30_no_pm/2023-05-26_08-33_0_results/',
                      ['cov_pers', 'cov_ff', 'media'])
