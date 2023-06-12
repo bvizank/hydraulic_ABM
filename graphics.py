@@ -2,7 +2,7 @@ import wntr
 import numpy as np
 import pandas as pd
 import copy
-from utils import read_data, read_comp_data
+from utils import read_data, read_comp_data, make_lorenz, gini
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
@@ -23,7 +23,7 @@ plt.rcParams['figure.figsize'] = [3.5, 3.5]
 plt.rcParams['figure.dpi'] = 500
 format = 'png'
 error = 'se'
-publication = True
+publication = False
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
@@ -45,7 +45,6 @@ plt.rcParams['xtick.major.width'] = 0.7
 plt.rcParams['ytick.major.width'] = 0.7
 plt.rcParams['xtick.major.size'] = 3.0
 plt.rcParams['ytick.major.size'] = 3.0
-
 
 
 '''Import water network and data'''
@@ -948,6 +947,7 @@ no_pm_curr_age_values = no_wfh['avg_age'].iloc[len(no_wfh['avg_age'])-1]/3600
 pm_curr_age_sd = wfh['sd_age'].iloc[len(wfh['sd_age'])-1]/3600
 no_pm_curr_age_sd = no_wfh['sd_age'].iloc[len(no_wfh['sd_age'])-1]/3600
 # print(pm_curr_age_values)
+
 ''' Collect the age for each residential node '''
 for i, age in pm_curr_age_values.items():
     no_pm_age = no_pm_curr_age_values[i]
@@ -1041,3 +1041,21 @@ sd = pd.concat([wfh['sd_wfh'].mean(axis=1),
 make_avg_plot(data, sd, cols,
               'Time (day)', 'Average Value', 'bbn_decision_all_pm',
               np.delete(x_values, 0))
+
+''' Lorenz plot and Gini calculations '''
+data_end = wfh['avg_age'].iloc[len(wfh['avg_age'])-1]
+res_data_end = data_end[res_nodes]
+res_data_sort = np.sort(res_data_end.to_numpy())
+gini_val = gini(res_data_sort)
+f = make_lorenz(res_data_sort)
+plt.legend(['Equality', 'Gini: ' + str(gini_val)])
+plt.ylabel('Cummulative % water age')
+plt.xlabel('Cummulative % households')
+if publication:
+    loc = pub_loc
+else:
+    loc = 'Output Files/png_figures/'
+
+plt.savefig(loc + 'lorenz_plot.' + format, format=format,
+            bbox_inches='tight')
+plt.close()
