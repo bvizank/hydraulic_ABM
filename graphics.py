@@ -2,7 +2,7 @@ import wntr
 import numpy as np
 import pandas as pd
 import copy
-from utils import read_data
+from utils import read_data, read_comp_data
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
@@ -47,20 +47,6 @@ plt.rcParams['xtick.major.size'] = 3.0
 plt.rcParams['ytick.major.size'] = 3.0
 
 
-def read_comp_data(loc, read_list):
-    out_dict = dict()
-    for item in read_list:
-        out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
-        out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
-        if error == 'ci95':
-            out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
-        elif error == 'se':
-            out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
-        else:
-            pass
-
-    return out_dict
-
 
 '''Import water network and data'''
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
@@ -71,8 +57,8 @@ G = wn.to_graph()
 # comp_list = ['seir', 'demand', 'age', 'flow']
 comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers',
              'wfh', 'dine', 'groc', 'ppe']
-wfh = read_comp_data(wfh_comp_dir, comp_list)
-no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
+wfh = read_comp_data(wfh_comp_dir, comp_list, error)
+no_wfh = read_comp_data(no_wfh_comp_dir, comp_list, error)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
 # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
 # print(wfh['sd_seir_data'])
@@ -673,6 +659,18 @@ def make_heatmap(data, xlabel, ylabel, name, vmax):
     plt.close()
 
 
+# def make_lorenz(data):
+#     # this divides the prefix sum by the total sum
+#     # this ensures all the values are between 0 and 1.0
+#     scaled_prefix_sum = data.cumsum() / data.sum()
+#     # this prepends the 0 value (because 0% of all people have 0% of all wealth)
+#     x_vals = np.insert(scaled_prefix_sum, 0, 0)
+#     # we need the X values to be between 0.0 to 1.0
+#     plt.plot(np.linspace(0.0, 1.0, x_vals.size), x_vals)
+#     # plot the straight line perfect equality curve
+#     plt.plot([0, 1], [0, 1])
+
+
 def calc_model_stats(wn, seir, age):
     '''
     Function for calculating comparison stats for decision models:
@@ -927,10 +925,10 @@ make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
 # grocery_loc = 'Output Files/30_grocery/'
 # ppe_loc = 'Output Files/30_ppe/'
 
-# only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'])
-# dine = read_comp_data(dine_loc, ['seir_data', 'age'])
-# grocery = read_comp_data(grocery_loc, ['seir_data', 'age'])
-# ppe = read_comp_data(ppe_loc, ['seir_data', 'age'])
+# only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'], error)
+# dine = read_comp_data(dine_loc, ['seir_data', 'age'], error)
+# grocery = read_comp_data(grocery_loc, ['seir_data', 'age'], error)
+# ppe = read_comp_data(ppe_loc, ['seir_data', 'age'], error)
 # print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
 # print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
 # print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))

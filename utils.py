@@ -1,7 +1,10 @@
 import pandas as pd
+import numpy as np
 import wntr
 import copy
 import os
+import math
+import matplotlib.pyplot as plt
 
 
 def setup(network):
@@ -216,6 +219,21 @@ def load_media():
     return (media, bbn_params, wfh_patterns)
 
 
+def read_comp_data(loc, read_list, error):
+    out_dict = dict()
+    for item in read_list:
+        out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
+        out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
+        if error == 'ci95':
+            out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
+        elif error == 'se':
+            out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
+        else:
+            pass
+
+    return out_dict
+
+
 def read_data(loc, read_list, data_file=None):
     ''' Function to read in data from either excel or pickle '''
     output = dict()
@@ -263,3 +281,15 @@ def clean_epanet(folder):
            file.endswith('.rpt') or \
            file.endswith('.inp'):
             os.remove(os.path.join(folder, file))
+
+
+def make_lorenz(data):
+    # this divides the prefix sum by the total sum
+    # this ensures all the values are between 0 and 1.0
+    scaled_prefix_sum = data.cumsum() / data.sum()
+    # this prepends the 0 value (because 0% of all people have 0% of all wealth)
+    x_vals = np.insert(scaled_prefix_sum, 0, 0)
+    # we need the X values to be between 0.0 to 1.0
+    plt.plot(np.linspace(0.0, 1.0, x_vals.size), x_vals)
+    # plot the straight line perfect equality curve
+    plt.plot([0, 1], [0, 1])
