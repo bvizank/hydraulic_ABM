@@ -2,7 +2,7 @@ import wntr
 import numpy as np
 import pandas as pd
 import copy
-from utils import read_data
+import utils as ut
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
@@ -47,21 +47,6 @@ plt.rcParams['xtick.major.size'] = 3.0
 plt.rcParams['ytick.major.size'] = 3.0
 
 
-def read_comp_data(loc, read_list):
-    out_dict = dict()
-    for item in read_list:
-        out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
-        out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
-        if error == 'ci95':
-            out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
-        elif error == 'se':
-            out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
-        else:
-            pass
-
-    return out_dict
-
-
 '''Import water network and data'''
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
@@ -71,11 +56,11 @@ G = wn.to_graph()
 # comp_list = ['seir', 'demand', 'age', 'flow']
 comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers',
              'wfh', 'dine', 'groc', 'ppe']
-wfh = read_comp_data(wfh_comp_dir, comp_list)
-no_wfh = read_comp_data(no_wfh_comp_dir, comp_list)
+wfh = ut.read_comp_data(wfh_comp_dir, comp_list)
+no_wfh = ut.read_comp_data(no_wfh_comp_dir, comp_list)
 # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
 # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
-# print(wfh['sd_seir_data'])
+# print(wfh['var_seir_data'])
 # print(wfh['avg_age'])
 # print(wfh['avg_ppe'])
 
@@ -835,77 +820,84 @@ res_dem = wfh['avg_demand'][res_nodes]
 com_dem = wfh['avg_demand'][com_nodes]
 ind_dem = wfh['avg_demand'][ind_nodes]
 
-res_sd = wfh['sd_demand'][res_nodes]
-com_sd = wfh['sd_demand'][com_nodes]
-ind_sd = wfh['sd_demand'][ind_nodes]
+res_sd = wfh['var_demand'][res_nodes]
+com_sd = wfh['var_demand'][com_nodes]
+ind_sd = wfh['var_demand'][ind_nodes]
 
 # make input data and sd
 sector_dem = pd.concat([res_dem.sum(axis=1).rolling(24).mean(),
                         com_dem.sum(axis=1).rolling(24).mean(),
                         ind_dem.sum(axis=1).rolling(24).mean()],
                        axis=1, keys=cols)
-sector_dem_sd = pd.concat([res_sd.sum(axis=1).rolling(24).mean(),
-                           com_sd.sum(axis=1).rolling(24).mean(),
-                           ind_sd.sum(axis=1).rolling(24).mean()],
-                          axis=1, keys=cols)
+sector_dem_var = pd.concat([res_sd.sum(axis=1).rolling(24).mean(),
+                            com_sd.sum(axis=1).rolling(24).mean(),
+                            ind_sd.sum(axis=1).rolling(24).mean()],
+                           axis=1, keys=cols)
+
+sector_dem_err = ut.calc_error(sector_dem_var, error)
 
 # plot demand by sector
-make_avg_plot(sector_dem, sector_dem_sd, cols, 'Time (days)', 'Demand (L)',
-              'sum_demand_'+error, x_values)
+make_avg_plot(sector_dem, sector_dem_err, cols, 'Time (days)', 'Demand (L)',
+              'sum_demand_' + error, x_values)
 
 ''' Make age plot by sector for both base and PM '''
 res_age_all_pm = wfh['avg_age'][res_nodes].mean(axis=1)
 com_age_all_pm = wfh['avg_age'][com_nodes].mean(axis=1)
 ind_age_all_pm = wfh['avg_age'][ind_nodes].mean(axis=1)
 
-res_sd_all_pm = wfh['sd_age'][res_nodes].mean(axis=1)
-com_sd_all_pm = wfh['sd_age'][com_nodes].mean(axis=1)
-ind_sd_all_pm = wfh['sd_age'][ind_nodes].mean(axis=1)
+res_sd_all_pm = wfh['var_age'][res_nodes].mean(axis=1)
+com_sd_all_pm = wfh['var_age'][com_nodes].mean(axis=1)
+ind_sd_all_pm = wfh['var_age'][ind_nodes].mean(axis=1)
 
 res_age_no_pm = no_wfh['avg_age'][res_nodes].mean(axis=1)
 com_age_no_pm = no_wfh['avg_age'][com_nodes].mean(axis=1)
 ind_age_no_pm = no_wfh['avg_age'][ind_nodes].mean(axis=1)
 
-res_sd_no_pm = no_wfh['sd_age'][res_nodes].mean(axis=1)
-com_sd_no_pm = no_wfh['sd_age'][com_nodes].mean(axis=1)
-ind_sd_no_pm = no_wfh['sd_age'][ind_nodes].mean(axis=1)
+res_sd_no_pm = no_wfh['var_age'][res_nodes].mean(axis=1)
+com_sd_no_pm = no_wfh['var_age'][com_nodes].mean(axis=1)
+ind_sd_no_pm = no_wfh['var_age'][ind_nodes].mean(axis=1)
 
 # make input data and sd
 all_pm_age = pd.concat([res_age_all_pm.rolling(24).mean(),
                         com_age_all_pm.rolling(24).mean(),
                         ind_age_all_pm.rolling(24).mean()],
                        axis=1, keys=cols)
-all_pm_age_sd = pd.concat([res_sd_all_pm.rolling(24).mean(),
-                           com_sd_all_pm.rolling(24).mean(),
-                           ind_sd_all_pm.rolling(24).mean()],
-                          axis=1, keys=cols)
+all_pm_age_var = pd.concat([res_sd_all_pm.rolling(24).mean(),
+                            com_sd_all_pm.rolling(24).mean(),
+                            ind_sd_all_pm.rolling(24).mean()],
+                           axis=1, keys=cols)
+all_pm_age_err = ut.calc_error(all_pm_age_var, error)
 non_pm_age = pd.concat([res_age_no_pm.rolling(24).mean(),
                         com_age_no_pm.rolling(24).mean(),
                         ind_age_no_pm.rolling(24).mean()],
                        axis=1, keys=cols)
-non_pm_age_sd = pd.concat([res_sd_no_pm.rolling(24).mean(),
-                           com_sd_no_pm.rolling(24).mean(),
-                           ind_sd_no_pm.rolling(24).mean()],
-                          axis=1, keys=cols)
-make_avg_plot(non_pm_age/3600, non_pm_age_sd/3600,
-              cols, 'Time (days)', 'Age (hr)', 'mean_age_'+error,
-              x_values, data2=all_pm_age/3600, sd2=all_pm_age_sd/3600, sub=True)
+non_pm_age_var = pd.concat([res_sd_no_pm.rolling(24).mean(),
+                            com_sd_no_pm.rolling(24).mean(),
+                            ind_sd_no_pm.rolling(24).mean()],
+                           axis=1, keys=cols)
+non_pm_age_err = ut.calc_error(non_pm_age_var, error)
+make_avg_plot(non_pm_age / 3600, non_pm_age_err / 3600,
+              cols, 'Time (days)', 'Age (hr)', 'mean_age_' + error,
+              x_values, data2=all_pm_age / 3600, sd2=all_pm_age_err / 3600,
+              sub=True)
 # make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', no_wfh_comp_dir,
-#                  'mean', 'mean_age', sd=no_wfh['sd_age']/3600)
+#                  'mean', 'mean_age', sd=no_wfh['var_age']/3600)
 # make_sector_plot(wn, days_200['age']/3600, 'Age (hr)', day200_loc, 'mean',
 #                  'mean_age', days=200)
 # make_sector_plot(wn, days_400['age']/3600, 'Age (hr)', day400_loc, 'mean',
 #                  'mean_age', days=400)
 
 ''' Make age plot comparing base and PM '''
-make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean',
-                 'mean_age_aggregate_'+error, wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600,
-                 sd2=wfh['sd_age']/3600, type='all')
+make_sector_plot(wn, no_wfh['avg_age'] / 3600, 'Age (hr)', 'mean',
+                 'mean_age_aggregate_' + error, wfh['avg_age'] / 3600,
+                 sd=ut.calc_error(no_wfh['var_age'] / 3600, error),
+                 sd2=ut.calc_error(wfh['var_age'] / 3600, error), type='all')
 
 ''' Make plots of aggregate demand data '''
 make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
-                 'sum_demand_aggregate_'+error, wfh['avg_demand'], type='all',
-                 sd=no_wfh['sd_demand'], sd2=wfh['sd_demand'])
+                 'sum_demand_aggregate_' + error, wfh['avg_demand'], type='all',
+                 sd=ut.calc_error(no_wfh['var_demand'], error),
+                 sd2=ut.calc_error(wfh['var_demand'], error))
 # make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'max', 'max_demand_aggregate',
 #                  wfh['demand'], type='all')
 # make_sector_plot(wn, no_wfh['demand'], 'Demand (L)', wfh_loc, 'mean', 'mean_demand_aggregate',
@@ -918,8 +910,10 @@ make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
 ''' SEIR plot '''
 make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
                leg_text=['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH'],
-               title='combined', data2=wfh['avg_seir_data'], sd=no_wfh['sd_seir_data'],
-               sd2=wfh['sd_seir_data'], sub=True)
+               title='combined', data2=wfh['avg_seir_data'],
+               sd=ut.calc_error(no_wfh['var_seir_data'], error),
+               sd2=ut.calc_error(wfh['var_seir_data'], error),
+               sub=True)
 
 ''' Export comparison stats '''
 # only_wfh_loc = 'Output Files/30_wfh/'
@@ -927,10 +921,10 @@ make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
 # grocery_loc = 'Output Files/30_grocery/'
 # ppe_loc = 'Output Files/30_ppe/'
 
-# only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'])
-# dine = read_comp_data(dine_loc, ['seir_data', 'age'])
-# grocery = read_comp_data(grocery_loc, ['seir_data', 'age'])
-# ppe = read_comp_data(ppe_loc, ['seir_data', 'age'])
+# only_wfh = ut.read_comp_data(only_wfh_loc, ['seir_data', 'age'])
+# dine = ut.read_comp_data(dine_loc, ['seir_data', 'age'])
+# grocery = ut.read_comp_data(grocery_loc, ['seir_data', 'age'])
+# ppe = ut.read_comp_data(ppe_loc, ['seir_data', 'age'])
 # print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
 # print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
 # print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
@@ -947,8 +941,8 @@ pm_age_sd = list()
 no_pm_age_sd = list()
 pm_curr_age_values = wfh['avg_age'].iloc[len(wfh['avg_age'])-1]/3600
 no_pm_curr_age_values = no_wfh['avg_age'].iloc[len(no_wfh['avg_age'])-1]/3600
-pm_curr_age_sd = wfh['sd_age'].iloc[len(wfh['sd_age'])-1]/3600
-no_pm_curr_age_sd = no_wfh['sd_age'].iloc[len(no_wfh['sd_age'])-1]/3600
+pm_curr_age_sd = wfh['var_age'].iloc[len(wfh['var_age'])-1]/3600
+no_pm_curr_age_sd = no_wfh['var_age'].iloc[len(no_wfh['var_age'])-1]/3600
 # print(pm_curr_age_values)
 ''' Collect the age for each residential node '''
 for i, age in pm_curr_age_values.items():
@@ -968,7 +962,8 @@ for i, age in pm_curr_age_values.items():
 
 dist_values = [i for i in ind_distances.values()]
 make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
-                   no_pm_age_sd, pm_age_sd,
+                   ut.calc_error(no_pm_age_sd, error),
+                   ut.calc_error(pm_age_sd, error),
                    'Distance (m)', 'Age (hr)', 'pm_age_ind_distance',
                    ['Base', 'PM'])
 
@@ -983,10 +978,10 @@ make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
 
 
 ''' Make agent state variable plots '''
-all_pm_sv = read_data('Output Files/30_all_pm/2023-05-30_15-29_0_results/',
-                      ['cov_pers', 'cov_ff', 'media'])
-no_pm_sv = read_data('Output Files/30_no_pm/2023-05-26_08-33_0_results/',
-                     ['cov_pers', 'cov_ff', 'media'])
+all_pm_sv = ut.read_data('Output Files/30_all_pm/2023-05-30_15-29_0_results/',
+                         ['cov_pers', 'cov_ff', 'media'])
+no_pm_sv = ut.read_data('Output Files/30_no_pm/2023-05-26_08-33_0_results/',
+                        ['cov_pers', 'cov_ff', 'media'])
 
 agent = '124'
 cols = ['Personal', 'Friends-Family', 'Media']
@@ -1012,19 +1007,21 @@ make_heatmap(no_pm_sv['cov_ff'].T,
 data = pd.concat([no_wfh['avg_cov_ff'].mean(axis=1),
                   wfh['avg_cov_ff'].mean(axis=1)],
                  axis=1, keys=['Base', 'PM'])
-sd = pd.concat([no_wfh['sd_cov_ff'].mean(axis=1),
-                wfh['sd_cov_ff'].mean(axis=1)],
-               axis=1, keys=['Base', 'PM'])
-make_avg_plot(data, sd, ['Base', 'PM'],
+var = pd.concat([no_wfh['var_cov_ff'].mean(axis=1),
+                 wfh['var_cov_ff'].mean(axis=1)],
+                axis=1, keys=['Base', 'PM'])
+err = ut.calc_error(var, error)
+make_avg_plot(data, err, ['Base', 'PM'],
               'Time (day)', 'Average Value', 'ff_avg',
               np.delete(x_values, 0))
 data = pd.concat([no_wfh['avg_cov_pers'].mean(axis=1),
                   wfh['avg_cov_pers'].mean(axis=1)],
                  axis=1, keys=['Base', 'PM'])
-sd = pd.concat([no_wfh['sd_cov_pers'].mean(axis=1),
-                wfh['sd_cov_pers'].mean(axis=1)],
-               axis=1, keys=['Base', 'PM'])
-make_avg_plot(data, sd, ['Base', 'PM'],
+var = pd.concat([no_wfh['var_cov_pers'].mean(axis=1),
+                 wfh['var_cov_pers'].mean(axis=1)],
+                axis=1, keys=['Base', 'PM'])
+err = ut.calc_error(var, error)
+make_avg_plot(data, err, ['Base', 'PM'],
               'Time (day)', 'Average Value', 'pers_avg',
               np.delete(x_values, 0))
 
@@ -1035,11 +1032,12 @@ data = pd.concat([wfh['avg_wfh'].mean(axis=1),
                   wfh['avg_groc'].mean(axis=1),
                   wfh['avg_ppe'].mean(axis=1)],
                  axis=1, keys=cols)
-sd = pd.concat([wfh['sd_wfh'].mean(axis=1),
-                wfh['sd_dine'].mean(axis=1),
-                wfh['sd_groc'].mean(axis=1),
-                wfh['sd_ppe'].mean(axis=1)],
-               axis=1, keys=cols)
-make_avg_plot(data, sd, cols,
+var = pd.concat([wfh['var_wfh'].mean(axis=1),
+                 wfh['var_dine'].mean(axis=1),
+                 wfh['var_groc'].mean(axis=1),
+                 wfh['var_ppe'].mean(axis=1)],
+                axis=1, keys=cols)
+err = ut.calc_error(var, error)
+make_avg_plot(data, err, cols,
               'Time (day)', 'Average Value', 'bbn_decision_all_pm',
               np.delete(x_values, 0))
