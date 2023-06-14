@@ -1,4 +1,6 @@
 import pandas as pd
+import numpy as np
+import math
 import wntr
 import copy
 import os
@@ -248,6 +250,37 @@ def read_data(loc, read_list, data_file=None):
             locals()[name] = pd.read_pickle(loc + name + '.pkl')
 
         output[name] = locals()[name]
+
+    return output
+
+
+def read_comp_data(loc, read_list):
+    out_dict = dict()
+    for item in read_list:
+        out_dict['avg_' + item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
+        out_dict['var_' + item] = pd.read_pickle(loc + 'var_' + item + '.pkl')
+
+    return out_dict
+
+
+def calc_error(var_data, error):
+    '''
+    Calculate the appropriate error values given the variance values
+
+    parameter:
+        var_data   (pd.DataFrame): variance data
+        error               (str): the error to calculate
+
+    '''
+
+    std_data = np.sqrt(var_data)
+    if error == 'ci95':
+        output = std_data * 1.96 / math.sqrt(30)
+    elif error == 'se':
+        output = std_data / math.sqrt(30)
+    else:
+        # assume output is just standard deviation
+        output = std_data
 
     return output
 
