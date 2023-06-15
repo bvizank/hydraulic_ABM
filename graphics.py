@@ -1038,6 +1038,13 @@ var = pd.concat([wfh['var_wfh'].mean(axis=1),
                  wfh['var_ppe'].mean(axis=1)],
                 axis=1, keys=cols)
 err = ut.calc_error(var, error)
-make_avg_plot(data, err, cols,
-              'Time (day)', 'Average Value', 'bbn_decision_all_pm',
-              np.delete(x_values, 0))
+
+fig, axes = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
+for i, col in enumerate(cols):
+    axes[i].plot(data.index, data[col])
+for item in input:
+    axes[i].fill_between(err.index, data[col] - err[col],
+                         data[col] + err[col], alpha=0.5)
+# make_avg_plot(data, err, cols,
+#               'Time (day)', 'Average Value', 'bbn_decision_all_pm',
+#               np.delete(x_values, 0))
