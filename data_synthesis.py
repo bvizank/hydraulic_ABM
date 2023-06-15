@@ -3,7 +3,7 @@ import pandas as pd
 from utils import read_data
 
 # data_dir = 'Output Files/30_all_pm/'
-data_dir = '../../OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/all_pm_30/'
+data_dir = '../../OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/grocery_30/'
 read_list = [
     'seir_data',
     'demand',
