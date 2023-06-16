@@ -670,9 +670,10 @@ def calc_model_stats(wn, seir, age):
     age_data = getattr(age[nodes], 'mean')(axis=1)
     final_age = age_data[(len(age_data)-1)*3600]
     max_inf = seir.I.loc[int(round(seir.I.idxmax(), 0))]
-    final_sus = seir.S[(len(seir.S)-1)*3600]
+    max_exp = seir.E.loc[int(round(seir.E.idxmax(), 0))]
+    final_sus = seir.S[(len(seir.S)-1)]
 
-    return (final_age, max_inf/4606, final_sus)
+    return (final_age, max_inf, final_sus, max_exp)
 
 
 # print(wfh['avg_seir_data'])
@@ -820,18 +821,18 @@ res_dem = wfh['avg_demand'][res_nodes]
 com_dem = wfh['avg_demand'][com_nodes]
 ind_dem = wfh['avg_demand'][ind_nodes]
 
-res_sd = wfh['var_demand'][res_nodes]
-com_sd = wfh['var_demand'][com_nodes]
-ind_sd = wfh['var_demand'][ind_nodes]
+res_var = wfh['var_demand'][res_nodes]
+com_var = wfh['var_demand'][com_nodes]
+ind_var = wfh['var_demand'][ind_nodes]
 
 # make input data and sd
 sector_dem = pd.concat([res_dem.sum(axis=1).rolling(24).mean(),
                         com_dem.sum(axis=1).rolling(24).mean(),
                         ind_dem.sum(axis=1).rolling(24).mean()],
                        axis=1, keys=cols)
-sector_dem_var = pd.concat([res_sd.sum(axis=1).rolling(24).mean(),
-                            com_sd.sum(axis=1).rolling(24).mean(),
-                            ind_sd.sum(axis=1).rolling(24).mean()],
+sector_dem_var = pd.concat([res_var.sum(axis=1).rolling(24).mean(),
+                            com_var.sum(axis=1).rolling(24).mean(),
+                            ind_var.sum(axis=1).rolling(24).mean()],
                            axis=1, keys=cols)
 
 sector_dem_err = ut.calc_error(sector_dem_var, error)
@@ -890,8 +891,8 @@ make_avg_plot(non_pm_age / 3600, non_pm_age_err / 3600,
 ''' Make age plot comparing base and PM '''
 make_sector_plot(wn, no_wfh['avg_age'] / 3600, 'Age (hr)', 'mean',
                  'mean_age_aggregate_' + error, wfh['avg_age'] / 3600,
-                 sd=ut.calc_error(no_wfh['var_age'] / 3600, error),
-                 sd2=ut.calc_error(wfh['var_age'] / 3600, error), type='all')
+                 sd=ut.calc_error(no_wfh['var_age'], error)/3600,
+                 sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
 
 ''' Make plots of aggregate demand data '''
 make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
@@ -916,21 +917,21 @@ make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
                sub=True)
 
 ''' Export comparison stats '''
-# only_wfh_loc = 'Output Files/30_wfh/'
-# dine_loc = 'Output Files/30_dine/'
-# grocery_loc = 'Output Files/30_grocery/'
-# ppe_loc = 'Output Files/30_ppe/'
+only_wfh_loc = 'Output Files/30_wfh/'
+dine_loc = 'Output Files/30_dine/'
+grocery_loc = 'Output Files/30_grocery/'
+ppe_loc = 'Output Files/30_ppe/'
 
-# only_wfh = ut.read_comp_data(only_wfh_loc, ['seir_data', 'age'])
-# dine = ut.read_comp_data(dine_loc, ['seir_data', 'age'])
-# grocery = ut.read_comp_data(grocery_loc, ['seir_data', 'age'])
-# ppe = ut.read_comp_data(ppe_loc, ['seir_data', 'age'])
-# print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
-# print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
-# print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
-# print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir_data'], ppe['avg_age']/3600)))
-# print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
-# print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir_data'], no_wfh['avg_age']/3600)))
+only_wfh = ut.read_comp_data(only_wfh_loc, ['seir_data', 'age'])
+dine = ut.read_comp_data(dine_loc, ['seir_data', 'age'])
+grocery = ut.read_comp_data(grocery_loc, ['seir_data', 'age'])
+ppe = ut.read_comp_data(ppe_loc, ['seir_data', 'age'])
+print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
+print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
+print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
+print("PPE model stats: " + str(calc_model_stats(wn, ppe['avg_seir_data'], ppe['avg_age']/3600)))
+print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
+print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir_data'], no_wfh['avg_age']/3600)))
 
 ind_nodes = [node for name, node in wn.junctions()
              if node.demand_timeseries_list[0].pattern_name == '3']
@@ -1026,25 +1027,50 @@ make_avg_plot(data, err, ['Base', 'PM'],
               np.delete(x_values, 0))
 
 ''' BBN decisions scenario comparisons '''
-cols = ['WFH', 'Dine out less', 'Grocery shop less', 'Wear PPE']
-data = pd.concat([wfh['avg_wfh'].mean(axis=1),
-                  wfh['avg_dine'].mean(axis=1),
+cols = ['Dine out less', 'Grocery shop less', 'WFH', 'Wear PPE']
+data = pd.concat([wfh['avg_dine'].mean(axis=1),
                   wfh['avg_groc'].mean(axis=1),
+                  wfh['avg_wfh'].mean(axis=1),
                   wfh['avg_ppe'].mean(axis=1)],
                  axis=1, keys=cols)
-var = pd.concat([wfh['var_wfh'].mean(axis=1),
-                 wfh['var_dine'].mean(axis=1),
+var = pd.concat([wfh['var_dine'].mean(axis=1),
                  wfh['var_groc'].mean(axis=1),
+                 wfh['var_wfh'].mean(axis=1),
                  wfh['var_ppe'].mean(axis=1)],
                 axis=1, keys=cols)
 err = ut.calc_error(var, error)
 
-fig, axes = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
-for i, col in enumerate(cols):
-    axes[i].plot(data.index, data[col])
-for item in input:
-    axes[i].fill_between(err.index, data[col] - err[col],
-                         data[col] + err[col], alpha=0.5)
+fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
+ax1.plot(np.delete(x_values, 0), data[cols[0]])
+ax1.fill_between(np.delete(x_values, 0), data[cols[0]] - err[cols[0]],
+                 data[cols[0]] + err[cols[0]], alpha=0.5)
+ax2.plot(np.delete(x_values, 0), data[cols[1]])
+ax2.fill_between(np.delete(x_values, 0), data[cols[1]] - err[cols[1]],
+                 data[cols[1]] + err[cols[1]], alpha=0.5)
+ax3.plot(np.delete(x_values, 0), data[cols[2]])
+ax3.fill_between(np.delete(x_values, 0), data[cols[2]] - err[cols[2]],
+                 data[cols[2]] + err[cols[2]], alpha=0.5)
+ax4.plot(np.delete(x_values, 0), data[cols[3]])
+ax4.fill_between(np.delete(x_values, 0), data[cols[3]] - err[cols[3]],
+                 data[cols[3]] + err[cols[3]], alpha=0.5)
+ax1.text(0.5, -0.14, "(a)", size=12, ha="center",
+         transform=ax1.transAxes)
+ax2.text(0.5, -0.14, "(b)", size=12, ha="center",
+         transform=ax2.transAxes)
+ax3.text(0.5, -0.24, "(c)", size=12, ha="center",
+         transform=ax3.transAxes)
+ax4.text(0.5, -0.24, "(d)", size=12, ha="center",
+         transform=ax4.transAxes)
+fig.supxlabel('Time (days)', y=-0.02)
+fig.supylabel('Percent Adoption', x=-0.03)
+
+if publication:
+    loc = pub_loc
+else:
+    loc = 'Output Files/png_figures/'
+plt.savefig(loc + 'bbn_decision_all_pm.' + format, format=format,
+            bbox_inches='tight')
+plt.close()
 # make_avg_plot(data, err, cols,
 #               'Time (day)', 'Average Value', 'bbn_decision_all_pm',
 #               np.delete(x_values, 0))
