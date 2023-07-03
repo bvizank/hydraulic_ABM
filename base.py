@@ -410,6 +410,9 @@ class Graphics(BaseGraphics):
             self.times[len(self.times) - 1]
         )
 
+        print(pm_flow_sum['MA728'])
+        print(base_flow_sum['MA728'])
+
         ax = wntr.graphics.plot_network(self.wn, link_attribute=pm_flow_sum,
                                         link_colorbar_label='Flow Changes',
                                         node_size=0, link_width=2)
