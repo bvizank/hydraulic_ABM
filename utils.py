@@ -63,13 +63,16 @@ def setup(network):
     for key in node_dict:
         terminal_nodes += node_dict[key]
 
-    # finish setup process by loading distributions of agents at each node type
-    # and media data.
+    # finish setup process by loading distributions of agents at each node type,
+    # media data, and the distance between residential nodes and closest ind.
+    # node.
     pop_dict = load_distributions(network)
     media, bbn_params, wfh_patterns = load_media()
+    ind_node_dist, na = calc_industry_distance(
+        wn, node_dict['ind'], nodes=node_dict['res'])
 
     return (node_dict, node_capacity, house_num, pop_dict, media, bbn_params,
-            wfh_patterns, terminal_nodes, wn)
+            wfh_patterns, terminal_nodes, wn, ind_node_dist)
 
 
 def init_wntr(inp_file):
@@ -217,6 +220,36 @@ def load_media():
     wfh_patterns = pd.read_csv(r'Input Files/res_patterns/normalized_res_patterns.csv')
 
     return (media, bbn_params, wfh_patterns)
+
+
+def calc_industry_distance(wn, ind_nodes, nodes=None):
+    '''
+    Function to calculate the distance to the nearest industrial node.
+    '''
+    if nodes is None:
+        nodes = [name for name, node in wn.junctions()
+                 if node.demand_timeseries_list[0].pattern_name != '3']
+
+    ind_distances = dict()
+    close_node = dict()
+    for node in nodes:
+        curr_node = wn.get_node(node)
+        curr_node_dis = dict()
+        for ind_node in ind_nodes:
+            curr_ind_node = wn.get_node(ind_node)
+            curr_node_dis[ind_node] = calc_distance(curr_node, curr_ind_node)
+        # find the key with the min value, i.e. the node with the lowest distance
+        ind_distances[node] = min(curr_node_dis.values())
+        close_node[node] = min(curr_node_dis, key=curr_node_dis.get)
+
+    return (ind_distances, close_node)
+
+
+def calc_distance(node1, node2):
+    p1x, p1y = node1.coordinates
+    p2x, p2y = node2.coordinates
+
+    return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
 
 
 def read_comp_data(loc, read_list, error):

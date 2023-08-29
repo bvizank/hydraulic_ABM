@@ -2,7 +2,7 @@ import wntr
 import numpy as np
 import pandas as pd
 import copy
-from utils import read_data, read_comp_data, make_lorenz, gini
+import utils as ut
 import matplotlib.pyplot as plt
 # from matplotlib.pyplot import figure
 # import plotly.graph_objects as go
@@ -10,7 +10,6 @@ from scipy.interpolate import griddata
 from scipy.stats import binned_statistic
 import networkx as nx
 # import os
-import math
 
 
 no_wfh_comp_dir = 'Output Files/30_no_pm/'
@@ -51,15 +50,15 @@ plt.rcParams['ytick.major.size'] = 3.0
 inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
 wn = wntr.network.WaterNetworkModel(inp_file)
 G = wn.to_graph()
-# wfh = read_data(wfh_loc, read_list)
-# no_wfh = read_data(no_wfh_loc, read_list)
+# wfh = ut.read_data(wfh_loc, read_list)
+# no_wfh = ut.read_data(no_wfh_loc, read_list)
 # comp_list = ['seir', 'demand', 'age', 'flow']
 comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers',
              'wfh', 'dine', 'groc', 'ppe']
-wfh = read_comp_data(wfh_comp_dir, comp_list, error)
-no_wfh = read_comp_data(no_wfh_comp_dir, comp_list, error)
-# days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
-# days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
+wfh = ut.read_comp_data(wfh_comp_dir, comp_list, error)
+no_wfh = ut.read_comp_data(no_wfh_comp_dir, comp_list, error)
+# days_200 = ut.read_data(day200_loc, ['seir', 'demand', 'age'])
+# days_400 = ut.read_data(day400_loc, ['seir', 'demand', 'age'])
 # print(wfh['sd_seir_data'])
 # print(wfh['avg_age'])
 # print(wfh['avg_ppe'])
@@ -92,33 +91,6 @@ def calc_flow_diff(data, hours):
     # return output, change_sum
 
 
-def calc_distance(node1, node2):
-    p1x, p1y = node1.coordinates
-    p2x, p2y = node2.coordinates
-
-    return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
-
-
-def calc_industry_distance(wn):
-    '''
-    Function to calculate the distance to the nearest industrial node.
-    '''
-    all_nodes = [node for name, node in wn.junctions()
-                 if node.demand_timeseries_list[0].pattern_name != '3']
-
-    ind_distances = dict()
-    close_node = dict()
-    for node in all_nodes:
-        curr_node_dis = dict()
-        for ind_node in ind_nodes:
-            curr_node_dis[ind_node.name] = calc_distance(node, ind_node)
-        # find the key with the min value, i.e. the node with the lowest distance
-        ind_distances[node.name] = min(curr_node_dis.values())
-        close_node[node.name] = min(curr_node_dis, key=curr_node_dis.get)
-
-    return (ind_distances, close_node)
-
-
 def calc_closest_node(wn):
     res_nodes = [node for name, node in wn.junctions()
                  if node.demand_timeseries_list[0].base_value > 0
@@ -131,7 +103,7 @@ def calc_closest_node(wn):
         curr_node_close = dict()
         for node2 in all_nodes:
             if node1.name != node2.name:
-                curr_node_close[node2.name] = calc_distance(node1, node2)
+                curr_node_close[node2.name] = ut.calc_distance(node1, node2)
         closest_distances[node1.name] = min(curr_node_close.values())
 
     return closest_distances
@@ -924,10 +896,10 @@ make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
 # grocery_loc = 'Output Files/30_grocery/'
 # ppe_loc = 'Output Files/30_ppe/'
 
-# only_wfh = read_comp_data(only_wfh_loc, ['seir_data', 'age'], error)
-# dine = read_comp_data(dine_loc, ['seir_data', 'age'], error)
-# grocery = read_comp_data(grocery_loc, ['seir_data', 'age'], error)
-# ppe = read_comp_data(ppe_loc, ['seir_data', 'age'], error)
+# only_wfh = ut.read_comp_data(only_wfh_loc, ['seir_data', 'age'], error)
+# dine = ut.read_comp_data(dine_loc, ['seir_data', 'age'], error)
+# grocery = ut.read_comp_data(grocery_loc, ['seir_data', 'age'], error)
+# ppe = ut.read_comp_data(ppe_loc, ['seir_data', 'age'], error)
 # print("WFH model stats: " + str(calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
 # print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))
 # print("Grocery model stats: " + str(calc_model_stats(wn, grocery['avg_seir_data'], grocery['avg_age']/3600)))
@@ -935,9 +907,9 @@ make_seir_plot(no_wfh['avg_seir_data'], ['S', 'E', 'I', 'R', 'wfh'],
 # print("All PM model stats: " + str(calc_model_stats(wn, wfh['avg_seir_data'], wfh['avg_age']/3600)))
 # print("No PM model stats: " + str(calc_model_stats(wn, no_wfh['avg_seir_data'], no_wfh['avg_age']/3600)))
 
-ind_nodes = [node for name, node in wn.junctions()
+ind_nodes = [name for name, node in wn.junctions()
              if node.demand_timeseries_list[0].pattern_name == '3']
-ind_distances, ind_closest = calc_industry_distance(wn)
+ind_distances, ind_closest = ut.calc_industry_distance(wn, ind_nodes)
 pm_age_values = list()
 no_pm_age_values = list()
 pm_age_sd = list()
@@ -981,10 +953,10 @@ make_distance_plot(dist_values, no_pm_age_values, pm_age_values,
 
 
 ''' Make agent state variable plots '''
-all_pm_sv = read_data('Output Files/30_all_pm/2023-05-30_15-29_0_results/',
-                      ['cov_pers', 'cov_ff', 'media'])
-no_pm_sv = read_data('Output Files/30_no_pm/2023-05-26_08-33_0_results/',
-                     ['cov_pers', 'cov_ff', 'media'])
+all_pm_sv = ut.read_data('Output Files/30_all_pm/2023-05-30_15-29_0_results/',
+                         ['cov_pers', 'cov_ff', 'media'])
+no_pm_sv = ut.read_data('Output Files/30_no_pm/2023-05-26_08-33_0_results/',
+                        ['cov_pers', 'cov_ff', 'media'])
 
 agent = '124'
 cols = ['Personal', 'Friends-Family', 'Media']
@@ -1046,8 +1018,8 @@ make_avg_plot(data, sd, cols,
 data_end = wfh['avg_age'].iloc[len(wfh['avg_age'])-1]
 res_data_end = data_end[res_nodes]
 res_data_sort = np.sort(res_data_end.to_numpy())
-gini_val = gini(res_data_sort)
-f = make_lorenz(res_data_sort)
+gini_val = ut.gini(res_data_sort)
+f = ut.make_lorenz(res_data_sort)
 plt.legend(['Equality', 'Gini: ' + str(gini_val)])
 plt.ylabel('Cummulative % water age')
 plt.xlabel('Cummulative % households')

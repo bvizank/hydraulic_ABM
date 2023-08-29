@@ -14,6 +14,7 @@ import pandas as pd
 # from pysimdeum import pysimdeum
 import copy
 import wntr
+import matplotlib.pyplot as plt
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -146,6 +147,13 @@ class ConsumerModel(Model):
         wfh_patterns = setup_out[6]
         self.terminal_nodes = setup_out[7]
         self.wn = setup_out[8]
+        self.ind_node_dist = setup_out[9]  # distance between res nodes and closest ind node
+        max_ind_dist = max(self.ind_node_dist.values())
+        for node, value in self.ind_node_dist.items():
+            self.ind_node_dist[node] = 1 - value / max_ind_dist
+        # x, y = zip(*sorted(self.ind_node_dist.items(), key=lambda kv: kv[1], reverse=True))
+        # plt.plot(x, y)
+        # plt.show()
 
         # set up water network
         # if city == 'micropolis':
@@ -240,6 +248,9 @@ class ConsumerModel(Model):
         # self.daily_demand = list()
         # self.demand_matrix = dict()
         self.agent_matrix = dict()
+
+        # income dictionary
+        self.income = dict()
 
         ''' Initialize the COVID state variable collectors '''
         # self.cov_pers = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
@@ -378,8 +389,19 @@ class ConsumerModel(Model):
         ids = 0
         for node in res_nodes:
             curr_node = list()
+            curr_node_dist = self.ind_node_dist[node]
             for spot in range(int(self.nodes_capacity[node])):
                 a = ConsumerAgent(ids, self)
+
+                ''' Assign income levels. If the agent lives close to an ind
+                node, then they have a higher chance of having an income level
+                of 0 (or low-income). '''
+                if curr_node_dist < self.random.random():
+                    a.income_level = 1
+                else:
+                    a.income_level = 0
+                self.income[ids] = a.income_level
+
                 self.schedule.add(a)
                 if work_agents != 0:
                     a.work_node = self.random.choice(self.work_loc_list)

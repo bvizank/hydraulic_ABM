@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
 from utils import clean_epanet
 import os
+from tqdm import tqdm
 warnings.simplefilter("ignore", UserWarning)
 
 
@@ -25,8 +26,12 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     start = perf_counter()
 
     model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
-    for t in range(24*days):
-        model.step()
+    if kwargs['verbose'] == 0.5:
+        for t in tqdm(range(24*days)):
+            model.step()
+    else:
+        for t in range(24*days):
+            model.step()
 
     stop = perf_counter()
 
@@ -100,6 +105,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     dine_dec = convert_to_pd(model.dine_dec, [str(i) for i in range(model.num_agents)])
     groc_dec = convert_to_pd(model.groc_dec, [str(i) for i in range(model.num_agents)])
     ppe_dec = convert_to_pd(model.ppe_dec, [str(i) for i in range(model.num_agents)])
+    income = pd.DataFrame.from_dict(model.income)
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
@@ -108,6 +114,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     dine_dec.to_pickle(output_loc + "/dine.pkl")
     groc_dec.to_pickle(output_loc + "/groc.pkl")
     ppe_dec.to_pickle(output_loc + "/ppe.pkl")
+    income.to_pickle(output_loc + "/income.pkl")
 
     with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
         # model.status_tot.to_excel(writer, sheet_name='seir_data')

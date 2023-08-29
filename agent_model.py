@@ -33,6 +33,7 @@ class ConsumerAgent(Agent):
         self.can_wfh = True   # bool based on workplace decision to allow work from home
         self.agent_params = {}  # BBN parameters for predicting work from home
         self.housemates = list()
+        self.income_level = 0
 
     def complying(self):
         if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:
