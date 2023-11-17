@@ -22,7 +22,7 @@ plt.rcParams['figure.figsize'] = [3.5, 3.5]
 plt.rcParams['figure.dpi'] = 500
 format = 'png'
 error = 'se'
-publication = False
+publication = True
 if publication:
     pub_loc = 'Output Files/publication_figures/'
     plt.rcParams['figure.dpi'] = 800
@@ -54,7 +54,7 @@ G = wn.to_graph()
 # no_wfh = ut.read_data(no_wfh_loc, read_list)
 # comp_list = ['seir', 'demand', 'age', 'flow']
 comp_list = ['seir_data', 'demand', 'age', 'flow', 'ppe', 'cov_ff', 'cov_pers',
-             'wfh', 'dine', 'groc', 'ppe']
+             'wfh', 'dine', 'groc', 'ppe', 'pressure']
 wfh = ut.read_comp_data(wfh_comp_dir, comp_list, error)
 no_wfh = ut.read_comp_data(no_wfh_comp_dir, comp_list, error)
 # days_200 = ut.read_data(day200_loc, ['seir', 'demand', 'age'])
@@ -784,7 +784,7 @@ plt.close()
 #                'all_flow_changes', wfh_flow_change,
 #                wfh_flow_sum)
 
-''' Make demand plots for by sector with PM data '''
+''' Make demand plots by sector with PM data '''
 # make lists of sector nodes
 res_nodes = [name for name, node in wn.junctions()
              if node.demand_timeseries_list[0].pattern_name == '2']
@@ -866,10 +866,54 @@ make_avg_plot(non_pm_age/3600, non_pm_age_sd/3600,
 # make_sector_plot(wn, days_400['age']/3600, 'Age (hr)', day400_loc, 'mean',
 #                  'mean_age', days=400)
 
+''' Make pressure plot by sector for both base and PM '''
+res_age_all_pm = wfh['avg_pressure'][res_nodes].mean(axis=1)
+com_age_all_pm = wfh['avg_pressure'][com_nodes].mean(axis=1)
+ind_age_all_pm = wfh['avg_pressure'][ind_nodes].mean(axis=1)
+
+res_sd_all_pm = wfh['sd_pressure'][res_nodes].mean(axis=1)
+com_sd_all_pm = wfh['sd_pressure'][com_nodes].mean(axis=1)
+ind_sd_all_pm = wfh['sd_pressure'][ind_nodes].mean(axis=1)
+
+res_age_no_pm = no_wfh['avg_pressure'][res_nodes].mean(axis=1)
+com_age_no_pm = no_wfh['avg_pressure'][com_nodes].mean(axis=1)
+ind_age_no_pm = no_wfh['avg_pressure'][ind_nodes].mean(axis=1)
+
+res_sd_no_pm = no_wfh['sd_pressure'][res_nodes].mean(axis=1)
+com_sd_no_pm = no_wfh['sd_pressure'][com_nodes].mean(axis=1)
+ind_sd_no_pm = no_wfh['sd_pressure'][ind_nodes].mean(axis=1)
+print(ind_age_no_pm)
+
+# make input data and sd
+all_pm_age = pd.concat([res_age_all_pm,
+                        com_age_all_pm,
+                        ind_age_all_pm],
+                       axis=1, keys=cols)
+all_pm_age_sd = pd.concat([res_sd_all_pm,
+                           com_sd_all_pm,
+                           ind_sd_all_pm],
+                          axis=1, keys=cols)
+non_pm_age = pd.concat([res_age_no_pm,
+                        com_age_no_pm,
+                        ind_age_no_pm],
+                       axis=1, keys=cols)
+non_pm_age_sd = pd.concat([res_sd_no_pm,
+                           com_sd_no_pm,
+                           ind_sd_no_pm],
+                          axis=1, keys=cols)
+make_avg_plot(non_pm_age, non_pm_age_sd,
+              cols, 'Time (days)', 'Pressure (m)', 'mean_pressure_'+error,
+              x_values, data2=all_pm_age, sd2=all_pm_age_sd, sub=True)
+
 ''' Make age plot comparing base and PM '''
 make_sector_plot(wn, no_wfh['avg_age']/3600, 'Age (hr)', 'mean',
                  'mean_age_aggregate_'+error, wfh['avg_age']/3600, sd=no_wfh['sd_age']/3600,
                  sd2=wfh['sd_age']/3600, type='all')
+
+# ''' Make pressure plot comparing base and PM '''
+# make_sector_plot(wn, no_wfh['avg_pressure'], 'Pressure (m)', 'mean',
+#                  'mean_pres_aggregate_'+error, wfh['avg_pressure'], sd=no_wfh['sd_pressure'],
+#                  sd2=wfh['sd_pressure'], type='all')
 
 ''' Make plots of aggregate demand data '''
 make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
