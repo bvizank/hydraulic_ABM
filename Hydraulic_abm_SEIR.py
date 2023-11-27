@@ -11,7 +11,6 @@ import time
 import bnlearn as bn
 import numpy as np
 import pandas as pd
-# from pysimdeum import pysimdeum
 import copy
 import wntr
 
@@ -19,7 +18,6 @@ warnings.simplefilter("ignore", UserWarning)
 
 
 class ConsumerModel(Model):
-
     def __init__(self,
                  N,
                  city,
@@ -227,33 +225,26 @@ class ConsumerModel(Model):
             node for node in self.grid.G.nodes
             if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
         ]
-        self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
+        self.daily_demand = pd.DataFrame(0, index=np.arange(0, 86400, 3600),
+                                         columns=self.nodes_w_demand)
         self.demand_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                           columns=self.G.nodes)
-        # self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
         self.pressure_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                             columns=self.G.nodes)
         self.age_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                        columns=self.G.nodes)
         self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                         columns=[name for name, link in self.wn.links()])
-        # self.daily_demand = list()
-        # self.demand_matrix = dict()
+
         self.agent_matrix = dict()
 
         ''' Initialize the COVID state variable collectors '''
-        # self.cov_pers = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.cov_ff = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.media_exp = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
+
         self.cov_pers = dict()
         self.cov_ff = dict()
         self.media_exp = dict()
 
         ''' Initialize the PM adoption collectors '''
-        # self.wfh_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.dine_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.groc_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.ppe_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
         self.wfh_dec = dict()
         self.dine_dec = dict()
         self.groc_dec = dict()
@@ -287,8 +278,6 @@ class ConsumerModel(Model):
         ]
         status_tot = [i / self.num_agents for i in status_tot]
         self.status_tot = {0: status_tot}
-        # self.status_tot = np.array([self.status_tot])
-        #  ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
 
         self.base_demand_list()
         self.create_node_list()
@@ -301,18 +290,6 @@ class ConsumerModel(Model):
         self.dag_nodes()
         if self.res_pat_select == 'pysimdeum':
             self.create_demand_houses()
-        # self.create_comm_network()
-
-        # # Create dictionary of work from home probabilities using bnlearn.
-        # self.rp_wfh_probs = {}
-        # for i in range(7):
-        #     query = bn.inference.fit(self.wfh_dag,
-        #                              variables = ['work_from_home'],
-        #                              evidence = {'risk_perception_r':(i)},
-        #                              verbose = 0)
-        #     self.rp_wfh_probs[i] = query.df['p'][1]
-        #
-        # print(self.rp_wfh_probs)
 
         init_stop = time.perf_counter()
 
@@ -334,7 +311,6 @@ class ConsumerModel(Model):
 
             ''' Make a pattern for each node for hydraulic simulation '''
             curr_pattern = copy.deepcopy(node_1.demand_timeseries_list[0].pattern)
-            # curr_pattern.name = 'node_'+node
             self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
             self.base_pattern[node] = copy.deepcopy(node_1.demand_timeseries_list[0].pattern_name)
 
@@ -350,8 +326,6 @@ class ConsumerModel(Model):
         nodes_nav_2x = self.nav_nodes + self.nav_nodes
         self.work_loc_list = self.node_list(self.nodes_capacity, nodes_industr_2x + nodes_nav_2x)
         self.res_loc_list = self.node_list(self.nodes_capacity, self.res_nodes)
-        # self.rest_loc_list = node_list(self.nodes_capacity, self.cafe_nodes)
-        # self.comm_loc_list = node_list(self.nodes_capacity, self.com_nodes)
 
     def create_agents(self):
         ''' Creating lists of nodes where employers have decided not to allow
@@ -360,16 +334,12 @@ class ConsumerModel(Model):
         ''' Potentially change this to include navy nodes '''
         no_wfh_ind_nodes = self.random.choices(population=self.ind_nodes,
                                                k=int(len(self.ind_nodes)*self.no_wfh_perc))
-        # no_wfh_comm_nodes = self.random.choices(population=self.com_nodes,
-        #                                         k=int(len(self.com_nodes)*0.2))
-        # no_wfh_rest_nodes = self.random.choices(population=self.cafe_nodes,
-        #                                         k=int(len(self.cafe_nodes)*0.2))
-        total_no_wfh = no_wfh_ind_nodes# + no_wfh_comm_nodes + no_wfh_rest_nodes
+        total_no_wfh = no_wfh_ind_nodes
 
         work_agents = (max(self.ind_dist) + max(self.nav_dist)) * 2
-        # rest_agents = max(self.cafe_dist)
-        # comm_agents = max(self.com_dist)
+
         # CREATING AGENTS
+
         ''' Needed to account for multifamily housing, so iterating through
         residential nodes and placing agents that way and then storing their
         housemates in the agent object. '''
@@ -384,31 +354,14 @@ class ConsumerModel(Model):
                 if work_agents != 0:
                     a.work_node = self.random.choice(self.work_loc_list)
                     a.home_node = node
-                    # a.home_node = self.random.choice(self.res_loc_list)
                     self.work_loc_list.remove(a.work_node)
-                    # self.res_loc_list.remove(a.home_node)
                     if a.work_node in self.nav_nodes:
                         a.work_type = 'navy'
                     elif a.work_node in self.ind_nodes:
                         a.work_type = 'industrial'
                     work_agents -= 1
-                # elif rest_agents != 0:
-                #     a.work_node = self.random.choice(self.rest_loc_list)
-                #     a.home_node = self.random.choice(self.res_loc_list)
-                #     self.rest_loc_list.remove(a.work_node)
-                #     self.res_loc_list.remove(a.home_node)
-                #     a.work_type = 'restaurant'
-                #     rest_agents -= 1
-                # elif comm_agents != 0:
-                #     a.work_node = self.random.choice(self.comm_loc_list)
-                #     a.home_node = self.random.choice(self.res_loc_list)
-                #     self.comm_loc_list.remove(a.work_node)
-                #     self.res_loc_list.remove(a.home_node)
-                #     a.work_type = 'commercial'
-                #     comm_agents -= 1
                 else:
                     a.home_node = node
-                    # self.res_loc_list.remove(a.home_node)
 
                 if a.work_node in total_no_wfh:
                     a.can_wfh = False
@@ -454,27 +407,19 @@ class ConsumerModel(Model):
                 so they each know who their housemates are '''
                 for mate in curr_housemates:
                     agent = self.schedule._agents[mate]
-                    # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
                     agent.housemates = copy.deepcopy(curr_housemates)  # this includes current agent
 
             for mate in curr_node:
                 agent = self.schedule._agents[mate]
-                # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
                 agent.housemates = copy.deepcopy(curr_node)
         else:
             for agent in curr_node:
                 curr_agent = self.schedule._agents[agent]
-                # agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
                 curr_agent.housemates = copy.deepcopy(curr_node)
 
     def meso_household(self, curr_node):
-        ''' Assign each agent's housemates based on the current node.
+        ''' Assign each agent's housemates based on the current node. '''
 
-        The current plan is to fill all residential node spots and then
-        the rest of the agents are travellers at the airport. '''
-        # need to rectify the difference between the number of
-        # residential spots (139,654) and the total population
-        # (146,716)
         ''' Iterate through the agents at the current res node
         and add them to households of 1 to 6 agents '''
         while len(curr_node) > 6:
@@ -489,44 +434,11 @@ class ConsumerModel(Model):
             so they each know who their housemates are '''
             for mate in curr_housemates:
                 agent = self.schedule._agents[mate]
-                # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
                 agent.housemates = copy.deepcopy(curr_housemates)  # this includes current agent
 
         for mate in curr_node:
             agent = self.schedule._agents[mate]
-            # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
             agent.housemates = copy.deepcopy(curr_node)
-
-    def create_demand_houses(self):
-        ''' Create houses using pysimdeum for stochastic demand simulation '''
-        self.res_houses = list()
-        for node in self.res_nodes:
-            agents_at_node = len(self.grid.G.nodes[node]['agent'])
-            if agents_at_node > 5 or agents_at_node < 2:
-                pass
-            elif agents_at_node == 1:
-                house = pysimdeum.built_house(house_type='one_person')
-                house.id = node
-                for user in house.users:
-                    user.age = 'work_ad'
-                    user.job = True
-                self.res_houses.append(house)
-            else:
-                house = pysimdeum.built_house(house_type='family', user_num=agents_at_node)
-                house.id = node
-                for user in house.users:
-                    user.age = 'work_ad'
-                    user.job = True
-                self.res_houses.append(house)
-
-    def check_houses(self):
-        for house in self.res_houses:
-            node = house.id
-            agents_at_node = self.grid.G.nodes[node]['agent']
-            for agent in agents_at_node:
-                if agent.wfh == 1 or agent.work_node == None:
-                    user.age = 'home_ad'
-                    user.job = True
 
     def set_attributes(self):
         '''
@@ -541,7 +453,7 @@ class ConsumerModel(Model):
         infected number.
         '''
         exposed_sample = self.random.sample([i for i, a in enumerate(self.schedule.agents)],
-                                               self.covid_exposed)
+                                            self.covid_exposed)
         for i, agent in enumerate(self.schedule.agents):
             ''' Set age of each agent '''
             agent.age = self.random.choices(population=ages,
@@ -556,11 +468,8 @@ class ConsumerModel(Model):
 
             ''' Set bbn parameters for each agent '''
             agent_set_params = self.bbn_params.sample()
-            # agent.agent_params['risk_perception_r'] = int(agent_set_params['risk_perception_r']) - 1
             for param in self.bbn_params:
                 try:
-                    # if param == "COVIDeffect_4":
-                    #     pass
                     if param == "DemEdu":
                         if int(agent_set_params[param]) == 9:
                             agent.agent_params[param] = 5
@@ -587,20 +496,6 @@ class ConsumerModel(Model):
         '''
         for agent in self.schedule.agents:
             agent.friends = self.swn.neighbors(agent.unique_id)
-        # self.snw_agents_node = {}
-        # Nodes_in_snw = list(range(1, Micro_pop + 1))
-
-        # # Create dictionairy with dict[agents]= Node
-        # for agent in self.schedule.agents:
-        #     node_to_agent = self.random.choice(Nodes_in_snw)
-        #     self.snw_agents_node[agent] = node_to_agent
-        #     Nodes_in_snw.remove(node_to_agent)
-
-        # # Create dictionairy with dict[Nodes]= agent
-        # self.snw_node_agents = {y: x for x, y in self.snw_agents_node.iteritems()}
-        # self.snw_node_agents = dict(zip(self.snw_agents_node.values(), self.snw_agents_node.keys()))
-        # for key in self.snw_node_agents:
-        #     print(self.snw_node_agents[key])
 
     def num_status(self):
         """
@@ -645,7 +540,6 @@ class ConsumerModel(Model):
         self.stat_tot[12] = int(len(self.agents_wfh()))
 
         self.stat_tot = [i / self.num_agents for i in self.stat_tot]
-        # step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
         self.status_tot[self.timestep] = copy.deepcopy(self.stat_tot)
 
     def contact(self, agent_to_move, node_type):
@@ -662,12 +556,6 @@ class ConsumerModel(Model):
             agents_to_expose = self.grid.G.nodes[agent_to_move.pos]['agent']
 
         for agent in agents_to_expose:
-            # agent.adj_covid_change = 1
-            # if agent.agent_params["COVIDeffect_4"] < 6 and node_type == 'residential':
-            #     agent.agent_params["COVIDeffect_4"] += 0.1
-            # else:
-            #     pass
-
             if agent.covid == 'susceptible':
                 if node_type == 'workplace':
                     if agent_to_move.ppe == 0:
@@ -874,7 +762,6 @@ class ConsumerModel(Model):
         if delta_agents_comm > 0:
             Possible_Agents_to_move = [a for a in self.schedule.agents
                                        if a.pos in self.res_nodes]
-                                       #and a.work_type == 'commercial']
 
             nodes_comm = list()
             for node in self.com_nodes:
@@ -882,7 +769,6 @@ class ConsumerModel(Model):
                 if avail_spots > 0:
                     for i in range(int(avail_spots)):
                         nodes_comm.append(node)
-            # print('Comm nodes: ' + str(len(nodes_comm)))
 
             # we want all the commercial nodes that have vacancies and how many
             # vacancies...
@@ -890,18 +776,6 @@ class ConsumerModel(Model):
             for i in range(min(delta_agents_comm, len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
                 location = self.random.choice(nodes_comm)
-                # work_node = Agent_to_move.work_node
-                # while len(self.grid.G.nodes[work_node]['agent']) > self.nodes_capacity[work_node]:
-                #     Agent_to_move = self.random.choice(Possible_Agents_to_move)
-                    # work_node = Agent_to_move.work_node
-                # if (Agent_to_move.wfh == 1 and
-                #     self.wfh_thres and
-                #     Agent_to_move.can_wfh == True):
-                #     pass
-                # else:
-                # if (Agent_to_move.work_type != None and
-                #     Agent_to_move in self.grid.G.nodes[Agent_to_move.work_node]['agent']):
-                #     print(f"Agent {Agent_to_move} is at work.")
                 if self.base_pattern[location] == '6':
                     if Agent_to_move.less_groceries == 1:
                         pass
@@ -939,7 +813,6 @@ class ConsumerModel(Model):
         if delta_agents_rest > 0:
             Possible_Agents_to_move = [a for a in self.schedule.agents
                                        if a.pos in self.res_nodes]
-                                       # and a.work_type == 'restaurant']
 
             nodes_cafe = list()
             for node in self.cafe_nodes:
@@ -947,16 +820,10 @@ class ConsumerModel(Model):
                 if avail_spots > 0:
                     for i in range(int(avail_spots)):
                         nodes_cafe.append(node)
-            # print('Cafe nodes: ' + str(len(nodes_cafe)))
 
             for i in range(min(delta_agents_rest,len(Possible_Agents_to_move))):
                 Agent_to_move = self.random.choice(Possible_Agents_to_move)
                 location = self.random.choice(nodes_cafe)
-                # if (Agent_to_move.wfh == 1 and
-                #     self.wfh_thres and
-                #     Agent_to_move.can_wfh == True):
-                #     pass
-                # else:
                 if Agent_to_move.no_dine == 1:
                     pass
                 else:
@@ -1030,46 +897,15 @@ class ConsumerModel(Model):
         for node in self.nodes_w_demand:
             if node in self.nodes_capacity:
                 Capacity_node = self.nodes_capacity[node]
-                # node_1 = self.wn.get_node(node)
                 agents_at_node_list = self.grid.G.nodes[node]['agent']
                 agents_at_node = len(agents_at_node_list)
                 step_agents[node] = agents_at_node
-                # agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
                 if Capacity_node != 0:
                     step_demand.append(agents_at_node/Capacity_node)
                 else:
                     step_demand.append(0)
             else:
                 step_demand.append(0)
-
-            # try:
-            #     # determine demand reduction
-            #     demand_reduction_node = 0
-            #     # for agent in self.grid.G.nodes[node]['agent']: # determine demand reduction for every agent at that node
-            #     #     if agent.compliance == 1:
-            #     #         rf = self.random.randint(0.035 * 1000, 0.417 * 1000) / 1000  # Reduction factor for demands
-            #     #         demand_reduction_node += node_1.demand_timeseries_list[0].base_value * rf /  agents_at_node     # Calculating demand reduction per agent per node
-            #     #     else:
-            #     #         continue
-            #
-            #     # Save first base demand so later assign it back to Node after simulation
-            #     # self.base_demands_previous[node] = node_1.demand_timeseries_list[0].base_value
-            #     # print(self.base_demands_previous[node])
-            #     # node_1.demand_timeseries_list[0].base_value = node_1.demand_timeseries_list[0].base_value * agents_at_node/ Capacity_node - demand_reduction_node
-            #     # check how many agents are working from home at current node
-            #     # if more than 50%, changes pattern
-            #
-                # if self.res_pat_select == 'lakewood':
-                #     perc_wfh = agents_wfh / agents_at_node
-                #     if perc_wfh > 0.5 and node in self.res_nodes:
-                #         node_1.demand_timeseries_list[0].pattern_name = 'wk1'
-                # elif self.res_pat_select == 'pysimdeum':
-                #     if node in self.res_nodes:
-                #         self.set_patterns(node_1)
-                # else:
-                #    pass
-            # except:
-            #     pass
 
         hourly_agents = [agent for key, agent in step_agents.items()]
         hourly_demands = pd.DataFrame(data=[step_demand], index=[0])
@@ -1113,20 +949,6 @@ class ConsumerModel(Model):
         sim = wntr.sim.EpanetSimulator(self.wn)
         results = sim.run_sim('id' + str(self.id))
 
-        # Assigning first base demand again to individual Nodes so WNTR doesnt add all BD up
-        # for node, base_demand in self.base_demands.items():
-        #
-        #     node_1 = self.wn.get_node(node)
-        #     node_1.demand_timeseries_list[0].base_value = base_demand
-
-        # SAVING CURRENT DEMAND TIMESTEP IN DEMAND MATRIX
-        # self.demand_matrix[self.timestep-23: self.timestep+1] = results.node['demand'][0:24]
-        # self.pressure_matrix[self.timestep-23: self.timestep+1] = results.node['pressure'][0:24]
-        # self.age_matrix[self.timestep-23: self.timestep+1] = results.node['quality'][0:24]
-        # flow = results.link['flowrate'][0:24] * 1000000
-        # flow = flow.astype('int')
-        # self.flow_matrix[self.timestep-23: self.timestep+1] = flow
-
         demand = results.node['demand'] * 1000000
         demand = demand.astype('int')
         self.demand_matrix = demand
@@ -1135,7 +957,6 @@ class ConsumerModel(Model):
         flow = results.link['flowrate'] * 1000000
         flow = flow.astype('int')
         self.flow_matrix = flow
-        # results.to_pickle(str(self.id) + 'out_results.pkl')
 
     def inform_status(self):
         info_stat_all = 0
@@ -1159,8 +980,6 @@ class ConsumerModel(Model):
             print('\tPeople complying: ' + str(compl_stat_all))
 
     def predict_wfh(self, agent):
-        # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
-        # for agent in agents_not_wfh:
         agent.adj_covid_change = 0
         evidence_agent = copy.deepcopy(agent.agent_params)
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
@@ -1174,12 +993,9 @@ class ConsumerModel(Model):
                                  evidence = evidence,
                                  verbose = 0)
         if self.random.random() < query.df['p'][1]:
-        # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.wfh = 1
 
     def predict_dine_less(self, agent):
-        # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
-        # for agent in agents_not_wfh:
         agent.adj_covid_change = 0
         evidence_agent = copy.deepcopy(agent.agent_params)
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
@@ -1193,12 +1009,9 @@ class ConsumerModel(Model):
                                  evidence = evidence,
                                  verbose = 0)
         if self.random.random() < query.df['p'][1]:
-        # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.no_dine = 1
 
     def predict_grocery(self, agent):
-        # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
-        # for agent in agents_not_wfh:
         agent.adj_covid_change = 0
         evidence_agent = copy.deepcopy(agent.agent_params)
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
@@ -1212,12 +1025,9 @@ class ConsumerModel(Model):
                                  evidence=evidence,
                                  verbose=0)
         if self.random.random() < query.df['p'][1]:
-        # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.less_groceries = 1
 
     def predict_ppe(self, agent):
-        # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
-        # for agent in agents_not_wfh:
         agent.adj_covid_change = 0
         evidence_agent = copy.deepcopy(agent.agent_params)
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
@@ -1232,38 +1042,22 @@ class ConsumerModel(Model):
                                  evidence = evidence,
                                  verbose = 0)
         if self.random.random() < query.df['p'][1]:
-        # if self.random.random() < self.rp_wfh_probs[agent.agent_params['risk_perception_r']]:
             agent.ppe = 1
 
     def change_house_adj(self, agent):
         ''' Function to check whether agents in a given agents node have become
         infected with COVID '''
-        # node = agent.home_node
-        # agents_at_node = copy.deepcopy(self.grid.G.nodes[node]['agent'])
-        # if len(agents_at_node) > 6:
-        # print(agent.housemates)
         agents_in_house = copy.deepcopy(agent.housemates)
         agents_friends = [n for n in self.swn.neighbors(agent.unique_id)]
         agents_in_network = agents_in_house + agents_friends
-        # print(agent)
-        # print(agents_in_house)
         agents_in_network.remove(agent.unique_id)
         for name in agents_in_network:
             adj_agent = self.schedule._agents[name]
-            # agent = [a for a in self.schedule.agents if a.unique_id == agent][0]
             adj_agent.adj_covid_change = 1
             if adj_agent.agent_params["COVIDeffect_4"] < 6:
                 adj_agent.agent_params["COVIDeffect_4"] += 1
             else:
                 pass
-        # else:
-        #     agents_at_node.remove(agent)
-        #     for a in agents_at_node:
-        #         a.adj_covid_change == 1
-        #         if a.agent_params["COVIDeffect_4"] < 6:
-        #             a.agent_params["COVIDeffect_4"] += 0.1
-        #         else:
-        #             pass
 
     def check_agent_change(self):
         ''' Function to check each agent for a change in household COVID '''
@@ -1305,7 +1099,6 @@ class ConsumerModel(Model):
             curr_mult = copy.deepcopy(curr_pat.multipliers)
             for j in range(90):
                 curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
-            # print(curr_pat.multipliers)
 
     def collect_agent_data(self):
         ''' BBN input containers '''
@@ -1340,7 +1133,6 @@ class ConsumerModel(Model):
     def change_time_model(self):
         self.timestep += 1
         if self.timestep % 24 == 0:
-            # self.wn.options.time.duration = 0
             ''' Increment day time step '''
             self.timestep_day += 1
 
@@ -1370,28 +1162,15 @@ class ConsumerModel(Model):
                     if agent.ppe == 0 and 'ppe' in self.bbn_models:
                         self.predict_ppe(agent)
 
-            # self.check_social_dist()
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
             self.change_demands()
-        # elif (self.timestep + 1) % 24 == 0 and self.timestep != 0:
-            # ''' Clear EPANET files and run hydraulic for the day '''
-            # curr_dir = os.getcwd()
-            # files_in_dir = os.listdir(curr_dir)
-            #
-            # for file in files_in_dir:
-            #     if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
-            #         os.remove(os.path.join(curr_dir, file))
-            # self.run_hydraulic()
-        # else:
-            # pass
 
         if self.timestep_day == self.days:
             self.update_patterns()
             self.wn.options.time.duration = 3600 * 24 * self.days
             self.run_hydraulic()
         self.timestepN = self.timestep - self.timestep_day * 24
-        # print(self.timestep)
 
     def industry_agents(self):
         return [a for a in self.schedule.agents if a.pos in self.ind_nodes]
@@ -1433,8 +1212,6 @@ class ConsumerModel(Model):
 
         print('\t', out_1)
         print('\t', out_2)
-        # print('\tStatus (%): ', ['{:.2f}'.format(i) for i in self.stat_tot])
-        # print('\tStatus (#): ', ['{:.3f}'.format(i) * self.num_agents for i in self.stat_tot])
         print('\n')
         print('\tAgents at industrial nodes: ' + str(len(self.industry_agents())))
         print('\tAgents at commercial nodes: ' + str(len(self.commercial_agents())))
@@ -1448,15 +1225,8 @@ class ConsumerModel(Model):
         self.schedule.step()
         if self.timestep != 0:
             self.move()
-            # self.move_wfh()
-        # self.check_agent_loc()
-        # self.check_covid_change()
-        # BV: changed times to 6, 14, and 22 because I think this is more representative
-        # of a three shift schedule. Unsure if this changes anything with water
-        # patterns, but I suspect it might.
         if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
             self.move_indust()
-            # self.move_indust_wfh()
         self.check_status()
         self.check_agent_change()
         if self.res_pat_select == 'pysimdeum':
@@ -1465,8 +1235,6 @@ class ConsumerModel(Model):
         self.collect_demands()
         self.collect_agent_data()
         self.change_time_model()
-        # self.inform_status()
-        # self.compliance_status()
         self.num_status()
         if self.verbose == 1:
             self.print_func()

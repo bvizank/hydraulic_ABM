@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
-from utils import clean_epanet
 import os
 warnings.simplefilter("ignore", UserWarning)
 
