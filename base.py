@@ -73,6 +73,16 @@ class BaseGraphics:
 
         return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
 
+    def calc_age_diff(self, data1, data2):
+        out_dict = dict()
+        print(data2)
+        for i, (node, colData) in enumerate(data1.items()):
+            out_data2 = data2.iloc[-1, i] / 3600
+            print(out_data2)
+            out_dict[node] = colData.iloc[-1] / 3600 - out_data2
+
+        return out_dict
+
     def calc_industry_distance(self, wn):
         '''
         Function to calculate the distance from each residential node
@@ -531,26 +541,13 @@ class Graphics(BaseGraphics):
         #                  'mean_age_aggregate_' + error, wfh['avg_age'] / 3600,
         #                  sd=ut.calc_error(no_wfh['var_age'], error)/3600,
         #                  sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
-        pm_age_change, pm_age_sum = self.calc_flow_diff(
-            self.pm['avg_age'],
-            self.times[len(self.times) - 1]
-        )
-        base_age_change, base_age_sum = self.calc_flow_diff(
-            self.base['avg_flow'],
-            self.times[len(self.times) - 1]
-        )
 
-        ax = wntr.graphics.plot_network(self.wn, link_attribute=pm_flow_sum,
-                                        link_colorbar_label='Flow Changes',
-                                        node_size=2, link_width=1)
-        plt.savefig(self.pub_loc + 'flow_network_pm.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        pm_age = self.calc_age_diff(self.base['avg_age'], self.pm['avg_age'])
 
-        ax = wntr.graphics.plot_network(self.wn, link_attribute=base_flow_sum,
-                                        link_colorbar_label='Flow Changes',
-                                        node_size=2, link_width=1)
-        plt.savefig(self.pub_loc + 'flow_network_base.' + self.format,
+        ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
+                                        node_colorbar_label='Age (hrs)',
+                                        node_size=5, link_width=0.3)
+        plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
