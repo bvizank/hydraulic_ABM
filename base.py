@@ -78,8 +78,8 @@ class BaseGraphics:
         print(data2)
         for i, (node, colData) in enumerate(data1.items()):
             out_data2 = data2.iloc[-1, i] / 3600
-            print(out_data2)
-            out_dict[node] = colData.iloc[-1] / 3600 - out_data2
+            out_dict[node] = (out_data2 - (colData.iloc[-1] / 3600)) / out_data2 * 100
+            print(f"Base: {colData.iloc[-1]/3600}, pm: {out_data2}, change: {out_dict[node]}")
 
         return out_dict
 
@@ -545,8 +545,9 @@ class Graphics(BaseGraphics):
         pm_age = self.calc_age_diff(self.base['avg_age'], self.pm['avg_age'])
 
         ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
-                                        node_colorbar_label='Age (hrs)',
-                                        node_size=5, link_width=0.3)
+                                        node_colorbar_label='Age Change (%)',
+                                        node_size=4, link_width=0.3,
+                                        node_cmap='PuOr')
         plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
