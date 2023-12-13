@@ -1099,6 +1099,11 @@ class ConsumerModel(Model):
         self.agent_matrix[self.timestep] = hourly_agents
 
     def change_demands(self):
+        '''
+        Add the current days demand pattern to each nodes demand pattern.
+        This appends a new 24 pattern based on the demands at each node.
+        '''
+
         for node in self.nodes_w_demand:
             curr_node = self.wn.get_node(node)
             curr_demand = curr_node.demand_timeseries_list[0].base_value

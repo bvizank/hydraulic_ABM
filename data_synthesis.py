@@ -2,8 +2,8 @@ import os
 import pandas as pd
 from utils import read_data
 
-data_dir = 'Output Files/30_ppe/'
-# data_dir = '../../OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/no_pm_30/'
+data_dir = 'Output Files/30_wfh/'
+# data_dir = 'D:/OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/wfh_30/'
 read_list = [
     'seir_data',
     'demand',
@@ -48,4 +48,4 @@ for i, folder in enumerate(next(os.walk(data_dir))[1]):
 for item in read_list:
     globals()['tot_'+item+'_row'] = globals()['tot_'+item].groupby(globals()['tot_'+item].index)
     globals()['tot_'+item+'_row'].mean().to_pickle(data_dir+'avg_'+item+'.pkl')
-    globals()['tot_'+item+'_row'].std().to_pickle(data_dir+'sd_'+item+'.pkl')
+    globals()['tot_'+item+'_row'].var().to_pickle(data_dir+'var_'+item+'.pkl')
