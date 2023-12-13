@@ -73,13 +73,11 @@ class BaseGraphics:
 
         return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
 
-    def calc_age_diff(self, data1, data2):
+    def calc_age_diff(self, data):
         out_dict = dict()
-        print(data2)
-        for i, (node, colData) in enumerate(data1.items()):
-            out_data2 = data2.iloc[-1, i] / 3600
-            out_dict[node] = (out_data2 - (colData.iloc[-1] / 3600)) / out_data2 * 100
-            print(f"Base: {colData.iloc[-1]/3600}, pm: {out_data2}, change: {out_dict[node]}")
+        for i, (node, colData) in data.items():
+            out_data = colData.iloc[i] / 3600
+            out_dict[node] = out_data
 
         return out_dict
 
@@ -255,7 +253,6 @@ class BaseGraphics:
                                  bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
         sd_y2 = binned_statistic(x, sd2, statistic='mean',
                                  bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
-        print(sd_y1.statistic)
         sd_y1 = ut.calc_error(sd_y1.statistic, self.error) / 3600
         sd_y2 = ut.calc_error(sd_y2.statistic, self.error) / 3600
         # print(mean_y1.bin_edges)
@@ -373,7 +370,7 @@ class Graphics(BaseGraphics):
         if publication:
             self.pub_loc = 'Output Files/publication_figures/'
             plt.rcParams['figure.dpi'] = 800
-            self.format = 'pdf'
+            self.format = 'eps'
         else:
             self.pub_loc = 'Output Files/png_figures/'
             self.format = 'png'
@@ -420,8 +417,8 @@ class Graphics(BaseGraphics):
             self.times[len(self.times) - 1]
         )
 
-        print(pm_flow_sum['MA728'])
-        print(base_flow_sum['MA728'])
+        # print(pm_flow_sum['MA728'])
+        # print(base_flow_sum['MA728'])
 
         ax = wntr.graphics.plot_network(self.wn, link_attribute=pm_flow_sum,
                                         link_colorbar_label='Flow Changes',
@@ -542,12 +539,20 @@ class Graphics(BaseGraphics):
         #                  sd=ut.calc_error(no_wfh['var_age'], error)/3600,
         #                  sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
 
-        pm_age = self.calc_age_diff(self.base['avg_age'], self.pm['avg_age'])
+        base_age = self.calc_age_diff(self.base['avg_age'])
+
+        ax = wntr.graphics.plot_network(self.wn, node_attribute=base_age,
+                                        node_colorbar_label='Age (hrs)',
+                                        node_size=4, link_width=0.3)
+        plt.savefig(self.pub_loc + 'age_network_base.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        pm_age = self.calc_age_diff(self.pm['avg_age'])
 
         ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
-                                        node_colorbar_label='Age Change (%)',
-                                        node_size=4, link_width=0.3,
-                                        node_cmap='PuOr')
+                                        node_colorbar_label='Age (hrs)',
+                                        node_size=4, link_width=0.3)
         plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
