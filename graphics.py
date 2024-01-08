@@ -1,7 +1,7 @@
 from base import Graphics
 
 
-plots = Graphics(publication=True, error='se')
+plots = Graphics(publication=False, error='se')
 
 ''' Demand plots '''
 plots.demand_plots()

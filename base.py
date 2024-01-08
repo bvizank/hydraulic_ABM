@@ -75,6 +75,7 @@ class BaseGraphics:
 
     def calc_age_diff(self, data):
         out_dict = dict()
+        print(data)
         for i, (node, colData) in data.items():
             out_data = colData.iloc[i] / 3600
             out_dict[node] = out_data
@@ -127,15 +128,23 @@ class BaseGraphics:
         '''
 
         ''' Plot a single figure with the input data '''
+        # set multiplier m to ensure plots with 3 or less lines
+        # get the correct colors.
+        print(data.shape[1])
+        if data.shape[1] > 3:
+            m = 1
+        else:
+            m = 2
+
         # plot each column of data
         for i, col in enumerate(cols):
-            ax.plot(x_values, data[col], color='C' + str(i * 2))
+            ax.plot(x_values, data[col], color='C' + str(i * m))
 
         #  need to separate so that the legend fills correctly
         for i, col in enumerate(cols):
             ax.fill_between(x_values, data[col] - sd[col],
                             data[col] + sd[col],
-                            color='C' + str(i * 2), alpha=0.5)
+                            color='C' + str(i * m), alpha=0.5)
 
         if show_labels:
             ax.set_xlabel(xlabel)
@@ -370,7 +379,7 @@ class Graphics(BaseGraphics):
         if publication:
             self.pub_loc = 'Output Files/publication_figures/'
             plt.rcParams['figure.dpi'] = 800
-            self.format = 'eps'
+            self.format = 'pdf'
         else:
             self.pub_loc = 'Output Files/png_figures/'
             self.format = 'png'
@@ -470,10 +479,30 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make plots of aggregate demand data '''
-        # make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
-        #                  'sum_demand_aggregate_' + error, wfh['avg_demand'], type='all',
-        #                  sd=ut.calc_error(no_wfh['var_demand'], error),
-        #                  sd2=ut.calc_error(wfh['var_demand'], error))
+        demand_base = self.base['avg_demand'][self.res_nodes, self.com_nodes, self.ind_nodes]
+        demand = pd.concat(
+            [demand_base.sum(axis=1).rolling(24).mean(),
+             self.pm['avg_demand'].sum(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'PM']
+        )
+
+        demand_var = pd.concat(
+            [self.base['var_demand'].sum(axis=1).rolling(24).mean(),
+             self.pm['var_demand'].sum(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'PM']
+        )
+
+        demand_err = ut.calc_error(demand_var, self.error)
+
+        ax = plt.subplot()
+        self.make_avg_plot(ax, demand, demand_err, ['Base', 'PM'],
+                           self.x_values,
+                           'Time (days)', 'Demand (L)', show_labels=True)
+        plt.savefig(self.pub_loc + 'sum_demand_aggregate' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
     def age_plots(self):
         ''' Make age plot by sector for both base and PM '''
@@ -539,23 +568,23 @@ class Graphics(BaseGraphics):
         #                  sd=ut.calc_error(no_wfh['var_age'], error)/3600,
         #                  sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
 
-        base_age = self.calc_age_diff(self.base['avg_age'])
+        # base_age = self.calc_age_diff(self.base['avg_age'])
 
-        ax = wntr.graphics.plot_network(self.wn, node_attribute=base_age,
-                                        node_colorbar_label='Age (hrs)',
-                                        node_size=4, link_width=0.3)
-        plt.savefig(self.pub_loc + 'age_network_base.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # ax = wntr.graphics.plot_network(self.wn, node_attribute=base_age,
+        #                                 node_colorbar_label='Age (hrs)',
+        #                                 node_size=4, link_width=0.3)
+        # plt.savefig(self.pub_loc + 'age_network_base.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
-        pm_age = self.calc_age_diff(self.pm['avg_age'])
+        # pm_age = self.calc_age_diff(self.pm['avg_age'])
 
-        ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
-                                        node_colorbar_label='Age (hrs)',
-                                        node_size=4, link_width=0.3)
-        plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
+        #                                 node_colorbar_label='Age (hrs)',
+        #                                 node_size=4, link_width=0.3)
+        # plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
     def ind_dist_plots(self):
         ''' Calculate the distance to the closest industrial node '''
