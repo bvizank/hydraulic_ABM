@@ -128,15 +128,23 @@ class BaseGraphics:
         '''
 
         ''' Plot a single figure with the input data '''
+        # set multiplier m to ensure plots with 3 or less lines
+        # get the correct colors.
+        print(data.shape[1])
+        if data.shape[1] > 3:
+            m = 1
+        else:
+            m = 2
+
         # plot each column of data
         for i, col in enumerate(cols):
-            ax.plot(x_values, data[col], color='C' + str(i * 2))
+            ax.plot(x_values, data[col], color='C' + str(i * m))
 
         #  need to separate so that the legend fills correctly
         for i, col in enumerate(cols):
             ax.fill_between(x_values, data[col] - sd[col],
                             data[col] + sd[col],
-                            color='C' + str(i * 2), alpha=0.5)
+                            color='C' + str(i * m), alpha=0.5)
 
         if show_labels:
             ax.set_xlabel(xlabel)
@@ -254,7 +262,6 @@ class BaseGraphics:
                                  bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
         sd_y2 = binned_statistic(x, sd2, statistic='mean',
                                  bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500])
-        print(sd_y1.statistic)
         sd_y1 = ut.calc_error(sd_y1.statistic, self.error) / 3600
         sd_y2 = ut.calc_error(sd_y2.statistic, self.error) / 3600
         # print(mean_y1.bin_edges)
@@ -419,8 +426,8 @@ class Graphics(BaseGraphics):
             self.times[len(self.times) - 1]
         )
 
-        print(pm_flow_sum['MA728'])
-        print(base_flow_sum['MA728'])
+        # print(pm_flow_sum['MA728'])
+        # print(base_flow_sum['MA728'])
 
         ax = wntr.graphics.plot_network(self.wn, link_attribute=pm_flow_sum,
                                         link_colorbar_label='Flow Changes',
@@ -472,10 +479,30 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make plots of aggregate demand data '''
-        # make_sector_plot(wn, no_wfh['avg_demand'], 'Demand (L)', 'sum',
-        #                  'sum_demand_aggregate_' + error, wfh['avg_demand'], type='all',
-        #                  sd=ut.calc_error(no_wfh['var_demand'], error),
-        #                  sd2=ut.calc_error(wfh['var_demand'], error))
+        demand_base = self.base['avg_demand'][self.res_nodes, self.com_nodes, self.ind_nodes]
+        demand = pd.concat(
+            [demand_base.sum(axis=1).rolling(24).mean(),
+             self.pm['avg_demand'].sum(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'PM']
+        )
+
+        demand_var = pd.concat(
+            [self.base['var_demand'].sum(axis=1).rolling(24).mean(),
+             self.pm['var_demand'].sum(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'PM']
+        )
+
+        demand_err = ut.calc_error(demand_var, self.error)
+
+        ax = plt.subplot()
+        self.make_avg_plot(ax, demand, demand_err, ['Base', 'PM'],
+                           self.x_values,
+                           'Time (days)', 'Demand (L)', show_labels=True)
+        plt.savefig(self.pub_loc + 'sum_demand_aggregate' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
     def age_plots(self):
         ''' Make age plot by sector for both base and PM '''
