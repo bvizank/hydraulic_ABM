@@ -73,13 +73,12 @@ class BaseGraphics:
 
         return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
 
-    def calc_age_diff(self, data1, data2):
+    def calc_age_diff(self, data):
         out_dict = dict()
-        print(data2)
-        for i, (node, colData) in enumerate(data1.items()):
-            out_data2 = data2.iloc[-1, i] / 3600
-            out_dict[node] = (out_data2 - (colData.iloc[-1] / 3600)) / out_data2 * 100
-            print(f"Base: {colData.iloc[-1]/3600}, pm: {out_data2}, change: {out_dict[node]}")
+        for (node, colData) in data.items():
+            out_data = colData.iloc[-1] / 3600
+            if 'TN' in node and out_data < 500:
+                out_dict[node] = out_data
 
         return out_dict
 
@@ -542,13 +541,20 @@ class Graphics(BaseGraphics):
         #                  sd=ut.calc_error(no_wfh['var_age'], error)/3600,
         #                  sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
 
-        pm_age = self.calc_age_diff(self.base['avg_age'], self.pm['avg_age'])
+        pm_age = self.calc_age_diff(self.pm['avg_age'])
+        base_age = self.calc_age_diff(self.base['avg_age'])
 
         ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
-                                        node_colorbar_label='Age Change (%)',
-                                        node_size=4, link_width=0.3,
-                                        node_cmap='PuOr')
+                                        node_colorbar_label='Age (hrs)',
+                                        node_size=4, link_width=0.3)
         plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ax = wntr.graphics.plot_network(self.wn, node_attribute=base_age,
+                                        node_colorbar_label='Age (hrs)',
+                                        node_size=4, link_width=0.3)
+        plt.savefig(self.pub_loc + 'age_network_base.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
