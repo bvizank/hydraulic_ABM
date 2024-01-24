@@ -1,5 +1,6 @@
 from mesa import Agent
 
+import random
 
 class ConsumerAgent(Agent):
 
