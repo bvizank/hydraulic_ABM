@@ -6,8 +6,14 @@ import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
 from utils import clean_epanet
 import os
+from tqdm import tqdm
+import time
 warnings.simplefilter("ignore", UserWarning)
 
+
+# for running the simulation once, id=number of simulation:
+
+# for COVID they use 90 days, for contamination we can use 1-2 days.
 
 def run_sim(city, id=0, days=90, plot=False, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
@@ -17,15 +23,15 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
 
     if city == 'micropolis':
         pop = 4606
-    elif city == 'mesopolis':
+    elif city == 'mesopolis':    # heavy running, still in progress...
         pop = 146716
     else:
         print(f"City {city} not implemented.")
 
-    start = perf_counter()
+    start = perf_counter()  # simply a stopper to see how much it ran...
 
     model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
-    for t in range(24*days):
+    for t in tqdm(range(24*days)):
         model.step()
 
     stop = perf_counter()
@@ -35,7 +41,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
 
     # model.status_tot['t'] = pop * model.status_tot['t'] / 24
 
-    if plot:
+    if plot:   # not used code:
         Demands_test = np.zeros(24 * days + 1)
         # print(model.demand_matrix)
         for node in model.terminal_nodes:
@@ -79,12 +85,15 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     
     # convert list of lists to pandas dataframes
     # print(model.status_tot)
+
+    # COVID data:
     status_tot = convert_to_pd(model.status_tot, ['t', 'S', 'E', 'I', 'R',
                                                   'D', 'Symp', 'Asymp', 'Mild',
                                                   'Sev', 'Crit', 'sum_I', 'wfh'])
     agent_matrix = convert_to_pd(model.agent_matrix, [n for n in model.nodes_w_demand
                                                       if n in model.nodes_capacity])
 
+    # store data to pkl files:
     status_tot.to_pickle(output_loc + "/seir_data.pkl")
     model.param_out.to_pickle(output_loc + "/params.pkl")
     model.demand_matrix.to_pickle(output_loc + "/demand.pkl")
@@ -101,6 +110,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     groc_dec = convert_to_pd(model.groc_dec, [str(i) for i in range(model.num_agents)])
     ppe_dec = convert_to_pd(model.ppe_dec, [str(i) for i in range(model.num_agents)])
 
+    # more COVID data:
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
     media.to_pickle(output_loc + "/media.pkl")
@@ -109,6 +119,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     groc_dec.to_pickle(output_loc + "/groc.pkl")
     ppe_dec.to_pickle(output_loc + "/ppe.pkl")
 
+    # store excel parameters of the simulation parameters:
     with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
         # model.status_tot.to_excel(writer, sheet_name='seir_data')
         model.param_out.to_excel(writer, sheet_name='params')

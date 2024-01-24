@@ -10,7 +10,7 @@ def setup(network):
     # Create a water network model
     if network == "micropolis":
         inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
-        data = pd.read_excel(r'Input Files/Micropolis_pop_at_node.xlsx')
+        data = pd.read_excel(r'Input Files/Micropolis_pop_at_node.xlsx')    # holds the max population at each node
     elif network == "mesopolis":
         inp_file = 'Input Files/Mesopolis.inp'
         data = pd.read_excel(r'Input Files/Mesopolis_pop_at_node.xlsx')
@@ -26,21 +26,22 @@ def setup(network):
     else:
         house_num = None
 
-    # Creating dictionary with max pop at each terminal node
+    # Creating dictionary with max pop at each terminal node (key=node name, value=max capacity at that node)
     node_capacity = dict(zip(node_id, maxpop_node))
 
     node_dict = dict()
     if network == "micropolis":
         # Node kinds are:(Pattern number - Kind of node)
-        # 1: Commercial – Cafe
+        # 1: Commercial – Cafe (means restaurant)
         # 2: Residential
         # 3: Industrial, factory with 3 shifts
         # 4: Commercial – Dairy Queen
         # 5: Commercial – Curches, schools, city hall, post office
         # Only terminal nodes count. So only nodes with prefix 'TN'
 
-        # Cafe nodes (only 1)
-        node_dict['cafe'] = find_nodes(1, pattern_list, network)
+        # Store also patterns into dictionary (find it in the file):
+        # Cafe nodes (only 1) - rest type:
+        node_dict['cafe'] = find_nodes(1, pattern_list, network)  # e.g. return list of all nodes with pattern=1
         # residential nodes
         node_dict['res'] = find_nodes(2, pattern_list, network)
         # Industrial nodes
@@ -65,7 +66,7 @@ def setup(network):
     # finish setup process by loading distributions of agents at each node type
     # and media data.
     pop_dict = load_distributions(network)
-    media, bbn_params, wfh_patterns = load_media()
+    media, bbn_params, wfh_patterns = load_media()   # TV, RADIO distributions
 
     return (node_dict, node_capacity, house_num, pop_dict, media, bbn_params,
             wfh_patterns, terminal_nodes, wn)
@@ -145,6 +146,7 @@ def load_distributions(network):
     return (pop_dict)
 
 
+# NOT EXPLAINED IN BRENT VIDEO:
 def load_clearance():
     # Clearance of nodes for every iteration step
     Cleared_nodes_iterations = pd.read_excel(r'Input Files/Cleared_node_names.xlsx')
