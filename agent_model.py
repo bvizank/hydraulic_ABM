@@ -1,6 +1,6 @@
 from mesa import Agent
 
-
+import random
 class ConsumerAgent(Agent):
 
     def __init__(self, unique_id, model):
