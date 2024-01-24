@@ -21,10 +21,10 @@ warnings.simplefilter("ignore", UserWarning)
 class ConsumerModel(Model):
 
     def __init__(self,
-                 N,
+                 N,   # number of people simulated
                  city,
                  days=90,
-                 id=0,
+                 id=0,    # id of simulation
                  **kwargs):
 
         init_start = time.perf_counter()
@@ -41,7 +41,7 @@ class ConsumerModel(Model):
         if 'seed' in kwargs:
             seed = kwargs['seed']
             self.swn = nx.watts_strogatz_graph(n=self.num_agents, p=0.2, k=6, seed=seed)
-        else:
+        else:  # default
             self.swn = nx.watts_strogatz_graph(n=self.num_agents, p=0.2, k=6, seed=919)
         self.snw_agents = {}
         # self.nodes_endangered = All_terminal_nodes
@@ -92,7 +92,7 @@ class ConsumerModel(Model):
                 self.bbn_models = kwargs['bbn_models']
         else:
             self.bbn_models = ['wfh', 'dine', 'grocery', 'ppe']
-        if 'verbose' in kwargs:
+        if 'verbose' in kwargs:   # to work in parallel
             self.verbose = kwargs['verbose']
         else:
             self.verbose = 1
@@ -159,7 +159,9 @@ class ConsumerModel(Model):
         # wn.options.time.duration = 0
         self.wn.options.time.hydraulic_timestep = 3600
         self.wn.options.time.pattern_timestep = 3600
-        self.wn.options.quality.parameter = 'AGE'
+        self.wn.options.quality.parameter = 'AGE'   # if you not use AGE simulation - then comment this line out.
+
+        # running in steps of 1hour in EPANET:
         for i in range(wfh_patterns.shape[1]):
             self.wn.add_pattern('wk'+str(i+1), np.array(wfh_patterns.iloc[:, i]))
 
@@ -223,10 +225,13 @@ class ConsumerModel(Model):
                                    wfh_lag, no_wfh, ppe_reduc])
 
         ''' Initialize the hydraulic information collectors '''
+        # these are nodes with demands (there are also nodes without demand):
         self.nodes_w_demand = [
             node for node in self.grid.G.nodes
             if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
         ]
+
+        # this part is slow because it uses excel data:
         self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
         self.demand_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                           columns=self.G.nodes)
@@ -358,6 +363,7 @@ class ConsumerModel(Model):
         working from home or jobs that are "essential". '''
 
         ''' Potentially change this to include navy nodes '''
+        # list of all industrial nodes:
         no_wfh_ind_nodes = self.random.choices(population=self.ind_nodes,
                                                k=int(len(self.ind_nodes)*self.no_wfh_perc))
         # no_wfh_comm_nodes = self.random.choices(population=self.com_nodes,
@@ -366,22 +372,26 @@ class ConsumerModel(Model):
         #                                         k=int(len(self.cafe_nodes)*0.2))
         total_no_wfh = no_wfh_ind_nodes# + no_wfh_comm_nodes + no_wfh_rest_nodes
 
-        work_agents = (max(self.ind_dist) + max(self.nav_dist)) * 2
+        work_agents = (max(self.ind_dist) + max(self.nav_dist)) * 2  # means each industrial node gets 2 agents (because there're shifts)
         # rest_agents = max(self.cafe_dist)
         # comm_agents = max(self.com_dist)
         # CREATING AGENTS
         ''' Needed to account for multifamily housing, so iterating through
         residential nodes and placing agents that way and then storing their
         housemates in the agent object. '''
+        # list of all residential nodes:
         res_nodes = copy.deepcopy(self.res_nodes)
         self.random.shuffle(res_nodes)
         ids = 0
+        # place all the agents in the residential nodes, each filled upto its capacity:
         for node in res_nodes:
             curr_node = list()
             for spot in range(int(self.nodes_capacity[node])):
                 a = ConsumerAgent(ids, self)
                 self.schedule.add(a)
                 if work_agents != 0:
+                    # each agent will have its home node, and some random work node (from industrial nodes):
+                    # but some agents don't get work node
                     a.work_node = self.random.choice(self.work_loc_list)
                     a.home_node = node
                     # a.home_node = self.random.choice(self.res_loc_list)
@@ -410,9 +420,9 @@ class ConsumerModel(Model):
                     a.home_node = node
                     # self.res_loc_list.remove(a.home_node)
 
-                if a.work_node in total_no_wfh:
+                if a.work_node in total_no_wfh:   # for working from home
                     a.can_wfh = False
-                self.grid.place_agent(a, a.home_node)
+                self.grid.place_agent(a, a.home_node) # then we place all agents at their home node
                 curr_node.append(a.unique_id)
                 ids += 1
 
@@ -434,7 +444,7 @@ class ConsumerModel(Model):
                 a.home_node = 'TN1372'
                 ids += 1
 
-    def micro_household(self, curr_node):
+    def micro_household(self, curr_node):  # tell each agent which other agents at their nodes, to contact them..
         ''' Assigns each agent's housemates based on the number
         of agents at the current node.
 
@@ -580,7 +590,7 @@ class ConsumerModel(Model):
                 except:
                     pass
 
-    def create_comm_network(self):
+    def create_comm_network(self):  # a random set of agents from household (all agents live at the same node)
         '''
         CREATING COMMUNICATION NETWORK WITH SWN = SMALL WORLD NETWORK
         Assigning Agents randomly to nodes in SNW
@@ -1024,6 +1034,9 @@ class ConsumerModel(Model):
                        np.array(np.divide(hourly_cons, hourly_cons.mean())))
         node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
 
+
+
+    # this code should be updated to run sim every 1hour
     def collect_demands(self):
         step_demand = list()
         step_agents = dict()
@@ -1076,6 +1089,9 @@ class ConsumerModel(Model):
         self.daily_demand[self.timestepN:(self.timestepN+1)] = hourly_demands
         self.agent_matrix[self.timestep] = hourly_agents
 
+
+
+    # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
         '''
         Add the current days demand pattern to each nodes demand pattern.
@@ -1108,6 +1124,8 @@ class ConsumerModel(Model):
             del curr_node.demand_timeseries_list[0]
             curr_node.demand_timeseries_list.append((curr_demand, new_pat))
 
+
+    # and then (after setting the demand above) we run the simulation:
     def run_hydraulic(self):
         # Simulate hydraulics
         sim = wntr.sim.EpanetSimulator(self.wn)
@@ -1158,6 +1176,10 @@ class ConsumerModel(Model):
         if self.verbose == 1:
             print('\tPeople complying: ' + str(compl_stat_all))
 
+
+
+
+    # all the 4 function below (predict_) can be used to insert uncertainty):
     def predict_wfh(self, agent):
         # agents_not_wfh = [a for a in self.schedule.agents if a.wfh == 0]
         # for agent in agents_not_wfh:
@@ -1392,6 +1414,10 @@ class ConsumerModel(Model):
             self.run_hydraulic()
         self.timestepN = self.timestep - self.timestep_day * 24
         # print(self.timestep)
+
+
+        # you can add here for running by 1hour:
+
 
     def industry_agents(self):
         return [a for a in self.schedule.agents if a.pos in self.ind_nodes]
