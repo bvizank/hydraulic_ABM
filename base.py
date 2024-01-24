@@ -225,7 +225,7 @@ class BaseGraphics:
         pm_sd = pm_sd * 100
 
         input = ['S', 'E', 'I', 'R', 'wfh']
-        leg_text = ['Susceptible', 'Exposed', 'Infected', 'Removed', 'WFH']
+        leg_text = ['Susceptible', 'Exposed', 'Infected', 'Recovered', 'WFH']
 
         x_values = np.array([x for x in np.arange(0, 90, 90 / len(base_data))])
 
@@ -446,7 +446,7 @@ class Graphics(BaseGraphics):
     def demand_plots(self):
         ''' Make demand plots by sector with PM data '''
         # define the columns of the input data and the x_values
-        cols = ['Residential', 'Industrial', 'Commercial']
+        cols = ['Residential', 'Commercial', 'Industrial']
 
         # collect demands
         res_dem = self.pm['avg_demand'][self.res_nodes]
@@ -479,17 +479,28 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make plots of aggregate demand data '''
-        demand_base = self.base['avg_demand'][self.res_nodes, self.com_nodes, self.ind_nodes]
+        demand_base = self.base['avg_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        demand_pm = self.pm['avg_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
-             self.pm['avg_demand'].sum(axis=1).rolling(24).mean()],
+             demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
             keys=['Base', 'PM']
         )
 
+        var_base = self.base['avg_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        var_pm = self.pm['avg_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
         demand_var = pd.concat(
-            [self.base['var_demand'].sum(axis=1).rolling(24).mean(),
-             self.pm['var_demand'].sum(axis=1).rolling(24).mean()],
+            [var_base.sum(axis=1).rolling(24).mean(),
+             var_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
             keys=['Base', 'PM']
         )
@@ -506,7 +517,7 @@ class Graphics(BaseGraphics):
 
     def age_plots(self):
         ''' Make age plot by sector for both base and PM '''
-        cols = ['Residential', 'Industrial', 'Commercial']
+        cols = ['Residential', 'Commercial', 'Industrial']
         res_age_pm = self.pm['avg_age'][self.res_nodes].mean(axis=1)
         com_age_pm = self.pm['avg_age'][self.com_nodes].mean(axis=1)
         ind_age_pm = self.pm['avg_age'][self.ind_nodes].mean(axis=1)
@@ -650,39 +661,58 @@ class Graphics(BaseGraphics):
 
     def sv_comp_plots(self):
         ''' State variable scenario comparisons '''
-        data = pd.concat([self.base['avg_cov_ff'].mean(axis=1),
-                          self.pm['avg_cov_ff'].mean(axis=1)],
-                         axis=1, keys=['Base', 'PM'])
-        var = pd.concat([self.base['var_cov_ff'].mean(axis=1),
-                         self.pm['var_cov_ff'].mean(axis=1)],
-                        axis=1, keys=['Base', 'PM'])
-        err = ut.calc_error(var, self.error)
+        ff = pd.concat([self.base['avg_cov_ff'].mean(axis=1),
+                        self.pm['avg_cov_ff'].mean(axis=1)],
+                       axis=1, keys=['Base', 'PM'])
+        ff_var = pd.concat([self.base['var_cov_ff'].mean(axis=1),
+                            self.pm['var_cov_ff'].mean(axis=1)],
+                           axis=1, keys=['Base', 'PM'])
+        ff_err = ut.calc_error(ff_var, self.error)
 
-        ax = plt.subplot()
-        ax = self.make_avg_plot(ax, data, err, ['Base', 'PM'],
-                                np.delete(self.x_values, 0),
-                                'Time (day)', 'Average Value',
-                                show_labels=True)
-        plt.savefig(self.pub_loc + 'ff_avg' + '.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # ax = plt.subplot()
+        # ax = self.make_avg_plot(ax, data, err, ['Base', 'PM'],
+        #                         np.delete(self.x_values, 0),
+        #                         'Time (day)', 'Average Value',
+        #                         show_labels=True)
+        # plt.savefig(self.pub_loc + 'ff_avg' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
-        data = pd.concat([self.base['avg_cov_pers'].mean(axis=1),
+        pers = pd.concat([self.base['avg_cov_pers'].mean(axis=1),
                           self.pm['avg_cov_pers'].mean(axis=1)],
                          axis=1, keys=['Base', 'PM'])
-        var = pd.concat([self.base['var_cov_pers'].mean(axis=1),
-                         self.pm['var_cov_pers'].mean(axis=1)],
-                        axis=1, keys=['Base', 'PM'])
-        err = ut.calc_error(var, self.error)
+        pers_var = pd.concat([self.base['var_cov_pers'].mean(axis=1),
+                              self.pm['var_cov_pers'].mean(axis=1)],
+                             axis=1, keys=['Base', 'PM'])
+        pers_err = ut.calc_error(pers_var, self.error)
 
-        ax = plt.subplot()
-        ax = self.make_avg_plot(ax, data, err, ['Base', 'PM'],
-                                np.delete(self.x_values, 0),
-                                'Time (day)', 'Average Value',
-                                show_labels=True)
-        plt.savefig(self.pub_loc + 'pers_avg' + '.' + self.format,
+        fig, axes = plt.subplots(nrows=1, ncols=2, sharey=False)
+        axes[0] = self.make_avg_plot(axes[0], pers, pers_err, ['Base', 'PM'],
+                                     np.delete(self.x_values, 0))
+        axes[1] = self.make_avg_plot(axes[1], ff, ff_err, ['Base', 'PM'],
+                                     np.delete(self.x_values, 0))
+
+        axes[0].legend(['Base', 'PM'])
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        fig.supxlabel('Time (days)', y=-0.03)
+        fig.supylabel('Average Values', x=0.04)
+        plt.gcf().set_size_inches(7, 3.5)
+
+        plt.savefig(self.pub_loc + 'sv_comparison.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+
+        # ax = plt.subplot()
+        # ax = self.make_avg_plot(ax, data, err, ['Base', 'PM'],
+        #                         np.delete(self.x_values, 0),
+        #                         'Time (day)', 'Average Value',
+        #                         show_labels=True)
+        # plt.savefig(self.pub_loc + 'pers_avg' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
     def bbn_plots(self):
         ''' BBN decisions scenario comparisons '''
