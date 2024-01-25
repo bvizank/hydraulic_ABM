@@ -7,22 +7,22 @@ plots = Graphics(publication=True, error='se')
 plots.demand_plots()
 
 ''' Flow plots '''
-plots.flow_plots()
+# plots.flow_plots()
 
 ''' Age plots '''
-plots.age_plots()
+# plots.age_plots()
 
 ''' Industrial distance plots '''
-plots.ind_dist_plots()
+# plots.ind_dist_plots()
 
 ''' State variable comparison plots '''
-plots.sv_comp_plots()
+# plots.sv_comp_plots()
 
 ''' BBN decision plots '''
-plots.bbn_plots()
+# plots.bbn_plots()
 
 ''' SEIR plot '''
-plots.make_seir_plot()
+# plots.make_seir_plot()
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))

@@ -472,6 +472,8 @@ class ConsumerModel(Model):
                 curr_housemates = self.random.choices(curr_node, k=home_size)
                 # remake the curr_node variable without the agents just chosen
                 curr_node = [a for a in curr_node if a not in curr_housemates]
+                # pick an income
+                curr_income = 
                 ''' Assign the current list of housemates to each agent
                 so they each know who their housemates are '''
                 for mate in curr_housemates:
