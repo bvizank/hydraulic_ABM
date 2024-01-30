@@ -4,18 +4,17 @@ import math
 import wntr
 import copy
 import os
-import math
 import matplotlib.pyplot as plt
 
 
 def setup(network):
     # Create a water network model
     if network == "micropolis":
-        inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
-        data = pd.read_excel(r'Input Files/Micropolis_pop_at_node.xlsx')
+        inp_file = 'Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp'
+        data = pd.read_excel(r'Input Files/micropolis/Micropolis_pop_at_node.xlsx')
     elif network == "mesopolis":
-        inp_file = 'Input Files/Mesopolis.inp'
-        data = pd.read_excel(r'Input Files/Mesopolis_pop_at_node.xlsx')
+        inp_file = 'Input Files/mesopolis/Mesopolis.inp'
+        data = pd.read_excel(r'Input Files/mesopolis/Mesopolis_pop_at_node.xlsx')
     base_demands, pattern_list, wn = init_wntr(inp_file)
 
     # input the number of agents required at each node type at each time
@@ -68,12 +67,11 @@ def setup(network):
     # media data, and the distance between residential nodes and closest ind.
     # node.
     pop_dict = load_distributions(network)
-    media, bbn_params, wfh_patterns = load_media()
     ind_node_dist, na = calc_industry_distance(
         wn, node_dict['ind'], nodes=node_dict['res'])
 
-    return (node_dict, node_capacity, house_num, pop_dict, media, bbn_params,
-            wfh_patterns, terminal_nodes, wn, ind_node_dist)
+    return (node_dict, node_capacity, house_num, pop_dict,
+            terminal_nodes, wn, ind_node_dist)
 
 
 def init_wntr(inp_file):
@@ -124,9 +122,9 @@ def load_distributions(network):
     '''
     # Import table for timesteps per nodetypes per hour
     if network == "micropolis":
-        node_pop = pd.read_excel(r'Input Files/Micropolis_pop_at_node_kind.xlsx')
+        node_pop = pd.read_excel(r'Input Files/micropolis/Micropolis_pop_at_node_kind.xlsx')
     elif network == "mesopolis":
-        node_pop = pd.read_excel(r'Input Files/Mesopolis_pop_at_node_kind.xlsx')
+        node_pop = pd.read_excel(r'Input Files/micropolis/Mesopolis_pop_at_node_kind.xlsx')
 
     pop_dict = dict()
 
@@ -191,38 +189,6 @@ def load_clearance():
             Endangered_nodes_terminal.append(node)
 
 
-def load_media():
-    '''
-    Load in the necessary media data including sleep, TV, and radio data
-    Also load the BBN parameters from Dryhurst et al. 2020 and the Lakewood
-    COVID-19 residential patterns.
-
-    THIS DATA IS NOT DEPENDENT ON NETWORK
-    '''
-
-    # Load TV, RADIO, SLEEP data
-    sleep_data = pd.read_excel(r'Input Files/sleep_data.xlsx')
-    sleep_distr = sleep_data['sleep_data'].tolist()
-
-    radio_data = pd.read_excel(r'Input Files/Radio_data.xlsx')
-    radio_distr = radio_data['radio_data'].tolist()
-
-    tv_data = pd.read_excel(r'Input Files/TV_data.xlsx')
-    tv_distr = tv_data['tv_data'].tolist()
-
-    media = {'sleep': sleep_distr,
-             'radio': radio_distr,
-             'tv': tv_distr}
-
-    # Load agent parameters for BBN predictions
-    bbn_params = pd.read_csv(r'Input Files/all_bbn_data.csv')
-
-    # Load in the new residential patterns from Lakewood data
-    wfh_patterns = pd.read_csv(r'Input Files/res_patterns/normalized_res_patterns.csv')
-
-    return (media, bbn_params, wfh_patterns)
-
-
 def calc_industry_distance(wn, ind_nodes, nodes=None):
     '''
     Function to calculate the distance to the nearest industrial node.
@@ -253,55 +219,55 @@ def calc_distance(node1, node2):
     return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
 
 
-def read_comp_data(loc, read_list, error):
-    out_dict = dict()
-    for item in read_list:
-        out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
-        out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
-        if error == 'ci95':
-            out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
-        elif error == 'se':
-            out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
-        else:
-            pass
+# def read_comp_data(loc, read_list, error):
+#     out_dict = dict()
+#     for item in read_list:
+#         out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
+#         out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
+#         if error == 'ci95':
+#             out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
+#         elif error == 'se':
+#             out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
+#         else:
+#             pass
 
-    return out_dict
+#     return out_dict
 
 
-def read_data(loc, read_list, data_file=None):
-    ''' Function to read in data from either excel or pickle '''
-    output = dict()
-    # data_file = loc + 'datasheet.xlsx'
-    pkls = [file for file in os.listdir(loc) if file.endswith(".pkl")]
+# def read_data(loc, read_list, data_file=None):
+#     ''' Function to read in data from either excel or pickle '''
+#     output = dict()
+#     # data_file = loc + 'datasheet.xlsx'
+#     pkls = [file for file in os.listdir(loc) if file.endswith(".pkl")]
 
-    for name in read_list:
-        index_col = 0
-        print("Reading " + name + " data")
-        if name == 'seir':
-            sheet_name = 'seir_data'
-            index_col = 1
-        elif name == 'agent':
-            sheet_name = 'agent locations'
-        else:
-            sheet_name = name
+#     for name in read_list:
+#         index_col = 0
+#         print("Reading " + name + " data")
+#         if name == 'seir':
+#             sheet_name = 'seir_data'
+#             index_col = 1
+#         elif name == 'agent':
+#             sheet_name = 'agent locations'
+#         else:
+#             sheet_name = name
 
-        file_name = name + '.pkl'
-        if file_name not in pkls:
-            print("No pickle file found, importing from excel")
-            locals()[name] = pd.read_excel(data_file,
-                                           sheet_name=sheet_name,
-                                           index_col=index_col)
-            if name == 'seir':
-                locals()[name].index = locals()[name].index.astype("int64")
+#         file_name = name + '.pkl'
+#         if file_name not in pkls:
+#             print("No pickle file found, importing from excel")
+#             locals()[name] = pd.read_excel(data_file,
+#                                            sheet_name=sheet_name,
+#                                            index_col=index_col)
+#             if name == 'seir':
+#                 locals()[name].index = locals()[name].index.astype("int64")
 
-            locals()[name].to_pickle(loc + file_name)
-        else:
-            print("Pickle file found, unpickling")
-            locals()[name] = pd.read_pickle(loc + name + '.pkl')
+#             locals()[name].to_pickle(loc + file_name)
+#         else:
+#             print("Pickle file found, unpickling")
+#             locals()[name] = pd.read_pickle(loc + name + '.pkl')
 
-        output[name] = locals()[name]
+#         output[name] = locals()[name]
 
-    return output
+#     return output
 
 
 def read_comp_data(loc, read_list):
@@ -309,6 +275,14 @@ def read_comp_data(loc, read_list):
     for item in read_list:
         out_dict['avg_' + item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
         out_dict['var_' + item] = pd.read_pickle(loc + 'var_' + item + '.pkl')
+
+    return out_dict
+
+
+def read_data(loc, read_list):
+    out_dict = dict()
+    for item in read_list:
+        out_dict[item] = pd.read_pickle(loc + item + '.pkl')
 
     return out_dict
 
@@ -328,9 +302,10 @@ def calc_error(var_data, error):
         output = std_data * 1.96 / math.sqrt(30)
     elif error == 'se':
         output = std_data / math.sqrt(30)
-    else:
-        # assume output is just standard deviation
+    elif error == 'sd':
         output = std_data
+    else:
+        raise NotImplementedError(f"{error} is not yet implemented.")
 
     return output
 

@@ -1,0 +1,14 @@
+name: abm_env
+channels:
+  - conda-forge
+dependencies:
+  - numpy
+  - pandas
+  - mesa
+  - networkx
+  - matplotlib
+  - scipy
+  - pip
+  - pip:
+      - wntr==1.0.*
+      - bnlearn

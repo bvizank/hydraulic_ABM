@@ -114,7 +114,7 @@ class BaseGraphics:
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
-                      show_labels=False, logx=False):
+                      show_labels=False, logx=False, sd_plot=True):
         '''
         Function to plot data with error.
 
@@ -130,7 +130,6 @@ class BaseGraphics:
         ''' Plot a single figure with the input data '''
         # set multiplier m to ensure plots with 3 or less lines
         # get the correct colors.
-        print(data.shape[1])
         if data.shape[1] > 3:
             m = 1
         else:
@@ -140,11 +139,12 @@ class BaseGraphics:
         for i, col in enumerate(cols):
             ax.plot(x_values, data[col], color='C' + str(i * m))
 
-        #  need to separate so that the legend fills correctly
-        for i, col in enumerate(cols):
-            ax.fill_between(x_values, data[col] - sd[col],
-                            data[col] + sd[col],
-                            color='C' + str(i * m), alpha=0.5)
+        if sd:
+            #  need to separate so that the legend fills correctly
+            for i, col in enumerate(cols):
+                ax.fill_between(x_values, data[col] - sd[col],
+                                data[col] + sd[col],
+                                color='C' + str(i * m), alpha=0.5)
 
         if show_labels:
             ax.set_xlabel(xlabel)
@@ -358,11 +358,11 @@ class Graphics(BaseGraphics):
         self.dine_loc = 'Output Files/30_dine/'
         self.groc_loc = 'Output Files/30_grocery/'
         self.ppe_loc = 'Output Files/30_ppe/'
-        comp_list = ['seir_data', 'demand', 'age', 'flow',
-                     'cov_ff', 'cov_pers',
-                     'wfh', 'dine', 'groc', 'ppe']
-        self.pm = ut.read_comp_data(self.pm_comp_dir, comp_list)
-        self.base = ut.read_comp_data(self.base_comp_dir, comp_list)
+        self.comp_list = ['seir_data', 'demand', 'age', 'flow',
+                          'cov_ff', 'cov_pers',
+                          'wfh', 'dine', 'groc', 'ppe']
+        self.pm = ut.read_comp_data(self.pm_comp_dir, self.comp_list)
+        self.base = ut.read_comp_data(self.base_comp_dir, self.comp_list)
         self.wfh = ut.read_comp_data(self.wfh_loc, ['seir_data', 'age'])
         self.dine = ut.read_comp_data(self.dine_loc, ['seir_data', 'age'])
         self.grocery = ut.read_comp_data(self.groc_loc, ['seir_data', 'age'])
@@ -403,7 +403,7 @@ class Graphics(BaseGraphics):
         plt.rcParams['ytick.major.size'] = 3.0
 
         ''' Import water network and data '''
-        inp_file = 'Input Files/MICROPOLIS_v1_inc_rest_consumers.inp'
+        inp_file = 'Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp'
         self.wn = wntr.network.WaterNetworkModel(inp_file)
         self.x_values = np.array([
             x for x in np.arange(0, 90, 90 / len(self.pm['avg_demand']))
@@ -757,3 +757,18 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'bbn_decision_all_pm.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+
+    def make_single_plots(self, file):
+        ''' Make SEIR plot without error '''
+        loc = 'Output Files/' + file + '/'
+        data = ut.read_data(loc, self.comp_list)
+        leg_text = ['S', 'E', 'I', 'R', 'wfh']
+        ax = plt.subplot()
+        print(data['seir_data'])
+        self.make_avg_plot(
+            ax, data['seir_data']*100, None, leg_text, self.x_values,
+            'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
+        plt.savefig(self.pub_loc + file + 'seir' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+        

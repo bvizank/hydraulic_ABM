@@ -84,11 +84,15 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     
     # convert list of lists to pandas dataframes
     # print(model.status_tot)
-    status_tot = convert_to_pd(model.status_tot, ['t', 'S', 'E', 'I', 'R',
-                                                  'D', 'Symp', 'Asymp', 'Mild',
-                                                  'Sev', 'Crit', 'sum_I', 'wfh'])
-    agent_matrix = convert_to_pd(model.agent_matrix, [n for n in model.nodes_w_demand
-                                                      if n in model.nodes_capacity])
+    status_tot = convert_to_pd(
+        model.status_tot,
+        ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild',
+         'Sev', 'Crit', 'sum_I', 'wfh']
+    )
+    agent_matrix = convert_to_pd(
+        model.agent_matrix,
+        [n for n in model.nodes_capacity]
+    )
 
     status_tot.to_pickle(output_loc + "/seir_data.pkl")
     model.param_out.to_pickle(output_loc + "/params.pkl")

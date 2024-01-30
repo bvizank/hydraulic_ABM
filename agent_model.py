@@ -1,10 +1,15 @@
 from mesa import Agent
+import math
+from copy import deepcopy as dcp
+import bnlearn as bn
+import data as dt
 
 
 class ConsumerAgent(Agent):
 
-    def __init__(self, unique_id, model):
+    def __init__(self, unique_id, household, model):
         super().__init__(unique_id, model)
+        self.household = household
         self.timestep = 0
         self.home_node = None
         self.work_node = None
@@ -18,7 +23,8 @@ class ConsumerAgent(Agent):
         self.informed_count_p_f = 0
         self.age = 0
         self.covid = None
-        self.exp_time = 0
+        # counters for different covid stages
+        self.exposed_time = 0
         self.infectious_time = 0
         self.symp_time = 0
         self.sev_time = 0
@@ -32,16 +38,76 @@ class ConsumerAgent(Agent):
         self.ppe = 0  # wearing ppe
         self.can_wfh = True   # bool based on workplace decision to allow work from home
         self.agent_params = {}  # BBN parameters for predicting work from home
-        self.housemates = list()
-        self.income_level = 0
+        # thresholds for covid stage. Represent the time an agent should spend
+        # in each stage.
+        # time after first exposure to infectious
+        self.exp_time = 24 * math.log(
+                                 self.random.lognormvariate(
+                                     self.model.e2i[0],
+                                     self.model.e2i[1]
+                                 )
+                             )
+        # time between first infectious and symptomatic
+        self.inf_time = 24 * math.log(
+                                 self.random.lognormvariate(
+                                     self.model.i2s[0],
+                                     self.model.i2s[1]
+                                 )
+                             )
+        # time between symptomatic and severe
+        self.sev_time = 24 * math.log(
+                                 self.random.lognormvariate(
+                                     self.model.s2sev[0],
+                                     self.model.s2sev[1]
+                                 )
+                             )
+        # time between severe and critical
+        self.crit_time = 24 * math.log(
+                                  self.random.lognormvariate(
+                                      self.model.sev2c[0],
+                                      self.model.sev2c[1]
+                                  )
+                              )
+
+        # recovery times for each covid stage
+        self.asymp_time = 24 * math.log(
+                                    self.random.lognormvariate(
+                                        self.model.recTimeAsym[0],
+                                        self.model.recTimeAsym[1]
+                                    )
+                                )
+        self.mild_time = 24 * math.log(
+                                  self.random.lognormvariate(
+                                      self.model.recTimeMild[0],
+                                      self.model.recTimeMild[1]
+                                  )
+                              )
+        self.sevRec_time = 24 * math.log(
+                                    self.random.lognormvariate(
+                                        self.model.recTimeSev[0],
+                                        self.model.recTimeSev[1]
+                                    )
+                                )
+        self.critRec_time = 24 * math.log(
+                                     self.random.lognormvariate(
+                                         self.model.recTimeC[0],
+                                         self.model.recTimeC[1]
+                                     )
+                                 )
+        self.death_time = 24 * math.log(
+                                   self.random.lognormvariate(
+                                       self.model.c2d[0],
+                                       self.model.c2d[1]
+                                   )
+                               )
 
     def complying(self):
         if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:
-            if self.informed_by == 'utility' and random.random() < 0.5:
+            if self.informed_by == 'utility' and self.random.random() < 0.5:
                 self.compliance = 1
-            elif self.informed_by == 'household' and random.random() < 0.3:
+            elif self.informed_by == 'household' and self.random.random() < 0.3:
                 self.compliance = 1
-            elif self.informed_by == 'peer_swn' and random.random() < 0.3:
+            elif self.informed_by == 'peer_swn' and self.random.random() < 0.3:
                 self.compliance = 1
         else:
             pass
@@ -81,6 +147,186 @@ class ConsumerAgent(Agent):
         else:
             pass
 
+    def check_infectious(self):
+        """
+        Function to check if agent has been exposed for sufficient time to be
+        infectious. Agent is not symptomatic yet, but can still transmit disease.
+
+        Function is typically run from loop over all agents at each DAY step.
+        """
+        if self.exposed_time >= self.exp_time:
+            self.covid = 'infectious'
+            self.model.cumm_infectious += 1
+            self.exposed_time = 0
+            self.agent_params["COVIDexp"] = 1
+        else:
+            pass
+
+    def check_symptomatic(self):
+        """
+        Function to check if agent has been infectious for sufficient time to be
+        either symptomatic or asymptomatic. Once asymptomatic, there is a set time
+        until recovered, otherwise, moves to mild, severe, or critical depending
+        on age.
+
+        Function is typically run from loop over all agents at each DAY step.
+        """
+        if self.symptomatic is None and self.infectious_time >= self.inf_time:
+            if self.random.random() < dt.susDict[self.age][0]:
+                self.symptomatic = 1
+                self.inf_severity = 1
+            else:
+                self.symptomatic = 0
+        else:
+            pass
+
+    def check_severity(self):
+        """
+        Function to check the agents infection severity. Severity is based on the
+        time the agent has been symptomatic and their age.
+
+        Function is typically run from loop over all agents at each DAY step.
+        """
+        sev_prob = dt.susDict[self.age][1]
+        crit_prob = dt.susDict[self.age][2]
+        if (self.inf_severity == 1 and
+                self.symp_time >= self.sev_time and
+                self.random.random() < sev_prob):
+            self.inf_severity = 2
+        elif (self.inf_severity == 2 and
+                self.sev_time >= self.crit_time and
+                self.random.random() < crit_prob):
+            self.inf_severity = 3
+        else:
+            pass
+
+    def check_recovered(self):
+        """
+        Function to check if agent has been infectious for sufficient time to be
+        recorvered. Depends on whether the agent was asymptomatic or symptomatic.
+
+        Function is typically run from loop over all agents at each DAY step.
+        """
+        if self.symptomatic == 0 and self.infectious_time >= self.asymp_time:
+            self.covid = 'recovered'
+            self.infectious_time = 0
+            self.symptomatic = None
+        else:
+            pass
+
+        if self.inf_severity == 1 and self.symp_time >= self.mild_time:
+            self.covid = 'recovered'
+            self.infectious_time = 0
+            self.symptomatic = None
+        elif self.inf_severity == 2 and self.sev_time >= self.sevRec_time:
+            self.covid = 'recovered'
+            self.infectious_time = 0
+            self.symptomatic = None
+        elif self.inf_severity == 3 and self.crit_time >= self.critRec_time:
+            self.covid = 'recovered'
+            self.infectious_time = 0
+            self.symptomatic = None
+        else:
+            pass
+
+    def check_death(self):
+        """
+        Function to check if agent has been critical for sufficient time to be
+        potentially dead. Depends on agents age. Removes agent from grid and
+        sets agents position to None.
+
+        Function is typically run from loop over all agents at each DAY step.
+        """
+        death_prob = dt.susDict[self.age][3]
+        if (self.inf_severity == 3 and
+                self.crit_time >= self.death_time and
+                self.random.random() < death_prob):
+            self.covid = 'dead'
+            self.symptomatic = None
+            self.model.grid.remove_agent(self)
+        else:
+            pass
+
+    def predict_wfh(self):
+        self.adj_covid_change = 0
+        evidence_agent = dcp(self.agent_params)
+        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence = dict()
+        for i, item in enumerate(self.model.wfh_nodes):
+            if item != 'work_from_home':
+                evidence[item] = evidence_agent[item]
+
+        query = bn.inference.fit(self.model.wfh_dag,
+                                 variables=['work_from_home'],
+                                 evidence=evidence,
+                                 verbose=0)
+        if self.random.random() < query.df['p'][1]:
+            self.wfh = 1
+
+    def predict_dine_less(self):
+        self.adj_covid_change = 0
+        evidence_agent = dcp(self.agent_params)
+        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence = dict()
+        for i, item in enumerate(self.model.dine_nodes):
+            if item != 'dine_out_less':
+                evidence[item] = evidence_agent[item]
+
+        query = bn.inference.fit(self.model.dine_less_dag,
+                                 variables=['dine_out_less'],
+                                 evidence=evidence,
+                                 verbose=0)
+        if self.random.random() < query.df['p'][1]:
+            self.no_dine = 1
+
+    def predict_grocery(self):
+        self.adj_covid_change = 0
+        evidence_agent = dcp(self.agent_params)
+        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence = dict()
+        for i, item in enumerate(self.model.grocery_nodes):
+            if item != 'shop_groceries_less':
+                evidence[item] = evidence_agent[item]
+
+        query = bn.inference.fit(self.model.grocery_dag,
+                                 variables=['shop_groceries_less'],
+                                 evidence=evidence,
+                                 verbose=0)
+        if self.random.random() < query.df['p'][1]:
+            self.less_groceries = 1
+
+    def predict_ppe(self):
+        self.adj_covid_change = 0
+        evidence_agent = dcp(self.agent_params)
+        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence = dict()
+        for i, item in enumerate(self.model.ppe_nodes):
+            if item != 'mask':
+                if evidence_agent[item] < 10 and evidence_agent[item] >= 0:
+                    evidence[item] = evidence_agent[item]
+
+        query = bn.inference.fit(self.model.ppe_dag,
+                                 variables=['mask'],
+                                 evidence=evidence,
+                                 verbose=0)
+        if self.random.random() < query.df['p'][1]:
+            self.ppe = 1
+
+    def change_house_adj(self):
+        ''' Function to check whether agents in a given agents node have become
+        infected with COVID '''
+        agents_in_house = self.household.agents
+        agents_friends = [n for n in self.model.swn.neighbors(self.unique_id)]
+        agents_in_network = agents_in_house + agents_friends
+        agents_in_network.remove(self.unique_id)
+        for id in agents_in_network:
+            adj_agent = self.model.schedule._agents[id]
+            adj_agent.adj_covid_change = 1
+            if adj_agent.agent_params["COVIDeffect_4"] < 6:
+                adj_agent.agent_params["COVIDeffect_4"] += 1
+            else:
+                pass
+
     def change_time(self):
         self.timestep += 1
         return self.timestep
@@ -90,3 +336,49 @@ class ConsumerAgent(Agent):
         # self.complying()
         # self.communcation()
         self.change_time()
+
+
+class Household:
+    ''' Container for households. Contains a collection of agent objects '''
+
+    def __init__(self, start_id, end_id, node, node_dist, model):
+        self.agents = list()  # list of agent ids that are in the household
+        self.behaviors = {
+            'drink': 'tap',
+            'hygiene': 'tap',
+            'cook': 'tap'
+        }
+        self.demand = 0
+        self.bottled_water = 0
+
+        for i in range(start_id, end_id):
+            a = ConsumerAgent(i, self, model)
+            model.schedule.add(a)
+            if model.work_agents != 0:
+                a.work_node = model.random.choice(model.work_loc_list)
+                a.home_node = node
+                model.work_loc_list.remove(a.work_node)
+                if a.work_node in model.nav_nodes:
+                    a.work_type = 'navy'
+                elif a.work_node in model.ind_nodes:
+                    a.work_type = 'industrial'
+                model.work_agents -= 1
+            else:
+                a.home_node = node
+
+            if a.work_node in model.total_no_wfh:
+                a.can_wfh = False
+            model.grid.place_agent(a, a.home_node)
+            self.agents.append(a.unique_id)
+
+        # assign an income for this household
+        if node_dist > model.ind_ring:
+            shape = dt.income[len(self.agents)][1]
+        else:
+            shape = dt.income[len(self.agents)][1] * model.ind_factor
+
+        # pick an income for the household based on the size of household
+        self.income = model.random.gammavariate(
+            dt.income[len(self.agents)][0],
+            shape
+        )
