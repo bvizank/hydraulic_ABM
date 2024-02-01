@@ -34,6 +34,7 @@ class ConsumerAgent(Agent):
         self.agent_params = {}  # BBN parameters for predicting work from home
         self.housemates = list()
 
+    # NOT USED IN HYDRAULIC_ABM_SEIR code
     def complying(self):
         if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:
             if self.informed_by == 'utility' and random.random() < 0.5:
@@ -45,6 +46,7 @@ class ConsumerAgent(Agent):
         else:
             pass
 
+    # NOT USED IN HYDRAULIC_ABM_SEIR code
     def communcation(self):
         household_members = [a for i, a in enumerate(self.model.schedule.agents)
                              if a.home_node == self.home_node]

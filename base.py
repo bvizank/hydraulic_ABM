@@ -469,7 +469,7 @@ class Graphics(BaseGraphics):
 
         sector_dem_err = ut.calc_error(sector_dem_var, self.error)
 
-        # plot demand by sector
+        # plot demand by sector (industrial, residance,...)
         ax = plt.subplot()
         self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values,
                            'Time (days)', 'Demand (L)',
@@ -478,7 +478,7 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        ''' Make plots of aggregate demand data '''
+        ''' Make plots of aggregate demand data  (total demand) '''
         demand_base = self.base['avg_demand'][self.res_nodes, self.com_nodes, self.ind_nodes]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),

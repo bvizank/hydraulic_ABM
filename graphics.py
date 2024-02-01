@@ -24,6 +24,10 @@ plots.bbn_plots()
 ''' SEIR plot '''
 plots.make_seir_plot()
 
+
+# ---------  IMPORTANT: to get statistics please uncomment the following lines: --------------------------------
+
+
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
 # print("Dine model stats: " + str(calc_model_stats(wn, dine['avg_seir_data'], dine['avg_age']/3600)))

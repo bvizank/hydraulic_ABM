@@ -1038,6 +1038,10 @@ class ConsumerModel(Model):
 
     # this code should be updated to run sim every 1hour
     def collect_demands(self):
+        '''
+        The demand at each node is updated hourly based on how many agents are at each node,
+        then the demands are collected into a new pattern (see hourly_demands below).
+        '''
         step_demand = list()
         step_agents = dict()
         for node in self.nodes_w_demand:
@@ -1094,19 +1098,23 @@ class ConsumerModel(Model):
     # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
         '''
+        Purpose: updates the demand patterns for each node after each day. How?
         Add the current days demand pattern to each nodes demand pattern.
         This appends a new 24 pattern based on the demands at each node.
         '''
 
         for node in self.nodes_w_demand:
+            # updates if needed the daily pattern of a node:
             curr_node = self.wn.get_node(node)
             curr_demand = curr_node.demand_timeseries_list[0].base_value
-            new_mult = self.daily_demand[node]
+            new_mult = self.daily_demand[node]   # The new_mult variable is a list of multipliers that reflect the demand changes caused by the agent locations
             agents_at_node = self.grid.G.nodes[node]['agent']
             agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
             if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
                 perc_wfh = agents_wfh / len(agents_at_node)
                 if perc_wfh > 0.5 and node in self.res_nodes:
+                    #  when a household has more than 50% of its agents working from home,
+                    #  that household adopts a new (COVID) demand 24h/daily pattern from the Lakewood data.
                     old_pat = self.wn.get_pattern('wk1')
                 else:
                     old_pat = self.wn.get_pattern(self.base_pattern[node])
@@ -1115,10 +1123,12 @@ class ConsumerModel(Model):
                     self.set_patterns(node_1)
             else:
                 old_pat = self.wn.get_pattern(self.base_pattern[node])
+
+            # Once the daily demands are collected (in collect_demands()), they are converted to a demand pattern:
             new_pat = self.wn.get_pattern('node_'+node)
-            if self.timestep_day == 1:
+            if self.timestep_day == 1:   # if it's the first day, then assign the new daily updated pattern:
                 new_pat.multipliers = old_pat.multipliers * new_mult
-            else:
+            else: # if it's day>=2, then append the old patterns with the new daily updated pattern:
                 new_pat.multipliers = np.concatenate((new_pat.multipliers, old_pat.multipliers * new_mult))
 
             del curr_node.demand_timeseries_list[0]
@@ -1322,10 +1332,14 @@ class ConsumerModel(Model):
         return covid_change
 
     def update_patterns(self):
+        '''
+        updates the predefined patterns (1 through 5) so that they include 24 hours for 90 days.
+        I.e. replicate the 24h 90 times sequentially.
+        '''
         for i in range(1, 6, 1):
             curr_pat = self.wn.get_pattern(str(i))
             curr_mult = copy.deepcopy(curr_pat.multipliers)
-            for j in range(90):
+            for j in range(self.days):
                 curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
             # print(curr_pat.multipliers)
 
