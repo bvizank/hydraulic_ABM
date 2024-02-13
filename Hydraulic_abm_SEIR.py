@@ -909,6 +909,14 @@ class ConsumerModel(Model):
         )
         node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
 
+    def update_demand_bahviors(self):
+        '''
+        Method to update the household demand behaviors.
+        
+        Checks water age at each node and if above a threshold changes
+        the households demand behaviors.
+        '''
+
     def collect_demands(self):
         step_demand = np.empty(len(self.nodes_w_demand))
         step_agents = list()

@@ -382,3 +382,13 @@ class Household:
             dt.income[len(self.agents)][0],
             shape
         )
+
+    def calc_demand(self):
+        '''
+        Calculates the demand change for the hour based on the behaviors
+        '''
+    
+    def calc_bottled_water(self):
+        '''
+        Calculates the bottled water demand for the hour based on the behaviors
+        '''
