@@ -14,6 +14,9 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy as dcp
 import wntr
+from wntr.epanet.toolkit import ENepanet
+from wntr.sim.results import SimulationResults
+from wntr.epanet.util import EN
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -167,10 +170,6 @@ class ConsumerModel(Model):
         self.G = self.wn.get_graph()
         self.grid = NetworkGrid(self.G)
         self.num_nodes = len(self.G.nodes)
-        # wn.options.time.duration = 0
-        self.wn.options.time.hydraulic_timestep = 3600
-        self.wn.options.time.pattern_timestep = 3600
-        self.wn.options.quality.parameter = 'AGE'
         for i in range(dt.wfh_patterns.shape[1]):
             self.wn.add_pattern(
                 'wk'+str(i+1), dt.wfh_patterns[:, i]
@@ -312,7 +311,8 @@ class ConsumerModel(Model):
         self.dag_nodes()
         if self.res_pat_select == 'pysimdeum':
             self.create_demand_houses()
-        # self.create_comm_network()
+        self.create_comm_network()
+        self.init_hydraulic()
 
         # # Create dictionary of work from home probabilities using bnlearn.
         # self.rp_wfh_probs = {}
@@ -587,6 +587,19 @@ class ConsumerModel(Model):
         # for key in self.snw_node_agents:
         #     print(self.snw_node_agents[key])
 
+    def init_hydraulic(self):
+        # define the epanet class
+        self.enData = ENepanet(version=2.2)
+        # wn.options.time.duration = 0
+        self.wn.options.time.hydraulic_timestep = 3600
+        self.wn.options.time.pattern_timestep = 3600
+        self.wn.options.time.duration = self.days * 3600 * 24
+        self.wn.options.quality.parameter = 'AGE'
+
+        inpfile = self.id + ".inp"
+        rptfile = self.id + ".rpt"
+        outfile = self.id + ".bin"
+
     def num_status(self):
         """
         Function to calculate the number of agents in each compartment (Susceptible,
@@ -595,7 +608,21 @@ class ConsumerModel(Model):
         class (mild, severe, and critical). This information is printed every
         hour step.
         """
-        self.stat_tot = [self.timestep, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, self.cumm_infectious, len(self.agents_wfh())]
+        self.stat_tot = [
+            self.timestep,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            self.cumm_infectious,
+            len(self.agents_wfh())
+        ]
 
         for i, agent in enumerate(self.schedule.agents):
             if agent.covid == 'susceptible':
@@ -630,7 +657,6 @@ class ConsumerModel(Model):
         self.stat_tot[12] = int(len(self.agents_wfh()))
 
         self.stat_tot = [i / self.num_agents for i in self.stat_tot]
-        # step_status = pd.DataFrame([self.stat_tot], columns = ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
         self.status_tot[self.timestep] = dcp(self.stat_tot)
 
     def contact(self, agent_to_move, node_type):
@@ -912,7 +938,7 @@ class ConsumerModel(Model):
     def update_demand_bahviors(self):
         '''
         Method to update the household demand behaviors.
-        
+
         Checks water age at each node and if above a threshold changes
         the households demand behaviors.
         '''
@@ -1003,6 +1029,27 @@ class ConsumerModel(Model):
 
             del curr_node.demand_timeseries_list[0]
             curr_node.demand_timeseries_list.append((curr_demand, new_pat))
+
+    def run_hyd_hour(self):
+        '''
+        Run the hydraulic simulation for one hour at a time.
+        '''
+        self.wn._prev_sim_time = self.h_t
+        self.enData.ENrunH()
+        self.enData.ENrunQ()
+        # set the simulation time of the water network to match the current
+        # hydraulic time
+        self.wn.sim_time = self.enData.ENgettimeparam(EN.HTIME)
+
+        # set the hydraulic time
+        self.h_t = self.enData.ENgettimeparam(EN.HTIME)
+        # move EPANET forward one time step
+        tstep = self.enData.ENnextH()
+        qstep = self.enData.ENnextQ()
+
+        self.nh_t = self.h_t + tstep
+
+        ''' Next we save results '''
 
     def run_hydraulic(self):
         # Simulate hydraulics
