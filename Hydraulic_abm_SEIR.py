@@ -16,7 +16,7 @@ from copy import deepcopy as dcp
 import wntr
 from wntr.epanet.toolkit import ENepanet
 from wntr.sim.results import SimulationResults
-from wntr.epanet.util import EN
+from wntr.epanet.util import EN, FlowUnits, HydParam, LinkTankStatus, MassUnits, QualParam, to_si
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -599,6 +599,34 @@ class ConsumerModel(Model):
         inpfile = self.id + ".inp"
         rptfile = self.id + ".rpt"
         outfile = self.id + ".bin"
+
+        # write an input file for this process
+        self.wn.write_inpfile(
+            inpfile,
+            units=self.wn.options.hydraulic.inpfiles_units,
+            version=2.2
+        )
+        # open the EPANET project
+        self.enData.ENopen(inpfile, rptfile, outfile)
+
+        # need to set node and link attributes for age calculation
+        self._node_attributes = [
+            (EN.QUALITY, "_quality", "quality", QualParam.WaterAge._to_si),
+            (EN.DEMAND, "_demand", "demand", HydParam.Demand._to_si),
+            (EN.HEAD, "_head", "head", HydParam.HydraulicHead._to_si),
+            (EN.PRESSURE, "_pressure", "pressure", HydParam.Pressure._to_si),
+        ]
+        self._link_attributes = [
+            (EN.LINKQUAL, "_quality", "quality", QualParam.WaterAge._to_si),
+            (EN.FLOW, "_flow", "flowrate", HydParam.Flow._to_si),
+            (EN.VELOCITY, "_velocity", "velocity", HydParam.Velocity._to_si),
+            (EN.HEADLOSS, "_headloss", "headloss", HydParam.HeadLoss._to_si),
+            (EN.STATUS, "_user_status", "status", None),
+            (EN.SETTING, "_setting", "setting", None),
+        ]
+
+        # set the time to 0
+        self.h_t = 0
 
     def num_status(self):
         """
