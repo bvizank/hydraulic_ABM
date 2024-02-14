@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-# from sklearn.neighbors import KernelDensity
+from sklearn.neighbors import KernelDensity
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
 
@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 # see: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#indexing-view-versus-copy
 pd.options.mode.copy_on_write = True
 # import the data the includes residential and industrial nodes and spatial data
-col_names = ['lon', 'lat', 'group', 'bg', 'sec', 'val', 'struct']
+col_names = ['lon', 'lat', 'group', 'bg', 'sec', 'val', 'struct', 'city']
 data = pd.read_csv(
     'Input Files/clinton_data.csv',
     delimiter=',',
@@ -28,8 +28,8 @@ data = pd.read_csv(
 data.loc[:, 'lat'] = data.loc[:, 'lat'] * np.pi / 180
 data.loc[:, 'lon'] = data.loc[:, 'lon'] * np.pi / 180
 
-ind_nodes = data[data['sec'] == 3]
-res_nodes = data[data['sec'] == 1]
+ind_nodes = data[(data['sec'] == 3) & (data['city'] == 1)]
+res_nodes = data[(data['sec'] == 1) & (data['city'] == 1)]
 res_nodes = res_nodes[res_nodes.loc[:, 'struct'] == 1]
 
 ind_loc = dict()
@@ -74,78 +74,122 @@ plt.plot(x, model.predict(x))
 plt.xlabel('Industrial Distance')
 plt.ylabel('Parcel Value')
 plt.show()
-# results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
 # print(res_nodes.groupby(['group', 'bg']).count())
 
-# # read in income distribution data
-# income = np.genfromtxt(
-#     'Input Files/clinton_income_data.csv',
-#     delimiter=',',
-#     dtype=np.int64
-# )
+''' Calculate new distances using all data from the block groups. '''
+ind_nodes = data[data['sec'] == 3]
+res_nodes = data[data['sec'] == 1]
+res_nodes = res_nodes[res_nodes.loc[:, 'struct'] == 1]
 
-# block_groups = [
-#     970502.1,
-#     970600.1,
-#     970600.2,
-#     970600.3,
-#     970600.4,
-#     970701.1,
-#     970701.2,
-#     970702.1,
-#     970702.2,
-#     970702.3,
-#     970702.4,
-#     970801.1,
-#     970801.2,
-#     970802.1,
-#     970802.2,
-#     970802.3
-# ]
+ind_loc = dict()
+for i, row in ind_nodes.iterrows():
+    ind_loc[row.name] = (row['lat'], row['lon'])
 
-# # make repeated data
-# brackets = pd.Series([
-#     5000,
-#     12500,
-#     17500,
-#     22500,
-#     27500,
-#     32500,
-#     37500,
-#     42500,
-#     47500,
-#     55000,
-#     67500,
-#     87500,
-#     112500,
-#     137500,
-#     175000,
-#     200000
-# ])
+for i, key in enumerate(ind_loc):
+    '''
+    Using haversine formula to calculate distance
 
-# results = list()
-# for col in income.T:
-#     dataset = np.array(
-#         [brackets[i] for i, v in enumerate(col) for j in range(v)]
-#     )
+    More information found here:
+    https://www.movable-type.co.uk/scripts/latlong.html
+    '''
+    res_nodes.loc[:, 'del_lat'] = res_nodes.loc[:, 'lat'] - ind_loc[key][0]
+    res_nodes.loc[:, 'del_lon'] = res_nodes.loc[:, 'lon'] - ind_loc[key][1]
+    res_nodes.loc[:, 'a'] = (
+        np.sin(res_nodes.loc[:, 'del_lat']/2) ** 2 +
+        np.cos(res_nodes.loc[:, 'lat']) * np.cos(ind_loc[key][0]) *
+        np.sin(res_nodes.loc[:, 'del_lon']/2) ** 2
+    )
+    res_nodes.loc[:, str(key)] = (
+        2 * np.arctan2(
+                np.sqrt(res_nodes.loc[:, 'a']), np.sqrt(1 - res_nodes.loc[:, 'a'])
+            ) *
+        6371000
+    )
 
-#     # KernelDensity requires 2D array
-#     dataset = dataset[:, np.newaxis]
+col_names.extend(['del_lat', 'del_lon', 'a'])
+res_nodes.loc[:, 'min'] = res_nodes.loc[:, ~res_nodes.columns.isin(col_names)].min(axis=1)
+results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
 
-#     # fit KDE to the dataset
-#     kde = KernelDensity(kernel='gaussian', bandwidth=0.1).fit(dataset)
+# read in income distribution data
+income = np.genfromtxt(
+    'Input Files/clinton_income_data.csv',
+    delimiter=',',
+    dtype=np.int64
+)
 
-#     results.append(np.mean(kde.sample(10000)))
+block_groups = [
+    970600.1,
+    970600.2,
+    970600.3,
+    970600.4,
+    970701.1,
+    970701.2,
+    970702.1,
+    970702.2,
+    970702.3,
+    970702.4,
+    970801.1,
+    970801.2,
+    970802.1,
+    970802.2,
+    970802.3
+]
 
+# make repeated data
+brackets = pd.Series([
+    5000,
+    12500,
+    17500,
+    22500,
+    27500,
+    32500,
+    37500,
+    42500,
+    47500,
+    55000,
+    67500,
+    87500,
+    112500,
+    137500,
+    175000,
+    200000
+])
 
-# combined = pd.DataFrame({
-#     'dist': results_ind.to_numpy(),
-#     'income': np.array(results)}
-# )
+results = list()
+for col in income.T:
+    dataset = np.array(
+        [brackets[i] for i, v in enumerate(col) for j in range(v)]
+    )
 
-# combined = combined.sort_values(by='income')
-# plt.plot(combined['income'], combined['dist'])
-# plt.show()
+    # KernelDensity requires 2D array
+    dataset = dataset[:, np.newaxis]
+
+    # fit KDE to the dataset
+    kde = KernelDensity(kernel='gaussian', bandwidth=0.1).fit(dataset)
+
+    results.append(np.mean(kde.sample(10000)))
+
+print(results_ind)
+print(results)
+combined = pd.DataFrame({
+    'dist': results_ind.to_numpy(),
+    'income': np.array(results)}
+)
+
+combined = combined.sort_values(by='income')
+model = LinearRegression()
+x = combined[['dist']]
+y = combined[['income']]
+model.fit(x, y)
+print(model.score(x, y))
+print(model.coef_)
+print(model.intercept_)
+
+plt.scatter(x, y)
+plt.plot(x, model.predict(x))
+plt.xlabel('Industrial Distance')
+plt.ylabel('Income')
+plt.show()
 
 ''' Calculate kernel density functions for income distributions '''
 # data = {
