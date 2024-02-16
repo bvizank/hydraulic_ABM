@@ -3,6 +3,7 @@ import warnings
 from mesa import Model
 from mesa.time import RandomActivation
 from utils import setup
+from hydraulic import EpanetSimulator_Stepwise
 import networkx as nx
 from mesa.space import NetworkGrid
 from agent_model import Household
@@ -48,10 +49,12 @@ class ConsumerModel(Model):
         self.snw_agents = {}
         # self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
+
         if 'start_inf' in kwargs:
             self.covid_exposed = kwargs['start_inf'] #round(0.001*N) # number of starting infectious
         else:
             self.covid_exposed = int(0.001 * self.num_agents)
+
         self.exposure_rate = 0.05  # infection rate per contact per day in households
         self.exposure_rate_large = 0.01  # infection rate per contact per day in workplaces
         self.e2i = (4.5, 1.5)  # mean and sd number of days before infection shows
@@ -128,6 +131,15 @@ class ConsumerModel(Model):
         else:
             self.ind_factor = 0.8
 
+        '''
+        hyd_sim represents the way the hydraulic simulation is to take place
+        options are 'eos' (end of simulation) and 'hourly' with the default 'eos'
+        '''
+        if 'hyd_sim' in kwargs:
+            self.hyd_sim = kwargs['hyd_sim']
+        else:
+            self.hyd_sim = 'eos'
+
         ''' Setup and mapping of variables from various sources. For more information
         see utils.py '''
         setup_out = setup(city)
@@ -170,6 +182,7 @@ class ConsumerModel(Model):
         self.G = self.wn.get_graph()
         self.grid = NetworkGrid(self.G)
         self.num_nodes = len(self.G.nodes)
+
         for i in range(dt.wfh_patterns.shape[1]):
             self.wn.add_pattern(
                 'wk'+str(i+1), dt.wfh_patterns[:, i]
@@ -244,37 +257,27 @@ class ConsumerModel(Model):
             if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
         ]
 
-        # self.daily_demand = pd.DataFrame(0, index = np.arange(0, 86400, 3600), columns = self.nodes_w_demand)
-        self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
-        # self.agent_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[node for node in self.nodes_w_demand if node in self.nodes_capacity])
-        self.demand_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                          columns=self.G.nodes)
-        self.pressure_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                            columns=self.G.nodes)
-        self.age_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                       columns=self.G.nodes)
-        self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                        columns=[name for name, link in self.wn.links()])
-        # self.daily_demand = list()
-        # self.demand_matrix = dict()
+        if self.hyd_sim == 'eos':
+            self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
+            self.demand_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                              columns=self.G.nodes)
+            self.pressure_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                                columns=self.G.nodes)
+            self.age_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                           columns=self.G.nodes)
+            self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
+                                            columns=[name for name, link in self.wn.links()])
         self.agent_matrix = dict()
 
         # income dictionary
         self.income = dict()
 
         ''' Initialize the COVID state variable collectors '''
-        # self.cov_pers = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.cov_ff = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.media_exp = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
         self.cov_pers = dict()
         self.cov_ff = dict()
         self.media_exp = dict()
 
         ''' Initialize the PM adoption collectors '''
-        # self.wfh_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.dine_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.groc_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
-        # self.ppe_dec = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600), columns=[str(i) for i in range(self.num_agents)])
         self.wfh_dec = dict()
         self.dine_dec = dict()
         self.groc_dec = dict()
@@ -297,22 +300,29 @@ class ConsumerModel(Model):
         ]
         status_tot = [i / self.num_agents for i in status_tot]
         self.status_tot = {0: status_tot}
-        # self.status_tot = np.array([self.status_tot])
-        #  ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild', 'Sev', 'Crit', 'sum_I', 'wfh'])
 
+        # initialization methods
         self.base_demand_list()
         self.create_node_list()
-        if self.verbose == 1:
+        if self.verbose == 0.5:
             print("Creating agents ..............")
         self.create_agents()
-        if self.verbose == 1:
+        if self.verbose == 0.5:
             print("Setting agent attributes ...............")
         self.set_attributes()
         self.dag_nodes()
         if self.res_pat_select == 'pysimdeum':
             self.create_demand_houses()
         self.create_comm_network()
-        self.init_hydraulic()
+        if self.hyd_sim == 'hourly':
+            self.wn.options.time.duration = self.days * 24 * 3600
+            self.sim = EpanetSimulator_Stepwise(self.wn,
+                                                file_prefix='temp' + str(self.id))
+            self.sim.initialize()
+            # if we are running the simulation hourly, we need to have
+            # demand patterns that are as long as the simulation, which
+            # is what update_patterns does.
+            self.update_patterns()
 
         # # Create dictionary of work from home probabilities using bnlearn.
         # self.rp_wfh_probs = {}
@@ -344,9 +354,9 @@ class ConsumerModel(Model):
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
 
             ''' Make a pattern for each node for hydraulic simulation '''
-            curr_pattern = dcp(node_1.demand_timeseries_list[0].pattern)
-            # curr_pattern.name = 'node_'+node
-            self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
+            if self.hyd_sim == 'eos':
+                curr_pattern = dcp(node_1.demand_timeseries_list[0].pattern)
+                self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
             self.base_pattern[node] = dcp(node_1.demand_timeseries_list[0].pattern_name)
 
     def node_list(self, list, nodes):
@@ -586,47 +596,6 @@ class ConsumerModel(Model):
         # self.snw_node_agents = dict(zip(self.snw_agents_node.values(), self.snw_agents_node.keys()))
         # for key in self.snw_node_agents:
         #     print(self.snw_node_agents[key])
-
-    def init_hydraulic(self):
-        # define the epanet class
-        self.enData = ENepanet(version=2.2)
-        # wn.options.time.duration = 0
-        self.wn.options.time.hydraulic_timestep = 3600
-        self.wn.options.time.pattern_timestep = 3600
-        self.wn.options.time.duration = self.days * 3600 * 24
-        self.wn.options.quality.parameter = 'AGE'
-
-        inpfile = self.id + ".inp"
-        rptfile = self.id + ".rpt"
-        outfile = self.id + ".bin"
-
-        # write an input file for this process
-        self.wn.write_inpfile(
-            inpfile,
-            units=self.wn.options.hydraulic.inpfiles_units,
-            version=2.2
-        )
-        # open the EPANET project
-        self.enData.ENopen(inpfile, rptfile, outfile)
-
-        # need to set node and link attributes for age calculation
-        self._node_attributes = [
-            (EN.QUALITY, "_quality", "quality", QualParam.WaterAge._to_si),
-            (EN.DEMAND, "_demand", "demand", HydParam.Demand._to_si),
-            (EN.HEAD, "_head", "head", HydParam.HydraulicHead._to_si),
-            (EN.PRESSURE, "_pressure", "pressure", HydParam.Pressure._to_si),
-        ]
-        self._link_attributes = [
-            (EN.LINKQUAL, "_quality", "quality", QualParam.WaterAge._to_si),
-            (EN.FLOW, "_flow", "flowrate", HydParam.Flow._to_si),
-            (EN.VELOCITY, "_velocity", "velocity", HydParam.Velocity._to_si),
-            (EN.HEADLOSS, "_headloss", "headloss", HydParam.HeadLoss._to_si),
-            (EN.STATUS, "_user_status", "status", None),
-            (EN.SETTING, "_setting", "setting", None),
-        ]
-
-        # set the time to 0
-        self.h_t = 0
 
     def num_status(self):
         """
@@ -1062,22 +1031,42 @@ class ConsumerModel(Model):
         '''
         Run the hydraulic simulation for one hour at a time.
         '''
-        self.wn._prev_sim_time = self.h_t
-        self.enData.ENrunH()
-        self.enData.ENrunQ()
-        # set the simulation time of the water network to match the current
-        # hydraulic time
-        self.wn.sim_time = self.enData.ENgettimeparam(EN.HTIME)
+        # update demands for each node in the network based on the number of
+        # agents at the node
+        step_agents = list()
+        for i, node in enumerate(self.nodes_w_demand):
+            # we need to iterate through all nodes with demand to be able to
+            # run the hydraulic simualation.
+            if node in self.nodes_capacity:
+                curr_node = self.wn.get_node(node)
+                capacity_node = self.nodes_capacity[node]
+                agents_at_node_list = self.grid.G.nodes[node]['agent']
+                agents_at_node = len(agents_at_node_list)
+                step_agents.append(agents_at_node)
+                if capacity_node != 0:
+                    curr_node.demand_timeseries_list.base_value = (
+                        self.base_demands[node] * agents_at_node / capacity_node
+                    )
+                else:
+                    # if the node does not have a capacity then we don't need
+                    # to change its demand
+                    pass
+            else:
+                # if the node does not have a capacity then we don't need
+                # to change its demand
+                pass
 
-        # set the hydraulic time
-        self.h_t = self.enData.ENgettimeparam(EN.HTIME)
-        # move EPANET forward one time step
-        tstep = self.enData.ENnextH()
-        qstep = self.enData.ENnextQ()
+        # need to save the agent list
+        self.agent_matrix[self.timestep] = step_agents
 
-        self.nh_t = self.h_t + tstep
+        # TO DO add daily check to see if agents are working from home
+        # and change demand pattern accordingly.
 
-        ''' Next we save results '''
+        self.sim.set_next_stop_time(3600 * (self.timestep+1))
+        success = False
+        while not success:
+            print('starting simulation step')
+            success, stop_conditions = self.sim.run_sim()
 
     def run_hydraulic(self):
         # Simulate hydraulics
@@ -1201,63 +1190,51 @@ class ConsumerModel(Model):
         self.groc_dec[self.timestep] = step_groc
         self.ppe_dec[self.timestep] = step_ppe
 
-    def change_time_model(self):
-        self.timestep += 1
-        if self.timestep % 24 == 0:
-            # self.wn.options.time.duration = 0
-            ''' Increment day time step '''
-            self.timestep_day += 1
+    def daily_tasks(self):
+        ''' Increment day time step '''
+        self.timestep_day += 1
 
-            ''' Check status of agents with COVID exposure and infections '''
-            for i, agent in enumerate(self.schedule.agents):
-                if agent.covid == 'exposed':
-                    agent.check_infectious()
-                elif agent.covid == 'infectious':
-                    agent.check_symptomatic()
-                    if agent.inf_severity >= 1:
-                        agent.check_severity()
-                    else:
-                        pass
-                    agent.check_recovered()
-                    agent.check_death()
+        ''' Check status of agents with COVID exposure and infections '''
+        for i, agent in enumerate(self.schedule.agents):
+            if agent.covid == 'exposed':
+                agent.check_infectious()
+            elif agent.covid == 'infectious':
+                agent.check_symptomatic()
+                if agent.inf_severity >= 1:
+                    agent.check_severity()
+                else:
+                    pass
+                agent.check_recovered()
+                agent.check_death()
 
-                if agent.adj_covid_change == 1:  # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
-                    if agent.wfh == 0 and 'wfh' in self.bbn_models:
-                        agent.predict_wfh()
+            if agent.adj_covid_change == 1:  # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
+                if agent.wfh == 0 and 'wfh' in self.bbn_models:
+                    agent.predict_wfh()
 
-                    if agent.no_dine == 0 and 'dine' in self.bbn_models:
-                        agent.predict_dine_less()
+                if agent.no_dine == 0 and 'dine' in self.bbn_models:
+                    agent.predict_dine_less()
 
-                    if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
-                        agent.predict_grocery()
+                if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
+                    agent.predict_grocery()
 
-                    if agent.ppe == 0 and 'ppe' in self.bbn_models:
-                        agent.predict_ppe()
+                if agent.ppe == 0 and 'ppe' in self.bbn_models:
+                    agent.predict_ppe()
 
-                    # agent.adj_covid_change = 0
+        ''' Set the wfh threshold if lag time has been reached '''
+        if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
+            self.wfh_thres = True
 
-            # self.check_social_dist()
-            if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
-                self.wfh_thres = True
+        ''' Change demands for the eos hydraulic simulation '''
+        if self.hyd_sim == 'eos':
             self.change_demands()
-        # elif (self.timestep + 1) % 24 == 0 and self.timestep != 0:
-            # ''' Clear EPANET files and run hydraulic for the day '''
-            # curr_dir = os.getcwd()
-            # files_in_dir = os.listdir(curr_dir)
-            #
-            # for file in files_in_dir:
-            #     if file.endswith(".rpt") or file.endswith(".bin") or file.endswith(".inp"):
-            #         os.remove(os.path.join(curr_dir, file))
-            # self.run_hydraulic()
-        # else:
-            # pass
 
-        if self.timestep_day == self.days:
-            self.update_patterns()
-            self.wn.options.time.duration = 3600 * 24 * self.days
-            self.run_hydraulic()
-        self.timestepN = self.timestep - self.timestep_day * 24
-        # print(self.timestep)
+    def eos_task(self):
+        ''' End of simulation tasks '''
+        # setup demand patterns so they extend self.days
+        self.update_patterns()
+        self.wn.options.time.duration = 3600 * 24 * self.days
+        # run the hydraulic simulation and collect results
+        self.run_hydraulic()
 
     def industry_agents(self):
         return [a for a in self.schedule.agents if a.pos in self.ind_nodes]
@@ -1314,7 +1291,6 @@ class ConsumerModel(Model):
         self.schedule.step()
         if self.timestep != 0:
             self.move()
-            # self.move_wfh()
         # self.check_agent_loc()
         # self.check_covid_change()
         # BV: changed times to 6, 14, and 22 because I think this is more representative
@@ -1322,15 +1298,22 @@ class ConsumerModel(Model):
         # patterns, but I suspect it might.
         if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
             self.move_indust()
-            # self.move_indust_wfh()
         self.check_status()
         self.check_agent_change()
         if self.res_pat_select == 'pysimdeum':
             self.check_houses()
         self.communication_utility()
-        self.collect_demands()
+        if self.hyd_sim == 'eos':
+            self.collect_demands()
         self.collect_agent_data()
-        self.change_time_model()
+        self.timestep += 1
+        if self.timestep % 24 == 0:
+            self.daily_tasks()
+        if self.timestep_day == self.days and self.hyd_sim == 'eos':
+            self.eos_tasks()
+        if self.hyd_sim == 'hourly':
+            self.run_hyd_hour()
+        self.timestepN = self.timestep - self.timestep_day * 24
         # self.inform_status()
         # self.compliance_status()
         self.num_status()

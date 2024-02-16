@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
-from utils import clean_epanet
+# from utils import clean_epanet
 import os
+import wntr
 from tqdm import tqdm
 warnings.simplefilter("ignore", UserWarning)
 
@@ -23,6 +24,11 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     else:
         print(f"City {city} not implemented.")
 
+    if 'hyd_sim' in kwargs:
+        hyd_sim = kwargs['hyd_sim']
+    else:
+        hyd_sim = 'eos'
+
     start = perf_counter()
 
     model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
@@ -32,6 +38,8 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     else:
         for t in range(24*days):
             model.step()
+
+    model.sim.close()
 
     stop = perf_counter()
 
@@ -81,7 +89,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     # model.status_tot['t'] = pd.to_numeric(model.status_tot['t'],downcast="integer")
     # model.status_tot = model.status_tot.set_index('t')
     # model.status_tot = pd.concat([model.status_tot, Demands_test], axis=1)
-    
+
     # convert list of lists to pandas dataframes
     # print(model.status_tot)
     status_tot = convert_to_pd(
@@ -96,11 +104,20 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
 
     status_tot.to_pickle(output_loc + "/seir_data.pkl")
     model.param_out.to_pickle(output_loc + "/params.pkl")
-    model.demand_matrix.to_pickle(output_loc + "/demand.pkl")
-    model.pressure_matrix.to_pickle(output_loc + "/pressure.pkl")
-    model.age_matrix.to_pickle(output_loc + "/age.pkl")
+    if hyd_sim == 'eos':
+        model.demand_matrix.to_pickle(output_loc + "/demand.pkl")
+        model.pressure_matrix.to_pickle(output_loc + "/pressure.pkl")
+        model.age_matrix.to_pickle(output_loc + "/age.pkl")
+        model.flow_matrix.to_pickle(output_loc + "/flow.pkl")
+    elif hyd_sim == 'hourly':
+        results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
+        demand = results.node['demand'] * 1000000
+        demand.to_pickle(output_loc + "/demand.pkl")
+        results.node['pressure'].to_pickle(output_loc + "/pressure.pkl")
+        results.node['quality'].to_pickle(output_loc + "/age.pkl")
+        flow = results.link['flowrate'] * 1000000
+        flow.to_pickle(output_loc + "/flow.pkl")
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
-    model.flow_matrix.to_pickle(output_loc + "/flow.pkl")
 
     cov_pers = convert_to_pd(model.cov_pers, [str(i) for i in range(model.num_agents)])
     cov_ff = convert_to_pd(model.cov_ff, [str(i) for i in range(model.num_agents)])

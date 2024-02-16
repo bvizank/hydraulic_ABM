@@ -771,4 +771,10 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + file + 'seir' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
+        ''' Make demand plot '''
+        ax = plt.subplot()
+        print(data['demand'])
+        # self.make_avg_plot(
+        #     ax, data['demand'], None, 
+        # )
