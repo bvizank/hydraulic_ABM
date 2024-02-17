@@ -15,9 +15,7 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy as dcp
 import wntr
-from wntr.epanet.toolkit import ENepanet
-from wntr.sim.results import SimulationResults
-from wntr.epanet.util import EN, FlowUnits, HydParam, LinkTankStatus, MassUnits, QualParam, to_si
+from wntr.epanet.util import EN
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -328,6 +326,7 @@ class ConsumerModel(Model):
                                                 file_prefix='temp' + str(self.id))
             self.sim.duration = self.days * 24 * 3600
             self.sim.initialize(file_prefix='temp' + str(self.id))
+            self.demand_matrix.iloc[0, :] = self.sim._results.node['demand']
             # print(self.sim._results.node['demand'])
             # if we are running the simulation hourly, we need to have
             # demand patterns that are as long as the simulation, which
@@ -1048,15 +1047,21 @@ class ConsumerModel(Model):
             # we need to iterate through all nodes with demand to be able to
             # run the hydraulic simualation.
             if node in self.nodes_capacity:
-                curr_node = self.wn.get_node(node)
+                # curr_node = self.wn.get_node(node)
                 capacity_node = self.nodes_capacity[node]
                 agents_at_node_list = self.grid.G.nodes[node]['agent']
                 agents_at_node = len(agents_at_node_list)
                 step_agents.append(agents_at_node)
                 if capacity_node != 0:
-                    curr_node.demand_timeseries_list.base_value = (
+                    node_index = self.sim._en.ENgetnodeindex(node)
+                    self.sim._en.ENsetnodevalue(
+                        node_index,
+                        EN.BASEDEMAND,
                         self.base_demands[node] * agents_at_node / capacity_node
                     )
+                    # curr_node.demand_timeseries_list.base_value = (
+                    #     self.base_demands[node] * agents_at_node / capacity_node
+                    # )
                 else:
                     # if the node does not have a capacity then we don't need
                     # to change its demand
@@ -1078,7 +1083,7 @@ class ConsumerModel(Model):
             print('starting simulation step')
             success, stop_conditions = self.sim.run_sim()
 
-        print(self.sim._results.node['demand'])
+        print(self.sim._results.node['demand'].iloc[3600 * (self.timestep+1)])
         print(3600 * (self.timestep))
         # if self.timestep != 0:
         #     self.demand_matrix.loc[3600 * (self.timestep), :] = (
