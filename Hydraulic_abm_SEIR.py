@@ -267,6 +267,13 @@ class ConsumerModel(Model):
                                            columns=self.G.nodes)
             self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                             columns=[name for name, link in self.wn.links()])
+        elif self.hyd_sim == 'hourly':
+            self.demand_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*days, 3600),
+                columns=self.G.nodes
+            )
+
         self.agent_matrix = dict()
 
         # income dictionary
@@ -315,10 +322,13 @@ class ConsumerModel(Model):
             self.create_demand_houses()
         self.create_comm_network()
         if self.hyd_sim == 'hourly':
-            self.wn.options.time.duration = self.days * 24 * 3600
+            self.wn.options.time.pattern_timestep = 3600
+            self.wn.options.time.hydraulic_timestep = 3600
             self.sim = EpanetSimulator_Stepwise(self.wn,
                                                 file_prefix='temp' + str(self.id))
-            self.sim.initialize()
+            self.sim.duration = self.days * 24 * 3600
+            self.sim.initialize(file_prefix='temp' + str(self.id))
+            # print(self.sim._results.node['demand'])
             # if we are running the simulation hourly, we need to have
             # demand patterns that are as long as the simulation, which
             # is what update_patterns does.
@@ -1062,11 +1072,18 @@ class ConsumerModel(Model):
         # TO DO add daily check to see if agents are working from home
         # and change demand pattern accordingly.
 
-        self.sim.set_next_stop_time(3600 * (self.timestep+1))
+        self.sim.set_next_stop_time(3600 * (self.timestep + 1))
         success = False
         while not success:
             print('starting simulation step')
             success, stop_conditions = self.sim.run_sim()
+
+        print(self.sim._results.node['demand'])
+        print(3600 * (self.timestep))
+        # if self.timestep != 0:
+        #     self.demand_matrix.loc[3600 * (self.timestep), :] = (
+        #         self.sim._results.node['demand'].loc[3600 * self.timestep, :]
+        #     )
 
     def run_hydraulic(self):
         # Simulate hydraulics
@@ -1306,8 +1323,7 @@ class ConsumerModel(Model):
         if self.hyd_sim == 'eos':
             self.collect_demands()
         self.collect_agent_data()
-        self.timestep += 1
-        if self.timestep % 24 == 0:
+        if self.timestep % 24 == 0 and self.timestep != 0:
             self.daily_tasks()
         if self.timestep_day == self.days and self.hyd_sim == 'eos':
             self.eos_tasks()
@@ -1319,3 +1335,4 @@ class ConsumerModel(Model):
         self.num_status()
         if self.verbose == 1:
             self.print_func()
+        self.timestep += 1

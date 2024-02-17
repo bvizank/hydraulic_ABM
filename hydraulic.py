@@ -912,7 +912,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
         enData = self._en
         completed = True
         conditions = list()
-        print(self._t)
+        # print(self._t)
         if enData is None:
             raise SimulatorError(self.__class__.__name__ + " not initialized before use")
         if self._t > self._next_stop_time:

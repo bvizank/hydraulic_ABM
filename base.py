@@ -765,16 +765,34 @@ class Graphics(BaseGraphics):
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
         print(data['seir_data'])
+        x_values = np.array([
+            x for x in np.arange(0, 90, 90 / len(data['seir_data'].index))
+        ])
         self.make_avg_plot(
-            ax, data['seir_data']*100, None, leg_text, self.x_values,
+            ax, data['seir_data']*100, None, leg_text, x_values,
             'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
         plt.savefig(self.pub_loc + file + 'seir' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
         ''' Make demand plot '''
+        base_loc = 'Output Files/base_results/'
+        base_data = ut.read_data(base_loc, self.comp_list)
         ax = plt.subplot()
-        print(data['demand'])
-        # self.make_avg_plot(
-        #     ax, data['demand'], None, 
-        # )
+        pm_demand = data['demand'].loc[:, self.all_nodes]
+        print(pm_demand.sum(axis=1))
+        base_demand = base_data['demand'].loc[:, self.all_nodes]
+        print(base_demand.sum(axis=1))
+        demand = pd.concat([pm_demand.sum(axis=1).rolling(24).mean(),
+                            base_demand.sum(axis=1).rolling(24).mean()],
+                           axis=1, keys=['PM', 'Base'])
+        print(demand)
+
+        self.make_avg_plot(
+            ax, demand, None, ['PM', 'Base'],
+            self.x_values, xlabel='Time (days)', ylabel='Demand',
+            show_labels=True, sd_plot=False
+        )
+        plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
