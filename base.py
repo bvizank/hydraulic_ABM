@@ -786,10 +786,10 @@ class Graphics(BaseGraphics):
         demand = pd.concat([pm_demand.sum(axis=1).rolling(24).mean(),
                             base_demand.sum(axis=1).rolling(24).mean()],
                            axis=1, keys=['PM', 'Base'])
-        print(demand)
+        print(demand[:-1])
 
         self.make_avg_plot(
-            ax, demand, None, ['PM', 'Base'],
+            ax, demand[:-1], None, ['PM', 'Base'],
             self.x_values, xlabel='Time (days)', ylabel='Demand',
             show_labels=True, sd_plot=False
         )

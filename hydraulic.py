@@ -925,7 +925,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
 
             # if tstep < 1, duration has been reached
             if tstep <= 0 or self._t > self._next_stop_time:
-                self._save_report_step()
+                # self._save_report_step()
                 break
 
             if len(conditions) > 0:

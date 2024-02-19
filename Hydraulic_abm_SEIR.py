@@ -266,10 +266,9 @@ class ConsumerModel(Model):
             self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
                                             columns=[name for name, link in self.wn.links()])
         elif self.hyd_sim == 'hourly':
-            self.demand_matrix = pd.DataFrame(
+            self.current_demand = pd.Series(
                 0,
-                index=np.arange(0, 86400*days, 3600),
-                columns=self.G.nodes
+                index=self.G.nodes
             )
 
         self.agent_matrix = dict()
@@ -307,6 +306,19 @@ class ConsumerModel(Model):
         self.status_tot = {0: status_tot}
 
         # initialization methods
+        if self.hyd_sim == 'hourly':
+            self.wn.options.time.pattern_timestep = 3600
+            self.wn.options.time.hydraulic_timestep = 3600
+            self.sim = EpanetSimulator_Stepwise(self.wn,
+                                                file_prefix='temp' + str(self.id))
+            self.sim.duration = self.days * 24 * 3600
+            self.sim.initialize(file_prefix='temp' + str(self.id))
+            self.current_demand = self.sim._results.node['demand']
+            # print(self.sim._results.node['demand'])
+            # if we are running the simulation hourly, we need to have
+            # demand patterns that are as long as the simulation, which
+            # is what update_patterns does.
+            self.update_patterns()
         self.base_demand_list()
         self.create_node_list()
         if self.verbose == 0.5:
@@ -319,19 +331,6 @@ class ConsumerModel(Model):
         if self.res_pat_select == 'pysimdeum':
             self.create_demand_houses()
         self.create_comm_network()
-        if self.hyd_sim == 'hourly':
-            self.wn.options.time.pattern_timestep = 3600
-            self.wn.options.time.hydraulic_timestep = 3600
-            self.sim = EpanetSimulator_Stepwise(self.wn,
-                                                file_prefix='temp' + str(self.id))
-            self.sim.duration = self.days * 24 * 3600
-            self.sim.initialize(file_prefix='temp' + str(self.id))
-            self.demand_matrix.iloc[0, :] = self.sim._results.node['demand']
-            # print(self.sim._results.node['demand'])
-            # if we are running the simulation hourly, we need to have
-            # demand patterns that are as long as the simulation, which
-            # is what update_patterns does.
-            self.update_patterns()
 
         # # Create dictionary of work from home probabilities using bnlearn.
         # self.rp_wfh_probs = {}
@@ -358,6 +357,7 @@ class ConsumerModel(Model):
     def base_demand_list(self):
         self.base_demands = dict()
         self.base_pattern = dict()
+        self.node_index = dict()
         for node in self.nodes_w_demand:
             node_1 = self.wn.get_node(node)
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
@@ -366,6 +366,8 @@ class ConsumerModel(Model):
             if self.hyd_sim == 'eos':
                 curr_pattern = dcp(node_1.demand_timeseries_list[0].pattern)
                 self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
+            elif self.hyd_sim == 'hourly':
+                self.node_index[node] = dcp(self.sim._en.ENgetnodeindex(node))
             self.base_pattern[node] = dcp(node_1.demand_timeseries_list[0].pattern_name)
 
     def node_list(self, list, nodes):
@@ -1053,19 +1055,18 @@ class ConsumerModel(Model):
                 agents_at_node = len(agents_at_node_list)
                 step_agents.append(agents_at_node)
                 if capacity_node != 0:
-                    node_index = self.sim._en.ENgetnodeindex(node)
                     self.sim._en.ENsetnodevalue(
-                        node_index,
-                        EN.BASEDEMAND,
-                        self.base_demands[node] * agents_at_node / capacity_node
+                      self.node_index[node],
+                      EN.BASEDEMAND,
+                      self.base_demands[node] * agents_at_node / capacity_node
                     )
                     # curr_node.demand_timeseries_list.base_value = (
                     #     self.base_demands[node] * agents_at_node / capacity_node
                     # )
-                else:
-                    # if the node does not have a capacity then we don't need
-                    # to change its demand
-                    pass
+                # else:
+                #     # if the node does not have a capacity then we don't need
+                #     # to change its demand
+                #     pass
             else:
                 # if the node does not have a capacity then we don't need
                 # to change its demand
@@ -1083,12 +1084,13 @@ class ConsumerModel(Model):
             print('starting simulation step')
             success, stop_conditions = self.sim.run_sim()
 
-        print(self.sim._results.node['demand'].iloc[3600 * (self.timestep+1)])
-        print(3600 * (self.timestep))
+        # print(3600 * (self.timestep+1))
+        # print(self.sim._results.node['demand'])
+        # print(3600 * (self.timestep))
         # if self.timestep != 0:
-        #     self.demand_matrix.loc[3600 * (self.timestep), :] = (
-        #         self.sim._results.node['demand'].loc[3600 * self.timestep, :]
-        #     )
+        # self.current_demand = (
+        #     self.sim._results.node['demand'].loc[3600 * (self.timestep+1), :]
+        # )
 
     def run_hydraulic(self):
         # Simulate hydraulics
