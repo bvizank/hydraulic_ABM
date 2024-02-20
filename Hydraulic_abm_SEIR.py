@@ -821,21 +821,19 @@ class ConsumerModel(Model):
                 #     print(f"Agent {Agent_to_move} is at work.")
                 if self.base_pattern[location] == '6':
                     if Agent_to_move.less_groceries == 1:
-                        pass
-                    else:
-                        self.grid.move_agent(Agent_to_move, location)
-                        Possible_Agents_to_move.remove(Agent_to_move)
-                        nodes_comm.remove(location)
-                        self.infect_agent(Agent_to_move, 'workplace')
+                        continue
+                    self.grid.move_agent(Agent_to_move, location)
+                    Possible_Agents_to_move.remove(Agent_to_move)
+                    nodes_comm.remove(location)
+                    self.infect_agent(Agent_to_move, 'workplace')
                 else:
                     ''' The agents in this arm are considered workers '''
-                    if Agent_to_move.wfh == 0:
-                        self.grid.move_agent(Agent_to_move, location)
-                        Possible_Agents_to_move.remove(Agent_to_move)
-                        nodes_comm.remove(location)
-                        self.infect_agent(Agent_to_move, 'workplace')
-                    else:
-                        pass
+                    if Agent_to_move.wfh == 1:
+                        continue
+                    self.grid.move_agent(Agent_to_move, location)
+                    Possible_Agents_to_move.remove(Agent_to_move)
+                    nodes_comm.remove(location)
+                    self.infect_agent(Agent_to_move, 'workplace')
 
         elif delta_agents_comm < 0: # It means, that agents are moving back to residential nodes from commmercial nodes
             Possible_Agents_to_move = self.commercial_agents()
@@ -844,8 +842,6 @@ class ConsumerModel(Model):
                 self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
                 Possible_Agents_to_move.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'residential')
-        else:
-            pass
 
         """
         Move the correct number of agents to and from cafe nodes.
@@ -875,12 +871,11 @@ class ConsumerModel(Model):
                 #     pass
                 # else:
                 if Agent_to_move.no_dine == 1:
-                    pass
-                else:
-                    self.grid.move_agent(Agent_to_move, location)
-                    Possible_Agents_to_move.remove(Agent_to_move)
-                    nodes_cafe.remove(location)
-                    self.infect_agent(Agent_to_move, 'workplace')
+                    continue
+                self.grid.move_agent(Agent_to_move, location)
+                Possible_Agents_to_move.remove(Agent_to_move)
+                nodes_cafe.remove(location)
+                self.infect_agent(Agent_to_move, 'workplace')
 
         elif delta_agents_rest < 0:
             Possible_Agents_to_move = self.rest_agents()
@@ -889,8 +884,6 @@ class ConsumerModel(Model):
                 self.grid.move_agent(Agent_to_move, Agent_to_move.home_node)
                 Possible_Agents_to_move.remove(Agent_to_move)
                 self.infect_agent(Agent_to_move, 'residential')
-        else:
-            pass
 
     # Moving Agents from and to work in Industrial Nodes. Every 8 hours half the Agents in industrial nodes
     # are being replaced with Agents from Residential nodes. At 1, 9 and 17:00
@@ -925,12 +918,11 @@ class ConsumerModel(Model):
             if (Agent_to_move.wfh == 1 and
                 self.wfh_thres and
                 Agent_to_move.can_wfh == True):
-                pass
-            else:
-                self.agents_moved.append(Agent_to_move)
-                self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
-                Possible_Agents_to_move_to_work.remove(Agent_to_move)
-                self.infect_agent(Agent_to_move, 'workplace')
+                continue
+            self.agents_moved.append(Agent_to_move)
+            self.grid.move_agent(Agent_to_move, Agent_to_move.work_node)
+            Possible_Agents_to_move_to_work.remove(Agent_to_move)
+            self.infect_agent(Agent_to_move, 'workplace')
 
     def set_patterns(self, node):
         house = [house for house in self.res_houses if house.id == node.name][0]
@@ -1055,11 +1047,12 @@ class ConsumerModel(Model):
                 agents_at_node = len(agents_at_node_list)
                 step_agents.append(agents_at_node)
                 if capacity_node != 0:
-                    self.sim._en.ENsetnodevalue(
-                      self.node_index[node],
-                      EN.BASEDEMAND,
-                      self.base_demands[node] * agents_at_node / capacity_node
-                    )
+                    pass
+                    # self.sim._en.ENsetnodevalue(
+                    #   self.node_index[node],
+                    #   EN.BASEDEMAND,
+                    #   self.base_demands[node] * agents_at_node / capacity_node
+                    # )
                     # curr_node.demand_timeseries_list.base_value = (
                     #     self.base_demands[node] * agents_at_node / capacity_node
                     # )
@@ -1067,10 +1060,6 @@ class ConsumerModel(Model):
                 #     # if the node does not have a capacity then we don't need
                 #     # to change its demand
                 #     pass
-            else:
-                # if the node does not have a capacity then we don't need
-                # to change its demand
-                pass
 
         # need to save the agent list
         self.agent_matrix[self.timestep] = step_agents
@@ -1091,6 +1080,12 @@ class ConsumerModel(Model):
         # self.current_demand = (
         #     self.sim._results.node['demand'].loc[3600 * (self.timestep+1), :]
         # )
+
+    def run_hyd_weekly(self):
+        '''
+        Run the hydraulic simulation for a week
+        '''
+        
 
     def run_hydraulic(self):
         # Simulate hydraulics
@@ -1184,6 +1179,16 @@ class ConsumerModel(Model):
                 curr_pat.multipliers = np.concatenate((curr_pat.multipliers, curr_mult))
             # print(curr_pat.multipliers)
 
+    def check_water_age(self):
+        total_error = 0
+        last_age = self.current_age[:-1]
+        pen_age = self.current_age[:-2]
+        for node in self.nodes_w_demand:
+            error = last_age[:, node] - pen_age[:, node]
+            total_error += error
+
+        return total_error
+
     def collect_agent_data(self):
         ''' BBN input containers '''
         step_cov_pers = list()
@@ -1273,10 +1278,8 @@ class ConsumerModel(Model):
         return [a for a in self.schedule.agents if a.pos == a.home_node]
 
     def infect_agent(self, agent, next_loc):
-        if agent.covid == 'infectious':
+        if agent.covid == 'infectious' and not self.warmup:
             self.contact(agent, next_loc)
-        else:
-            pass
 
     def agents_wfh(self):
         return [a for a in self.schedule.agents if a.wfh == 1]
@@ -1322,16 +1325,19 @@ class ConsumerModel(Model):
         # patterns, but I suspect it might.
         if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
             self.move_indust()
-        self.check_status()
-        self.check_agent_change()
-        if self.res_pat_select == 'pysimdeum':
-            self.check_houses()
-        self.communication_utility()
-        if self.hyd_sim == 'eos':
-            self.collect_demands()
-        self.collect_agent_data()
-        if self.timestep % 24 == 0 and self.timestep != 0:
-            self.daily_tasks()
+        if self.warmup:
+            self.check_status()
+            self.check_agent_change()
+            if self.res_pat_select == 'pysimdeum':
+                self.check_houses()
+            self.communication_utility()
+            if self.timestep % 24 == 0 and self.timestep != 0:
+                self.daily_tasks()
+            if self.hyd_sim == 'eos':
+                self.collect_demands()
+            self.collect_agent_data()
+        # if self.timestep % 24 == 0 and self.timestep != 0:
+        #     self.daily_tasks()
         if self.timestep_day == self.days and self.hyd_sim == 'eos':
             self.eos_tasks()
         if self.hyd_sim == 'hourly':
@@ -1339,7 +1345,8 @@ class ConsumerModel(Model):
         self.timestepN = self.timestep - self.timestep_day * 24
         # self.inform_status()
         # self.compliance_status()
-        self.num_status()
+        if self.warmup:
+            self.num_status()
         if self.verbose == 1:
             self.print_func()
         self.timestep += 1
