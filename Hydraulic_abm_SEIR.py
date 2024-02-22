@@ -1305,6 +1305,16 @@ class ConsumerModel(Model):
 
         return slope
 
+    def check_water_age(self):
+        total_error = 0
+        last_age = self.current_age[:-1]
+        pen_age = self.current_age[:-2]
+        for node in self.nodes_w_demand:
+            error = last_age[:, node] - pen_age[:, node]
+            total_error += error
+
+        return total_error
+
     def collect_agent_data(self):
         ''' BBN input containers '''
         step_cov_pers = list()
