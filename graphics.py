@@ -1,7 +1,10 @@
 from base import Graphics
 
 
-plots = Graphics(publication=True, error='se')
+plots = Graphics(publication=False, error='se')
+
+print(plots.base['avg_demand'])
+print(plots.base['avg_age']/3600)
 
 ''' Demand plots '''
 # plots.demand_plots()
@@ -25,7 +28,7 @@ plots = Graphics(publication=True, error='se')
 # plots.make_seir_plot()
 
 ''' Make single plots '''
-plots.make_single_plots('2024-02-17_16-24_0_results')
+plots.make_single_plots('2024-02-21_10-14_0_results')
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))

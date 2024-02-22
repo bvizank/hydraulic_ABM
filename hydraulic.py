@@ -12,13 +12,16 @@ import numpy as np
 import pandas as pd
 import wntr.epanet.io
 from wntr.epanet.toolkit import ENepanet
-from wntr.epanet.util import EN, FlowUnits, HydParam, LinkTankStatus, MassUnits, QualParam, to_si
+from wntr.epanet.util import EN, FlowUnits, SizeLimits, HydParam, LinkTankStatus, MassUnits, QualParam, to_si
 from wntr.network.base import Link, LinkStatus, Node
 from wntr.network.controls import Control
 from wntr.network.model import WaterNetworkModel
 from wntr.sim.core import WaterNetworkSimulator
 from wntr.sim.results import SimulationResults
 from wntr.network.io import write_inpfile
+
+import ctypes
+from ctypes import byref
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +32,56 @@ class SimulatorError(Exception):
 
 class SimulatorWarning(Exception):
     pass
+
+
+class ENepanet_update(ENepanet):
+    '''
+    Wrapper update to include the function to set patterns.
+    '''
+
+    def __init__(self, inpfile="", rptfile="", binfile="", version=2.2):
+        super().__init__(inpfile, rptfile, binfile, version)
+
+    def ENsetpattern(self, iPattern, values):
+        iLen = len(values)
+        if self._project is not None:
+            self.errcode = self.ENlib.EN_setpattern(
+                self._project,
+                ctypes.c_int(iPattern),
+                (ctypes.c_double * iLen)(*values),
+                ctypes.c_int(iLen)
+            )
+        else:
+            self.errcode = self.ENlib.ENaddpattern(iPattern, values, iLen)
+        self._error()
+        return
+
+    def ENgetpatternindex(self, sId):
+        iIndex = ctypes.c_int()
+        if self._project is not None:
+            self.errcode = self.ENlib.EN_getpatternindex(
+                self._project,
+                sId.encode("latin-1"),
+                byref(iIndex)
+            )
+        else:
+            self.errcode = self.ENlib.ENgetpatternindex(
+                sId.encode("latin-1"),
+                byref(iIndex)
+            )
+        self._error()
+        return iIndex.value
+
+    def ENgetpatternid(self, iIndex):
+        fId = ctypes.create_string_buffer(SizeLimits.EN_MAX_ID.value)
+        if self._project is not None:
+            self.errcode = self.ENlib.EN_getpatternid(
+                self._project, iIndex, byref(fId)
+            )
+        else:
+            self.errcode = self.ENlib.ENgetpatternid(iIndex, byref(fId))
+        self._error()
+        return str(fId.value, 'UTF-8')
 
 
 class EpanetSimulator_Stepwise(WaterNetworkSimulator):
@@ -111,7 +164,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
 
         """
         super().__init__(wn)
-        self._en: ENepanet = None
+        self._en: ENepanet_update = None
         self._t: int = 0
         self._tn: int = 0
         self._results: SimulationResults = None
@@ -772,7 +825,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
         if self._en is not None:
             raise SimulatorError(self.__class__.__name__ + " already initialized")
         inpfile = file_prefix + ".inp"
-        enData = wntr.epanet.toolkit.ENepanet(version=version)
+        enData = ENepanet_update(version=version)
         orig_duration = self._wn.options.time.duration
         if self._max_duration is None:
             self._max_duration = int(2**30)

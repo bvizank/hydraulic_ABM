@@ -8,6 +8,7 @@ from time import localtime, strftime, perf_counter
 import os
 import wntr
 from tqdm import tqdm
+import logging
 warnings.simplefilter("ignore", UserWarning)
 
 
@@ -109,7 +110,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
         model.pressure_matrix.to_pickle(output_loc + "/pressure.pkl")
         model.age_matrix.to_pickle(output_loc + "/age.pkl")
         model.flow_matrix.to_pickle(output_loc + "/flow.pkl")
-    elif hyd_sim == 'hourly':
+    elif hyd_sim == 'hourly' or isinstance(hyd_sim, int):
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
         demand = results.node['demand'] * 1000000
         demand.to_pickle(output_loc + "/demand.pkl")

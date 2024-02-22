@@ -764,7 +764,6 @@ class Graphics(BaseGraphics):
         data = ut.read_data(loc, self.comp_list)
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
-        print(data['seir_data'])
         x_values = np.array([
             x for x in np.arange(0, 90, 90 / len(data['seir_data'].index))
         ])
@@ -776,23 +775,42 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make demand plot '''
-        base_loc = 'Output Files/base_results/'
-        base_data = ut.read_data(base_loc, self.comp_list)
-        ax = plt.subplot()
-        pm_demand = data['demand'].loc[:, self.all_nodes]
-        print(pm_demand.sum(axis=1))
-        base_demand = base_data['demand'].loc[:, self.all_nodes]
-        print(base_demand.sum(axis=1))
-        demand = pd.concat([pm_demand.sum(axis=1).rolling(24).mean(),
-                            base_demand.sum(axis=1).rolling(24).mean()],
-                           axis=1, keys=['PM', 'Base'])
-        print(demand[:-1])
+        # base_loc = 'Output Files/base_results/'
+        # base_data = ut.read_data(base_loc, self.comp_list)
+        # ax = plt.subplot()
+        # pm_demand = data['demand'].loc[:, self.all_nodes]
+        # base_demand = base_data['demand'].loc[:, self.all_nodes]
+        # demand = pd.concat([pm_demand.sum(axis=1).rolling(24).mean(),
+        #                     base_demand.sum(axis=1).rolling(24).mean()],
+        #                    axis=1, keys=['PM', 'Base'])
+        # x_values = np.array([
+        #     x for x in np.arange(0, 90, 90 / len(data['demand'].index))
+        # ])
+        # print(demand[:-1])
 
-        self.make_avg_plot(
-            ax, demand[:-1], None, ['PM', 'Base'],
-            self.x_values, xlabel='Time (days)', ylabel='Demand',
-            show_labels=True, sd_plot=False
-        )
-        plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
+        # self.make_avg_plot(
+        #     ax, demand[:-1], None, ['PM', 'Base'],
+        #     x_values, xlabel='Time (days)', ylabel='Demand',
+        #     show_labels=True, sd_plot=False
+        # )
+        # plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
+        demand = data['demand'].sum(axis=1)
+        x_values = np.array([
+            x for x in np.arange(0, 90, 90 / len(data['demand'].index))
+        ])
+        plt.plot(x_values, demand)
+        plt.savefig(self.pub_loc + file + '_demand_' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Make age plots '''
+        age = data['age'].mean(axis=1)
+        x_values = np.array([
+            x for x in np.arange(0, 90, 90 / len(data['age'].index))
+        ])
+        plt.plot(x_values, age)
+        plt.savefig(self.pub_loc + file + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
