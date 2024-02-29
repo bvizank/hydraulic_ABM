@@ -14,7 +14,7 @@ class ConsumerAgent(Agent):
         self.home_node = None
         self.work_node = None
         self.work_type = None
-        self.demand =  0
+        self.demand = 0
         self.base_demand = 0
         self.information = 0
         self.informed_by = None
@@ -341,32 +341,35 @@ class ConsumerAgent(Agent):
 class Household:
     '''
     Container for households. Contains a collection of agent objects
-    
+
     Parameters
     ----------
     start_id : int
         starting index for agent ids
-        
+
     end_id : int
         ending index for agent ids
-        
+
     node : string
         string corresponding to the node in the water network that is this
         households home node
-        
+
     node_dist : float
         this nodes distance to the nearest industrial node
-        
+
     model : ConsumerModel
         model object where agents are added
     '''
 
     def __init__(self, start_id, end_id, node, node_dist, model):
         self.agents = list()  # list of agent ids that are in the household
-        self.tap = ['drink', 'hygiene', 'cook']
-        self.bottle = []
-        self.demand = 0
-        self.bottled_water = 0
+        self.tap = ['drink', 'hygiene', 'cook']  # the actions using tap water
+        self.bottle = []  # actions using bottled water
+        self.demand = 0  # the tap water demand
+        self.bottled_water = 0  # the bottled water demand
+        self.change = 1  # the demand change multiplier for the last 168 hours
+        self.model = model
+        self.node = node
 
         for i in range(start_id, end_id):
             a = ConsumerAgent(i, self, model)
@@ -388,6 +391,10 @@ class Household:
             model.grid.place_agent(a, a.home_node)
             self.agents.append(a.unique_id)
 
+        # get the base demand for this node
+        wn_node = model.wn.get_node(node)
+        self.base_demand = wn_node.demand_timeseries_list[0].base_value
+
         # assign an income for this household
         # if node_dist > model.ind_ring:
         #     shape = dt.income[len(self.agents)][1]
@@ -400,22 +407,24 @@ class Household:
         #     dt.income[len(self.agents)][0],
         #     shape
         # )
-        
+
     def update_household(self, age):
         '''
         Perform updating methods. Update behaviors, calculate demand
         and calculate bottled water use.
         '''
         self.update_behaviors(age)
-        change = self.calc_demand()
-        self.calc_bottled_water()
+        self.calc_demand()
+        self.change = self.calc_demand_change()
+        print(self.change)
 
-        return change
-        
+        return self.change
+
     def update_behaviors(self, age):
         '''
         Update the behavior lists tap and bottle based on the water age
         '''
+        print(age)
         if age > 150 and 'hygiene' in self.tap:
             self.tap.remove('hygiene')
             self.bottle.append('hygiene')
@@ -426,22 +435,32 @@ class Household:
             self.tap.remove('cook')
             self.bottle.append('cook')
 
-    def calc_demand(self):
+    def calc_demand_change(self):
         '''
         Calculates the demand change for the hour based on the behaviors
         '''
-        change = 0
-        if 'hygiene' in self.tap:
-            change += 0.1
-        if 'cook' in self.tap:
-            change += 0.1
-        if 'drink' in self.tap:
-            change += 0.1        
-        
-        return change
-            
-    def calc_bottled_water(self):
-        '''
-        Calculates the bottled water demand for the hour based on the behaviors
-        '''
+        change = 1
+        if 'hygiene' not in self.tap:
+            change -= 0.1
+        if 'cook' not in self.tap:
+            change -= 0.1
+        if 'drink' not in self.tap:
+            change -= 0.1
 
+        return change
+
+    def calc_demand(self):
+        '''
+        Calculated the actual demand for the 
+        '''
+        timestep = self.model.timestep - 1
+        hyd_step = (self.model.hyd_sim * 24) - 1
+        print(timestep)
+        print(hyd_step)
+        demand_pattern = self.model.wn.get_pattern('node_'+self.node)
+        demand_pattern = demand_pattern.multipliers[timestep-hyd_step:timestep]
+        total_demand = demand_pattern * self.base_demand
+        self.demand = total_demand * self.change
+        self.bottled = total_demand - self.demand
+        print(self.demand)
+        print(self.bottled)

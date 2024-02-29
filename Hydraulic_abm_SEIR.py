@@ -203,8 +203,6 @@ class ConsumerModel(Model):
         self.terminal_nodes = setup_out[4]
         self.wn = setup_out[5]
         self.ind_node_dist = setup_out[6]  # distance between res nodes and closest ind node
-        plt.hist(self.ind_node_dist.values())
-        plt.show()
 
         self.G = self.wn.get_graph()
         self.grid = NetworkGrid(self.G)
@@ -391,6 +389,7 @@ class ConsumerModel(Model):
         self.base_demands = dict()
         self.base_pattern = dict()
         self.node_index = dict()
+        self.demand_multiplier = dict()
         for node in self.nodes_w_demand:
             node_1 = self.wn.get_node(node)
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
@@ -407,7 +406,7 @@ class ConsumerModel(Model):
                 dcp(node_1.demand_timeseries_list[0].pattern_name),
                 dcp(self.wn.get_pattern(node_1.demand_timeseries_list[0].pattern_name))
             )
-            
+
             # set demand multipliers for each node for the tap water avoidance
             # modeling
             self.demand_multiplier[node] = 1
@@ -436,6 +435,9 @@ class ConsumerModel(Model):
                                 population=self.ind_nodes,
                                 k=int(len(self.ind_nodes)*self.no_wfh_perc)
                             )
+
+        # create list of households
+        self.households = dict()
         # no_wfh_comm_nodes = self.random.choices(population=self.com_nodes,
         #                                         k=int(len(self.com_nodes)*0.2))
         # no_wfh_rest_nodes = self.random.choices(population=self.cafe_nodes,
@@ -493,16 +495,19 @@ class ConsumerModel(Model):
             home_size = self.random.choice(range(1, 7))
             prev_id = curr_ids
             curr_ids += home_size
-            # make the household
-            self.households.append(Household(prev_id, curr_ids, curr_node, node_dist, self))
+            # make the household and append it to a list of households
+            self.households[curr_node] = Household(
+                prev_id, curr_ids, curr_node, node_dist, self
+            )
             node_cap -= home_size
         else:
             # if the node size is 6 or fewer, we only need to do this once
-            self.households.append(Household(curr_ids,
+            self.households[curr_node] = Household(
+                curr_ids,
                 node_cap_static + init_id,
                 curr_node,
                 node_dist,
-                self)
+                self
             )
 
         return init_id + node_cap
@@ -1164,10 +1169,13 @@ class ConsumerModel(Model):
             while not success:
                 success, stop_conditions = self.sim.run_sim()
             print(self.check_water_age())
-            
+
             # update household avoidance behaviors
-            
-            
+            for node in self.households:
+                household = self.households[node]
+                node_age = self.sim._results.node['quality'].loc[:, node]
+                household.update_household(node_age.iloc[-1] / 3600)
+
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:
             self.change_demands()
@@ -1295,8 +1303,6 @@ class ConsumerModel(Model):
         int
             slope of the line between first and last timesteps
         '''
-        total_error = 0
-
         # get the most recent results
         curr_results = self.sim.get_results()
         # parse last and last water age lists
@@ -1315,16 +1321,6 @@ class ConsumerModel(Model):
         slope = (last_age - first_age) / len(mean_age)
 
         return slope
-
-    def check_water_age(self):
-        total_error = 0
-        last_age = self.current_age[:-1]
-        pen_age = self.current_age[:-2]
-        for node in self.nodes_w_demand:
-            error = last_age[:, node] - pen_age[:, node]
-            total_error += error
-
-        return total_error
 
     def collect_agent_data(self):
         ''' BBN input containers '''

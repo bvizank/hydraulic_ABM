@@ -1,5 +1,15 @@
 from run_sim import run_sim
-# import logging
+import logging
+
+logger = logging.getLogger()
+for hdlr in logger.handlers[:]:
+    logger.removeHandler(hdlr)
+
+fh = logging.FileHandler('log', 'w')
+fh.setLevel(logging.DEBUG)
+formmater = logging.Formatter('%(name)-12s %(levelname)-8s %(message)s')
+fh.setFormatter(formmater)
+logger.addHandler(fh)
 
 # logger = logging.getLogger('wntr')
 

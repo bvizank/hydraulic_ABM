@@ -8,6 +8,7 @@ dependencies:
   - networkx
   - matplotlib
   - scipy
+  - openpyxl
   - pip
   - pip:
       - wntr==1.0.*
