@@ -339,15 +339,32 @@ class ConsumerAgent(Agent):
 
 
 class Household:
-    ''' Container for households. Contains a collection of agent objects '''
+    '''
+    Container for households. Contains a collection of agent objects
+    
+    Parameters
+    ----------
+    start_id : int
+        starting index for agent ids
+        
+    end_id : int
+        ending index for agent ids
+        
+    node : string
+        string corresponding to the node in the water network that is this
+        households home node
+        
+    node_dist : float
+        this nodes distance to the nearest industrial node
+        
+    model : ConsumerModel
+        model object where agents are added
+    '''
 
     def __init__(self, start_id, end_id, node, node_dist, model):
         self.agents = list()  # list of agent ids that are in the household
-        self.behaviors = {
-            'drink': 'tap',
-            'hygiene': 'tap',
-            'cook': 'tap'
-        }
+        self.tap = ['drink', 'hygiene', 'cook']
+        self.bottle = []
         self.demand = 0
         self.bottled_water = 0
 
@@ -372,23 +389,59 @@ class Household:
             self.agents.append(a.unique_id)
 
         # assign an income for this household
-        if node_dist > model.ind_ring:
-            shape = dt.income[len(self.agents)][1]
-        else:
-            shape = dt.income[len(self.agents)][1] * model.ind_factor
+        # if node_dist > model.ind_ring:
+        #     shape = dt.income[len(self.agents)][1]
+        # else:
+        #     shape = dt.income[len(self.agents)][1] * model.ind_factor
 
         # pick an income for the household based on the size of household
-        self.income = model.random.gammavariate(
-            dt.income[len(self.agents)][0],
-            shape
-        )
+        self.income = 9156.2736 + node_dist * 41.1114
+        # self.income = model.random.gammavariate(
+        #     dt.income[len(self.agents)][0],
+        #     shape
+        # )
+        
+    def update_household(self, age):
+        '''
+        Perform updating methods. Update behaviors, calculate demand
+        and calculate bottled water use.
+        '''
+        self.update_behaviors(age)
+        change = self.calc_demand()
+        self.calc_bottled_water()
+
+        return change
+        
+    def update_behaviors(self, age):
+        '''
+        Update the behavior lists tap and bottle based on the water age
+        '''
+        if age > 150 and 'hygiene' in self.tap:
+            self.tap.remove('hygiene')
+            self.bottle.append('hygiene')
+        if age > 180 and 'drink' in self.tap:
+            self.tap.remove('drink')
+            self.bottle.append('drink')
+        if age > 200 and 'cook' in self.tap:
+            self.tap.remove('cook')
+            self.bottle.append('cook')
 
     def calc_demand(self):
         '''
         Calculates the demand change for the hour based on the behaviors
         '''
-    
+        change = 0
+        if 'hygiene' in self.tap:
+            change += 0.1
+        if 'cook' in self.tap:
+            change += 0.1
+        if 'drink' in self.tap:
+            change += 0.1        
+        
+        return change
+            
     def calc_bottled_water(self):
         '''
         Calculates the bottled water demand for the hour based on the behaviors
         '''
+

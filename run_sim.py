@@ -1,6 +1,11 @@
+import os
+import sys
+print(sys.platform)
+if sys.platform == "darwin":
+    os.environ['KMP_DUPLICATE_LIB_OK']='True'
+
 import warnings
 from Hydraulic_abm_SEIR import ConsumerModel
-import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
@@ -9,6 +14,8 @@ import os
 import wntr
 from tqdm import tqdm
 import logging
+import numpy as np
+
 warnings.simplefilter("ignore", UserWarning)
 
 

@@ -47,7 +47,7 @@ class ConsumerModel(Model):
                  id=0,
                  seed=123,
                  **kwargs):
-
+        super().__init__()
         init_start = time.perf_counter()
         self.days = days
         self.id = id
@@ -203,6 +203,8 @@ class ConsumerModel(Model):
         self.terminal_nodes = setup_out[4]
         self.wn = setup_out[5]
         self.ind_node_dist = setup_out[6]  # distance between res nodes and closest ind node
+        plt.hist(self.ind_node_dist.values())
+        plt.show()
 
         self.G = self.wn.get_graph()
         self.grid = NetworkGrid(self.G)
@@ -405,6 +407,10 @@ class ConsumerModel(Model):
                 dcp(node_1.demand_timeseries_list[0].pattern_name),
                 dcp(self.wn.get_pattern(node_1.demand_timeseries_list[0].pattern_name))
             )
+            
+            # set demand multipliers for each node for the tap water avoidance
+            # modeling
+            self.demand_multiplier[node] = 1
 
     def node_list(self, list, nodes):
         list_out = []
@@ -488,15 +494,16 @@ class ConsumerModel(Model):
             prev_id = curr_ids
             curr_ids += home_size
             # make the household
-            Household(prev_id, curr_ids, curr_node, node_dist, self)
+            self.households.append(Household(prev_id, curr_ids, curr_node, node_dist, self))
             node_cap -= home_size
         else:
             # if the node size is 6 or fewer, we only need to do this once
-            Household(curr_ids,
-                      node_cap_static + init_id,
-                      curr_node,
-                      node_dist,
-                      self)
+            self.households.append(Household(curr_ids,
+                node_cap_static + init_id,
+                curr_node,
+                node_dist,
+                self)
+            )
 
         return init_id + node_cap
 
@@ -1157,6 +1164,10 @@ class ConsumerModel(Model):
             while not success:
                 success, stop_conditions = self.sim.run_sim()
             print(self.check_water_age())
+            
+            # update household avoidance behaviors
+            
+            
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:
             self.change_demands()
@@ -1276,13 +1287,13 @@ class ConsumerModel(Model):
 
     def check_water_age(self):
         '''
-        Check the difference in water age between the last and penultimate
-        timesteps
+        Check the difference in water age between the first and last timestep
+        in the current hydraulic results
 
         Returns
         -------
         int
-            total error between last and penultimate water age for each node
+            slope of the line between first and last timesteps
         '''
         total_error = 0
 
