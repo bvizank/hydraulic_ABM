@@ -1055,6 +1055,7 @@ class ConsumerModel(Model):
             curr_node = self.wn.get_node(node)
             # curr_demand = curr_node.demand_timeseries_list[0].base_value
             new_mult = self.daily_demand[:, i]  # np.array
+            new_mult = new_mult * self.demand_multiplier[node]
             agents_at_node = self.grid.G.nodes[node]['agent']
             agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
             if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
@@ -1174,7 +1175,9 @@ class ConsumerModel(Model):
             for node in self.households:
                 household = self.households[node]
                 node_age = self.sim._results.node['quality'].loc[:, node]
-                household.update_household(node_age.iloc[-1] / 3600)
+                self.demand_multiplier[node] = household.update_household(
+                                                   node_age.iloc[-1] / 3600
+                                               )
 
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:

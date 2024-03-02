@@ -367,6 +367,11 @@ class Household:
         self.bottle = []  # actions using bottled water
         self.demand = 0  # the tap water demand
         self.bottled_water = 0  # the bottled water demand
+        # https://www.cityofclintonnc.com/DocumentCenter/View/431/FY2020-2021-Fee-schedule?bidId=
+        self.tap_cost_pl = 0.0014479  # dollars per L; this is from the city of clinton, nc
+        self.bottle_cost_pl = 0.325  # dollars per L
+        self.tap_cost = 0  # the total cost of tap water
+        self.bottle_cost = 0  # the total cost of bottled water
         self.change = 1  # the demand change multiplier for the last 168 hours
         self.model = model
         self.node = node
@@ -415,16 +420,22 @@ class Household:
         '''
         self.update_behaviors(age)
         self.calc_demand()
+        self.calc_cost()
         self.change = self.calc_demand_change()
-        print(self.change)
 
         return self.change
 
     def update_behaviors(self, age):
         '''
         Update the behavior lists tap and bottle based on the water age
+
+        ** NOTE **
+        None of the behaviors are readded to the self.tap
+        variable. This means that once the water age at the node
+        exceeds the threshold that household will always adopt that
+        behavior. I think that makes sense as once we perceive something
+        as unsafe we are unlikely to go back.
         '''
-        print(age)
         if age > 150 and 'hygiene' in self.tap:
             self.tap.remove('hygiene')
             self.bottle.append('hygiene')
@@ -451,16 +462,57 @@ class Household:
 
     def calc_demand(self):
         '''
-        Calculated the actual demand for the 
+        Calculate the actual demand for the hydraulic interval
         '''
+        # collect the current timestep of the model and the hydraulic interval
         timestep = self.model.timestep - 1
         hyd_step = (self.model.hyd_sim * 24) - 1
-        print(timestep)
-        print(hyd_step)
+
+        # get the demand pattern from the model and subset for the last
+        # hydraulic interval
         demand_pattern = self.model.wn.get_pattern('node_'+self.node)
         demand_pattern = demand_pattern.multipliers[timestep-hyd_step:timestep]
+
+        # Calculate the actual demand for that period
         total_demand = demand_pattern * self.base_demand
-        self.demand = total_demand * self.change
-        self.bottled = total_demand - self.demand
-        print(self.demand)
-        print(self.bottled)
+
+        # set the households tap demand and bottled water demand
+        # conversion of 1,000,000 is ML -> L
+        self.demand = total_demand * self.change * 1000000
+        self.bottled = total_demand * 1000000 - self.demand
+
+    def calc_tap_cost(self, demand, structure='simple'):
+        '''
+        Helper to calculate cost of tap water
+        '''
+        if structure == 'simple':
+            self.tap_cost += demand * self.tap_cost_pl
+
+    def calc_cost(self):
+        '''
+        Calculate the cost of water for the household. Total cost is the cost
+        of tap water plus the cost of bottled water.
+        '''
+        # calculate cost of tap water
+        tap = self.demand.sum()
+        self.calc_tap_cost(tap)
+
+        # calculate cost of bottled water
+        bottle = self.bottled.sum()
+        self.bottle_cost += bottle * self.bottle_cost_pl
+
+        # calculate total cost
+        self.cow = self.tap_cost + self.bottle_cost
+        if bottle > 0.0:
+            print(self.node)
+            print(tap)
+            print(self.tap_cost)
+            print(bottle)
+            print(self.bottle_cost)
+            print(self.cow)
+
+    def finalize(self):
+        '''
+        Add the base rate to the water cost based on the number of days
+        in the simulation.
+        '''

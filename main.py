@@ -1,32 +1,19 @@
 from run_sim import run_sim
 import logging
 
+# delete all the handlers from the root logger
 logger = logging.getLogger()
 for hdlr in logger.handlers[:]:
     logger.removeHandler(hdlr)
 
+# set a new file logger in place of the stream handler
+# this will eliminate errors being sent to sys.stderr
 fh = logging.FileHandler('log', 'w')
 fh.setLevel(logging.DEBUG)
 formmater = logging.Formatter('%(name)-12s %(levelname)-8s %(message)s')
 fh.setFormatter(formmater)
 logger.addHandler(fh)
 
-# logger = logging.getLogger('wntr')
-
-# for k, v in logging.Logger.manager.loggerDict.items():
-#     print('+ [%s] {%s} ' % (str.ljust(k, 20), str(v.__class__)[8:-2]))
-#     if not isinstance(v, logging.PlaceHolder):
-#         for h in v.handlers:
-#             print('     +++', str(h.__class__)[8:-2])
-
-# run_sim(id=0, seed=123, wfh_lag=0, no_wfh_perc=0, bbn_models=[])
-# logging.basicConfig(
-#     filename='log.log',
-#     encoding='utf-8',
-#     level=logging.DEBUG,
-#     filemode='w'
-# )
-
-# logging.info('Starting simulation')
-run_sim(id=0, days=200, seed=123, wfh_lag=0, no_wfh_perc=0, bbn_models=['all'],
+# run the simulation
+run_sim(id=0, days=84, seed=123, wfh_lag=0, no_wfh_perc=0, bbn_models=['all'],
         city='micropolis', verbose=0.5, hyd_sim=7)
