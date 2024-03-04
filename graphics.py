@@ -28,7 +28,7 @@ print(plots.base['avg_age']/3600)
 # plots.make_seir_plot()
 
 ''' Make single plots '''
-plots.make_single_plots('2024-02-21_10-14_0_results')
+plots.make_single_plots('2024-03-01_12-22_0_results')
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))

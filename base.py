@@ -814,3 +814,28 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + file + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+
+        cols = ['Residential', 'Commercial', 'Industrial']
+        res_age_pm = data['age'][self.res_nodes].mean(axis=1)
+        com_age_pm = data['age'][self.com_nodes].mean(axis=1)
+        ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
+
+        # make input data and sd
+        pm_age = pd.concat([res_age_pm.rolling(24).mean(),
+                            com_age_pm.rolling(24).mean(),
+                            ind_age_pm.rolling(24).mean()],
+                           axis=1, keys=cols)
+        print(pm_age)
+        x_values = np.array([
+            x for x in np.arange(0, 77, 77 / len(data['age'].index))
+        ])
+
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, pm_age / 3600, None, cols, x_values,
+            'Time (days)', 'Water Age (hr)', show_labels=True, sd_plot=False
+        )
+
+        plt.savefig(self.pub_loc + file + '_sector_age.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
