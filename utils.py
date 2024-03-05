@@ -50,6 +50,7 @@ def setup(network):
         node_dict['dq'] = find_nodes(4, pattern_list, network)
         # Rest of commercial nodes like schools, churches etc.
         node_dict['com'] = find_nodes(5, pattern_list, network)
+        node_dict['com'] = node_dict['com'] + find_nodes(6, pattern_list, network)
     elif network == "mesopolis":
         # pattern types: air, com, res, ind, nav
         node_dict['air'] = find_nodes('air', pattern_list, network)

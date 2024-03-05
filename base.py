@@ -27,9 +27,15 @@ class BaseGraphics:
         self.times = times
 
     def get_nodes(self, wn):
+        data = pd.read_excel('Input Files/micropolis/Micropolis_pop_at_node.xlsx')
+        node_capacity = dict(zip(
+                                 data['Node'].tolist(),
+                                 data['Max Population'].tolist()
+                             ))
         self.res_nodes = [name for name, node in wn.junctions()
                           if node.demand_timeseries_list[0].pattern_name == '2' and
-                          node.demand_timeseries_list[0].base_value > 0]
+                          node.demand_timeseries_list[0].base_value > 0 and
+                          node_capacity[name] != 0]
         self.ind_nodes = [name for name, node in wn.junctions()
                           if node.demand_timeseries_list[0].pattern_name == '3' and
                           node.demand_timeseries_list[0].base_value > 0]
@@ -37,12 +43,15 @@ class BaseGraphics:
                           if (node.demand_timeseries_list[0].pattern_name == '4' or
                           node.demand_timeseries_list[0].pattern_name == '5' or
                           node.demand_timeseries_list[0].pattern_name == '6') and
-                          node.demand_timeseries_list[0].base_value > 0]
+                          node.demand_timeseries_list[0].base_value > 0 and
+                          node_capacity[name] != 0]
         self.rest_nodes = [name for name, node in wn.junctions()
                            if node.demand_timeseries_list[0].pattern_name == '1' and
-                           node.demand_timeseries_list[0].base_value > 0]
+                           node.demand_timeseries_list[0].base_value > 0 and
+                           node_capacity[name] != 0]
         self.all_nodes = [name for name, node in wn.junctions()
-                          if node.demand_timeseries_list[0].base_value > 0]
+                          if node.demand_timeseries_list[0].base_value > 0 and
+                          node_capacity[name] != 0]
 
         self.ind_nodes_obj = [name for name, node in wn.junctions()
                               if node.demand_timeseries_list[0].pattern_name == '3']
@@ -758,14 +767,14 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-    def make_single_plots(self, file):
+    def make_single_plots(self, file, days):
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
         data = ut.read_data(loc, self.comp_list)
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
         x_values = np.array([
-            x for x in np.arange(0, 90, 90 / len(data['seir_data'].index))
+            x for x in np.arange(0, days, days / len(data['seir_data'].index))
         ])
         self.make_avg_plot(
             ax, data['seir_data']*100, None, leg_text, x_values,
@@ -796,9 +805,10 @@ class Graphics(BaseGraphics):
         # plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
         #             format=self.format, bbox_inches='tight')
         # plt.close()
-        demand = data['demand'].sum(axis=1)
+        print(data['demand'].loc[:, self.all_nodes])
+        demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
         x_values = np.array([
-            x for x in np.arange(0, 90, 90 / len(data['demand'].index))
+            x for x in np.arange(0, days, days / len(data['demand'].index))
         ])
         plt.plot(x_values, demand)
         plt.savefig(self.pub_loc + file + '_demand_' + '.' + self.format,
@@ -807,8 +817,10 @@ class Graphics(BaseGraphics):
 
         ''' Make age plots '''
         age = data['age'].mean(axis=1)
+        # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
+        # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
         x_values = np.array([
-            x for x in np.arange(0, 90, 90 / len(data['age'].index))
+            x for x in np.arange(0, days, days / len(data['age'].index))
         ])
         plt.plot(x_values, age)
         plt.savefig(self.pub_loc + file + 'age' + '.' + self.format,
@@ -827,7 +839,7 @@ class Graphics(BaseGraphics):
                            axis=1, keys=cols)
         print(pm_age)
         x_values = np.array([
-            x for x in np.arange(0, 77, 77 / len(data['age'].index))
+            x for x in np.arange(0, days, days / len(data['age'].index))
         ])
 
         ax = plt.subplot()

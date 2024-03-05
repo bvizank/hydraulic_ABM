@@ -723,8 +723,8 @@ class ConsumerModel(Model):
         """
         if len(self.grid.G.nodes[agent_to_move.pos]['agent']) > 6:
             agents_at_node = self.grid.G.nodes[agent_to_move.pos]['agent']
-            agents_to_expose = self.random.choices(population = agents_at_node,
-                                                   k = self.daily_contacts)
+            agents_to_expose = self.random.sample(population=agents_at_node,
+                                                  k=self.daily_contacts)
         else:
             agents_to_expose = self.grid.G.nodes[agent_to_move.pos]['agent']
 
@@ -1131,7 +1131,7 @@ class ConsumerModel(Model):
         #     self.sim._results.node['demand'].loc[3600 * (self.timestep+1), :]
         # )
 
-    def run_hyd_daily(self, days):
+    def run_hyd_daily(self):
         '''
         Run the hydraulic simulation for a week. This method handles all funcs
         necessary to run the weekly simulation, including collecting the demand
@@ -1142,7 +1142,7 @@ class ConsumerModel(Model):
         # we run self.collect_demands() each time this method is called.
         self.collect_demands()
         # if the timestep is the beginning of a week then we want to run the sim
-        if ((self.timestep / 24) % days == 0 and self.timestep != 0 or
+        if ((self.timestep / 24) % self.hyd_sim == 0 and self.timestep != 0 or
            self.timestep / 24 == self.days):
             self.change_demands()
             # first set the demand patterns for each node
@@ -1187,20 +1187,6 @@ class ConsumerModel(Model):
         # Simulate hydraulics
         sim = wntr.sim.EpanetSimulator(self.wn)
         results = sim.run_sim('id' + str(self.id))
-
-        # Assigning first base demand again to individual Nodes so WNTR doesnt add all BD up
-        # for node, base_demand in self.base_demands.items():
-        #
-        #     node_1 = self.wn.get_node(node)
-        #     node_1.demand_timeseries_list[0].base_value = base_demand
-
-        # SAVING CURRENT DEMAND TIMESTEP IN DEMAND MATRIX
-        # self.demand_matrix[self.timestep-23: self.timestep+1] = results.node['demand'][0:24]
-        # self.pressure_matrix[self.timestep-23: self.timestep+1] = results.node['pressure'][0:24]
-        # self.age_matrix[self.timestep-23: self.timestep+1] = results.node['quality'][0:24]
-        # flow = results.link['flowrate'][0:24] * 1000000
-        # flow = flow.astype('int')
-        # self.flow_matrix[self.timestep-23: self.timestep+1] = flow
 
         demand = results.node['demand'] * 1000000
         demand = demand.astype('int')
@@ -1359,47 +1345,52 @@ class ConsumerModel(Model):
         ''' Increment day time step '''
         self.timestep_day += 1
 
-        ''' Check status of agents with COVID exposure and infections '''
-        for i, agent in enumerate(self.schedule.agents):
-            if agent.covid == 'exposed':
-                agent.check_infectious()
-            elif agent.covid == 'infectious':
-                agent.check_symptomatic()
-                if agent.inf_severity >= 1:
-                    agent.check_severity()
-                else:
-                    pass
-                agent.check_recovered()
-                agent.check_death()
+        if not self.warmup:
+            ''' Check status of agents with COVID exposure and infections '''
+            for i, agent in enumerate(self.schedule.agents):
+                if agent.covid == 'exposed':
+                    agent.check_infectious()
+                elif agent.covid == 'infectious':
+                    agent.check_symptomatic()
+                    if agent.inf_severity >= 1:
+                        agent.check_severity()
+                    else:
+                        pass
+                    agent.check_recovered()
+                    agent.check_death()
 
-            if agent.adj_covid_change == 1:  # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
-                if agent.wfh == 0 and 'wfh' in self.bbn_models:
-                    agent.predict_wfh()
+                if agent.adj_covid_change == 1:  # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
+                    if agent.wfh == 0 and 'wfh' in self.bbn_models:
+                        agent.predict_wfh()
 
-                if agent.no_dine == 0 and 'dine' in self.bbn_models:
-                    agent.predict_dine_less()
+                    if agent.no_dine == 0 and 'dine' in self.bbn_models:
+                        agent.predict_dine_less()
 
-                if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
-                    agent.predict_grocery()
+                    if agent.less_groceries == 0 and 'grocery' in self.bbn_models:
+                        agent.predict_grocery()
 
-                if agent.ppe == 0 and 'ppe' in self.bbn_models:
-                    agent.predict_ppe()
+                    if agent.ppe == 0 and 'ppe' in self.bbn_models:
+                        agent.predict_ppe()
 
-        ''' Set the wfh threshold if lag time has been reached '''
-        if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
-            self.wfh_thres = True
+            ''' Set the wfh threshold if lag time has been reached '''
+            if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
+                self.wfh_thres = True
 
-        ''' Change demands for the eos hydraulic simulation '''
-        if self.hyd_sim == 'eos':
-            self.change_demands()
-
-    def eos_task(self):
+    def eos_tasks(self):
         ''' End of simulation tasks '''
-        # setup demand patterns so they extend self.days
-        self.update_patterns()
-        self.wn.options.time.duration = 3600 * 24 * self.days
-        # run the hydraulic simulation and collect results
-        self.run_hydraulic()
+        # collect the demands from each node each hour
+        self.collect_demands()
+        if (self.timestep + 1) / 24 == self.days:
+            # setup demand patterns so they extend self.days
+            self.update_patterns()
+            self.wn.options.time.duration = 3600 * 24 * self.days
+            self.wn.options.quality.parameter = 'AGE'
+            print(self.wn.get_pattern('node_TN1').multipliers)
+            # run the hydraulic simulation and collect results
+            self.run_hydraulic()
+        if self.timestep % 24 == 0:
+            # update the demand patterns with the current days demand
+            self.change_demands()
 
     def industry_agents(self):
         return [a for a in self.schedule.agents if a.pos in self.ind_nodes]
@@ -1461,25 +1452,32 @@ class ConsumerModel(Model):
         # patterns, but I suspect it might.
         if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
             self.move_indust()
-        if self.warmup:
+
+        # COVID related methods are not run during warmup
+        if not self.warmup:
             self.check_status()
             self.check_agent_change()
             if self.res_pat_select == 'pysimdeum':
                 self.check_houses()
             self.communication_utility()
-            if self.timestep % 24 == 0 and self.timestep != 0:
-                self.daily_tasks()
-            if self.hyd_sim == 'eos':
-                self.collect_demands()
+        # daily updating is done during warmup
+        if self.timestep % 24 == 0 and self.timestep != 0:
+            self.daily_tasks()
+
+        if not self.warmup:
             self.collect_agent_data()
         # if self.timestep % 24 == 0 and self.timestep != 0:
         #     self.daily_tasks()
-        if self.timestep_day == self.days and self.hyd_sim == 'eos':
+
+        if self.hyd_sim == 'eos':
             self.eos_tasks()
-        if self.hyd_sim == 'hourly':
+        elif self.hyd_sim == 'hourly':
             self.run_hyd_hour()
-        if isinstance(self.hyd_sim, int):
-            self.run_hyd_daily(self.hyd_sim)
+        elif isinstance(self.hyd_sim, int):
+            self.run_hyd_daily()
+        else:
+            NotImplementedError(f"Hydraulic simultion {self.hyd_sim} not set up.")
+
         self.timestepN = self.timestep - self.timestep_day * 24
         # self.inform_status()
         # self.compliance_status()

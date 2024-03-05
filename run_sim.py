@@ -47,8 +47,6 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
         for t in range(24*days):
             model.step()
 
-    model.sim.close()
-
     stop = perf_counter()
 
     if kwargs['verbose'] != 0:
@@ -118,6 +116,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
         model.age_matrix.to_pickle(output_loc + "/age.pkl")
         model.flow_matrix.to_pickle(output_loc + "/flow.pkl")
     elif hyd_sim == 'hourly' or isinstance(hyd_sim, int):
+        model.sim.close()
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
         demand = results.node['demand'] * 1000000
         demand.to_pickle(output_loc + "/demand.pkl")
