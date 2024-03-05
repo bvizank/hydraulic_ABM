@@ -183,6 +183,8 @@ class ConsumerModel(Model):
         self.nodes_capacity = setup_out[1]
         self.house_num = setup_out[2]
 
+        self.age_nodes = [n for n in self.nodes_capacity if self.nodes_capacity[n] != 0]
+
         self.res_dist = setup_out[3]['res']  # residential capacities at each hour
         self.com_dist = setup_out[3]['com']  # commercial capacities at each hour
         self.ind_dist = setup_out[3]['ind']  # industrial capacities at each hour
@@ -345,7 +347,10 @@ class ConsumerModel(Model):
                                                 file_prefix='temp' + str(self.id))
             self.sim.initialize(file_prefix='temp' + str(self.id))
             self.current_demand = self.sim._results.node['demand']
-            # print(self.sim._results.node['demand'])
+
+        # water age slope to determine the warmup period end
+        self.water_age_slope = 1
+
         # if we are running the simulation hourly, we need to have
         # demand patterns that are as long as the simulation, which
         # is what update_patterns does.
@@ -721,20 +726,20 @@ class ConsumerModel(Model):
         in their node to covid. This is currently called everytime an agent moves
         to a new location and NOT every hour.
         """
-        if len(self.grid.G.nodes[agent_to_move.pos]['agent']) > 6:
-            agents_at_node = self.grid.G.nodes[agent_to_move.pos]['agent']
-            agents_to_expose = self.random.sample(population=agents_at_node,
-                                                  k=self.daily_contacts)
-        else:
-            agents_to_expose = self.grid.G.nodes[agent_to_move.pos]['agent']
+        agents_at_node = self.grid.G.nodes[agent_to_move.pos]['agent']
+        if node_type == 'residential':
+            agents_to_expose = [a for a in agent_to_move.household.agent_obs
+                                if a in agents_at_node]
+        elif node_type == 'workplace':
+            if len(agents_at_node) > self.daily_contacts:
+                agents_to_expose = self.random.sample(population=agents_at_node,
+                                                      k=self.daily_contacts)
+            else:
+                agents_to_expose = agents_at_node
+
+        print(len(agents_to_expose))
 
         for agent in agents_to_expose:
-            # agent.adj_covid_change = 1
-            # if agent.agent_params["COVIDeffect_4"] < 6 and node_type == 'residential':
-            #     agent.agent_params["COVIDeffect_4"] += 0.1
-            # else:
-            #     pass
-
             if agent.covid == 'susceptible':
                 if node_type == 'workplace':
                     if agent_to_move.ppe == 0:
@@ -983,14 +988,6 @@ class ConsumerModel(Model):
         )
         node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
 
-    def update_demand_bahviors(self):
-        '''
-        Method to update the household demand behaviors.
-
-        Checks water age at each node and if above a threshold changes
-        the households demand behaviors.
-        '''
-
     def collect_demands(self):
         step_demand = np.empty(len(self.nodes_w_demand))
         step_agents = list()
@@ -1098,12 +1095,11 @@ class ConsumerModel(Model):
                 agents_at_node = len(agents_at_node_list)
                 step_agents.append(agents_at_node)
                 if capacity_node != 0:
-                    pass
-                    # self.sim._en.ENsetnodevalue(
-                    #   self.node_index[node],
-                    #   EN.BASEDEMAND,
-                    #   self.base_demands[node] * agents_at_node / capacity_node
-                    # )
+                    self.sim._en.ENsetnodevalue(
+                      self.node_index[node],
+                      EN.BASEDEMAND,
+                      self.base_demands[node] * agents_at_node / capacity_node
+                    )
                     # curr_node.demand_timeseries_list.base_value = (
                     #     self.base_demands[node] * agents_at_node / capacity_node
                     # )
@@ -1122,6 +1118,10 @@ class ConsumerModel(Model):
         success = False
         while not success:
             success, stop_conditions = self.sim.run_sim()
+
+        if (self.timestep / 24) % 7 == 0:
+            self.check_water_age()
+            print(self.water_age_slope)
 
         # print(3600 * (self.timestep+1))
         # print(self.sim._results.node['demand'])
@@ -1169,7 +1169,8 @@ class ConsumerModel(Model):
             success = False
             while not success:
                 success, stop_conditions = self.sim.run_sim()
-            print(self.check_water_age())
+            self.check_water_age()
+            print(self.water_age_slope)
 
             # update household avoidance behaviors
             for node in self.households:
@@ -1286,30 +1287,23 @@ class ConsumerModel(Model):
         '''
         Check the difference in water age between the first and last timestep
         in the current hydraulic results
-
-        Returns
-        -------
-        int
-            slope of the line between first and last timesteps
         '''
         # get the most recent results
         curr_results = self.sim.get_results()
         # parse last and last water age lists
-        mean_age = curr_results.node['quality'].mean(axis=1) / 3600
-        print(mean_age)
+        mean_age = curr_results.node['quality'].loc[:, self.age_nodes].mean(axis=1) / 3600
+        # print(mean_age)
         last_age = mean_age.iloc[-1]
         first_age = mean_age.iloc[1]
-        print(first_age)
-        print(len(mean_age))
-        self.plot_water_age(curr_results.node['quality'] / 3600)
+        # print(first_age)
+        # print(len(mean_age))
+        self.plot_water_age(curr_results.node['quality'].loc[:, self.age_nodes] / 3600)
         # calculate the difference between last and penultimate timesteps
         # and sum a total error.
         # for node in self.nodes_w_demand:
         #     error = last_age[node] - pen_age[node]
         #     total_error += error
-        slope = (last_age - first_age) / len(mean_age)
-
-        return slope
+        self.water_age_slope = (last_age - first_age) / len(mean_age)
 
     def collect_agent_data(self):
         ''' BBN input containers '''
@@ -1486,3 +1480,6 @@ class ConsumerModel(Model):
         if self.verbose == 1:
             self.print_func()
         self.timestep += 1
+
+        if self.water_age_slope < 0.0001:
+            self.warmup = False

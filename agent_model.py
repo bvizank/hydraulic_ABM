@@ -315,7 +315,7 @@ class ConsumerAgent(Agent):
     def change_house_adj(self):
         ''' Function to check whether agents in a given agents node have become
         infected with COVID '''
-        agents_in_house = self.household.agents
+        agents_in_house = self.household.agent_ids
         agents_friends = [n for n in self.model.swn.neighbors(self.unique_id)]
         agents_in_network = agents_in_house + agents_friends
         agents_in_network.remove(self.unique_id)
@@ -362,7 +362,8 @@ class Household:
     '''
 
     def __init__(self, start_id, end_id, node, node_dist, model):
-        self.agents = list()  # list of agent ids that are in the household
+        self.agent_ids = list()  # list of agent that are in the household
+        self.agent_obs = list()  # list of agent objects that are in the household
         self.tap = ['drink', 'hygiene', 'cook']  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.demand = 0  # the tap water demand
@@ -394,7 +395,8 @@ class Household:
             if a.work_node in model.total_no_wfh:
                 a.can_wfh = False
             model.grid.place_agent(a, a.home_node)
-            self.agents.append(a.unique_id)
+            self.agent_obs.append(a)
+            self.agent_ids.append(a.unique_id)
 
         # get the base demand for this node
         wn_node = model.wn.get_node(node)

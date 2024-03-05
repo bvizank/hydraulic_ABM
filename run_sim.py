@@ -40,6 +40,14 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     start = perf_counter()
 
     model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+
+    print('Starting simulation ............................')
+    # run a warmup period if warmup appears in kwargs
+    while model.warmup:
+        model.step()
+    print(f'Warmup period finished with slope {model.water_age_slope}.')
+
+    # run the number of days required by the input
     if kwargs['verbose'] == 0.5:
         for t in tqdm(range(24*days)):
             model.step()
