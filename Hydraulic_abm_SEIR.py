@@ -745,8 +745,6 @@ class ConsumerModel(Model):
             else:
                 agents_to_expose = agents_at_node
 
-        print(len(agents_to_expose))
-
         for agent in agents_to_expose:
             if agent.covid == 'susceptible':
                 if node_type == 'workplace':
@@ -1181,12 +1179,13 @@ class ConsumerModel(Model):
             print(self.water_age_slope)
 
             # update household avoidance behaviors
-            for node in self.households:
-                household = self.households[node]
-                node_age = self.sim._results.node['quality'].loc[:, node]
-                self.demand_multiplier[node] = household.update_household(
-                                                   node_age.iloc[-1] / 3600
-                                               )
+            ''' UNCOMMENT FOR COST OF WATER '''
+            # for node in self.households:
+            #     household = self.households[node]
+            #     node_age = self.sim._results.node['quality'].loc[:, node]
+            #     self.demand_multiplier[node] = household.update_household(
+            #                                        node_age.iloc[-1] / 3600
+            #                                    )
 
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:
@@ -1483,7 +1482,7 @@ class ConsumerModel(Model):
         self.timestepN = self.timestep - self.timestep_day * 24
         # self.inform_status()
         # self.compliance_status()
-        if self.warmup:
+        if not self.warmup:
             self.num_status()
         if self.verbose == 1:
             self.print_func()
@@ -1491,3 +1490,4 @@ class ConsumerModel(Model):
 
         if self.water_age_slope < self.tol:
             self.warmup = False
+            self.sim._en.ENclearreport()

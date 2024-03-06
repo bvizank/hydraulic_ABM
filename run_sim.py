@@ -15,6 +15,7 @@ import wntr
 from tqdm import tqdm
 import logging
 import numpy as np
+from wntr.network.io import write_inpfile
 
 warnings.simplefilter("ignore", UserWarning)
 
@@ -54,6 +55,15 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     else:
         for t in range(24*days):
             model.step()
+            
+    # save the input file to test run time
+    write_inpfile(
+        model.wn,
+        'final_wnm.inp',
+        units=model.wn.options.hydraulic.inpfile_units,
+        version=2.2
+    )
+    
 
     stop = perf_counter()
 

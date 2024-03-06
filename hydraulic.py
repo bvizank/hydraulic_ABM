@@ -82,6 +82,12 @@ class ENepanet_update(ENepanet):
             self.errcode = self.ENlib.ENgetpatternid(iIndex, byref(fId))
         self._error()
         return str(fId.value, 'UTF-8')
+        
+    def ENclearreport(self):
+        ''' Clear the report file from the current project '''
+        self.errcode = self.ENlib.EN_clearreport(self._project)
+        self._error()
+        return
 
 
 class EpanetSimulator_Stepwise(WaterNetworkSimulator):
