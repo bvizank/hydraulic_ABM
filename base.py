@@ -768,9 +768,14 @@ class Graphics(BaseGraphics):
         plt.close()
 
     def make_single_plots(self, file, days):
+        ''' Set the warmup period '''
+        x_len = days * 24
+        print(x_len)
+
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
         data = ut.read_data(loc, self.comp_list)
+        print(data['seir_data'])
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
         x_values = np.array([
@@ -806,23 +811,21 @@ class Graphics(BaseGraphics):
         #             format=self.format, bbox_inches='tight')
         # plt.close()
         print(data['demand'].loc[:, self.all_nodes])
+        print(data['demand'].iloc[-x_len:])
         demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
         x_values = np.array([
-            x for x in np.arange(0, days, days / len(data['demand'].index))
+            x for x in np.arange(0, days, days / x_len)
         ])
-        plt.plot(x_values, demand)
+        plt.plot(x_values, demand.iloc[-x_len:])
         plt.savefig(self.pub_loc + file + '_demand_' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
         ''' Make age plots '''
-        age = data['age'].mean(axis=1)
+        age = data['age'][self.all_nodes].mean(axis=1)
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
-        x_values = np.array([
-            x for x in np.arange(0, days, days / len(data['age'].index))
-        ])
-        plt.plot(x_values, age)
+        plt.plot(x_values, age.iloc[-x_len:])
         plt.savefig(self.pub_loc + file + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -838,13 +841,9 @@ class Graphics(BaseGraphics):
                             ind_age_pm.rolling(24).mean()],
                            axis=1, keys=cols)
         print(pm_age)
-        x_values = np.array([
-            x for x in np.arange(0, days, days / len(data['age'].index))
-        ])
-
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, pm_age / 3600, None, cols, x_values,
+            ax, pm_age.iloc[-x_len:] / 3600, None, cols, x_values,
             'Time (days)', 'Water Age (hr)', show_labels=True, sd_plot=False
         )
 

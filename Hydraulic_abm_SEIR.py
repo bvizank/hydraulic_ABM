@@ -165,6 +165,14 @@ class ConsumerModel(Model):
         else:
             self.warmup = True
 
+        '''
+        Warmup tolerance is the threshold for when warmup period is complete
+        '''
+        if 'tol' in kwargs:
+            self.tol = kwargs['tol']
+        else:
+            self.tol = 0.001
+
         ''' Setup and mapping of variables from various sources. For more information
         see utils.py '''
         setup_out = setup(city)
@@ -1481,5 +1489,5 @@ class ConsumerModel(Model):
             self.print_func()
         self.timestep += 1
 
-        if self.water_age_slope < 0.0001:
+        if self.water_age_slope < self.tol:
             self.warmup = False
