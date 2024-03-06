@@ -16,4 +16,4 @@ logger.addHandler(fh)
 
 # run the simulation
 run_sim(id=0, days=91, seed=123, wfh_lag=0, no_wfh_perc=0, bbn_models=[],
-        city='micropolis', verbose=0.5, hyd_sim='daily', warmup=True)
+        city='micropolis', verbose=0.5, hyd_sim=14, warmup=True)
