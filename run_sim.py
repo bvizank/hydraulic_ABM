@@ -50,10 +50,10 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
 
     # run the number of days required by the input
     if kwargs['verbose'] == 0.5:
-        for t in tqdm(range(24*days)):
+        for _ in tqdm(range(24*days)):
             model.step()
     else:
-        for t in range(24*days):
+        for _ in range(24*days):
             model.step()
             
     # save the input file to test run time
@@ -143,15 +143,25 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
         flow = results.link['flowrate'] * 1000000
         flow.to_pickle(output_loc + "/flow.pkl")
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
+    
+    agents = [str(i) for i in range(model.num_agents)]
+    households = [str(i) for i in range(len(model.households))]
+    income = dict()
+    for node in model.households:
+        house = model.households[node]
+        income[node] = house.income
 
-    cov_pers = convert_to_pd(model.cov_pers, [str(i) for i in range(model.num_agents)])
-    cov_ff = convert_to_pd(model.cov_ff, [str(i) for i in range(model.num_agents)])
-    media = convert_to_pd(model.media_exp, [str(i) for i in range(model.num_agents)])
-    wfh_dec = convert_to_pd(model.wfh_dec, [str(i) for i in range(model.num_agents)])
-    dine_dec = convert_to_pd(model.dine_dec, [str(i) for i in range(model.num_agents)])
-    groc_dec = convert_to_pd(model.groc_dec, [str(i) for i in range(model.num_agents)])
-    ppe_dec = convert_to_pd(model.ppe_dec, [str(i) for i in range(model.num_agents)])
-    income = pd.DataFrame.from_dict(model.income)
+    cov_pers = convert_to_pd(model.cov_pers, agents)
+    cov_ff = convert_to_pd(model.cov_ff, agents)
+    media = convert_to_pd(model.media_exp, agents)
+    wfh_dec = convert_to_pd(model.wfh_dec, agents)
+    dine_dec = convert_to_pd(model.dine_dec, agents)
+    groc_dec = convert_to_pd(model.groc_dec, agents)
+    ppe_dec = convert_to_pd(model.ppe_dec, agents)
+    bw_cost = convert_to_pd(model.bw_cost, households)
+    tw_cost = convert_to_pd(model.tw_cost, households)
+    bw_demand = convert_to_pd(model.bw_demand, households)
+    income = convert_to_pd(income, [0])
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
@@ -160,28 +170,13 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     dine_dec.to_pickle(output_loc + "/dine.pkl")
     groc_dec.to_pickle(output_loc + "/groc.pkl")
     ppe_dec.to_pickle(output_loc + "/ppe.pkl")
+    bw_cost.to_pickle(output_loc + "/bw_cost.pkl")
+    tw_cost.to_pickle(output_loc + "/tw_cost.pkl")
+    bw_demand.to_pickle(output_loc + "/bw_demand.pkl")
     income.to_pickle(output_loc + "/income.pkl")
 
     with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
-        # model.status_tot.to_excel(writer, sheet_name='seir_data')
         model.param_out.to_excel(writer, sheet_name='params')
-    #     model.demand_matrix.to_excel(writer, sheet_name='demand')
-    #     model.pressure_matrix.to_excel(writer, sheet_name='pressure')
-    #     model.age_matrix.to_excel(writer, sheet_name='age')
-    #     model.agent_matrix.to_excel(writer, sheet_name='agent locations')
-    #     model.flow_matrix.to_excel(writer, sheet_name='flow')
-
-    # with pd.ExcelWriter(output_loc + '/' + 'agent_params.xlsx') as writer:
-    #     model.cov_pers.to_excel(writer, sheet_name='cov_pers')
-    #     model.cov_ff.to_excel(writer, sheet_name='cov_ff')
-    #     model.media_exp.to_excel(writer, sheet_name='media')
-    #     model.wfh_dec.to_excel(writer, sheet_name='wfh')
-    #     model.dine_dec.to_excel(writer, sheet_name='dine')
-    #     model.groc_dec.to_excel(writer, sheet_name='groc')
-    #     model.ppe_dec.to_excel(writer, sheet_name='ppe')
-
-    #  clean_epanet('.')  # clean all input, bin, and rpt files
-
 
 def convert_to_pd(in_list, columns):
     return pd.DataFrame.from_dict(in_list, orient='index', columns=columns)

@@ -176,18 +176,18 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
         self._results: SimulationResults = None
         self._node_attributes = [
             (EN.QUALITY, "_quality", "quality", None),
-            (EN.DEMAND, "_demand", "demand", HydParam.Demand._to_si),
-            (EN.HEAD, "_head", "head", HydParam.HydraulicHead._to_si),
-            (EN.PRESSURE, "_pressure", "pressure", HydParam.Pressure._to_si),
+            # (EN.DEMAND, "_demand", "demand", HydParam.Demand._to_si),
+            # (EN.HEAD, "_head", "head", HydParam.HydraulicHead._to_si),
+            # (EN.PRESSURE, "_pressure", "pressure", HydParam.Pressure._to_si),
         ]
-        self._link_attributes = [
-            (EN.LINKQUAL, "_quality", "quality", None),
-            (EN.FLOW, "_flow", "flowrate", HydParam.Flow._to_si),
-            (EN.VELOCITY, "_velocity", "velocity", HydParam.Velocity._to_si),
-            (EN.HEADLOSS, "_headloss", "headloss", HydParam.HeadLoss._to_si),
-            (EN.STATUS, "_user_status", "status", None),
-            (EN.SETTING, "_setting", "setting", None),
-        ]
+        # self._link_attributes = [
+        #     (EN.LINKQUAL, "_quality", "quality", None),
+        #     (EN.FLOW, "_flow", "flowrate", HydParam.Flow._to_si),
+        #     (EN.VELOCITY, "_velocity", "velocity", HydParam.Velocity._to_si),
+        #     (EN.HEADLOSS, "_headloss", "headloss", HydParam.HeadLoss._to_si),
+        #     (EN.STATUS, "_user_status", "status", None),
+        #     (EN.SETTING, "_setting", "setting", None),
+        # ]
         self.logger = logger
         self._link_sensors = dict()
         self._node_sensors = dict()
@@ -650,38 +650,38 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
             self._last_line_added = report_line
             logger.debug("Reporting at time {}".format(time))
             self._temp_index.append(time)
-            demand = list()
-            head = list()
-            pressure = list()
+            # demand = list()
+            # head = list()
+            # pressure = list()
             quality = list()
             for idx in self._node_name_idx:
-                demand.append(self._en.ENgetnodevalue(idx, EN.DEMAND))
-                head.append(self._en.ENgetnodevalue(idx, EN.HEAD))
-                pressure.append(self._en.ENgetnodevalue(idx, EN.PRESSURE))
+                # demand.append(self._en.ENgetnodevalue(idx, EN.DEMAND))
+                # head.append(self._en.ENgetnodevalue(idx, EN.HEAD))
+                # pressure.append(self._en.ENgetnodevalue(idx, EN.PRESSURE))
                 quality.append(self._en.ENgetnodevalue(idx, EN.QUALITY))
-            self._temp_node_report_lines["demand"].append(demand)
-            self._temp_node_report_lines["head"].append(head)
-            self._temp_node_report_lines["pressure"].append(pressure)
+            # self._temp_node_report_lines["demand"].append(demand)
+            # self._temp_node_report_lines["head"].append(head)
+            # self._temp_node_report_lines["pressure"].append(pressure)
             self._temp_node_report_lines["quality"].append(quality)
-            linkqual = list()
-            flow = list()
-            velocity = list()
-            headloss = list()
-            status = list()
-            setting = list()
-            for idx in self._link_name_idx:
-                linkqual.append(self._en.ENgetlinkvalue(idx, EN.LINKQUAL))
-                flow.append(self._en.ENgetlinkvalue(idx, EN.FLOW))
-                velocity.append(self._en.ENgetlinkvalue(idx, EN.VELOCITY))
-                headloss.append(self._en.ENgetlinkvalue(idx, EN.HEADLOSS))
-                status.append(self._en.ENgetlinkvalue(idx, EN.STATUS))
-                setting.append(self._en.ENgetlinkvalue(idx, EN.SETTING))
-            self._temp_link_report_lines["quality"].append(linkqual)
-            self._temp_link_report_lines["flowrate"].append(flow)
-            self._temp_link_report_lines["velocity"].append(velocity)
-            self._temp_link_report_lines["headloss"].append(headloss)
-            self._temp_link_report_lines["status"].append(status)
-            self._temp_link_report_lines["setting"].append(setting)
+            # linkqual = list()
+            # flow = list()
+            # velocity = list()
+            # headloss = list()
+            # status = list()
+            # setting = list()
+            # for idx in self._link_name_idx:
+                # linkqual.append(self._en.ENgetlinkvalue(idx, EN.LINKQUAL))
+                # flow.append(self._en.ENgetlinkvalue(idx, EN.FLOW))
+                # velocity.append(self._en.ENgetlinkvalue(idx, EN.VELOCITY))
+                # headloss.append(self._en.ENgetlinkvalue(idx, EN.HEADLOSS))
+                # status.append(self._en.ENgetlinkvalue(idx, EN.STATUS))
+                # setting.append(self._en.ENgetlinkvalue(idx, EN.SETTING))
+            # self._temp_link_report_lines["quality"].append(linkqual)
+            # self._temp_link_report_lines["flowrate"].append(flow)
+            # self._temp_link_report_lines["velocity"].append(velocity)
+            # self._temp_link_report_lines["headloss"].append(headloss)
+            # self._temp_link_report_lines["status"].append(status)
+            # self._temp_link_report_lines["setting"].append(setting)
 
     def _copy_results_object(self):
         if len(self._temp_index) == 0:
@@ -713,25 +713,25 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
                 df2, index=self._temp_index, columns=self._wn.node_name_list
             )  # .loc[self._temp_index, :] = df2
             self._temp_node_report_lines[name] = list()
-        for _, _, name, f in self._link_attributes:
-            df2 = np.array(self._temp_link_report_lines[name])
-            if f is not None:
-                df2 = f(self._flow_units, df2)
-            self._results.link[name] = pd.DataFrame(
-                df2, index=self._temp_index, columns=self._wn.link_name_list
-            )  # .loc[self._temp_index, :] = df2
-            self._temp_link_report_lines[name] = list()
+        # for _, _, name, f in self._link_attributes:
+        #     df2 = np.array(self._temp_link_report_lines[name])
+        #     if f is not None:
+        #         df2 = f(self._flow_units, df2)
+        #     self._results.link[name] = pd.DataFrame(
+        #         df2, index=self._temp_index, columns=self._wn.link_name_list
+        #     )  # .loc[self._temp_index, :] = df2
+        #     self._temp_link_report_lines[name] = list()
         self._temp_index = list()
 
     def _setup_results_object(self, results_size):
         results_size = 1
         self._results = SimulationResults()
         self._results.node = dict()
-        self._results.link = dict()
+        # self._results.link = dict()
         self._node_name_idx = list()
-        self._link_name_idx = list()
+        # self._link_name_idx = list()
         self._node_name_str = self._wn.node_name_list
-        self._link_name_str = self._wn.link_name_list
+        # self._link_name_str = self._wn.link_name_list
         index = [self._report_start]
         if results_size > 0:
             index = np.arange(
@@ -741,14 +741,14 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
             )
         for node_name in self._node_name_str:
             self._node_name_idx.append(self._en.ENgetnodeindex(node_name))
-        for link_name in self._link_name_str:
-            self._link_name_idx.append(self._en.ENgetlinkindex(link_name))
+        # for link_name in self._link_name_str:
+        #     self._link_name_idx.append(self._en.ENgetlinkindex(link_name))
         for _, _, name, _ in self._node_attributes:
             self._results.node[name] = pd.DataFrame([], columns=self._node_name_str, index=index)
             self._temp_node_report_lines[name] = list()
-        for _, _, name, _ in self._link_attributes:
-            self._results.link[name] = pd.DataFrame([], columns=self._link_name_str, index=index)
-            self._temp_link_report_lines[name] = list()
+        # for _, _, name, _ in self._link_attributes:
+        #     self._results.link[name] = pd.DataFrame([], columns=self._link_name_str, index=index)
+        #     self._temp_link_report_lines[name] = list()
 
     def _setup_overrides(self):
         require_override = set()
@@ -878,12 +878,12 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
                     self._node_attributes[0][2],
                     QualParam.WaterAge._to_si,
                 )
-                self._link_attributes[0] = (
-                    self._link_attributes[0][0],
-                    self._link_attributes[0][1],
-                    self._link_attributes[0][2],
-                    QualParam.WaterAge._to_si,
-                )
+                # self._link_attributes[0] = (
+                #     self._link_attributes[0][0],
+                #     self._link_attributes[0][1],
+                #     self._link_attributes[0][2],
+                #     QualParam.WaterAge._to_si,
+                # )
 
         self._setup_results_object(initial_chunks * self._chunk_size)
         # setup intermediate sensors indices from names to internal EPANET numbers
@@ -1027,9 +1027,9 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
             mask = df2.index <= self._nt
             df2 = df2.loc[mask, :]
             self._results.node[name] = df2
-        for _, _, name, _ in self._link_attributes:
-            df2 = self._results.link[name]
-            mask = df2.index <= self._nt
-            df2 = df2.loc[mask, :]
-            self._results.link[name] = df2
+        # for _, _, name, _ in self._link_attributes:
+        #     df2 = self._results.link[name]
+        #     mask = df2.index <= self._nt
+        #     df2 = df2.loc[mask, :]
+        #     self._results.link[name] = df2
         return self._results

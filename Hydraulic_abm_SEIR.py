@@ -313,9 +313,6 @@ class ConsumerModel(Model):
 
         self.agent_matrix = dict()
 
-        # income dictionary
-        self.income = dict()
-
         ''' Initialize the COVID state variable collectors '''
         self.cov_pers = dict()
         self.cov_ff = dict()
@@ -326,6 +323,11 @@ class ConsumerModel(Model):
         self.dine_dec = dict()
         self.groc_dec = dict()
         self.ppe_dec = dict()
+        
+        ''' Initialize household income and COW collectors '''
+        self.bw_cost = dict()
+        self.tw_cost = dict()
+        self.bw_demand = dict()
 
         status_tot = [
             0,
@@ -345,8 +347,9 @@ class ConsumerModel(Model):
         status_tot = [i / self.num_agents for i in status_tot]
         self.status_tot = {0: status_tot}
 
-        self.base_demand_list()
         # initialization methods
+        self.base_demand_list()
+        self.set_age()
         if self.hyd_sim == 'hourly' or isinstance(self.hyd_sim, int):
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
@@ -354,7 +357,7 @@ class ConsumerModel(Model):
             self.sim = EpanetSimulator_Stepwise(self.wn,
                                                 file_prefix='temp' + str(self.id))
             self.sim.initialize(file_prefix='temp' + str(self.id))
-            self.current_demand = self.sim._results.node['demand']
+            # self.current_demand = self.sim._results.node['demand']
 
         # water age slope to determine the warmup period end
         self.water_age_slope = 1
@@ -423,6 +426,13 @@ class ConsumerModel(Model):
             # set demand multipliers for each node for the tap water avoidance
             # modeling
             self.demand_multiplier[node] = 1
+
+    def set_age(self):
+        ''' Set initial water age '''
+        init_age = pd.read_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')
+        for node in self.grid.G.nodes:
+            curr_node = self.wn.get_node(node)
+            curr_node.initial_quality = float(init_age.loc[[node]].values[0])
 
     def node_list(self, list, nodes):
         list_out = []
@@ -1148,8 +1158,9 @@ class ConsumerModel(Model):
         # we run self.collect_demands() each time this method is called.
         self.collect_demands()
         # if the timestep is the beginning of a week then we want to run the sim
+        # also run the sim at the end of the simulation
         if ((self.timestep / 24) % self.hyd_sim == 0 and self.timestep != 0 or
-           self.timestep / 24 == self.days):
+           (self.timestep + 1) / 24 == self.days):
             self.change_demands()
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
@@ -1180,12 +1191,13 @@ class ConsumerModel(Model):
 
             # update household avoidance behaviors
             ''' UNCOMMENT FOR COST OF WATER '''
-            # for node in self.households:
-            #     household = self.households[node]
-            #     node_age = self.sim._results.node['quality'].loc[:, node]
-            #     self.demand_multiplier[node] = household.update_household(
-            #                                        node_age.iloc[-1] / 3600
-            #                                    )
+            for node in self.households:
+                household = self.households[node]
+                node_age = self.sim._results.node['quality'].loc[:, node]
+                self.demand_multiplier[node] = household.update_household(
+                                                   node_age.iloc[-1] / 3600
+                                               )
+            self.collect_household_data()
 
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:
@@ -1323,6 +1335,7 @@ class ConsumerModel(Model):
         step_dine = list()
         step_groc = list()
         step_ppe = list()
+        
         for agent in self.schedule.agents:
             step_cov_pers.append(dcp(agent.agent_params['COVIDexp']))
             step_cov_ff.append(dcp(agent.agent_params['COVIDeffect_4']))
@@ -1341,6 +1354,22 @@ class ConsumerModel(Model):
         self.dine_dec[self.timestep] = step_dine
         self.groc_dec[self.timestep] = step_groc
         self.ppe_dec[self.timestep] = step_ppe
+
+    def collect_household_data(self):
+        ''' Income output containers '''
+        step_bw_cost = list()
+        step_tw_cost = list()
+        step_bw_demand = list()
+        
+        for node in self.households:
+            house = self.households[node]
+            step_bw_cost.append(dcp(house.bottle_cost))
+            step_tw_cost.append(dcp(house.tap_cost))
+            step_bw_demand.append(dcp(house.bottled_water))
+
+        self.bw_cost[self.timestep] = step_bw_cost
+        self.tw_cost[self.timestep] = step_tw_cost
+        self.bw_demand[self.timestep] = step_bw_demand
 
     def daily_tasks(self):
         ''' Increment day time step '''
@@ -1386,7 +1415,6 @@ class ConsumerModel(Model):
             self.update_patterns()
             self.wn.options.time.duration = 3600 * 24 * self.days
             self.wn.options.quality.parameter = 'AGE'
-            print(self.wn.get_pattern('node_TN1').multipliers)
             # run the hydraulic simulation and collect results
             self.run_hydraulic()
         if self.timestep % 24 == 0:
@@ -1461,14 +1489,11 @@ class ConsumerModel(Model):
             if self.res_pat_select == 'pysimdeum':
                 self.check_houses()
             self.communication_utility()
+            self.collect_agent_data()
+
         # daily updating is done during warmup
         if self.timestep % 24 == 0 and self.timestep != 0:
             self.daily_tasks()
-
-        if not self.warmup:
-            self.collect_agent_data()
-        # if self.timestep % 24 == 0 and self.timestep != 0:
-        #     self.daily_tasks()
 
         if self.hyd_sim == 'eos':
             self.eos_tasks()
@@ -1490,4 +1515,3 @@ class ConsumerModel(Model):
 
         if self.water_age_slope < self.tol:
             self.warmup = False
-            self.sim._en.ENclearreport()

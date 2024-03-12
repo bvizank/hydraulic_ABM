@@ -774,19 +774,23 @@ class Graphics(BaseGraphics):
 
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
-        data = ut.read_data(loc, self.comp_list)
-        print(data['seir_data'])
-        leg_text = ['S', 'E', 'I', 'R', 'wfh']
-        ax = plt.subplot()
+        comp_list = self.comp_list + ['bw_cost', 'tw_cost', 'bw_demand']
+        data = ut.read_data(loc, comp_list)
+        for i in data['bw_cost'].sum(axis=0):
+            print(i)
+        print(data['tw_cost'])
+        # print(data['seir_data'])
+        # leg_text = ['S', 'E', 'I', 'R', 'wfh']
+        # ax = plt.subplot()
         x_values = np.array([
-            x for x in np.arange(0, days, days / len(data['seir_data'].index))
+            x for x in np.arange(0, days, days / x_len)
         ])
-        self.make_avg_plot(
-            ax, data['seir_data']*100, None, leg_text, x_values,
-            'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
-        plt.savefig(self.pub_loc + file + 'seir' + '.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # self.make_avg_plot(
+        #     ax, data['seir_data']*100, None, leg_text, x_values,
+        #     'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
+        # plt.savefig(loc + 'seir' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
         ''' Make demand plot '''
         # base_loc = 'Output Files/base_results/'
@@ -810,6 +814,8 @@ class Graphics(BaseGraphics):
         # plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
         #             format=self.format, bbox_inches='tight')
         # plt.close()
+
+
         print(data['demand'].loc[:, self.all_nodes])
         print(data['demand'].iloc[-x_len:])
         demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
@@ -817,16 +823,17 @@ class Graphics(BaseGraphics):
             x for x in np.arange(0, days, days / x_len)
         ])
         plt.plot(x_values, demand.iloc[-x_len:])
-        plt.savefig(self.pub_loc + file + '_demand_' + '.' + self.format,
+        plt.savefig(loc + '_demand_' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
         ''' Make age plots '''
+        print(data['age'][self.res_nodes] / 3600)
         age = data['age'][self.all_nodes].mean(axis=1)
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
         plt.plot(x_values, age.iloc[-x_len:])
-        plt.savefig(self.pub_loc + file + 'age' + '.' + self.format,
+        plt.savefig(loc + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -847,6 +854,7 @@ class Graphics(BaseGraphics):
             'Time (days)', 'Water Age (hr)', show_labels=True, sd_plot=False
         )
 
-        plt.savefig(self.pub_loc + file + '_sector_age.' + self.format,
+        plt.savefig(loc + '_sector_age.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+        
