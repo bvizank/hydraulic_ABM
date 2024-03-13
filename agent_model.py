@@ -15,7 +15,7 @@ class ConsumerAgent(Agent):
         self.home_node = None
         self.work_node = None
         self.work_type = None
-        self.demand =  0
+        self.demand = 0
         self.base_demand = 0
         self.information = 0
         self.informed_by = None
@@ -316,7 +316,7 @@ class ConsumerAgent(Agent):
     def change_house_adj(self):
         ''' Function to check whether agents in a given agents node have become
         infected with COVID '''
-        agents_in_house = self.household.agents
+        agents_in_house = self.household.agent_ids
         agents_friends = [n for n in self.model.swn.neighbors(self.unique_id)]
         agents_in_network = agents_in_house + agents_friends
         agents_in_network.remove(self.unique_id)
@@ -340,17 +340,43 @@ class ConsumerAgent(Agent):
 
 
 class Household:
-    ''' Container for households. Contains a collection of agent objects '''
+    '''
+    Container for households. Contains a collection of agent objects
+
+    Parameters
+    ----------
+    start_id : int
+        starting index for agent ids
+
+    end_id : int
+        ending index for agent ids
+
+    node : string
+        string corresponding to the node in the water network that is this
+        households home node
+
+    node_dist : float
+        this nodes distance to the nearest industrial node
+
+    model : ConsumerModel
+        model object where agents are added
+    '''
 
     def __init__(self, start_id, end_id, node, node_dist, model):
-        self.agents = list()  # list of agent ids that are in the household
-        self.behaviors = {
-            'drink': 'tap',
-            'hygiene': 'tap',
-            'cook': 'tap'
-        }
-        self.demand = 0
-        self.bottled_water = 0
+        self.agent_ids = list()  # list of agent that are in the household
+        self.agent_obs = list()  # list of agent objects that are in the household
+        self.tap = ['drink', 'hygiene', 'cook']  # the actions using tap water
+        self.bottle = []  # actions using bottled water
+        self.demand = 0  # the tap water demand
+        self.bottled_water = 0  # the bottled water demand
+        # https://www.cityofclintonnc.com/DocumentCenter/View/431/FY2020-2021-Fee-schedule?bidId=
+        self.tap_cost_pl = 0.0014479  # dollars per L; this is from the city of clinton, nc
+        self.bottle_cost_pl = 0.325  # dollars per L
+        self.tap_cost = 0  # the total cost of tap water
+        self.bottle_cost = 0  # the total cost of bottled water
+        self.change = 1  # the demand change multiplier for the last 168 hours
+        self.model = model
+        self.node = node
 
         for i in range(start_id, end_id):
             a = ConsumerAgent(i, self, model)
@@ -370,26 +396,126 @@ class Household:
             if a.work_node in model.total_no_wfh:
                 a.can_wfh = False
             model.grid.place_agent(a, a.home_node)
-            self.agents.append(a.unique_id)
+            self.agent_obs.append(a)
+            self.agent_ids.append(a.unique_id)
+
+        # get the base demand for this node
+        wn_node = model.wn.get_node(node)
+        self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
         # assign an income for this household
-        if node_dist > model.ind_ring:
-            shape = dt.income[len(self.agents)][1]
-        else:
-            shape = dt.income[len(self.agents)][1] * model.ind_factor
+        # if node_dist > model.ind_ring:
+        #     shape = dt.income[len(self.agents)][1]
+        # else:
+        #     shape = dt.income[len(self.agents)][1] * model.ind_factor
 
         # pick an income for the household based on the size of household
-        self.income = model.random.gammavariate(
-            dt.income[len(self.agents)][0],
-            shape
-        )
+        self.income = 9156.2736 + node_dist * 41.1114
+        # self.income = model.random.gammavariate(
+        #     dt.income[len(self.agents)][0],
+        #     shape
+        # )
 
-    def calc_demand(self):
+    def update_household(self, age):
+        '''
+        Perform updating methods. Update behaviors, calculate demand
+        and calculate bottled water use.
+        '''
+        self.update_behaviors(age)
+        self.calc_demand()
+        self.calc_cost()
+        self.change = self.calc_demand_change()
+
+        return self.change
+
+    def update_behaviors(self, age):
+        '''
+        Update the behavior lists tap and bottle based on the water age
+
+        ** NOTE **
+        None of the behaviors are readded to the self.tap
+        variable. This means that once the water age at the node
+        exceeds the threshold that household will always adopt that
+        behavior. I think that makes sense as once we perceive something
+        as unsafe we are unlikely to go back.
+        '''
+        if age > 150 and 'hygiene' in self.tap:
+            self.tap.remove('hygiene')
+            self.bottle.append('hygiene')
+        if age > 180 and 'drink' in self.tap:
+            self.tap.remove('drink')
+            self.bottle.append('drink')
+        if age > 200 and 'cook' in self.tap:
+            self.tap.remove('cook')
+            self.bottle.append('cook')
+
+    def calc_demand_change(self):
         '''
         Calculates the demand change for the hour based on the behaviors
         '''
-    
-    def calc_bottled_water(self):
+        change = 1
+        if 'hygiene' not in self.tap:
+            change -= 0.1
+        if 'cook' not in self.tap:
+            change -= 0.1
+        if 'drink' not in self.tap:
+            change -= 0.1
+
+        return change
+
+    def calc_demand(self):
         '''
-        Calculates the bottled water demand for the hour based on the behaviors
+        Calculate the actual demand for the hydraulic interval
+        '''
+        # collect the current timestep of the model and the hydraulic interval
+        timestep = self.model.timestep - 1
+        hyd_step = (self.model.hyd_sim * 24) - 1
+
+        # get the demand pattern from the model and subset for the last
+        # hydraulic interval
+        demand_pattern = self.model.wn.get_pattern('node_'+self.node)
+        demand_pattern = demand_pattern.multipliers[timestep-hyd_step:timestep]
+
+        # Calculate the actual demand for that period
+        total_demand = demand_pattern * self.base_demand
+
+        # set the households tap demand and bottled water demand
+        # conversion of 1,000,000 is ML -> L
+        self.demand = total_demand * self.change * 1000000
+        self.bottled = total_demand * 1000000 - self.demand
+
+    def calc_tap_cost(self, demand, structure='simple'):
+        '''
+        Helper to calculate cost of tap water
+        '''
+        if structure == 'simple':
+            self.tap_cost += demand * self.tap_cost_pl
+
+    def calc_cost(self):
+        '''
+        Calculate the cost of water for the household. Total cost is the cost
+        of tap water plus the cost of bottled water.
+        '''
+        # calculate cost of tap water
+        tap = self.demand.sum()
+        self.calc_tap_cost(tap)
+
+        # calculate cost of bottled water
+        bottle = self.bottled.sum()
+        self.bottle_cost += bottle * self.bottle_cost_pl
+
+        # calculate total cost
+        self.cow = self.tap_cost + self.bottle_cost
+        if bottle > 0.0:
+            print(self.node)
+            print(tap)
+            print(self.tap_cost)
+            print(bottle)
+            print(self.bottle_cost)
+            print(self.cow)
+
+    def finalize(self):
+        '''
+        Add the base rate to the water cost based on the number of days
+        in the simulation.
         '''

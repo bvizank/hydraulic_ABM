@@ -27,9 +27,15 @@ class BaseGraphics:
         self.times = times
 
     def get_nodes(self, wn):
+        data = pd.read_excel('Input Files/micropolis/Micropolis_pop_at_node.xlsx')
+        node_capacity = dict(zip(
+                                 data['Node'].tolist(),
+                                 data['Max Population'].tolist()
+                             ))
         self.res_nodes = [name for name, node in wn.junctions()
                           if node.demand_timeseries_list[0].pattern_name == '2' and
-                          node.demand_timeseries_list[0].base_value > 0]
+                          node.demand_timeseries_list[0].base_value > 0 and
+                          node_capacity[name] != 0]
         self.ind_nodes = [name for name, node in wn.junctions()
                           if node.demand_timeseries_list[0].pattern_name == '3' and
                           node.demand_timeseries_list[0].base_value > 0]
@@ -37,12 +43,15 @@ class BaseGraphics:
                           if (node.demand_timeseries_list[0].pattern_name == '4' or
                           node.demand_timeseries_list[0].pattern_name == '5' or
                           node.demand_timeseries_list[0].pattern_name == '6') and
-                          node.demand_timeseries_list[0].base_value > 0]
+                          node.demand_timeseries_list[0].base_value > 0 and
+                          node_capacity[name] != 0]
         self.rest_nodes = [name for name, node in wn.junctions()
                            if node.demand_timeseries_list[0].pattern_name == '1' and
-                           node.demand_timeseries_list[0].base_value > 0]
+                           node.demand_timeseries_list[0].base_value > 0 and
+                           node_capacity[name] != 0]
         self.all_nodes = [name for name, node in wn.junctions()
-                          if node.demand_timeseries_list[0].base_value > 0]
+                          if node.demand_timeseries_list[0].base_value > 0 and
+                          node_capacity[name] != 0]
 
         self.ind_nodes_obj = [name for name, node in wn.junctions()
                               if node.demand_timeseries_list[0].pattern_name == '3']
@@ -298,19 +307,19 @@ class BaseGraphics:
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-    def make_heatmap(self, data, xlabel, ylabel, name, vmax):
+    def make_heatmap(self, data, xlabel, ylabel, name, aspect):
         ''' heatmap plot of all agents '''
         fig, ax = plt.subplots()
-        im = ax.imshow(data, aspect=0.55, vmax=vmax)  # for 100 agents: 0.03, for 1000 agents: 0.003
+        im = ax.imshow(data, aspect=aspect)  # for 100 agents: 0.03, for 1000 agents: 0.003
         ax.figure.colorbar(im, ax=ax)
-        plt.xlim(1, data.shape[1])
+        # plt.xlim(1, data.shape[1])
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        x_tick_labels = [0, 20, 40, 60, 80]
-        ax.set_xticks([i * 24 for i in x_tick_labels])
-        ax.set_xticklabels(x_tick_labels)
+        # x_tick_labels = [0, 20, 40, 60, 80]
+        # ax.set_xticks([i * 24 for i in x_tick_labels])
+        # ax.set_xticklabels(x_tick_labels)
 
-        plt.savefig(self.pub_loc + name + '.' + self.format,
+        plt.savefig(name + '.' + self.format,
                     format=self.format,
                     bbox_inches='tight')
         plt.close()
@@ -758,17 +767,104 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-    def make_single_plots(self, file):
+    def make_single_plots(self, file, days):
+        ''' Set the warmup period '''
+        x_len = days * 24
+        print(x_len)
+
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
-        data = ut.read_data(loc, self.comp_list)
-        leg_text = ['S', 'E', 'I', 'R', 'wfh']
-        ax = plt.subplot()
-        print(data['seir_data'])
-        self.make_avg_plot(
-            ax, data['seir_data']*100, None, leg_text, self.x_values,
-            'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
-        plt.savefig(self.pub_loc + file + 'seir' + '.' + self.format,
+        comp_list = self.comp_list + ['bw_cost', 'tw_cost', 'bw_demand', 'income']
+        data = ut.read_data(loc, comp_list)
+        data['tot_cost'] = data['bw_cost'] + data['tw_cost']
+        # print(data['seir_data'])
+        # leg_text = ['S', 'E', 'I', 'R', 'wfh']
+        # ax = plt.subplot()
+        x_values = np.array([
+            x for x in np.arange(0, days, days / x_len)
+        ])
+        # self.make_avg_plot(
+        #     ax, data['seir_data']*100, None, leg_text, x_values,
+        #     'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
+        # plt.savefig(loc + 'seir' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
+
+        ''' Make demand plot '''
+        # base_loc = 'Output Files/base_results/'
+        # base_data = ut.read_data(base_loc, self.comp_list)
+        # ax = plt.subplot()
+        # pm_demand = data['demand'].loc[:, self.all_nodes]
+        # base_demand = base_data['demand'].loc[:, self.all_nodes]
+        # demand = pd.concat([pm_demand.sum(axis=1).rolling(24).mean(),
+        #                     base_demand.sum(axis=1).rolling(24).mean()],
+        #                    axis=1, keys=['PM', 'Base'])
+        # x_values = np.array([
+        #     x for x in np.arange(0, 90, 90 / len(data['demand'].index))
+        # ])
+        # print(demand[:-1])
+
+        # self.make_avg_plot(
+        #     ax, demand[:-1], None, ['PM', 'Base'],
+        #     x_values, xlabel='Time (days)', ylabel='Demand',
+        #     show_labels=True, sd_plot=False
+        # )
+        # plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
+
+        print(data['demand'].loc[:, self.all_nodes])
+        print(data['demand'].iloc[-x_len:])
+        demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
+        x_values = np.array([
+            x for x in np.arange(0, days, days / x_len)
+        ])
+        plt.plot(x_values, demand.iloc[-x_len:])
+        plt.savefig(loc + '_demand_' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
+        ''' Make age plots '''
+        print(data['age'][self.res_nodes] / 3600)
+        age = data['age'][self.all_nodes].mean(axis=1)
+        # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
+        # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
+        plt.plot(x_values, age.iloc[-x_len:])
+        plt.savefig(loc + 'age' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        cols = ['Residential', 'Commercial', 'Industrial']
+        res_age_pm = data['age'][self.res_nodes].mean(axis=1)
+        com_age_pm = data['age'][self.com_nodes].mean(axis=1)
+        ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
+
+        # make input data and sd
+        pm_age = pd.concat([res_age_pm.rolling(24).mean(),
+                            com_age_pm.rolling(24).mean(),
+                            ind_age_pm.rolling(24).mean()],
+                           axis=1, keys=cols)
+        print(pm_age)
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, pm_age.iloc[-x_len:] / 3600, None, cols, x_values,
+            'Time (days)', 'Water Age (hr)', show_labels=True, sd_plot=False
+        )
+
+        plt.savefig(loc + '_sector_age.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Heatmap of costs '''
+        print(data['tot_cost'].iloc[-1, :])
+        print(data['income'].iloc[:, 0])
+        # convert the annual income to an income that is specific to timeframe
+        data['income'] = data['income'] * days / 365
+        print((data['tot_cost'].iloc[-1, :] / data['income'].iloc[:, 0] * 100).mean())
+        self.make_heatmap(
+            data['tot_cost'].T,
+            'Time (weeks)',
+            'Household',
+            loc + 'tot_cost_heatmap',
+            0.01
+        )

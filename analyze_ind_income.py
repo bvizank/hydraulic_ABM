@@ -3,6 +3,7 @@ import numpy as np
 from sklearn.neighbors import KernelDensity
 from sklearn.linear_model import LinearRegression
 import matplotlib.pyplot as plt
+import statsmodels.api as sm
 
 
 '''
@@ -18,11 +19,12 @@ import matplotlib.pyplot as plt
 # see: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#indexing-view-versus-copy
 pd.options.mode.copy_on_write = True
 # import the data the includes residential and industrial nodes and spatial data
-col_names = ['lon', 'lat', 'group', 'bg', 'sec', 'val', 'struct', 'city']
+col_names = ['lon', 'lat', 'val', 'struct', 'sec', 'group', 'bg', 'clinton']
 data = pd.read_csv(
     'Input Files/clinton_data.csv',
     delimiter=',',
-    names=col_names)
+    names=col_names
+)
 
 # convert lat and lon to radians
 data.loc[:, 'lat'] = data.loc[:, 'lat'] * np.pi / 180
@@ -32,6 +34,7 @@ ind_nodes = data[(data['sec'] == 3) & (data['city'] == 1)]
 res_nodes = data[(data['sec'] == 1) & (data['city'] == 1)]
 res_nodes = res_nodes[res_nodes.loc[:, 'struct'] == 1]
 
+# make a dict of industrial parcel locations
 ind_loc = dict()
 for i, row in ind_nodes.iterrows():
     ind_loc[row.name] = (row['lat'], row['lon'])
@@ -73,17 +76,61 @@ plt.scatter(x, y)
 plt.plot(x, model.predict(x))
 plt.xlabel('Industrial Distance')
 plt.ylabel('Parcel Value')
-plt.show()
+plt.savefig('clinton_parcel_val.png', format='png', bbox_inches='tight')
+plt.close()
+results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
 # print(res_nodes.groupby(['group', 'bg']).count())
 
-''' Calculate new distances using all data from the block groups. '''
-ind_nodes = data[data['sec'] == 3]
-res_nodes = data[data['sec'] == 1]
-res_nodes = res_nodes[res_nodes.loc[:, 'struct'] == 1]
+# read in income distribution data
+income = np.genfromtxt(
+    'Input Files/clinton_income_data.csv',
+    delimiter=',',
+)
 
-ind_loc = dict()
-for i, row in ind_nodes.iterrows():
-    ind_loc[row.name] = (row['lat'], row['lon'])
+x_with_intercept = np.empty(shape=(len(results_ind.values), 2), dtype=np.float64)
+x_with_intercept[:, 0] = 1
+x_with_intercept[:, 1] = results_ind.values
+
+print(x_with_intercept)
+
+ols = sm.OLS(income, x_with_intercept)
+ols_result = ols.fit()
+print(ols_result.summary())
+
+model = LinearRegression()
+x = results_ind.values
+x = x[:, np.newaxis]
+y = income
+model.fit(x, y)
+print(model.score(x, y))
+print(model.coef_)
+print(model.intercept_)
+
+plt.scatter(x, y)
+plt.plot(x, model.predict(x))
+plt.xlabel('Industrial Distance')
+plt.ylabel('Median BG Income')
+plt.savefig('clinton_bg_income.png', format='png', bbox_inches='tight')
+plt.close()
+
+# block_groups = [
+#     970600.1,
+#     970600.2,
+#     970600.3,
+#     970600.4,
+#     970701.1,
+#     970701.2,
+#     970702.1,
+#     970702.2,
+#     970702.3,
+#     970702.4,
+#     970801.1,
+#     970801.2,
+#     970802.1,
+#     970802.2,
+#     970802.3
+# ]
+>>>>>>> gini
 
 for i, key in enumerate(ind_loc):
     '''

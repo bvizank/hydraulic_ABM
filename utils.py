@@ -50,6 +50,7 @@ def setup(network):
         node_dict['dq'] = find_nodes(4, pattern_list, network)
         # Rest of commercial nodes like schools, churches etc.
         node_dict['com'] = find_nodes(5, pattern_list, network)
+        node_dict['com'] = node_dict['com'] + find_nodes(6, pattern_list, network)
     elif network == "mesopolis":
         # pattern types: air, com, res, ind, nav
         node_dict['air'] = find_nodes('air', pattern_list, network)
@@ -357,3 +358,10 @@ def gini(x, w=None):
         cumx = np.cumsum(sorted_x, dtype=float)
         # The above formula, with all weights equal to 1 simplifies to:
         return (n + 1 - 2 * np.sum(cumx) / cumx[-1]) / n
+
+def output_age_data(file):
+    loc = 'Output Files/' + file + '/'
+    data = read_data(loc, ['age'])
+    data = data['age'].iloc[-100:].mean(axis=0)
+    print(data)
+    data.to_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')
