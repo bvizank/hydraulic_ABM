@@ -307,19 +307,19 @@ class BaseGraphics:
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-    def make_heatmap(self, data, xlabel, ylabel, name, vmax):
+    def make_heatmap(self, data, xlabel, ylabel, name, aspect):
         ''' heatmap plot of all agents '''
         fig, ax = plt.subplots()
-        im = ax.imshow(data, aspect=0.55, vmax=vmax)  # for 100 agents: 0.03, for 1000 agents: 0.003
+        im = ax.imshow(data, aspect=aspect)  # for 100 agents: 0.03, for 1000 agents: 0.003
         ax.figure.colorbar(im, ax=ax)
-        plt.xlim(1, data.shape[1])
+        # plt.xlim(1, data.shape[1])
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
-        x_tick_labels = [0, 20, 40, 60, 80]
-        ax.set_xticks([i * 24 for i in x_tick_labels])
-        ax.set_xticklabels(x_tick_labels)
+        # x_tick_labels = [0, 20, 40, 60, 80]
+        # ax.set_xticks([i * 24 for i in x_tick_labels])
+        # ax.set_xticklabels(x_tick_labels)
 
-        plt.savefig(self.pub_loc + name + '.' + self.format,
+        plt.savefig(name + '.' + self.format,
                     format=self.format,
                     bbox_inches='tight')
         plt.close()
@@ -774,11 +774,9 @@ class Graphics(BaseGraphics):
 
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
-        comp_list = self.comp_list + ['bw_cost', 'tw_cost', 'bw_demand']
+        comp_list = self.comp_list + ['bw_cost', 'tw_cost', 'bw_demand', 'income']
         data = ut.read_data(loc, comp_list)
-        for i in data['bw_cost'].sum(axis=0):
-            print(i)
-        print(data['tw_cost'])
+        data['tot_cost'] = data['bw_cost'] + data['tw_cost']
         # print(data['seir_data'])
         # leg_text = ['S', 'E', 'I', 'R', 'wfh']
         # ax = plt.subplot()
@@ -814,7 +812,6 @@ class Graphics(BaseGraphics):
         # plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
         #             format=self.format, bbox_inches='tight')
         # plt.close()
-
 
         print(data['demand'].loc[:, self.all_nodes])
         print(data['demand'].iloc[-x_len:])
@@ -857,4 +854,17 @@ class Graphics(BaseGraphics):
         plt.savefig(loc + '_sector_age.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
+        ''' Heatmap of costs '''
+        print(data['tot_cost'].iloc[-1, :])
+        print(data['income'].iloc[:, 0])
+        # convert the annual income to an income that is specific to timeframe
+        data['income'] = data['income'] * days / 365
+        print((data['tot_cost'].iloc[-1, :] / data['income'].iloc[:, 0] * 100).mean())
+        self.make_heatmap(
+            data['tot_cost'].T,
+            'Time (weeks)',
+            'Household',
+            loc + 'tot_cost_heatmap',
+            0.01
+        )

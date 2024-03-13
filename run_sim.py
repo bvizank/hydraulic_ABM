@@ -55,7 +55,7 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     else:
         for _ in range(24*days):
             model.step()
-            
+
     # save the input file to test run time
     write_inpfile(
         model.wn,
@@ -63,7 +63,6 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
         units=model.wn.options.hydraulic.inpfile_units,
         version=2.2
     )
-    
 
     stop = perf_counter()
 
@@ -143,9 +142,9 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
         flow = results.link['flowrate'] * 1000000
         flow.to_pickle(output_loc + "/flow.pkl")
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
-    
+
     agents = [str(i) for i in range(model.num_agents)]
-    households = [str(i) for i in range(len(model.households))]
+    households = [i for i in model.households]
     income = dict()
     for node in model.households:
         house = model.households[node]
@@ -161,6 +160,9 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     bw_cost = convert_to_pd(model.bw_cost, households)
     tw_cost = convert_to_pd(model.tw_cost, households)
     bw_demand = convert_to_pd(model.bw_demand, households)
+    hygiene = convert_to_pd(model.hygiene, households)
+    drink = convert_to_pd(model.drink, households)
+    cook = convert_to_pd(model.cook, households)
     income = convert_to_pd(income, [0])
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
@@ -173,10 +175,14 @@ def run_sim(city, id=0, days=90, plot=False, **kwargs):
     bw_cost.to_pickle(output_loc + "/bw_cost.pkl")
     tw_cost.to_pickle(output_loc + "/tw_cost.pkl")
     bw_demand.to_pickle(output_loc + "/bw_demand.pkl")
+    hygiene.to_pickle(output_loc + "/hygiene.pkl")
+    drink.to_pickle(output_loc + "/drink.pkl")
+    cook.to_pickle(output_loc + "/cook.pkl")
     income.to_pickle(output_loc + "/income.pkl")
 
     with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
         model.param_out.to_excel(writer, sheet_name='params')
+
 
 def convert_to_pd(in_list, columns):
     return pd.DataFrame.from_dict(in_list, orient='index', columns=columns)
