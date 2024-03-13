@@ -774,21 +774,28 @@ class Graphics(BaseGraphics):
 
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
-        comp_list = self.comp_list + ['bw_cost', 'tw_cost', 'bw_demand', 'income']
+        comp_list = self.comp_list + ['bw_cost',
+                                      'tw_cost',
+                                      'bw_demand',
+                                      'income',
+                                      'hygiene',
+                                      'drink',
+                                      'cook']
         data = ut.read_data(loc, comp_list)
+        households = len(data['income'])
+        print(households)
         data['tot_cost'] = data['bw_cost'] + data['tw_cost']
-        # print(data['seir_data'])
-        # leg_text = ['S', 'E', 'I', 'R', 'wfh']
-        # ax = plt.subplot()
+        leg_text = ['S', 'E', 'I', 'R', 'wfh']
+        ax = plt.subplot()
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
         ])
-        # self.make_avg_plot(
-        #     ax, data['seir_data']*100, None, leg_text, x_values,
-        #     'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
-        # plt.savefig(loc + 'seir' + '.' + self.format,
-        #             format=self.format, bbox_inches='tight')
-        # plt.close()
+        self.make_avg_plot(
+            ax, data['seir_data']*100, None, leg_text, x_values,
+            'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
+        plt.savefig(loc + 'seir' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
         ''' Make demand plot '''
         # base_loc = 'Output Files/base_results/'
@@ -868,3 +875,19 @@ class Graphics(BaseGraphics):
             loc + 'tot_cost_heatmap',
             0.01
         )
+
+        ''' Plot of TWA parameters '''
+        twa = pd.concat([data['hygiene'].sum(axis=1),
+                         data['drink'].sum(axis=1),
+                         data['cook'].sum(axis=1)],
+                        axis=1, keys=['Hygiene', 'Drink', 'Cook'])
+
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, twa / households, None, ['Hygiene', 'Drink', 'Cook'], twa.index / 24,
+            'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
+        )
+
+        plt.savefig(loc + 'twa.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
