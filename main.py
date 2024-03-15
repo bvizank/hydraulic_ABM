@@ -21,7 +21,7 @@ run_sim(
     seed=123,
     wfh_lag=0,
     no_wfh_perc=0,
-    bbn_models=['all'],
+    bbn_models=[],
     daily_contacts=30,
     city='micropolis',
     verbose=0.5,

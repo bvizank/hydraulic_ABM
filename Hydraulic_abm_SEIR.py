@@ -45,6 +45,7 @@ class ConsumerModel(Model):
                  city,
                  days=90,
                  id=0,    # id of simulation
+                 seed=218,
                  **kwargs):
         super().__init__()
         init_start = time.perf_counter()
@@ -356,6 +357,7 @@ class ConsumerModel(Model):
         if self.hyd_sim == 'hourly' or isinstance(self.hyd_sim, int):
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
+            # self.wn.options.time.quality_timestep = 900
             self.wn.options.quality.parameter = 'AGE'
             self.sim = EpanetSimulator_Stepwise(self.wn,
                                                 file_prefix='temp' + str(self.id))

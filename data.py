@@ -15,7 +15,7 @@ radio = np.genfromtxt(r'Input Files/Radio_data.csv', delimiter=',')
 ''' Hourly TV probabilities '''
 # tv_data = pd.read_excel(r'Input Files/TV_data.xlsx')
 # tv = tv_data['tv_data'].tolist()
-tv = np.genfromtxt(r'Input Files/TV_data.csv', delimiter=',')
+tv = np.genfromtxt(r'Input Files/tv_data.csv', delimiter=',')
 
 # media = {'sleep': sleep_distr,
 #          'radio': radio_distr,

@@ -20,7 +20,7 @@ from wntr.network.io import write_inpfile
 warnings.simplefilter("ignore", UserWarning)
 
 
-def run_sim(city, id=0, days=90, plot=False, **kwargs):
+def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
     output_loc = 'Output Files/' + curr_dt + '_results'
     os.mkdir(output_loc)
