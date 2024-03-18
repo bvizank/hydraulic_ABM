@@ -359,9 +359,11 @@ def gini(x, w=None):
         # The above formula, with all weights equal to 1 simplifies to:
         return (n + 1 - 2 * np.sum(cumx) / cumx[-1]) / n
 
+
 def output_age_data(file):
     loc = 'Output Files/' + file + '/'
     data = read_data(loc, ['age'])
     data = data['age'].iloc[-100:].mean(axis=0)
     print(data)
+    print(data.mean() / 3600)
     data.to_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')

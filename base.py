@@ -148,7 +148,7 @@ class BaseGraphics:
         for i, col in enumerate(cols):
             ax.plot(x_values, data[col], color='C' + str(i * m))
 
-        if sd:
+        if sd_plot:
             #  need to separate so that the legend fills correctly
             for i, col in enumerate(cols):
                 ax.fill_between(x_values, data[col] - sd[col],
@@ -851,11 +851,17 @@ class Graphics(BaseGraphics):
                             com_age_pm.rolling(24).mean(),
                             ind_age_pm.rolling(24).mean()],
                            axis=1, keys=cols)
+        pm_age_sd = pd.concat([res_age_pm.rolling(24).std(),
+                               com_age_pm.rolling(24).std(),
+                               ind_age_pm.rolling(24).std()],
+                              axis=1, keys=cols)
         print(pm_age)
+        print(pm_age_sd)
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, pm_age.iloc[-x_len:] / 3600, None, cols, x_values,
-            'Time (days)', 'Water Age (hr)', show_labels=True, sd_plot=False
+            ax, pm_age.iloc[-x_len:] / 3600, pm_age_sd[-x_len:] / 3600, cols,
+            x_values, 'Time (days)', 'Water Age (hr)', show_labels=True,
+            sd_plot=True
         )
 
         plt.savefig(loc + '_sector_age.' + self.format,
@@ -875,6 +881,22 @@ class Graphics(BaseGraphics):
             loc + 'tot_cost_heatmap',
             0.01
         )
+
+        print(data['tot_cost'].mean(axis=1))
+        cols = ['Tap Water', 'Bottled Water', 'Total']
+        cost = pd.concat([data['tw_cost'].mean(axis=1),
+                          data['bw_cost'].mean(axis=1),
+                          data['tot_cost'].mean(axis=1)],
+                         axis=1, keys=cols)
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, cost, None, cols, cost.index / 24,
+            'Time (Weeks)', 'Water Cost ($)', show_labels=True, sd_plot=False
+        )
+
+        plt.savefig(loc + 'water_cost.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
         ''' Plot of TWA parameters '''
         twa = pd.concat([data['hygiene'].sum(axis=1),
