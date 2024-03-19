@@ -25,7 +25,7 @@ plots = Graphics(publication=False, error='se')
 # plots.make_seir_plot()
 
 ''' Make single plots '''
-plots.make_single_plots('2024-03-12_17-58_0_results', 100)
+plots.make_single_plots('2024-03-12_17-31_0_results', 100)
 # plots.make_single_plots('2024-03-12_17-31_0_results', 100)
 
 # ''' Export comparison stats '''

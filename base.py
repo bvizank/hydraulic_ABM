@@ -836,7 +836,7 @@ class Graphics(BaseGraphics):
         age = data['age'][self.all_nodes].mean(axis=1)
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
-        plt.plot(x_values, age.iloc[-x_len:])
+        plt.plot(x_values, age.iloc[-x_len:] / 3600)
         plt.savefig(loc + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -867,6 +867,9 @@ class Graphics(BaseGraphics):
         plt.savefig(loc + '_sector_age.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+
+        print(data['age'].loc[:, 'TN1'])
+        # plt.show()
 
         ''' Heatmap of costs '''
         print(data['tot_cost'].iloc[-1, :])
