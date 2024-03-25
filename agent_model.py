@@ -506,13 +506,13 @@ class Household:
 
         # calculate total cost
         self.cow = self.tap_cost + self.bottle_cost
-        if bottle > 0.0:
-            print(self.node)
-            print(tap)
-            print(self.tap_cost)
-            print(bottle)
-            print(self.bottle_cost)
-            print(self.cow)
+        # if bottle > 0.0:
+            # print(self.node)
+            # print(tap)
+            # print(self.tap_cost)
+            # print(bottle)
+            # print(self.bottle_cost)
+            # print(self.cow)
 
     def finalize(self):
         '''
