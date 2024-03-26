@@ -1150,7 +1150,7 @@ class ConsumerModel(Model):
         while not success:
             success, stop_conditions = self.sim.run_sim()
 
-        if (self.timestep / 24) % 7 == 0:
+        if (self.timestep + 1 / 24) % 7 == 0:
             self.check_water_age()
             # print(self.water_age_slope)
 
@@ -1172,11 +1172,13 @@ class ConsumerModel(Model):
         # first we need to collect the nodal demands at each hour. That means
         # we run self.collect_demands() each time this method is called.
         self.collect_demands()
+        # if the timestep is a day then we need to update the demand patterns
+        if (self.timestep + 1) % 24 == 0 and self.timestep != 0:
+            self.change_demands()
         # if the timestep is the beginning of a week then we want to run the sim
         # also run the sim at the end of the simulation
-        if ((self.timestep / 24) % self.hyd_sim == 0 and self.timestep != 0 or
+        if ((self.timestep + 1 / 24) % self.hyd_sim == 0 and self.timestep != 0 or
            (self.timestep + 1) / 24 == self.days):
-            self.change_demands()
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
                 if node in self.nodes_capacity:
@@ -1221,10 +1223,6 @@ class ConsumerModel(Model):
                     np.array(self.income),
                     np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
                 )
-
-        # if the timestep is a day then we need to update the demand patterns
-        elif self.timestep % 24 == 0 and self.timestep != 0:
-            self.change_demands()
 
     # and then (after setting the demand above) we run the simulation:
     def run_hydraulic(self):
@@ -1486,7 +1484,7 @@ class ConsumerModel(Model):
             self.wn.options.quality.parameter = 'AGE'
             # run the hydraulic simulation and collect results
             self.run_hydraulic()
-        if self.timestep % 24 == 0:
+        if (self.timestep + 1) % 24 == 0:
             # update the demand patterns with the current days demand
             self.change_demands()
 
@@ -1552,7 +1550,7 @@ class ConsumerModel(Model):
         # BV: changed times to 6, 14, and 22 because I think this is more representative
         # of a three shift schedule. Unsure if this changes anything with water
         # patterns, but I suspect it might.
-        if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
+        if self.timestep == 0 or self.timestepN == 5 or self.timestepN == 13 or self.timestepN == 21:
             self.move_indust()
 
         # COVID related methods are not run during warmup
@@ -1565,7 +1563,7 @@ class ConsumerModel(Model):
             self.collect_agent_data()
 
         # daily updating is done during warmup
-        if self.timestep % 24 == 0 and self.timestep != 0:
+        if (self.timestep + 1) % 24 == 0 and self.timestep != 0:
             self.daily_tasks()
 
         if self.hyd_sim == 'eos':
