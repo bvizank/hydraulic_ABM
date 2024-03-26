@@ -466,6 +466,7 @@ class ConsumerModel(Model):
 
         # create list of households
         self.households = dict()
+        self.household_n = dict()
         # no_wfh_comm_nodes = self.random.choices(population=self.com_nodes,
         #                                         k=int(len(self.com_nodes)*0.2))
         # no_wfh_rest_nodes = self.random.choices(population=self.cafe_nodes,
@@ -516,6 +517,7 @@ class ConsumerModel(Model):
 
         curr_ids = init_id
 
+        house_list = list()
         ''' Iterate through the agents at the current res node
         and add them to households of 1 to 6 agents '''
         while node_cap > 6:
@@ -524,19 +526,22 @@ class ConsumerModel(Model):
             prev_id = curr_ids
             curr_ids += home_size
             # make the household and append it to a list of households
-            self.households[curr_node] = Household(
+            house_list.append(Household(
                 prev_id, curr_ids, curr_node, node_dist, self
-            )
+            ))
             node_cap -= home_size
         else:
             # if the node size is 6 or fewer, we only need to do this once
-            self.households[curr_node] = Household(
+            house_list.append(Household(
                 curr_ids,
                 node_cap_static + init_id,
                 curr_node,
                 node_dist,
                 self
-            )
+            ))
+
+        self.households[curr_node] = house_list
+        self.household_n[curr_node] = len(house_list)
 
         return init_id + node_cap
 
@@ -560,8 +565,6 @@ class ConsumerModel(Model):
             curr_node = [a for a in curr_node if a not in curr_housemates]
             ''' Assign the current list of housemates to each agent
             so they each know who their housemates are '''
-
-            ''' USE BASE_HOUSEHOLD METHOD '''
 
             for mate in curr_housemates:
                 agent = self.schedule._agents[mate]
@@ -1063,8 +1066,6 @@ class ConsumerModel(Model):
         self.daily_demand[self.timestepN, :] = step_demand
         self.agent_matrix[self.timestep] = step_agents
 
-
-
     # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
         '''
@@ -1197,20 +1198,21 @@ class ConsumerModel(Model):
             self.check_water_age()
             print(self.water_age_slope)
 
-            # update household avoidance behaviors
-            ''' UNCOMMENT FOR COST OF WATER '''
-            for node in self.households:
-                household = self.households[node]
-                node_age = self.sim._results.node['quality'].loc[:, node]
-                self.demand_multiplier[node] = household.update_household(
-                                                   node_age.iloc[-1] / 3600
-                                               )
+            # update household avoidance behaviors and demand values
+            demand_list = list()
+            for node, houses in self.households.items():
+                for house in houses:
+                    node_age = self.sim._results.node['quality'].loc[:, node]
+                    demand_list.append(house.update_household(
+                        node_age.iloc[-1] / 3600
+                    ))
+
+            self.demand_multiplier[node] = sum(demand_list) / len(demand_list)
             self.collect_household_data()
 
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:
             self.change_demands()
-
 
     # and then (after setting the demand above) we run the simulation:
     def run_hydraulic(self):
@@ -1345,7 +1347,7 @@ class ConsumerModel(Model):
         step_dine = list()
         step_groc = list()
         step_ppe = list()
-        
+
         for agent in self.schedule.agents:
             step_cov_pers.append(dcp(agent.agent_params['COVIDexp']))
             step_cov_ff.append(dcp(agent.agent_params['COVIDeffect_4']))
@@ -1374,17 +1376,17 @@ class ConsumerModel(Model):
         step_drink = list()
         step_cook = list()
 
-        for node in self.households:
-            house = self.households[node]
-            step_bw_cost.append(dcp(house.bottle_cost))
-            step_tw_cost.append(dcp(house.tap_cost))
-            step_bw_demand.append(dcp(house.bottled_water))
-            hygiene = 1 if 'hygiene' in house.bottle else 0
-            drink = 1 if 'drink' in house.bottle else 0
-            cook = 1 if 'cook' in house.bottle else 0
-            step_hygiene.append(hygiene)
-            step_drink.append(drink)
-            step_cook.append(cook)
+        for node, houses in self.households.items():
+            for house in houses:
+                step_bw_cost.append(dcp(house.bottle_cost))
+                step_tw_cost.append(dcp(house.tap_cost))
+                step_bw_demand.append(dcp(house.bottled_water))
+                hygiene = 1 if 'hygiene' in house.bottle else 0
+                drink = 1 if 'drink' in house.bottle else 0
+                cook = 1 if 'cook' in house.bottle else 0
+                step_hygiene.append(hygiene)
+                step_drink.append(drink)
+                step_cook.append(cook)
 
         self.bw_cost[self.timestep] = step_bw_cost
         self.tw_cost[self.timestep] = step_tw_cost

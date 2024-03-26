@@ -770,7 +770,6 @@ class Graphics(BaseGraphics):
     def make_single_plots(self, file, days):
         ''' Set the warmup period '''
         x_len = days * 24
-        print(x_len)
 
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
@@ -782,7 +781,7 @@ class Graphics(BaseGraphics):
                                       'drink',
                                       'cook']
         data = ut.read_data(loc, comp_list)
-        households = len(data['income'])
+        households = len(data['income'].columns)
         print(households)
         data['tot_cost'] = data['bw_cost'] + data['tw_cost']
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
@@ -791,7 +790,7 @@ class Graphics(BaseGraphics):
             x for x in np.arange(0, days, days / x_len)
         ])
         self.make_avg_plot(
-            ax, data['seir_data']*100, None, leg_text, x_values,
+            ax, data['seir_data'].iloc[-x_len:]*100, None, leg_text, x_values,
             'Time (days)', 'Percent Population', show_labels=True, sd_plot=False)
         plt.savefig(loc + 'seir' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -820,8 +819,6 @@ class Graphics(BaseGraphics):
         #             format=self.format, bbox_inches='tight')
         # plt.close()
 
-        print(data['demand'].loc[:, self.all_nodes])
-        print(data['demand'].iloc[-x_len:])
         demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
@@ -832,7 +829,6 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make age plots '''
-        print(data['age'][self.res_nodes] / 3600)
         age = data['age'][self.all_nodes].mean(axis=1)
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
@@ -855,8 +851,6 @@ class Graphics(BaseGraphics):
                                com_age_pm.rolling(24).std(),
                                ind_age_pm.rolling(24).std()],
                               axis=1, keys=cols)
-        print(pm_age)
-        print(pm_age_sd)
         ax = plt.subplot()
         self.make_avg_plot(
             ax, pm_age.iloc[-x_len:] / 3600, pm_age_sd[-x_len:] / 3600, cols,
@@ -868,15 +862,11 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        print(data['age'].loc[:, 'TN1'])
         # plt.show()
 
-        ''' Heatmap of costs '''
-        print(data['tot_cost'].iloc[-1, :])
-        print(data['income'].iloc[:, 0])
+        ''' Heatmap and map of costs '''
         # convert the annual income to an income that is specific to timeframe
         data['income'] = data['income'] * days / 365
-        print((data['tot_cost'].iloc[-1, :] / data['income'].iloc[:, 0] * 100).mean())
         self.make_heatmap(
             data['tot_cost'].T,
             'Time (weeks)',
@@ -885,12 +875,14 @@ class Graphics(BaseGraphics):
             0.01
         )
 
-        print(data['tot_cost'].mean(axis=1))
         cols = ['Tap Water', 'Bottled Water', 'Total']
+        for i in data['tw_cost'].max():
+            print(i)
         cost = pd.concat([data['tw_cost'].mean(axis=1),
                           data['bw_cost'].mean(axis=1),
                           data['tot_cost'].mean(axis=1)],
                          axis=1, keys=cols)
+        print(cost)
         ax = plt.subplot()
         self.make_avg_plot(
             ax, cost, None, cols, cost.index / 24,
@@ -898,6 +890,27 @@ class Graphics(BaseGraphics):
         )
 
         plt.savefig(loc + 'water_cost.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        print(data['income'].iloc[0, :].groupby(level=0).mean())
+        print(data['tot_cost'].iloc[-1, :].groupby(level=0).mean())
+
+        ax = wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=data['income'].iloc[0, :].groupby(level=0).mean(),
+            node_size=5
+        )
+        plt.savefig(loc + 'income_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ax = wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=data['tot_cost'].iloc[-1, :].groupby(level=0).mean(),
+            node_size=5
+        )
+        plt.savefig(loc + 'tot_cost_map.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -909,7 +922,7 @@ class Graphics(BaseGraphics):
 
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, twa / households, None, ['Hygiene', 'Drink', 'Cook'], twa.index / 24,
+            ax, twa / households * 100, None, ['Hygiene', 'Drink', 'Cook'], twa.index / 24,
             'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
         )
 

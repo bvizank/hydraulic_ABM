@@ -144,11 +144,11 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
-    households = [i for i in model.households]
-    income = dict()
-    for node in model.households:
-        house = model.households[node]
-        income[node] = house.income
+    households = [h.node for i, hs in model.households.items() for h in hs]
+    income = list()
+    for node, houses in model.households.items():
+        for house in houses:
+            income.append(house.income)
 
     cov_pers = convert_to_pd(model.cov_pers, agents)
     cov_ff = convert_to_pd(model.cov_ff, agents)
@@ -163,7 +163,7 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     hygiene = convert_to_pd(model.hygiene, households)
     drink = convert_to_pd(model.drink, households)
     cook = convert_to_pd(model.cook, households)
-    income = convert_to_pd(income, [0])
+    income = convert_to_pd({'0': income}, households)
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")

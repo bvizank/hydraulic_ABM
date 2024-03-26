@@ -4,7 +4,6 @@ from copy import deepcopy as dcp
 import bnlearn as bn
 import data as dt
 
-import random
 
 class ConsumerAgent(Agent):
 
@@ -331,7 +330,6 @@ class ConsumerAgent(Agent):
     def change_time(self):
         self.timestep += 1
         return self.timestep
-        #print(self.timestep)
 
     def step(self):
         # self.complying()
@@ -403,18 +401,15 @@ class Household:
         wn_node = model.wn.get_node(node)
         self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
-        # assign an income for this household
-        # if node_dist > model.ind_ring:
-        #     shape = dt.income[len(self.agents)][1]
-        # else:
-        #     shape = dt.income[len(self.agents)][1] * model.ind_factor
-
         # pick an income for the household based on the size of household
         self.income = 9156.2736 + node_dist * 41.1114
-        # self.income = model.random.gammavariate(
-        #     dt.income[len(self.agents)][0],
-        #     shape
-        # )
+
+        # pick water age thresholds for TWA behaviors
+        self.twa_thresholds = {
+            'drink':   model.random.betavariate(3, 1) * 130 + 24,
+            'hygiene': model.random.betavariate(3, 1) * 140 + 24,
+            'cook':    model.random.betavariate(3, 1) * 150 + 24
+        }
 
     def update_household(self, age):
         '''
@@ -433,33 +428,52 @@ class Household:
         Update the behavior lists tap and bottle based on the water age
 
         ** NOTE **
-        None of the behaviors are readded to the self.tap
+        None of the behaviors are re-added to the self.tap
         variable. This means that once the water age at the node
         exceeds the threshold that household will always adopt that
         behavior. I think that makes sense as once we perceive something
         as unsafe we are unlikely to go back.
         '''
-        if age > 150 and 'hygiene' in self.tap:
+        if age > self.twa_thresholds['hygiene'] and 'hygiene' in self.tap:
             self.tap.remove('hygiene')
             self.bottle.append('hygiene')
-        if age > 180 and 'drink' in self.tap:
+        if age > self.twa_thresholds['drink'] and 'drink' in self.tap:
             self.tap.remove('drink')
             self.bottle.append('drink')
-        if age > 200 and 'cook' in self.tap:
+        if age > self.twa_thresholds['cook'] and 'cook' in self.tap:
             self.tap.remove('cook')
             self.bottle.append('cook')
 
     def calc_demand_change(self):
         '''
         Calculates the demand change for the hour based on the behaviors
+
+        Values come from minimum emergency water use values:
+        https://handbook.spherestandards.org/en/sphere/#ch006_004_001
+
+        And are converted to percentage of household demand using data
+        from:
+
+        DeOreo, W. B., Mayer, P., Dziegielewski, B., & Kiefer, J. (2016).
+            Residential End Uses of Water, Version 2: Executive Report.
+
+        Calculate the amount of water needed for each use given the total
+        necessary amount is 50 L/P/D (from Sphere report).
+        Drink:   3 L/P/D / 15 L/P/D = 20% * 50 L/P/D = 10 L/P/D
+        Hygiene: 6 L/P/D / 15 L/P/D = 40% * 50 L/P/D = 20 L/P/D
+        Cook:    6 L/P/D / 15 L/P/D = 40% * 50 L/P/D = 20 L/P/D
+
+        Calculate percentage using DeOreo data: 522 L/H/D and 2.77 P/H
+        10L * 2.77 P/H / 522 L/H/D = 5.3%
+        20L * 2.77 P/H / 522 L/H/D = 10.6%
         '''
         change = 1
         if 'hygiene' not in self.tap:
-            change -= 0.1
+            change -= 0.106
         if 'cook' not in self.tap:
-            change -= 0.1
+            change -= 0.106
         if 'drink' not in self.tap:
-            change -= 0.1
+            change -= 0.053
 
         return change
 
@@ -476,8 +490,12 @@ class Household:
         demand_pattern = self.model.wn.get_pattern('node_'+self.node)
         demand_pattern = demand_pattern.multipliers[timestep-hyd_step:timestep]
 
+        # need to get the demand of just this household if it is in a
+        # multifamily housing node
+        multiplier = len(self.agent_ids) / self.model.nodes_capacity[self.node]
+
         # Calculate the actual demand for that period
-        total_demand = demand_pattern * self.base_demand
+        total_demand = demand_pattern * self.base_demand * multiplier
 
         # set the households tap demand and bottled water demand
         # conversion of 1,000,000 is ML -> L
@@ -506,13 +524,13 @@ class Household:
 
         # calculate total cost
         self.cow = self.tap_cost + self.bottle_cost
-        if bottle > 0.0:
-            print(self.node)
-            print(tap)
-            print(self.tap_cost)
-            print(bottle)
-            print(self.bottle_cost)
-            print(self.cow)
+        # if bottle > 0.0:
+        #     print(self.node)
+        #     print(tap)
+        #     print(self.tap_cost)
+        #     print(bottle)
+        #     print(self.bottle_cost)
+        #     print(self.cow)
 
     def finalize(self):
         '''
