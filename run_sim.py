@@ -50,10 +50,10 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
 
     # run the number of days required by the input
     if kwargs['verbose'] == 0.5:
-        for _ in tqdm(range(24*days)):
+        for _ in tqdm(range(1, 24*days+1)):
             model.step()
     else:
-        for _ in range(24*days):
+        for _ in range(1, 24*days+1):
             model.step()
 
     # save the input file to test run time
@@ -144,19 +144,11 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
-<<<<<<< HEAD
     households = [h.node for i, hs in model.households.items() for h in hs]
-    income = list()
-    for node, houses in model.households.items():
-        for house in houses:
-            income.append(house.income)
-=======
-    households = [i for i in model.households]
-    # income = dict()
-    # for node in model.households:
-    #     house = model.households[node]
-    #     income[node] = house.income
->>>>>>> d795b2ba7bca8a349df20c17bbbb46e25a0de249
+    # income = list()
+    # for node, houses in model.households.items():
+    #     for house in houses:
+    #         income.append(house.income)
 
     cov_pers = convert_to_pd(model.cov_pers, agents)
     cov_ff = convert_to_pd(model.cov_ff, agents)
@@ -171,13 +163,9 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     hygiene = convert_to_pd(model.hygiene, households)
     drink = convert_to_pd(model.drink, households)
     cook = convert_to_pd(model.cook, households)
-<<<<<<< HEAD
-    income = convert_to_pd({'0': income}, households)
-=======
-    income = convert_to_pd(model.income, [0])
+    income = convert_to_pd({0: model.income}, households)
     traditional = convert_to_pd(model.traditional, [0])
     burden = convert_to_pd(model.burden, [0])
->>>>>>> d795b2ba7bca8a349df20c17bbbb46e25a0de249
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")

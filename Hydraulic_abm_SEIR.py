@@ -494,7 +494,8 @@ class ConsumerModel(Model):
             elif self.network == 'mesopolis':
                 ids = self.meso_household(ids, node)
 
-        self.income = {n: i.income for n, i in self.households.items()}
+        # households is a dictionary of lists of households
+        self.income = [h.income for n, i in self.households.items() for h in i]
 
         if self.network == 'mesopolis':
             '''
@@ -1201,23 +1202,25 @@ class ConsumerModel(Model):
             while not success:
                 success, stop_conditions = self.sim.run_sim()
             self.check_water_age()
-            print(self.water_age_slope)
+            # print(self.water_age_slope)
 
             # update household avoidance behaviors and demand values
-            demand_list = list()
-            for node, houses in self.households.items():
-                for house in houses:
-                    node_age = self.sim._results.node['quality'].loc[:, node]
-                    demand_list.append(house.update_household(
-                        node_age.iloc[-1] / 3600
-                    ))
+            # we don't want to update behaviors during the warmup period
+            if not self.warmup:
+                demand_list = list()
+                for node, houses in self.households.items():
+                    for house in houses:
+                        node_age = self.sim._results.node['quality'].loc[:, node]
+                        demand_list.append(house.update_household(
+                            node_age.iloc[-1] / 3600
+                        ))
 
-            self.demand_multiplier[node] = sum(demand_list) / len(demand_list)
-            self.collect_household_data()
-            self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
-                np.array(list(self.income.values())),
-                np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
-            )
+                self.demand_multiplier[node] = sum(demand_list) / len(demand_list)
+                self.collect_household_data()
+                self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
+                    np.array(self.income),
+                    np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
+                )
 
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:

@@ -876,25 +876,38 @@ class Graphics(BaseGraphics):
         )
 
         cols = ['Tap Water', 'Bottled Water', 'Total']
-        for i in data['tw_cost'].max():
-            print(i)
         cost = pd.concat([data['tw_cost'].mean(axis=1),
                           data['bw_cost'].mean(axis=1),
                           data['tot_cost'].mean(axis=1)],
                          axis=1, keys=cols)
-        print(cost)
+        cost_max = pd.concat([data['tw_cost'].max(axis=1),
+                              data['bw_cost'].max(axis=1),
+                              data['tot_cost'].max(axis=1)],
+                             axis=1, keys=cols)
+        for i in cost.items():
+            print(i)
+
+        # average cost plot
         ax = plt.subplot()
         self.make_avg_plot(
             ax, cost, None, cols, cost.index / 24,
-            'Time (Weeks)', 'Water Cost ($)', show_labels=True, sd_plot=False
+            'Time (Days)', 'Mean Water Cost ($)', show_labels=True, sd_plot=False
         )
 
-        plt.savefig(loc + 'water_cost.' + self.format,
+        plt.savefig(loc + 'mean_water_cost.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        print(data['income'].iloc[0, :].groupby(level=0).mean())
-        print(data['tot_cost'].iloc[-1, :].groupby(level=0).mean())
+        # max cost plot
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, cost_max, None, cols, cost_max.index / 24,
+            'Time (Days)', 'Maximum Water Cost ($)', show_labels=True, sd_plot=False
+        )
+
+        plt.savefig(loc + 'max_water_cost.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
         ax = wntr.graphics.plot_network(
             self.wn,
