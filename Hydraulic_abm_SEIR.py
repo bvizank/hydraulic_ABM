@@ -328,6 +328,8 @@ class ConsumerModel(Model):
         self.bw_cost = dict()
         self.tw_cost = dict()
         self.bw_demand = dict()
+        self.traditional = dict()
+        self.burden = dict()
 
         self.hygiene = dict()
         self.drink = dict()
@@ -482,7 +484,8 @@ class ConsumerModel(Model):
         res_nodes = dcp(self.res_nodes)
         self.random.shuffle(res_nodes)
         ids = 0
-        # place all the agents in the residential nodes, each filled upto its capacity:
+        # place all the agents in the residential nodes, each filled up to
+        # its capacity:
         for node in res_nodes:
             node_dist = self.ind_node_dist[node]
             # for spot in range(int(self.nodes_capacity[node])):
@@ -490,6 +493,8 @@ class ConsumerModel(Model):
                 ids = self.micro_household(ids, node, node_dist)
             elif self.network == 'mesopolis':
                 ids = self.meso_household(ids, node)
+
+        self.income = {n: i.income for n, i in self.households.items()}
 
         if self.network == 'mesopolis':
             '''
@@ -1146,7 +1151,7 @@ class ConsumerModel(Model):
 
         if (self.timestep / 24) % 7 == 0:
             self.check_water_age()
-            print(self.water_age_slope)
+            # print(self.water_age_slope)
 
         # print(3600 * (self.timestep+1))
         # print(self.sim._results.node['demand'])
@@ -1209,6 +1214,10 @@ class ConsumerModel(Model):
 
             self.demand_multiplier[node] = sum(demand_list) / len(demand_list)
             self.collect_household_data()
+            self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
+                np.array(list(self.income.values())),
+                np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
+            )
 
         # if the timestep is a day then we need to update the demand patterns
         elif self.timestep % 24 == 0 and self.timestep != 0:
@@ -1328,7 +1337,7 @@ class ConsumerModel(Model):
         first_age = mean_age.iloc[1]
         # print(first_age)
         # print(len(mean_age))
-        self.plot_water_age(curr_results.node['quality'].loc[:, self.age_nodes] / 3600)
+        # self.plot_water_age(curr_results.node['quality'].loc[:, self.age_nodes] / 3600)
         # calculate the difference between last and penultimate timesteps
         # and sum a total error.
         # for node in self.nodes_w_demand:
@@ -1395,6 +1404,38 @@ class ConsumerModel(Model):
         self.hygiene[self.timestep] = step_hygiene
         self.drink[self.timestep] = step_drink
         self.cook[self.timestep] = step_cook
+
+    def calc_equity_metrics(self, income, cow):
+        '''
+        Calculate the equity metrics for the given time period.
+
+        See:
+        https://nicholasinstitute.duke.edu/water-affordability/affordability/about_dashboard.html#metrics
+
+        Parameters
+        ----------
+        income : np.array
+            income for each household
+
+        cow : np.array
+            cost of water for each household for the given timestep
+
+        '''
+        # scale the income to the number of days passed in the simulation
+        scaled_income = income * self.timestep_day / 365
+
+        # calculate the median and 20th percentile income values
+        median_i = np.median(scaled_income)
+        bot20_i = np.quantile(scaled_income, 0.2)
+
+        # calculate the median water bill
+        median_cow = np.median(cow)
+
+        # caculate traditional and household burden
+        traditional = median_cow / median_i
+        household_burden = median_cow / bot20_i
+
+        return traditional, household_burden
 
     def daily_tasks(self):
         ''' Increment day time step '''

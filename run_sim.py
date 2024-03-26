@@ -144,11 +144,19 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
+<<<<<<< HEAD
     households = [h.node for i, hs in model.households.items() for h in hs]
     income = list()
     for node, houses in model.households.items():
         for house in houses:
             income.append(house.income)
+=======
+    households = [i for i in model.households]
+    # income = dict()
+    # for node in model.households:
+    #     house = model.households[node]
+    #     income[node] = house.income
+>>>>>>> d795b2ba7bca8a349df20c17bbbb46e25a0de249
 
     cov_pers = convert_to_pd(model.cov_pers, agents)
     cov_ff = convert_to_pd(model.cov_ff, agents)
@@ -163,7 +171,13 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     hygiene = convert_to_pd(model.hygiene, households)
     drink = convert_to_pd(model.drink, households)
     cook = convert_to_pd(model.cook, households)
+<<<<<<< HEAD
     income = convert_to_pd({'0': income}, households)
+=======
+    income = convert_to_pd(model.income, [0])
+    traditional = convert_to_pd(model.traditional, [0])
+    burden = convert_to_pd(model.burden, [0])
+>>>>>>> d795b2ba7bca8a349df20c17bbbb46e25a0de249
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
@@ -179,6 +193,8 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     drink.to_pickle(output_loc + "/drink.pkl")
     cook.to_pickle(output_loc + "/cook.pkl")
     income.to_pickle(output_loc + "/income.pkl")
+    traditional.to_pickle(output_loc + "/traditional.pkl")
+    burden.to_pickle(output_loc + "/burden.pkl")
 
     with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
         model.param_out.to_excel(writer, sheet_name='params')
