@@ -1469,6 +1469,9 @@ class ConsumerModel(Model):
                     if agent.ppe == 0 and 'ppe' in self.bbn_models:
                         agent.predict_ppe()
 
+            # collect the bbn and sv data for each agent
+            self.collect_agent_data()
+
             ''' Set the wfh threshold if lag time has been reached '''
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
@@ -1560,7 +1563,7 @@ class ConsumerModel(Model):
             if self.res_pat_select == 'pysimdeum':
                 self.check_houses()
             self.communication_utility()
-            self.collect_agent_data()
+            # self.collect_agent_data()
 
         # daily updating is done during warmup
         if (self.timestep + 1) % 24 == 0 and self.timestep != 0:

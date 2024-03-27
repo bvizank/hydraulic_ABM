@@ -1,6 +1,5 @@
 import os
 import sys
-print(sys.platform)
 if sys.platform == "darwin":
     os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -46,7 +45,8 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     # run a warmup period if warmup appears in kwargs
     while model.warmup:
         model.step()
-    print(f'Warmup period finished with slope {model.water_age_slope}.')
+    if kwargs['verbose'] > 0:
+        print(f'Warmup period finished with slope {model.water_age_slope}.')
 
     # run the number of days required by the input
     if kwargs['verbose'] == 0.5:
@@ -57,12 +57,12 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
             model.step()
 
     # save the input file to test run time
-    write_inpfile(
-        model.wn,
-        'final_wnm.inp',
-        units=model.wn.options.hydraulic.inpfile_units,
-        version=2.2
-    )
+    # write_inpfile(
+    #     model.wn,
+    #     'final_wnm.inp',
+    #     units=model.wn.options.hydraulic.inpfile_units,
+    #     version=2.2
+    # )
 
     stop = perf_counter()
 

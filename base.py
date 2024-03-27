@@ -779,10 +779,15 @@ class Graphics(BaseGraphics):
                                       'income',
                                       'hygiene',
                                       'drink',
-                                      'cook']
+                                      'cook',
+                                      'traditional',
+                                      'burden']
         data = ut.read_data(loc, comp_list)
         households = len(data['income'].columns)
-        print(households)
+        warmup = data['bw_cost'].index[-1] - x_len
+        print(warmup)
+        print(data['burden'] * 100)
+        print(data['traditional'] * 100)
         data['tot_cost'] = data['bw_cost'] + data['tw_cost']
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
@@ -890,7 +895,7 @@ class Graphics(BaseGraphics):
         # average cost plot
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, cost, None, cols, (cost.index - cost.index[0]) / 24,
+            ax, cost, None, cols, (cost.index - warmup) / 24,
             'Time (Days)', 'Mean Water Cost ($)', show_labels=True, sd_plot=False
         )
 
@@ -901,7 +906,7 @@ class Graphics(BaseGraphics):
         # max cost plot
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, cost_max, None, cols, (cost_max.index - cost_max.index[0]) / 24,
+            ax, cost_max, None, cols, (cost_max.index - warmup) / 24,
             'Time (Days)', 'Maximum Water Cost ($)', show_labels=True, sd_plot=False
         )
 
@@ -940,5 +945,21 @@ class Graphics(BaseGraphics):
         )
 
         plt.savefig(loc + 'twa.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Equity metric costs '''
+        metrics = pd.concat([data['traditional'],
+                             data['burden']],
+                            axis=1, keys=['Traditional', 'Burden'])
+
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, metrics * 100, None, ['Traditional', 'Burden'],
+            (metrics.index - warmup) / 24,
+            'Time (days)', '% of Income', show_labels=True, sd_plot=False
+        )
+
+        plt.savefig(loc + 'equity_metrics.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
