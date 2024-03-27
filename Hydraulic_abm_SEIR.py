@@ -1150,7 +1150,7 @@ class ConsumerModel(Model):
         while not success:
             success, stop_conditions = self.sim.run_sim()
 
-        if (self.timestep + 1 / 24) % 7 == 0:
+        if ((self.timestep + 1) / 24) % 7 == 0:
             self.check_water_age()
             # print(self.water_age_slope)
 
@@ -1177,7 +1177,7 @@ class ConsumerModel(Model):
             self.change_demands()
         # if the timestep is the beginning of a week then we want to run the sim
         # also run the sim at the end of the simulation
-        if ((self.timestep + 1 / 24) % self.hyd_sim == 0 and self.timestep != 0 or
+        if (((self.timestep + 1) / 24) % self.hyd_sim == 0 and self.timestep != 0 or
            (self.timestep + 1) / 24 == self.days):
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
@@ -1575,7 +1575,7 @@ class ConsumerModel(Model):
         else:
             NotImplementedError(f"Hydraulic simultion {self.hyd_sim} not set up.")
 
-        self.timestepN = self.timestep - self.timestep_day * 24
+        self.timestepN = self.timestep + 1 - self.timestep_day * 24
         # self.inform_status()
         # self.compliance_status()
         if not self.warmup:

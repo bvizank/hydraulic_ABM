@@ -890,7 +890,7 @@ class Graphics(BaseGraphics):
         # average cost plot
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, cost, None, cols, cost.index / 24,
+            ax, cost, None, cols, (cost.index - cost.index[0]) / 24,
             'Time (Days)', 'Mean Water Cost ($)', show_labels=True, sd_plot=False
         )
 
@@ -901,7 +901,7 @@ class Graphics(BaseGraphics):
         # max cost plot
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, cost_max, None, cols, cost_max.index / 24,
+            ax, cost_max, None, cols, (cost_max.index - cost_max.index[0]) / 24,
             'Time (Days)', 'Maximum Water Cost ($)', show_labels=True, sd_plot=False
         )
 
