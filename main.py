@@ -17,11 +17,11 @@ logger.addHandler(fh)
 # run the simulation
 run_sim(
     id=0,
-    days=98,
+    days=182,
     seed=123,
     wfh_lag=0,
     no_wfh_perc=0,
-    bbn_models=['all'],
+    bbn_models=[],
     daily_contacts=30,
     city='micropolis',
     verbose=0.5,
