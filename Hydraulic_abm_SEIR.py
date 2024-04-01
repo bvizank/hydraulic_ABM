@@ -45,10 +45,11 @@ class ConsumerModel(Model):
                  city,
                  days=90,
                  id=0,    # id of simulation
-                 seed=218,
+                 seed=None,
                  **kwargs):
         super().__init__()
         init_start = time.perf_counter()
+        print(f"Seed: {self._seed}")
         self.days = days
         self.id = id
         self.num_agents = N

@@ -39,7 +39,7 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
 
     start = perf_counter()
 
-    model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+    model = ConsumerModel(pop, city, days=days, id=id, seed=seed, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
 
     print('Starting simulation ............................')
     # run a warmup period if warmup appears in kwargs
