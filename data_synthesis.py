@@ -82,4 +82,3 @@ for i in range(0+rank, len(read_list), nprocs):
     curr_data = curr_data.groupby(curr_data.index)
     curr_data.mean().to_pickle(data_dir + '/' + 'avg_' + file + '.pkl')
     curr_data.var().to_pickle(data_dir + '/' + 'var_' + file + '.pkl')
-
