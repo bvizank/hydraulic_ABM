@@ -1,6 +1,5 @@
 import os
 import sys
-print(sys.platform)
 if sys.platform == "darwin":
     os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
@@ -40,29 +39,30 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
 
     start = perf_counter()
 
-    model = ConsumerModel(pop, city, days=days, id=id, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+    model = ConsumerModel(pop, city, days=days, id=id, seed=seed, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
 
     print('Starting simulation ............................')
     # run a warmup period if warmup appears in kwargs
     while model.warmup:
         model.step()
-    print(f'Warmup period finished with slope {model.water_age_slope}.')
+    if kwargs['verbose'] > 0:
+        print(f'Warmup period finished with slope {model.water_age_slope}.')
 
     # run the number of days required by the input
     if kwargs['verbose'] == 0.5:
-        for _ in tqdm(range(24*days)):
+        for _ in tqdm(range(1, 24*days+1)):
             model.step()
     else:
-        for _ in range(24*days):
+        for _ in range(1, 24*days+1):
             model.step()
 
     # save the input file to test run time
-    write_inpfile(
-        model.wn,
-        'final_wnm.inp',
-        units=model.wn.options.hydraulic.inpfile_units,
-        version=2.2
-    )
+    # write_inpfile(
+    #     model.wn,
+    #     'final_wnm.inp',
+    #     units=model.wn.options.hydraulic.inpfile_units,
+    #     version=2.2
+    # )
 
     stop = perf_counter()
 
@@ -144,11 +144,11 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
-    households = [i for i in model.households]
-    income = dict()
-    for node in model.households:
-        house = model.households[node]
-        income[node] = house.income
+    households = [h.node for i, hs in model.households.items() for h in hs]
+    # income = list()
+    # for node, houses in model.households.items():
+    #     for house in houses:
+    #         income.append(house.income)
 
     cov_pers = convert_to_pd(model.cov_pers, agents)
     cov_ff = convert_to_pd(model.cov_ff, agents)
@@ -163,7 +163,9 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     hygiene = convert_to_pd(model.hygiene, households)
     drink = convert_to_pd(model.drink, households)
     cook = convert_to_pd(model.cook, households)
-    income = convert_to_pd(income, [0])
+    income = convert_to_pd({0: model.income}, households)
+    traditional = convert_to_pd(model.traditional, [0])
+    burden = convert_to_pd(model.burden, [0])
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
@@ -179,6 +181,8 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     drink.to_pickle(output_loc + "/drink.pkl")
     cook.to_pickle(output_loc + "/cook.pkl")
     income.to_pickle(output_loc + "/income.pkl")
+    traditional.to_pickle(output_loc + "/traditional.pkl")
+    burden.to_pickle(output_loc + "/burden.pkl")
 
     with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
         model.param_out.to_excel(writer, sheet_name='params')

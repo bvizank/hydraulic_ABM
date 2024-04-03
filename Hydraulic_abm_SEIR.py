@@ -45,10 +45,11 @@ class ConsumerModel(Model):
                  city,
                  days=90,
                  id=0,    # id of simulation
-                 seed=218,
+                 seed=None,
                  **kwargs):
         super().__init__()
         init_start = time.perf_counter()
+        print(f"Seed: {self._seed}")
         self.days = days
         self.id = id
         self.num_agents = N
@@ -328,6 +329,8 @@ class ConsumerModel(Model):
         self.bw_cost = dict()
         self.tw_cost = dict()
         self.bw_demand = dict()
+        self.traditional = dict()
+        self.burden = dict()
 
         self.hygiene = dict()
         self.drink = dict()
@@ -466,6 +469,7 @@ class ConsumerModel(Model):
 
         # create list of households
         self.households = dict()
+        self.household_n = dict()
         # no_wfh_comm_nodes = self.random.choices(population=self.com_nodes,
         #                                         k=int(len(self.com_nodes)*0.2))
         # no_wfh_rest_nodes = self.random.choices(population=self.cafe_nodes,
@@ -481,7 +485,8 @@ class ConsumerModel(Model):
         res_nodes = dcp(self.res_nodes)
         self.random.shuffle(res_nodes)
         ids = 0
-        # place all the agents in the residential nodes, each filled upto its capacity:
+        # place all the agents in the residential nodes, each filled up to
+        # its capacity:
         for node in res_nodes:
             node_dist = self.ind_node_dist[node]
             # for spot in range(int(self.nodes_capacity[node])):
@@ -489,6 +494,9 @@ class ConsumerModel(Model):
                 ids = self.micro_household(ids, node, node_dist)
             elif self.network == 'mesopolis':
                 ids = self.meso_household(ids, node)
+
+        # households is a dictionary of lists of households
+        self.income = [h.income for n, i in self.households.items() for h in i]
 
         if self.network == 'mesopolis':
             '''
@@ -516,6 +524,7 @@ class ConsumerModel(Model):
 
         curr_ids = init_id
 
+        house_list = list()
         ''' Iterate through the agents at the current res node
         and add them to households of 1 to 6 agents '''
         while node_cap > 6:
@@ -524,19 +533,22 @@ class ConsumerModel(Model):
             prev_id = curr_ids
             curr_ids += home_size
             # make the household and append it to a list of households
-            self.households[curr_node] = Household(
+            house_list.append(Household(
                 prev_id, curr_ids, curr_node, node_dist, self
-            )
+            ))
             node_cap -= home_size
         else:
             # if the node size is 6 or fewer, we only need to do this once
-            self.households[curr_node] = Household(
+            house_list.append(Household(
                 curr_ids,
                 node_cap_static + init_id,
                 curr_node,
                 node_dist,
                 self
-            )
+            ))
+
+        self.households[curr_node] = house_list
+        self.household_n[curr_node] = len(house_list)
 
         return init_id + node_cap
 
@@ -560,8 +572,6 @@ class ConsumerModel(Model):
             curr_node = [a for a in curr_node if a not in curr_housemates]
             ''' Assign the current list of housemates to each agent
             so they each know who their housemates are '''
-
-            ''' USE BASE_HOUSEHOLD METHOD '''
 
             for mate in curr_housemates:
                 agent = self.schedule._agents[mate]
@@ -1063,8 +1073,6 @@ class ConsumerModel(Model):
         self.daily_demand[self.timestepN, :] = step_demand
         self.agent_matrix[self.timestep] = step_agents
 
-
-
     # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
         '''
@@ -1143,9 +1151,9 @@ class ConsumerModel(Model):
         while not success:
             success, stop_conditions = self.sim.run_sim()
 
-        if (self.timestep / 24) % 7 == 0:
+        if ((self.timestep + 1) / 24) % 7 == 0:
             self.check_water_age()
-            print(self.water_age_slope)
+            # print(self.water_age_slope)
 
         # print(3600 * (self.timestep+1))
         # print(self.sim._results.node['demand'])
@@ -1165,11 +1173,13 @@ class ConsumerModel(Model):
         # first we need to collect the nodal demands at each hour. That means
         # we run self.collect_demands() each time this method is called.
         self.collect_demands()
+        # if the timestep is a day then we need to update the demand patterns
+        if (self.timestep + 1) % 24 == 0 and self.timestep != 0:
+            self.change_demands()
         # if the timestep is the beginning of a week then we want to run the sim
         # also run the sim at the end of the simulation
-        if ((self.timestep / 24) % self.hyd_sim == 0 and self.timestep != 0 or
+        if (((self.timestep + 1) / 24) % self.hyd_sim == 0 and self.timestep != 0 or
            (self.timestep + 1) / 24 == self.days):
-            self.change_demands()
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
                 if node in self.nodes_capacity:
@@ -1195,22 +1205,25 @@ class ConsumerModel(Model):
             while not success:
                 success, stop_conditions = self.sim.run_sim()
             self.check_water_age()
-            print(self.water_age_slope)
+            # print(self.water_age_slope)
 
-            # update household avoidance behaviors
-            ''' UNCOMMENT FOR COST OF WATER '''
-            for node in self.households:
-                household = self.households[node]
-                node_age = self.sim._results.node['quality'].loc[:, node]
-                self.demand_multiplier[node] = household.update_household(
-                                                   node_age.iloc[-1] / 3600
-                                               )
-            self.collect_household_data()
+            # update household avoidance behaviors and demand values
+            # we don't want to update behaviors during the warmup period
+            if not self.warmup:
+                demand_list = list()
+                for node, houses in self.households.items():
+                    for house in houses:
+                        node_age = self.sim._results.node['quality'].loc[:, node]
+                        demand_list.append(house.update_household(
+                            node_age.iloc[-1] / 3600
+                        ))
 
-        # if the timestep is a day then we need to update the demand patterns
-        elif self.timestep % 24 == 0 and self.timestep != 0:
-            self.change_demands()
-
+                self.demand_multiplier[node] = sum(demand_list) / len(demand_list)
+                self.collect_household_data()
+                self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
+                    np.array(self.income),
+                    np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
+                )
 
     # and then (after setting the demand above) we run the simulation:
     def run_hydraulic(self):
@@ -1326,7 +1339,7 @@ class ConsumerModel(Model):
         first_age = mean_age.iloc[1]
         # print(first_age)
         # print(len(mean_age))
-        self.plot_water_age(curr_results.node['quality'].loc[:, self.age_nodes] / 3600)
+        # self.plot_water_age(curr_results.node['quality'].loc[:, self.age_nodes] / 3600)
         # calculate the difference between last and penultimate timesteps
         # and sum a total error.
         # for node in self.nodes_w_demand:
@@ -1345,7 +1358,7 @@ class ConsumerModel(Model):
         step_dine = list()
         step_groc = list()
         step_ppe = list()
-        
+
         for agent in self.schedule.agents:
             step_cov_pers.append(dcp(agent.agent_params['COVIDexp']))
             step_cov_ff.append(dcp(agent.agent_params['COVIDeffect_4']))
@@ -1374,17 +1387,17 @@ class ConsumerModel(Model):
         step_drink = list()
         step_cook = list()
 
-        for node in self.households:
-            house = self.households[node]
-            step_bw_cost.append(dcp(house.bottle_cost))
-            step_tw_cost.append(dcp(house.tap_cost))
-            step_bw_demand.append(dcp(house.bottled_water))
-            hygiene = 1 if 'hygiene' in house.bottle else 0
-            drink = 1 if 'drink' in house.bottle else 0
-            cook = 1 if 'cook' in house.bottle else 0
-            step_hygiene.append(hygiene)
-            step_drink.append(drink)
-            step_cook.append(cook)
+        for node, houses in self.households.items():
+            for house in houses:
+                step_bw_cost.append(dcp(house.bottle_cost))
+                step_tw_cost.append(dcp(house.tap_cost))
+                step_bw_demand.append(dcp(house.bottled_water))
+                hygiene = 1 if 'hygiene' in house.bottle else 0
+                drink = 1 if 'drink' in house.bottle else 0
+                cook = 1 if 'cook' in house.bottle else 0
+                step_hygiene.append(hygiene)
+                step_drink.append(drink)
+                step_cook.append(cook)
 
         self.bw_cost[self.timestep] = step_bw_cost
         self.tw_cost[self.timestep] = step_tw_cost
@@ -1393,6 +1406,38 @@ class ConsumerModel(Model):
         self.hygiene[self.timestep] = step_hygiene
         self.drink[self.timestep] = step_drink
         self.cook[self.timestep] = step_cook
+
+    def calc_equity_metrics(self, income, cow):
+        '''
+        Calculate the equity metrics for the given time period.
+
+        See:
+        https://nicholasinstitute.duke.edu/water-affordability/affordability/about_dashboard.html#metrics
+
+        Parameters
+        ----------
+        income : np.array
+            income for each household
+
+        cow : np.array
+            cost of water for each household for the given timestep
+
+        '''
+        # scale the income to the number of days passed in the simulation
+        scaled_income = income * self.timestep_day / 365
+
+        # calculate the median and 20th percentile income values
+        median_i = np.median(scaled_income)
+        bot20_i = np.quantile(scaled_income, 0.2)
+
+        # calculate the median water bill
+        median_cow = np.median(cow)
+
+        # caculate traditional and household burden
+        traditional = median_cow / median_i
+        household_burden = median_cow / bot20_i
+
+        return traditional, household_burden
 
     def daily_tasks(self):
         ''' Increment day time step '''
@@ -1425,6 +1470,9 @@ class ConsumerModel(Model):
                     if agent.ppe == 0 and 'ppe' in self.bbn_models:
                         agent.predict_ppe()
 
+            # collect the bbn and sv data for each agent
+            self.collect_agent_data()
+
             ''' Set the wfh threshold if lag time has been reached '''
             if self.stat_tot[3] > self.wfh_lag and not self.wfh_thres:
                 self.wfh_thres = True
@@ -1440,7 +1488,7 @@ class ConsumerModel(Model):
             self.wn.options.quality.parameter = 'AGE'
             # run the hydraulic simulation and collect results
             self.run_hydraulic()
-        if self.timestep % 24 == 0:
+        if (self.timestep + 1) % 24 == 0:
             # update the demand patterns with the current days demand
             self.change_demands()
 
@@ -1506,7 +1554,7 @@ class ConsumerModel(Model):
         # BV: changed times to 6, 14, and 22 because I think this is more representative
         # of a three shift schedule. Unsure if this changes anything with water
         # patterns, but I suspect it might.
-        if self.timestep == 0 or self.timestepN == 6 or self.timestepN == 14 or self.timestepN == 22:
+        if self.timestep == 0 or self.timestepN == 5 or self.timestepN == 13 or self.timestepN == 21:
             self.move_indust()
 
         # COVID related methods are not run during warmup
@@ -1516,10 +1564,10 @@ class ConsumerModel(Model):
             if self.res_pat_select == 'pysimdeum':
                 self.check_houses()
             self.communication_utility()
-            self.collect_agent_data()
+            # self.collect_agent_data()
 
         # daily updating is done during warmup
-        if self.timestep % 24 == 0 and self.timestep != 0:
+        if (self.timestep + 1) % 24 == 0 and self.timestep != 0:
             self.daily_tasks()
 
         if self.hyd_sim == 'eos':
@@ -1531,7 +1579,7 @@ class ConsumerModel(Model):
         else:
             NotImplementedError(f"Hydraulic simultion {self.hyd_sim} not set up.")
 
-        self.timestepN = self.timestep - self.timestep_day * 24
+        self.timestepN = self.timestep + 1 - self.timestep_day * 24
         # self.inform_status()
         # self.compliance_status()
         if not self.warmup:
