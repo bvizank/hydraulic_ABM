@@ -361,12 +361,12 @@ class Graphics(BaseGraphics):
     '''
 
     def __init__(self, publication, error):
-        self.base_comp_dir = 'Output Files/30_no_pm/'
-        self.pm_comp_dir = 'Output Files/30_all_pm/'
-        self.wfh_loc = 'Output Files/30_wfh/'
-        self.dine_loc = 'Output Files/30_dine/'
-        self.groc_loc = 'Output Files/30_grocery/'
-        self.ppe_loc = 'Output Files/30_ppe/'
+        self.base_comp_dir = 'Output Files/30_base_equity/'
+        self.pm_comp_dir = 'Output Files/30_all_pm_equity/'
+        self.wfh_loc = 'Output Files/30_wfh_equity/'
+        self.dine_loc = 'Output Files/30_dine_equity/'
+        self.groc_loc = 'Output Files/30_groc_equity/'
+        # self.ppe_loc = 'Output Files/30_ppe_equity/'
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers',
                           'wfh', 'dine', 'groc', 'ppe']
@@ -375,7 +375,7 @@ class Graphics(BaseGraphics):
         self.wfh = ut.read_comp_data(self.wfh_loc, ['seir_data', 'age'])
         self.dine = ut.read_comp_data(self.dine_loc, ['seir_data', 'age'])
         self.grocery = ut.read_comp_data(self.groc_loc, ['seir_data', 'age'])
-        self.ppe = ut.read_comp_data(self.ppe_loc, ['seir_data', 'age'])
+        # self.ppe = ut.read_comp_data(self.ppe_loc, ['seir_data', 'age'])
 
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
@@ -871,7 +871,7 @@ class Graphics(BaseGraphics):
 
         ''' Heatmap and map of costs '''
         # convert the annual income to an income that is specific to timeframe
-        data['income'] = data['income'] * days / 365
+        data['income'] = data['income']
         self.make_heatmap(
             data['tot_cost'].T,
             'Time (weeks)',

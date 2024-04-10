@@ -174,6 +174,14 @@ class ConsumerModel(Model):
         else:
             self.tol = 0.001
 
+        '''
+        twa_mods are the modulators to the twa thresholds passed to households
+        '''
+        if 'twa_mods' in kwargs:
+            self.twa_mods = kwargs['twa_mods']
+        else:
+            self.twa_mods = [130, 150, 140]
+
         ''' Setup and mapping of variables from various sources. For more information
         see utils.py '''
         setup_out = setup(city)
@@ -467,7 +475,7 @@ class ConsumerModel(Model):
                                 k=int(len(self.ind_nodes)*self.no_wfh_perc)
                             )
 
-        # create list of households
+        # create dictionary of households
         self.households = dict()
         self.household_n = dict()
         # no_wfh_comm_nodes = self.random.choices(population=self.com_nodes,
@@ -478,24 +486,31 @@ class ConsumerModel(Model):
         self.work_agents = (max(self.ind_dist) + max(self.nav_dist)) * 2
         # rest_agents = max(self.cafe_dist)
         # comm_agents = max(self.com_dist)
+
         # CREATING AGENTS
-        ''' Needed to account for multifamily housing, so iterating through
-        residential nodes and placing agents that way and then storing their
-        housemates in the agent object. '''
         res_nodes = dcp(self.res_nodes)
         self.random.shuffle(res_nodes)
         ids = 0
-        # place all the agents in the residential nodes, each filled up to
-        # its capacity:
+        max_node_dist = max(self.ind_node_dist.values())
+
+        '''
+        Place all the agents in the residential nodes, each filled up to
+        its capacity
+
+        The self.households and self.households_n are filled in the household
+        methods (micro_ and meso_)
+        '''
         for node in res_nodes:
-            node_dist = self.ind_node_dist[node]
+            # distance to closest industrial node relative to max distance
+            # essentially a normalized distance
+            node_dist = self.ind_node_dist[node] / max_node_dist
             # for spot in range(int(self.nodes_capacity[node])):
             if self.network == 'micropolis':
                 ids = self.micro_household(ids, node, node_dist)
             elif self.network == 'mesopolis':
                 ids = self.meso_household(ids, node)
 
-        # households is a dictionary of lists of households
+        # collect income from each household that was just created
         self.income = [h.income for n, i in self.households.items() for h in i]
 
         if self.network == 'mesopolis':
@@ -525,8 +540,15 @@ class ConsumerModel(Model):
         curr_ids = init_id
 
         house_list = list()
-        ''' Iterate through the agents at the current res node
-        and add them to households of 1 to 6 agents '''
+
+        '''
+        Need to account for multifamily housing, so iterating through
+        residential nodes and placing agents that way and then storing their
+        housemates in the agent object.
+
+        Iterate through the agents at the current res node
+        and add them to households of 1 to 6 agents
+        '''
         while node_cap > 6:
             # pick a random size for current household
             home_size = self.random.choice(range(1, 7))
@@ -534,7 +556,7 @@ class ConsumerModel(Model):
             curr_ids += home_size
             # make the household and append it to a list of households
             house_list.append(Household(
-                prev_id, curr_ids, curr_node, node_dist, self
+                prev_id, curr_ids, curr_node, node_dist, self.twa_mods, self
             ))
             node_cap -= home_size
         else:
@@ -544,6 +566,7 @@ class ConsumerModel(Model):
                 node_cap_static + init_id,
                 curr_node,
                 node_dist,
+                self.twa_mods,
                 self
             ))
 

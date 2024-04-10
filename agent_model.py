@@ -354,13 +354,16 @@ class Household:
         households home node
 
     node_dist : float
-        this nodes distance to the nearest industrial node
+        this nodes relative distance to the nearest industrial node
+
+    twa_mods : list
+        list of twa modulators for [drink, cook, hygiene]
 
     model : ConsumerModel
         model object where agents are added
     '''
 
-    def __init__(self, start_id, end_id, node, node_dist, model):
+    def __init__(self, start_id, end_id, node, node_dist, twa_mods, model):
         self.agent_ids = list()  # list of agent that are in the household
         self.agent_obs = list()  # list of agent objects that are in the household
         self.tap = ['drink', 'hygiene', 'cook']  # the actions using tap water
@@ -401,14 +404,17 @@ class Household:
         wn_node = model.wn.get_node(node)
         self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
-        # pick an income for the household based on the size of household
-        self.income = 9156.2736 + node_dist * 41.1114
+        # pick an income for the household based on the relative distance
+        # to the nearest industrial node
+        self.income = model.random.normalvariate(
+            (28250.195500391284 + 28711.81795579 * node_dist), 14569.890867054484
+        )
 
         # pick water age thresholds for TWA behaviors
         self.twa_thresholds = {
-            'drink':   model.random.betavariate(3, 1) * 130 + 24,
-            'hygiene': model.random.betavariate(3, 1) * 140 + 24,
-            'cook':    model.random.betavariate(3, 1) * 150 + 24
+            'drink':   model.random.betavariate(3, 1) * twa_mods[0] + 24,
+            'cook':    model.random.betavariate(3, 1) * twa_mods[1] + 24,
+            'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
         }
 
     def update_household(self, age):
