@@ -15,7 +15,7 @@ rank = comm.Get_rank()
 
 # set a new file logger in place of the stream handler
 # this will eliminate errors being sent to sys.stderr
-fh = logging.FileHandler('log' + str(rank), 'w')
+fh = logging.FileHandler('logs/log' + str(rank), 'w')
 fh.setLevel(logging.DEBUG)
 formmater = logging.Formatter('%(name)-12s %(levelname)-8s %(message)s')
 fh.setFormatter(formmater)
@@ -30,7 +30,7 @@ for i in range(0+rank, 30, nprocs):
         seed=i,
         wfh_lag=0,
         no_wfh_perc=0,
-        bbn_models=[],
+        bbn_models=['ppe'],
         daily_contacts=30,
         city='micropolis',
         verbose=0,

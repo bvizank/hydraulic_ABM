@@ -31,8 +31,7 @@ plots.make_cost_plots()
 plots.make_seir_plot(100)
 
 ''' Make single plots '''
-# plots.make_single_plots('2024-03-31_07-49_0_results', 182)
-# plots.make_single_plots('2024-03-12_17-31_0_results', 100)
+# plots.make_single_plots('2024-04-11_22-23_0_results', 180)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
