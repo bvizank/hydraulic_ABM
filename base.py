@@ -222,7 +222,7 @@ class BaseGraphics:
                                'rest': rest_loc})
         output.to_csv(output_loc + 'locations.csv')
 
-    def make_seir_plot(self):
+    def make_seir_plot(self, days):
         ''' Function to make the seir plot with the input columns '''
         base_data = dcp(self.base['avg_seir_data'])
         pm_data = dcp(self.pm['avg_seir_data'])
@@ -232,11 +232,11 @@ class BaseGraphics:
         pm_data = pm_data * 100
         base_sd = base_sd * 100
         pm_sd = pm_sd * 100
-
+        
         input = ['S', 'E', 'I', 'R', 'wfh']
         leg_text = ['Susceptible', 'Exposed', 'Infected', 'Recovered', 'WFH']
 
-        x_values = np.array([x for x in np.arange(0, 90, 90 / len(base_data))])
+        x_values = np.array([x for x in np.arange(0, days, days / len(base_data))])
 
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
         axes[0] = self.make_avg_plot(axes[0], base_data, base_sd, input, x_values)
@@ -360,22 +360,42 @@ class Graphics(BaseGraphics):
                             options include: se, ci95, and sd
     '''
 
-    def __init__(self, publication, error):
-        self.base_comp_dir = 'Output Files/30_no_pm/'
-        self.pm_comp_dir = 'Output Files/30_all_pm/'
+    def __init__(self, publication, error, days):
+        self.days = days
+        self.x_len = days * 24
+        # self.base_comp_dir = 'Output Files/30_no_pm/'
+        # self.pm_comp_dir = 'Output Files/30_all_pm/'
+        self.base_comp_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_base_equity/'
+        self.pm_comp_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_all_pm_equity/'
         self.wfh_loc = 'Output Files/30_wfh/'
         self.dine_loc = 'Output Files/30_dine/'
         self.groc_loc = 'Output Files/30_grocery/'
         self.ppe_loc = 'Output Files/30_ppe/'
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
-                          'cov_ff', 'cov_pers',
-                          'wfh', 'dine', 'groc', 'ppe']
-        self.pm = ut.read_comp_data(self.pm_comp_dir, self.comp_list)
-        self.base = ut.read_comp_data(self.base_comp_dir, self.comp_list)
-        self.wfh = ut.read_comp_data(self.wfh_loc, ['seir_data', 'age'])
-        self.dine = ut.read_comp_data(self.dine_loc, ['seir_data', 'age'])
-        self.grocery = ut.read_comp_data(self.groc_loc, ['seir_data', 'age'])
-        self.ppe = ut.read_comp_data(self.ppe_loc, ['seir_data', 'age'])
+                          'cov_ff', 'cov_pers', 'agent_loc',
+                          'wfh', 'dine', 'groc', 'ppe', 'burden',
+                          'bw_cost', 'tw_cost', 'income']
+        self.truncate_list = [
+            'seir_data', 'demand', 'age', 'flow'
+        ]
+        self.pm = ut.read_comp_data(
+            self.pm_comp_dir, self.comp_list, days, self.truncate_list
+        )
+        self.base = ut.read_comp_data(
+            self.base_comp_dir, self.comp_list, days, self.truncate_list
+        )
+        self.wfh = ut.read_comp_data(
+            self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
+        )
+        self.dine = ut.read_comp_data(
+            self.dine_loc, ['seir_data', 'age'], days, self.truncate_list
+        )
+        self.grocery = ut.read_comp_data(
+            self.groc_loc, ['seir_data', 'age'], days, self.truncate_list
+        )
+        self.ppe = ut.read_comp_data(
+            self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
+        )
 
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
@@ -390,7 +410,7 @@ class Graphics(BaseGraphics):
             plt.rcParams['figure.dpi'] = 800
             self.format = 'pdf'
         else:
-            self.pub_loc = 'Output Files/png_figures/'
+            self.pub_loc = 'Output Files/png_figures_equity/'
             self.format = 'png'
             plt.rcParams['figure.dpi'] = 500
 
@@ -414,8 +434,11 @@ class Graphics(BaseGraphics):
         ''' Import water network and data '''
         inp_file = 'Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp'
         self.wn = wntr.network.WaterNetworkModel(inp_file)
-        self.x_values = np.array([
-            x for x in np.arange(0, 90, 90 / len(self.pm['avg_demand']))
+        self.x_values_hour = np.array([
+            x for x in np.arange(0, days, days / len(self.pm['avg_demand']))
+        ])
+        self.x_values_day = np.array([
+            x for x in range(183)
         ])
 
         ''' Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh '''
@@ -480,7 +503,7 @@ class Graphics(BaseGraphics):
 
         # plot demand by sector
         ax = plt.subplot()
-        self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values,
+        self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour,
                            'Time (days)', 'Demand (L)',
                            show_labels=True) 
         plt.savefig(self.pub_loc + 'sector_demand' + '.' + self.format,
@@ -518,7 +541,7 @@ class Graphics(BaseGraphics):
 
         ax = plt.subplot()
         self.make_avg_plot(ax, demand, demand_err, ['Base', 'PM'],
-                           self.x_values,
+                           self.x_values_hour,
                            'Time (days)', 'Demand (L)', show_labels=True)
         plt.savefig(self.pub_loc + 'sum_demand_aggregate' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -565,9 +588,9 @@ class Graphics(BaseGraphics):
 
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
         axes[0] = self.make_avg_plot(axes[0], base_age / 3600, base_age_err / 3600,
-                                     cols, self.x_values)
+                                     cols, self.x_values_hour)
         axes[1] = self.make_avg_plot(axes[1], pm_age / 3600, pm_age_err / 3600,
-                                     cols, self.x_values)
+                                     cols, self.x_values_hour)
 
         axes[0].legend(cols)
         axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
@@ -655,7 +678,7 @@ class Graphics(BaseGraphics):
                           base_sv['cov_ff'][agent],
                           base_sv['media'][agent]],
                          axis=1, keys=cols)
-        plt.plot(np.delete(self.x_values, 0), data)
+        plt.plot(self.x_values_day, data)
         plt.xlabel('Time (day)')
         plt.ylabel('Value')
 
@@ -697,9 +720,9 @@ class Graphics(BaseGraphics):
 
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=False)
         axes[0] = self.make_avg_plot(axes[0], pers, pers_err, ['Base', 'PM'],
-                                     np.delete(self.x_values, 0))
+                                     np.delete(self.x_values_day, 0))
         axes[1] = self.make_avg_plot(axes[1], ff, ff_err, ['Base', 'PM'],
-                                     np.delete(self.x_values, 0))
+                                     np.delete(self.x_values_day, 0))
 
         axes[0].legend(['Base', 'PM'])
         axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
@@ -740,17 +763,17 @@ class Graphics(BaseGraphics):
 
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(nrows=2, ncols=2,
                                                      sharex=True, sharey=True)
-        ax1.plot(np.delete(self.x_values, 0), data[cols[0]])
-        ax1.fill_between(np.delete(self.x_values, 0), data[cols[0]] - err[cols[0]],
+        ax1.plot(np.delete(self.x_values_day, 0), data[cols[0]])
+        ax1.fill_between(np.delete(self.x_values_day, 0), data[cols[0]] - err[cols[0]],
                          data[cols[0]] + err[cols[0]], alpha=0.5)
-        ax2.plot(np.delete(self.x_values, 0), data[cols[1]])
-        ax2.fill_between(np.delete(self.x_values, 0), data[cols[1]] - err[cols[1]],
+        ax2.plot(np.delete(self.x_values_day, 0), data[cols[1]])
+        ax2.fill_between(np.delete(self.x_values_day, 0), data[cols[1]] - err[cols[1]],
                          data[cols[1]] + err[cols[1]], alpha=0.5)
-        ax3.plot(np.delete(self.x_values, 0), data[cols[2]])
-        ax3.fill_between(np.delete(self.x_values, 0), data[cols[2]] - err[cols[2]],
+        ax3.plot(np.delete(self.x_values_day, 0), data[cols[2]])
+        ax3.fill_between(np.delete(self.x_values_day, 0), data[cols[2]] - err[cols[2]],
                          data[cols[2]] + err[cols[2]], alpha=0.5)
-        ax4.plot(np.delete(self.x_values, 0), data[cols[3]])
-        ax4.fill_between(np.delete(self.x_values, 0), data[cols[3]] - err[cols[3]],
+        ax4.plot(np.delete(self.x_values_day, 0), data[cols[3]])
+        ax4.fill_between(np.delete(self.x_values_day, 0), data[cols[3]] - err[cols[3]],
                          data[cols[3]] + err[cols[3]], alpha=0.5)
         ax1.text(0.5, -0.14, "(a)", size=12, ha="center",
                  transform=ax1.transAxes)
@@ -764,6 +787,75 @@ class Graphics(BaseGraphics):
         fig.supylabel('Percent Adoption', x=-0.03)
 
         plt.savefig(self.pub_loc + 'bbn_decision_all_pm.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+    def make_equity_plots(self):
+        metrics = pd.concat([self.base['avg_burden'].iloc[:, 0],
+                             self.pm['avg_burden'].iloc[:, 0]],
+                            axis=1, keys=['Base', 'PM'])
+        metrics_var = pd.concat([self.base['var_burden'].iloc[:, 0],
+                                 self.pm['var_burden'].iloc[:, 0]],
+                                axis=1, keys=['Base', 'PM'])
+        err = ut.calc_error(metrics_var, self.error)
+        
+        warmup = metrics.index[-1] - self.x_len
+
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, metrics * 100, err * 100, ['Base', 'PM'],
+            (metrics.index - warmup) / 24,
+            'Time (days)', '% of Income', show_labels=True
+        )
+
+        plt.savefig(self.pub_loc + 'equity_metrics.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+        
+    def make_cost_plots(self):
+        base_tot_cost = self.base['avg_bw_cost'] + self.base['avg_tw_cost']
+        ax = wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=base_tot_cost.iloc[-1, :],
+            node_size=5,
+            node_range=[0, 15000],
+            node_colorbar_label='Water Cost ($)'
+        )
+        plt.savefig(self.pub_loc + 'tot_cost_base_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
+        ax = wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=pm_tot_cost.iloc[-1, :],
+            node_size=5,
+            node_range=[0, 15000],
+            node_colorbar_label='Water Cost ($)'
+        )
+        plt.savefig(self.pub_loc + 'tot_cost_pm_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+        
+        base_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
+        pm_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
+        base_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
+        pm_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
+        
+        pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
+        base_mean_cost = base_tot_cost.iloc[-1, :].mean()
+        
+        cost_comp = pd.DataFrame(
+            {'Lower Quintile': [base_mean_cost / base_lower_income, pm_mean_cost / pm_lower_income],
+             'Mean': [base_mean_cost / base_mean_income, pm_mean_cost / pm_mean_income]},
+            index=['Base', 'PM']
+        )
+        
+        print(cost_comp)
+        
+        ax = cost_comp.plot.bar(ylabel='% of Income', rot=0)
+        plt.gcf().set_size_inches(3, 3.5)
+        plt.savefig(self.pub_loc + 'cow_comparison.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -829,7 +921,17 @@ class Graphics(BaseGraphics):
             x for x in np.arange(0, days, days / x_len)
         ])
         plt.plot(x_values, demand.iloc[-x_len:])
-        plt.savefig(loc + '_demand_' + '.' + self.format,
+        plt.savefig(loc + 'aggregate_demand' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        demand = data['demand'].loc[:, self.res_nodes].mean(axis=1)
+        demand = demand.rolling(30*24).sum()
+        x_values = np.array([
+            x for x in np.arange(0, days, days / x_len)
+        ])
+        plt.plot(x_values, demand.iloc[-x_len:])
+        plt.savefig(loc + 'mean_res_demand' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -871,7 +973,7 @@ class Graphics(BaseGraphics):
 
         ''' Heatmap and map of costs '''
         # convert the annual income to an income that is specific to timeframe
-        data['income'] = data['income'] * days / 365
+        data['income'] = data['income']
         self.make_heatmap(
             data['tot_cost'].T,
             'Time (weeks)',
