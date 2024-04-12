@@ -316,7 +316,7 @@ class ConsumerModel(Model):
                 0,
                 index=self.G.nodes
             )
-        elif isinstance(self.hyd_sim, int):
+        elif self.hyd_sim == 'monthly':
             self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
             self.current_age = None
 
@@ -365,7 +365,7 @@ class ConsumerModel(Model):
         # initialization methods
         self.base_demand_list()
         self.set_age()
-        if self.hyd_sim == 'hourly' or isinstance(self.hyd_sim, int):
+        if self.hyd_sim == 'hourly' or self.hyd_sim == 'monthly':
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
             # self.wn.options.time.quality_timestep = 900
@@ -427,7 +427,7 @@ class ConsumerModel(Model):
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
 
             ''' Make a pattern for each node for hydraulic simulation '''
-            if self.hyd_sim == 'eos' or isinstance(self.hyd_sim, int):
+            if self.hyd_sim == 'eos' or self.hyd_sim == 'monthly':
                 curr_pattern = dcp(node_1.demand_timeseries_list[0].pattern)
                 self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
                 # set the demand pattern for the node to the new pattern
@@ -1186,9 +1186,9 @@ class ConsumerModel(Model):
         #     self.sim._results.node['demand'].loc[3600 * (self.timestep+1), :]
         # )
 
-    def run_hyd_daily(self):
+    def run_hyd_monthly(self):
         '''
-        Run the hydraulic simulation for a week. This method handles all funcs
+        Run the hydraulic simulation for a month. This method handles all funcs
         necessary to run the weekly simulation, including collecting the demand
         values for each node at each hour, making the new demand patterns each
         day, and running the simulation every week.
@@ -1201,7 +1201,7 @@ class ConsumerModel(Model):
             self.change_demands()
         # if the timestep is the beginning of a week then we want to run the sim
         # also run the sim at the end of the simulation
-        if (((self.timestep + 1) / 24) % self.hyd_sim == 0 and self.timestep != 0 or
+        if (((self.timestep + 1) / 24) % 30 == 0 and self.timestep != 0 or
            (self.timestep + 1) / 24 == self.days):
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
@@ -1247,6 +1247,13 @@ class ConsumerModel(Model):
                     np.array(self.income),
                     np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
                 )
+
+        # if a month has passed (30 days) then we need to add the
+        # fixed cost of the water bill
+        # if ((self.timestep + 1) / 24) % 30 == 0:
+        #     for node, houses in self.households.items():
+        #         for house in houses:
+        #             house.cow += house.fixed_cost
 
     # and then (after setting the demand above) we run the simulation:
     def run_hydraulic(self):
@@ -1597,8 +1604,8 @@ class ConsumerModel(Model):
             self.eos_tasks()
         elif self.hyd_sim == 'hourly':
             self.run_hyd_hour()
-        elif isinstance(self.hyd_sim, int):
-            self.run_hyd_daily()
+        elif self.hyd_sim == 'monthly':
+            self.run_hyd_monthly()
         else:
             NotImplementedError(f"Hydraulic simultion {self.hyd_sim} not set up.")
 

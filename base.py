@@ -829,7 +829,17 @@ class Graphics(BaseGraphics):
             x for x in np.arange(0, days, days / x_len)
         ])
         plt.plot(x_values, demand.iloc[-x_len:])
-        plt.savefig(loc + '_demand_' + '.' + self.format,
+        plt.savefig(loc + 'aggregate_demand' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        demand = data['demand'].loc[:, self.res_nodes].mean(axis=1)
+        demand = demand.rolling(30*24).sum()
+        x_values = np.array([
+            x for x in np.arange(0, days, days / x_len)
+        ])
+        plt.plot(x_values, demand.iloc[-x_len:])
+        plt.savefig(loc + 'mean_res_demand' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 

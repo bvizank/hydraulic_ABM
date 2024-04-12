@@ -17,7 +17,7 @@ logger.addHandler(fh)
 # run the simulation
 run_sim(
     id=0,
-    days=90,
+    days=180,
     seed=123,
     wfh_lag=0,
     no_wfh_perc=0,
@@ -25,6 +25,6 @@ run_sim(
     daily_contacts=30,
     city='micropolis',
     verbose=0.5,
-    hyd_sim=30,
+    hyd_sim='monthly',
     warmup=True
 )

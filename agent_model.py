@@ -370,9 +370,14 @@ class Household:
         self.bottle = []  # actions using bottled water
         self.demand = 0  # the tap water demand
         self.bottled_water = 0  # the bottled water demand
-        # https://www.cityofclintonnc.com/DocumentCenter/View/431/FY2020-2021-Fee-schedule?bidId=
-        self.tap_cost_pl = 0.0014479  # dollars per L; this is from the city of clinton, nc
+
+        # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
+        self.base_rate_water = 15.55  # dollars per month; this is from the city of clinton, nc
+        self.cons_rate_water = 0.000844022  # dollars per L; clinton, nc
+        self.base_rate_sewer = 16.21  # dollars per month; clinton, nc
+        self.cons_rate_sewer = 0.00081577  # dollars per L; clinton, nc
         self.bottle_cost_pl = 0.325  # dollars per L
+
         self.tap_cost = 0  # the total cost of tap water
         self.bottle_cost = 0  # the total cost of bottled water
         self.change = 1  # the demand change multiplier for the last 168 hours
@@ -487,9 +492,9 @@ class Household:
         '''
         Calculate the actual demand for the hydraulic interval
         '''
-        # collect the current timestep of the model and the hydraulic interval
-        timestep = self.model.timestep - 1
-        hyd_step = (self.model.hyd_sim * 24) - 1
+        # collect the last 30 days of hydraulic data
+        timestep = self.model.timestep
+        hyd_step = (30 * 24)
 
         # get the demand pattern from the model and subset for the last
         # hydraulic interval
@@ -513,7 +518,27 @@ class Household:
         Helper to calculate cost of tap water
         '''
         if structure == 'simple':
-            self.tap_cost += demand * self.tap_cost_pl
+            '''
+            Calculate the cost of the tap water use. Any use above
+            300 cu. ft. household pays consumption rate (which is per
+            100 cu. ft.)
+            '''
+            cons_threshold = 300 * 28.3168  # 300 cu. ft. to L
+            water = (
+                self.base_rate_water +
+                (demand - cons_threshold if demand > cons_threshold else 0) *
+                self.cons_rate_water
+            )
+
+            '''
+            Calculate sewer cost. All use is charged a base rate and a per
+            100 cu. ft. consumption rate
+            '''
+            sewer = (
+                self.base_rate_sewer +
+                demand * self.cons_rate_sewer
+            )
+            self.tap_cost += water + sewer
 
     def calc_cost(self):
         '''
@@ -537,9 +562,3 @@ class Household:
         #     print(bottle)
         #     print(self.bottle_cost)
         #     print(self.cow)
-
-    def finalize(self):
-        '''
-        Add the base rate to the water cost based on the number of days
-        in the simulation.
-        '''
