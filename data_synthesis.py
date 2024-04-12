@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(filename='log'+str(rank), filemode='w', level=logging.DEBUG)
 
 # data_dir = 'Output Files/30_base_equity/'
-data_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_base_equity'
+data_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_all_pm_equity'
 # data_dir = 'D:/OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/wfh_30/'
 
 read_list = [

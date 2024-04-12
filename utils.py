@@ -271,11 +271,16 @@ def calc_distance(node1, node2):
 #     return output
 
 
-def read_comp_data(loc, read_list):
+def read_comp_data(loc, read_list, days, truncate_list):
     out_dict = dict()
     for item in read_list:
         out_dict['avg_' + item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
         out_dict['var_' + item] = pd.read_pickle(loc + 'var_' + item + '.pkl')
+        
+        if item in truncate_list:
+            x_len = days * 24
+            out_dict['avg_' + item] = out_dict['avg_' + item].iloc[168:x_len, :]
+            out_dict['var_' + item] = out_dict['var_' + item].iloc[168:x_len, :]
 
     return out_dict
 
