@@ -37,14 +37,14 @@ wfh_patterns = np.genfromtxt(
     delimiter=','
 )
 
-''' Currently reflects Lakewood data '''
-income = {
-    1: (1.83913478, 27649.41457),
-    2: (3.929102832, 20760.71905),
-    3: (7.346390908, 13674.60584),
-    4: (3.519763579, 30890.71114),
-    5: (11.97233919, 9709.881934),
-    6: (12.76472073, 10398.50404)
+''' Low income values by household size '''
+low_income = {
+    1: 41100,
+    2: 46950,
+    3: 52800,
+    4: 58650,
+    5: 63350,
+    6: 68050
 }
 
 # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149

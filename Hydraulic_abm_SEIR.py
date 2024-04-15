@@ -510,8 +510,13 @@ class ConsumerModel(Model):
             elif self.network == 'mesopolis':
                 ids = self.meso_household(ids, node)
 
-        # collect income from each household that was just created
+        # collect income and income level from each household that was just created
         self.income = [h.income for n, i in self.households.items() for h in i]
+        self.income_level = [h.income_level for n, i in self.households.items() for h in i]
+        self.income_comb = pd.DataFrame(
+            data={'income': self.income, 'level': self.income_level}
+            # columns=[h.node for n, i in self.households.items() for h in i]
+        )
 
         if self.network == 'mesopolis':
             '''

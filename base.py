@@ -365,12 +365,12 @@ class Graphics(BaseGraphics):
         self.x_len = days * 24
         # self.base_comp_dir = 'Output Files/30_no_pm/'
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
-        self.base_comp_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_base_equity/'
-        self.pm_comp_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_all_pm_equity/'
-        self.wfh_loc = 'Output Files/30_wfh/'
-        self.dine_loc = 'Output Files/30_dine/'
-        self.groc_loc = 'Output Files/30_grocery/'
-        self.ppe_loc = 'Output Files/30_ppe/'
+        self.base_comp_dir = 'Output Files/30_base_equity/'
+        self.pm_comp_dir = 'Output Files/30_all_pm_equity/'
+        self.wfh_loc = 'Output Files/30_wfh_equity/'
+        self.dine_loc = 'Output Files/30_dine_equity/'
+        self.groc_loc = 'Output Files/30_groc_equity/'
+        self.ppe_loc = 'Output Files/30_ppe_equity/'
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers', 'agent_loc',
                           'wfh', 'dine', 'groc', 'ppe', 'burden',
@@ -836,23 +836,23 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'tot_cost_pm_map.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
         base_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
         pm_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
         base_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
         pm_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
-        
+
         pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
         base_mean_cost = base_tot_cost.iloc[-1, :].mean()
-        
+
         cost_comp = pd.DataFrame(
             {'Lower Quintile': [base_mean_cost / base_lower_income, pm_mean_cost / pm_lower_income],
              'Mean': [base_mean_cost / base_mean_income, pm_mean_cost / pm_mean_income]},
             index=['Base', 'PM']
         )
-        
+
         print(cost_comp)
-        
+
         ax = cost_comp.plot.bar(ylabel='% of Income', rot=0)
         plt.gcf().set_size_inches(3, 3.5)
         plt.savefig(self.pub_loc + 'cow_comparison.' + self.format,
@@ -1065,3 +1065,21 @@ class Graphics(BaseGraphics):
         plt.savefig(loc + 'equity_metrics.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+
+        ''' % of income figure by income level '''
+        print('Income')
+        print(data['income'].T[0])
+        print('Total cow')
+        print(data['tot_cost'].iloc[-1, :])
+        cowpi = pd.concat(
+            [data['income'.T[0]],
+             data['tot_cost'].iloc[-1, :] / (data['income'].T[0] * self.days / 365)],
+            axis=1, keys=['Income', 'COWPI']
+        )
+
+        print('Cowpi')
+        print(cowpi * 100)
+
+        cowpi_levels = pd.concat(
+            [cowpi[cowpi['income'] > ]]
+        )

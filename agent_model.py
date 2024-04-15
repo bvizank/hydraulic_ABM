@@ -415,6 +415,22 @@ class Household:
             (28250.195500391284 + 28711.81795579 * node_dist), 14569.890867054484
         )
 
+        # if the income from the distribution above is negative, truncate to 0.
+        if self.income < 0:
+            self.income = 0
+
+        # set the income level: low, medium, high
+        # low income is set using HUD thresholds by household size
+        # https://www.huduser.gov/portal/datasets/il.html
+        high_income = 150000
+        if self.income < dt.low_income[int(len(self.agent_ids))]:
+            self.income_level = 1
+        if (self.income >= dt.low_income[int(len(self.agent_ids))]
+           and self.income < high_income):
+            self.income_level = 2
+        if self.income >= high_income:
+            self.income_level = 3
+
         # pick water age thresholds for TWA behaviors
         self.twa_thresholds = {
             'drink':   model.random.betavariate(3, 1) * twa_mods[0] + 24,

@@ -163,7 +163,8 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     hygiene = convert_to_pd(model.hygiene, households)
     drink = convert_to_pd(model.drink, households)
     cook = convert_to_pd(model.cook, households)
-    income = convert_to_pd({0: model.income}, households)
+    # income = convert_to_pd({0: model.income}, households)
+    # income_level = convert_to_pd({0: model.income_level}, households)
     traditional = convert_to_pd(model.traditional, [0])
     burden = convert_to_pd(model.burden, [0])
 
@@ -180,7 +181,9 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     hygiene.to_pickle(output_loc + "/hygiene.pkl")
     drink.to_pickle(output_loc + "/drink.pkl")
     cook.to_pickle(output_loc + "/cook.pkl")
-    income.to_pickle(output_loc + "/income.pkl")
+    # income.to_pickle(output_loc + "/income.pkl")
+    # income_level.to_pickle(output_loc + "/income_level.pkl")
+    model.income_comb.to_pickle(output_loc + "/income.pkl")
     traditional.to_pickle(output_loc + "/traditional.pkl")
     burden.to_pickle(output_loc + "/burden.pkl")
 
