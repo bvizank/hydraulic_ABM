@@ -383,6 +383,7 @@ class Household:
         self.change = 1  # the demand change multiplier for the last 168 hours
         self.model = model
         self.node = node
+        self.ind_dist = node_dist
 
         for i in range(start_id, end_id):
             a = ConsumerAgent(i, self, model)
@@ -411,8 +412,20 @@ class Household:
 
         # pick an income for the household based on the relative distance
         # to the nearest industrial node
-        self.income = model.random.normalvariate(
-            (28250.195500391284 + 28711.81795579 * node_dist), 14569.890867054484
+
+        # the scaling factor represents the median income at the distance this
+        # node is away from industrial
+        scaling_factor = (28250.195500391284 + 28711.81795579 * node_dist) / 38880
+        # pick an income from the gamma distribution trained with clinton
+        # income ranges
+        mean = 46165.5
+        var = 1872936403.3903391
+
+        a = mean**2/var
+        b = var/mean
+        # variance in income/dist data 14569.890867054484
+        self.income = model.random.gammavariate(
+            a, b * scaling_factor
         )
 
         # if the income from the distribution above is negative, truncate to 0.
