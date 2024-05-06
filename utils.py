@@ -276,7 +276,7 @@ def read_comp_data(loc, read_list, days, truncate_list):
     for item in read_list:
         out_dict['avg_' + item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
         out_dict['var_' + item] = pd.read_pickle(loc + 'var_' + item + '.pkl')
-        
+
         if item in truncate_list:
             x_len = days * 24
             out_dict['avg_' + item] = out_dict['avg_' + item].iloc[168:x_len, :]
