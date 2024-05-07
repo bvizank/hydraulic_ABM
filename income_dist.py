@@ -29,8 +29,8 @@ b = var_b/mean_b
 print(f"random gamma value: {random.gammavariate(a, b)}")
 
 fig, ax = plt.subplots(1, 1)
-x = np.linspace(stats.gamma.ppf(0.01, a, scale=1/b),
-                stats.gamma.ppf(0.99, a, scale=1/b), 100)
+x = np.linspace(stats.gamma.ppf(0.001, a, scale=1/b),
+                stats.gamma.ppf(0.999, a, scale=1/b), 100)
 
 ax.plot(x, stats.gamma.pdf(x, a, scale=1/b),
         'r-', lw=5, alpha=0.6, label='gamma pdf')

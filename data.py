@@ -47,6 +47,17 @@ low_income = {
     6: 68050
 }
 
+''' Gamma parameters for income based on size for Clinton, NC '''
+size_income = {
+    1: (0.22849, 96694.59),
+    2: (0.063517253, 790761.5278),
+    3: (0.667215195, 128128.0771),
+    4: (0.016212716, 2261619.808),
+    5: (0.063113445, 1094267.64),
+    6: (1.303040116, 50842.64038),
+}
+
+
 # Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
 susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
            2: [0.6, 0.0072, 0.00036, 0.0001],

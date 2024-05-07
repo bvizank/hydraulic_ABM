@@ -514,8 +514,8 @@ class ConsumerModel(Model):
         self.income = [h.income for n, i in self.households.items() for h in i]
         self.income_level = [h.income_level for n, i in self.households.items() for h in i]
         self.income_comb = pd.DataFrame(
-            data={'income': self.income, 'level': self.income_level}
-            # columns=[h.node for n, i in self.households.items() for h in i]
+            data={'income': self.income, 'level': self.income_level},
+            index=[h.node for n, i in self.households.items() for h in i]
         )
 
         if self.network == 'mesopolis':
