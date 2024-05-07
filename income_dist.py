@@ -17,11 +17,39 @@ data = {
     200000: 3
 }
 
-bootstrap = np.array(random.choices(list(data.keys()), weights=list(data.values()), k=10000))
-mean_b = np.mean(bootstrap)
-var_b = np.var(bootstrap, ddof=1)
-print(f"mean = {mean_b}")
-print(f"var = {var_b}")
+
+def bootstrap(n, data, b):
+    '''
+    Method to bootstrap data
+
+    parameters:
+    -----------
+    n (int):
+        number of samples to pick each set
+    b (int):
+        number of sets to draw
+    '''
+
+    output = np.empty((b, n))
+    for i in range(b):
+        bootstrap = np.array(
+            random.choices(list(data.keys()), weights=list(data.values()), k=n)
+        )
+        output[i, :] = bootstrap
+
+    return output
+
+
+b_arr = bootstrap(10, data, 1000)
+# bootstrap = np.array(random.choices(list(data.keys()), weights=list(data.values()), k=10000))
+mean_b = np.mean(b_arr, axis=1)
+med_b = np.median(b_arr, axis=1)
+up_b = np.percentile(b_arr, 90, axis=1)
+var_b = np.var(b_arr, axis=1, ddof=1)
+print(f"mean = {np.mean(mean_b)}")
+print(f"var = {np.mean(var_b)}")
+print(f"90th percentile: {np.percentile(up_b, 90)}")
+print(f"50th percentile: {np.percentile(med_b, 50)}")
 
 a = mean_b**2/var_b
 b = var_b/mean_b

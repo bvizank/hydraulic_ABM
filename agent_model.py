@@ -415,16 +415,16 @@ class Household:
 
         # the scaling factor represents the median income at the distance this
         # node is away from industrial
-        scaling_factor = (28250.195500391284 + 28711.81795579 * node_dist) / 38880
+        scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
         # pick an income from the gamma distribution trained with clinton
         # income ranges
-        mean = 46165.5
-        var = 1872936403.3903391
+        mean = 46801.0
+        var = 1961837582.7582757
 
         a = mean**2/var
         b = var/mean
         # variance in income/dist data 14569.890867054484
-        self.income = model.random.gammavariate(a, b)
+        self.income = model.random.gammavariate(a, b) * scaling_factor
         # self.income = model.random.gammavariate(
         #     dt.size_income[int(len(self.agent_ids))][0],
         #     dt.size_income[int(len(self.agent_ids))][1]
@@ -432,6 +432,7 @@ class Household:
 
         # if the income from the distribution above is negative, truncate to 0.
         if self.income < 0:
+            print("Needed to truncate income")
             self.income = 0
 
         # set the income level: low, medium, high

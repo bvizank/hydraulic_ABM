@@ -37,7 +37,7 @@ def box_plots(ind_dist, model, i):
     plt.savefig('income_boxplot_' + str(i) + '.png',
                 format='png', bbox_inches='tight')
     plt.close()
-    
+
 
 def scatter_plot(ind_dist, model, i):
     x = ind_dist
@@ -70,7 +70,10 @@ def scatter_plot(ind_dist, model, i):
     plt.plot(x, lr_model.predict(x))
     plt.xlabel('Normalized Industrial Distance')
     plt.ylabel('Median BG Income')
-    plt.savefig('micropolis_income' + str(i) + '.png', format='png', bbox_inches='tight')
+    plt.savefig(
+        'micropolis_income' + str(i) + '.png',
+        format='png', bbox_inches='tight'
+    )
     plt.close()
 
 
@@ -83,8 +86,8 @@ def network_plot(model, i):
     plt.savefig('income_map_' + str(i) + '.png',
                 format='png', bbox_inches='tight')
     plt.close()
-    
-    
+
+
 def dist_hist(ind_dist, i):
     plt.hist(ind_dist)
     plt.savefig('ind_dist_hist_' + str(i) + '.png',
@@ -106,15 +109,15 @@ for i in range(10):
     ind_dist = np.array(
         [h.ind_dist for i, hs in model.households.items() for h in hs]
     )
-    
+
     # box_plots(ind_dist, model, i)
-    
+
     scatter_plot(ind_dist, model, i)
-    
-    dist_hist(ind_dist, i)
-    
+
+    # dist_hist(ind_dist, i)
+
     # network_plot(model, i)
-    
+
     high_income.append(np.percentile(np.array(model.income), 90))
     med_income.append(np.percentile(np.array(model.income), 50))
     low_income.append(model.income_comb['level'].value_counts()[1])

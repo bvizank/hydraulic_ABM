@@ -88,25 +88,28 @@ income = np.genfromtxt(
     delimiter=',',
 )
 
+y = income[:, 1]
+
 print(results_ind)
 x = results_ind.values
 x_norm = (
     (x - np.min(x)) / (np.max(x) - np.min(x))
 )
+y_norm = (y)
+#     (y - np.min(y)) / (np.max(y) - np.min(y))
+# )
 x_with_intercept = np.empty(shape=(len(x_norm), 2), dtype=np.float64)
 x_with_intercept[:, 0] = 1
 x_with_intercept[:, 1] = x_norm
 
-y = income[:, 1]
-
 print(x_with_intercept)
-print(y)
+print(y_norm)
 
-model = sm.OLS(y, x_with_intercept).fit()
+model = sm.OLS(y_norm, x_with_intercept).fit()
 print(model.fittedvalues)
-print(model.fittedvalues-y)
-sse = np.sum((model.fittedvalues - y)**2)
-ssr = np.sum((model.fittedvalues - y.mean())**2)
+print(model.fittedvalues-y_norm)
+sse = np.sum((model.fittedvalues - y_norm)**2)
+ssr = np.sum((model.fittedvalues - y_norm.mean())**2)
 sst = ssr + sse
 print(f'R2 = {ssr/sst}')
 print(len(x_norm))
@@ -115,6 +118,7 @@ print(model.summary())
 
 model = LinearRegression()
 x = x_norm[:, np.newaxis]
+y = y_norm[:, np.newaxis]
 model.fit(x, y)
 print(model.score(x, y))
 print(model.coef_)
@@ -123,7 +127,7 @@ print(model.intercept_)
 plt.scatter(x, y)
 plt.plot(x, model.predict(x))
 plt.xlabel('Normalized Industrial Distance')
-plt.ylabel('Median BG Income')
+plt.ylabel('Normalized Median BG Income')
 plt.savefig('clinton_bg_income.png', format='png', bbox_inches='tight')
 plt.close()
 
