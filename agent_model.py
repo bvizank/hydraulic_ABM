@@ -418,8 +418,8 @@ class Household:
         scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
         # pick an income from the gamma distribution trained with clinton
         # income ranges
-        mean = 46801.0
-        var = 1961837582.7582757
+        mean = 61628.09180717512
+        var = 5671494492.817419
 
         a = mean**2/var
         b = var/mean
