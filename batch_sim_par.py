@@ -26,15 +26,15 @@ for i in range(0+rank, 30, nprocs):
     # run the simulation
     run_sim(
         id=i,
-        days=182,
+        days=180,
         seed=i,
         wfh_lag=0,
         no_wfh_perc=0,
-        bbn_models=['ppe'],
+        bbn_models=[],
         daily_contacts=30,
         city='micropolis',
         verbose=0,
-        hyd_sim=7,
+        hyd_sim='monthly',
         warmup=True
     )
     os.remove('temp' + str(i) + '.bin')
