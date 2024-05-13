@@ -397,6 +397,8 @@ class Graphics(BaseGraphics):
             self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
         )
 
+        print(self.base['avg_income']['income'])
+
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
         # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
@@ -798,7 +800,7 @@ class Graphics(BaseGraphics):
                                  self.pm['var_burden'].iloc[:, 0]],
                                 axis=1, keys=['Base', 'PM'])
         err = ut.calc_error(metrics_var, self.error)
-        
+
         warmup = metrics.index[-1] - self.x_len
 
         ax = plt.subplot()
@@ -811,7 +813,7 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'equity_metrics.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
     def make_cost_plots(self):
         base_tot_cost = self.base['avg_bw_cost'] + self.base['avg_tw_cost']
         ax = wntr.graphics.plot_network(
@@ -1067,19 +1069,19 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' % of income figure by income level '''
-        print('Income')
-        print(data['income'].T[0])
-        print('Total cow')
-        print(data['tot_cost'].iloc[-1, :])
-        cowpi = pd.concat(
-            [data['income'.T[0]],
-             data['tot_cost'].iloc[-1, :] / (data['income'].T[0] * self.days / 365)],
-            axis=1, keys=['Income', 'COWPI']
-        )
+        # print('Income')
+        # print(data['income'].T[0])
+        # print('Total cow')
+        # print(data['tot_cost'].iloc[-1, :])
+        # cowpi = pd.concat(
+        #     [data['income'.T[0]],
+        #      data['tot_cost'].iloc[-1, :] / (data['income'].T[0] * self.days / 365)],
+        #     axis=1, keys=['Income', 'COWPI']
+        # )
 
-        print('Cowpi')
-        print(cowpi * 100)
+        # print('Cowpi')
+        # print(cowpi * 100)
 
-        cowpi_levels = pd.concat(
-            [cowpi[cowpi['income'] > ]]
-        )
+        # cowpi_levels = pd.concat(
+        #     [cowpi[cowpi['income'] > ]]
+        # )
