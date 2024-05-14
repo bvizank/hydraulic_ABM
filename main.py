@@ -26,5 +26,6 @@ run_sim(
     city='micropolis',
     verbose=0.5,
     hyd_sim='monthly',
-    warmup=True
+    warmup=True,
+    bw=False
 )

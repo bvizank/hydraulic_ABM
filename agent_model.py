@@ -433,8 +433,8 @@ class Household:
 
         # if the income is below minimum wage, increase to minimum wage
         # 2080 is the number of hours per year worked if working 40hr/wk
-        if self.income < self.win_wage * 2080:
-            self.income = self.min_wage * 2080
+        # if self.income < self.win_wage * 2080:
+        #     self.income = self.min_wage * 2080
 
         # set the income level: low, medium, high
         # low income is set using HUD thresholds by household size

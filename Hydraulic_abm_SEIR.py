@@ -173,6 +173,14 @@ class ConsumerModel(Model):
             self.tol = kwargs['tol']
         else:
             self.tol = 0.001
+            
+        '''
+        bw dictates whether bottled water buying is modeled. Defaults to True
+        '''
+        if 'bw' in kwargs:
+            self.bw = kwargs['bw']
+        else:
+            self.bw = True
 
         '''
         twa_mods are the modulators to the twa thresholds passed to households
@@ -1238,7 +1246,7 @@ class ConsumerModel(Model):
 
             # update household avoidance behaviors and demand values
             # we don't want to update behaviors during the warmup period
-            if not self.warmup:
+            if not self.warmup and self.bw:
                 demand_list = list()
                 for node, houses in self.households.items():
                     for house in houses:
