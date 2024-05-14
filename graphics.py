@@ -26,7 +26,7 @@ plots = Graphics(publication=False, error='se', days=days)
 # plots.make_equity_plots()
 
 ''' Cost plots '''
-# plots.make_cost_plots()
+plots.make_cost_plots()
 
 ''' SEIR plot '''
 # plots.make_seir_plot(100)

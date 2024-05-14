@@ -1,5 +1,6 @@
 import math
 import wntr
+import os
 import numpy as np
 import pandas as pd
 from copy import deepcopy as dcp
@@ -120,6 +121,81 @@ class BaseGraphics:
             closest_distances[node1.name] = min(curr_node_close.values())
 
         return closest_distances
+
+    def collect_data(self, folder, param):
+        '''
+        Helper method for pre_household. Collects data from n runs in folder
+        '''
+        output = pd.DataFrame()
+        for file in os.listdir(folder):
+            if param in file:
+                curr_data = pd.read_pickle(os.path.join(folder, file))
+                if param == 'income':
+                    output = pd.concat([output, curr_data])
+                else:
+                    output = pd.concat([output, curr_data.T])
+
+        return output
+
+    def pre_household(self, folder, param):
+        '''
+        Combine per household data from a group of n runs
+
+        Parameters
+        ----------
+        folder : str
+            data folder
+
+        param : (str | list)
+            param(s) to combine
+        '''
+        output = dict()
+        if isinstance(param, str):
+            output[param] = self.collect_data(folder, param)
+        elif isinstance(param, list):
+            for item in param:
+                output[item] = self.collect_data(folder, item)
+
+        return output
+
+    def post_household(self):
+        '''
+        Manipulate household data to be ready to plot
+        '''
+        # get base data ready
+        cow_base = self.pre_household(
+            self.base_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
+        )
+        self.base['income'] = self.pre_household(
+            self.base_comp_dir + '/hh_results/', 'income'
+        )['income']
+        tot_cost_base = cow_base['bw_cost'].iloc[:, -1] + cow_base['tw_cost'].iloc[:, -1]
+        self.base['cowpi'] = pd.DataFrame(
+            {'level': self.base['income'].loc[:, 'level'],
+             'cowpi': tot_cost_base / self.base['income'].loc[:, 'income'],
+             'tot_cost': tot_cost_base,
+             'income': self.base['income'].loc[:, 'income']},
+            index=tot_cost_base.index
+        )
+        # for i, row in self.base['cowpi'].iterrows():
+        #     if row['cowpi'] > 1:
+        #         print(row)
+        # print(len(self.base['cowpi']['cowpi']))
+        # print(self.base['cowpi'][self.base['cowpi']['cowpi'] > 1].count())
+
+        # get pm data ready
+        cow_pm = self.pre_household(
+            self.pm_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
+        )
+        self.pm['income'] = self.pre_household(
+            self.pm_comp_dir + '/hh_results/', 'income'
+        )['income']
+        tot_cost_pm = cow_pm['bw_cost'].iloc[:, -1] + cow_pm['tw_cost'].iloc[:, -1]
+        self.pm['cowpi'] = pd.DataFrame(
+            {'level': self.pm['income'].loc[:, 'level'],
+             'cowpi': tot_cost_pm / self.pm['income'].loc[:, 'income']},
+            index=tot_cost_pm.index
+        )
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -355,14 +431,17 @@ class Graphics(BaseGraphics):
     BaseGraphics.
 
     parameters:
-        publication (bool): whether to plot pngs or pdfs
-        error        (str): the type of error to use
-                            options include: se, ci95, and sd
+        publication : bool
+            whether to plot pngs or pdfs
+        error : str
+            the type of error to use
+            options include: se, ci95, and sd
     '''
 
     def __init__(self, publication, error, days):
         self.days = days
         self.x_len = days * 24
+        ''' Define data directories '''
         # self.base_comp_dir = 'Output Files/30_no_pm/'
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/30_base_equity/'
@@ -373,11 +452,14 @@ class Graphics(BaseGraphics):
         self.ppe_loc = 'Output Files/30_ppe_equity/'
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers', 'agent_loc',
-                          'wfh', 'dine', 'groc', 'ppe', 'burden',
-                          'bw_cost', 'tw_cost', 'income']
+                          'wfh', 'dine', 'groc', 'ppe']
+        ''' List that will be truncated based on the number of days the
+        simulation was run. Does not include the warmup period '''
         self.truncate_list = [
             'seir_data', 'demand', 'age', 'flow'
         ]
+
+        ''' Read in data from data directories '''
         self.pm = ut.read_comp_data(
             self.pm_comp_dir, self.comp_list, days, self.truncate_list
         )
@@ -397,7 +479,8 @@ class Graphics(BaseGraphics):
             self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
         )
 
-        print(self.base['avg_income']['income'])
+        ''' Read and distill household level data '''
+        self.post_household()
 
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
@@ -815,45 +898,64 @@ class Graphics(BaseGraphics):
         plt.close()
 
     def make_cost_plots(self):
-        base_tot_cost = self.base['avg_bw_cost'] + self.base['avg_tw_cost']
-        ax = wntr.graphics.plot_network(
-            self.wn,
-            node_attribute=base_tot_cost.iloc[-1, :],
-            node_size=5,
-            node_range=[0, 15000],
-            node_colorbar_label='Water Cost ($)'
-        )
-        plt.savefig(self.pub_loc + 'tot_cost_base_map.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # base_tot_cost = self.base['avg_bw_cost'] + self.base['avg_tw_cost']
+        # ax = wntr.graphics.plot_network(
+        #     self.wn,
+        #     node_attribute=base_tot_cost.iloc[-1, :],
+        #     node_size=5,
+        #     node_range=[0, 15000],
+        #     node_colorbar_label='Water Cost ($)'
+        # )
+        # plt.savefig(self.pub_loc + 'tot_cost_base_map.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
-        pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
-        ax = wntr.graphics.plot_network(
-            self.wn,
-            node_attribute=pm_tot_cost.iloc[-1, :],
-            node_size=5,
-            node_range=[0, 15000],
-            node_colorbar_label='Water Cost ($)'
-        )
-        plt.savefig(self.pub_loc + 'tot_cost_pm_map.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
+        # ax = wntr.graphics.plot_network(
+        #     self.wn,
+        #     node_attribute=pm_tot_cost.iloc[-1, :],
+        #     node_size=5,
+        #     node_range=[0, 15000],
+        #     node_colorbar_label='Water Cost ($)'
+        # )
+        # plt.savefig(self.pub_loc + 'tot_cost_pm_map.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
-        base_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
-        pm_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
-        base_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
-        pm_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
+        # base_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
+        # pm_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
+        # base_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
+        # pm_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
 
-        pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
-        base_mean_cost = base_tot_cost.iloc[-1, :].mean()
+        # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
+        # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
+        level_cowpi_b = self.base['cowpi'][
+            self.base['cowpi']['cowpi'] < 1
+        ].groupby('level').mean()['cowpi']
+        print(level_cowpi_b)
+        level_cowpi_p = self.pm['cowpi'][
+            self.pm['cowpi']['cowpi'] < 1
+        ].groupby('level').mean()['cowpi']
+        print(level_cowpi_p)
+        diff = (level_cowpi_p - level_cowpi_b)
         cost_comp = pd.DataFrame(
-            {'Lower Quintile': [base_mean_cost / base_lower_income, pm_mean_cost / pm_lower_income],
-             'Mean': [base_mean_cost / base_mean_income, pm_mean_cost / pm_mean_income]},
-            index=['Base', 'PM']
+            {'Diff': diff},
+            index=[1, 2, 3]
         )
 
+        # cost_comp.reset_index(inplace=True)
+        # print(cost_comp)
+        cost_comp = cost_comp.rename({1: 'Low', 2: 'Medium', 3: 'High'})
         print(cost_comp)
+
+        # cost_comp = pd.DataFrame(
+        #     {'Lower Quintile': [base_mean_cost / base_lower_income, pm_mean_cost / pm_lower_income],
+        #      'Mean': [base_mean_cost / base_mean_income, pm_mean_cost / pm_mean_income]},
+        #     index=['Base', 'PM']
+        # )
+
+        # print(cost_comp)
 
         ax = cost_comp.plot.bar(ylabel='% of Income', rot=0)
         plt.gcf().set_size_inches(3, 3.5)

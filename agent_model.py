@@ -377,6 +377,7 @@ class Household:
         self.base_rate_sewer = 16.21  # dollars per month; clinton, nc
         self.cons_rate_sewer = 0.00081577  # dollars per L; clinton, nc
         self.bottle_cost_pl = 0.325  # dollars per L
+        self.min_wage = 7.25  # minimum wage for NC
 
         self.tap_cost = 0  # the total cost of tap water
         self.bottle_cost = 0  # the total cost of bottled water
@@ -430,10 +431,10 @@ class Household:
         #     dt.size_income[int(len(self.agent_ids))][1]
         # )
 
-        # if the income from the distribution above is negative, truncate to 0.
-        if self.income < 0:
-            print("Needed to truncate income")
-            self.income = 0
+        # if the income is below minimum wage, increase to minimum wage
+        # 2080 is the number of hours per year worked if working 40hr/wk
+        if self.income < self.win_wage * 2080:
+            self.income = self.min_wage * 2080
 
         # set the income level: low, medium, high
         # low income is set using HUD thresholds by household size

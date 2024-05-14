@@ -49,7 +49,9 @@ avg_list = [
     'tw_cost',
     'cook',
     'hygiene',
-    'drink'
+    'drink',
+    'burden',
+    'traditional'
 ]
 
 '''
@@ -81,7 +83,7 @@ for i in range(0+rank, len(read_list), nprocs):
                 curr_data,
                 new_data
             ])
-    
+
     # group values by index and then export mean and var data
     if file not in avg_list:
         logger.info(f'{curr_data}')
