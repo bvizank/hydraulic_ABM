@@ -35,7 +35,8 @@ for i in range(0+rank, 30, nprocs):
         city='micropolis',
         verbose=0,
         hyd_sim='monthly',
-        warmup=True
+        warmup=True,
+        bw=False
     )
     os.remove('temp' + str(i) + '.bin')
     os.remove('temp' + str(i) + '.rpt')
