@@ -173,7 +173,7 @@ class ConsumerModel(Model):
             self.tol = kwargs['tol']
         else:
             self.tol = 0.001
-            
+
         '''
         bw dictates whether bottled water buying is modeled. Defaults to True
         '''
@@ -1262,14 +1262,18 @@ class ConsumerModel(Model):
                     np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
                 )
 
-        # if a month has passed (30 days) then we need to add the
-        # fixed cost of the water bill
-        # if ((self.timestep + 1) / 24) % 30 == 0:
-        #     for node, houses in self.households.items():
-        #         for house in houses:
-        #             house.cow += house.fixed_cost
+            # if we aren't allowing bottled water buying then we still need to
+            # calculate the cost of tap water
+            if not self.warmup and not self.bw:
+                step_tw_cost = list()
+                # for each house, calculate the demand and cost of tap water
+                for node, houses in self.households.items():
+                    for house in houses:
+                        house.calc_demand()
+                        house.calc_tap_cost(house.demand.sum())
+                        step_tw_cost.append(dcp(house.tap_cost))
+                self.tw_cost[self.timestep] = step_tw_cost
 
-    # and then (after setting the demand above) we run the simulation:
     def run_hydraulic(self):
         # Simulate hydraulics
         sim = wntr.sim.EpanetSimulator(self.wn)

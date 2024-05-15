@@ -11,7 +11,7 @@ plots = Graphics(publication=False, error='se', days=days)
 # plots.flow_plots()
 
 ''' Age plots '''
-# plots.age_plots()
+plots.age_plots()
 
 ''' Industrial distance plots '''
 # plots.ind_dist_plots()

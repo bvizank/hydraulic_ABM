@@ -57,6 +57,24 @@ class BaseGraphics:
         self.ind_nodes_obj = [name for name, node in wn.junctions()
                               if node.demand_timeseries_list[0].pattern_name == '3']
 
+    def calc_sec_averages(self, data, rolling=True):
+        '''
+        Calculate the average of the input data by sector
+        '''
+        output = dict()
+        output['res'] = data[self.res_nodes].mean(axis=1)
+        output['com'] = data[self.com_nodes].mean(axis=1)
+        output['ind'] = data[self.ind_nodes].mean(axis=1)
+
+        if rolling:
+            cols = ['Residential', 'Commercial', 'Industrial']
+            output = pd.concat([output['res'].rolling(24).mean(),
+                                output['com'].rolling(24).mean(),
+                                output['ind'].rolling(24).mean()],
+                               axis=1, keys=cols)
+
+        return output
+
     def calc_flow_diff(self, data, hours):
         flow_data = dict()
         flow_changes_sum = dict()
@@ -162,31 +180,46 @@ class BaseGraphics:
         '''
         Manipulate household data to be ready to plot
         '''
+
+        # data interpolated from HUD extremely low income values using average
+        # clinton household size of 2.56
+        extreme_income = 23452.8
         # get base data ready
-        cow_base = self.pre_household(
-            self.base_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
+        # cow_base = self.pre_household(
+        #     self.base_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
+        # )
+        # self.base['income'] = self.pre_household(
+        #     self.base_comp_dir + '/hh_results/', 'income'
+        # )['income']
+        # print(cow_base)
+
+        # tot_cost_base = cow_base['bw_cost'].iloc[:, -1] + cow_base['tw_cost'].iloc[:, -1]
+        # self.base['cowpi'] = pd.DataFrame(
+        #     {'level': self.base['income'].loc[:, 'level'],
+        #      'cowpi': tot_cost_base / self.base['income'].loc[:, 'income'],
+        #      'tot_cost': tot_cost_base,
+        #      'income': self.base['income'].loc[:, 'income']},
+        #     index=tot_cost_base.index
+        # )
+
+        # get base+bw data ready
+        cow_basebw = self.pre_household(
+            self.base_bw_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
         )
-        self.base['income'] = self.pre_household(
-            self.base_comp_dir + '/hh_results/', 'income'
+        self.basebw['income'] = self.pre_household(
+            self.base_bw_comp_dir + '/hh_results/', 'income'
         )['income']
-        tot_cost_base = cow_base['bw_cost'].iloc[:, -1] + cow_base['tw_cost'].iloc[:, -1]
-        self.base['cowpi'] = pd.DataFrame(
-            {'level': self.base['income'].loc[:, 'level'],
-             'cowpi': tot_cost_base / self.base['income'].loc[:, 'income'],
-             'tot_cost': tot_cost_base,
-             'income': self.base['income'].loc[:, 'income']},
-            index=tot_cost_base.index
+
+        tot_cost_basebw = cow_basebw['bw_cost'].iloc[:, -1] + cow_basebw['tw_cost'].iloc[:, -1]
+        self.basebw['cowpi'] = pd.DataFrame(
+            {'level': self.basebw['income'].loc[:, 'level'],
+             'cowpi': tot_cost_basebw / self.basebw['income'].loc[:, 'income'],
+             'tot_cost': tot_cost_basebw,
+             'income': self.basebw['income'].loc[:, 'income']},
+            index=tot_cost_basebw.index
         )
-        self.base['cowpi']['level'].loc[
-            self.base['cowpi']['income'] < 10000, 'level'
-        ] = 0
-        
-        print(self.base['cowpi'])
-        # for i, row in self.base['cowpi'].iterrows():
-        #     if row['cowpi'] > 1:
-        #         print(row)
-        # print(len(self.base['cowpi']['cowpi']))
-        # print(self.base['cowpi'][self.base['cowpi']['cowpi'] > 1].count())
+
+        self.basebw['cowpi'].loc[self.basebw['cowpi']['income'] < extreme_income, 'level'] = 0
 
         # get pm data ready
         cow_pm = self.pre_household(
@@ -195,12 +228,17 @@ class BaseGraphics:
         self.pm['income'] = self.pre_household(
             self.pm_comp_dir + '/hh_results/', 'income'
         )['income']
+
         tot_cost_pm = cow_pm['bw_cost'].iloc[:, -1] + cow_pm['tw_cost'].iloc[:, -1]
         self.pm['cowpi'] = pd.DataFrame(
             {'level': self.pm['income'].loc[:, 'level'],
-             'cowpi': tot_cost_pm / self.pm['income'].loc[:, 'income']},
+             'cowpi': tot_cost_pm / self.pm['income'].loc[:, 'income'],
+             'tot_cost': tot_cost_pm,
+             'income': self.pm['income'].loc[:, 'income']},
             index=tot_cost_pm.index
         )
+
+        self.pm['cowpi'].loc[self.pm['cowpi']['income'] < extreme_income, 'level'] = 0
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -450,7 +488,8 @@ class Graphics(BaseGraphics):
         # self.base_comp_dir = 'Output Files/30_no_pm/'
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/30_base_equity/'
-        self.pm_comp_dir = 'Output Files/30_all_pm_equity/'
+        self.base_bw_comp_dir = 'Output Files/30_base-bw_equity/'
+        self.pm_comp_dir = 'Output Files/30_all_pm-bw_equity/'
         self.wfh_loc = 'Output Files/30_wfh_equity/'
         self.dine_loc = 'Output Files/30_dine_equity/'
         self.groc_loc = 'Output Files/30_groc_equity/'
@@ -470,6 +509,9 @@ class Graphics(BaseGraphics):
         )
         self.base = ut.read_comp_data(
             self.base_comp_dir, self.comp_list, days, self.truncate_list
+        )
+        self.basebw = ut.read_comp_data(
+            self.base_bw_comp_dir, self.comp_list, days, self.truncate_list
         )
         self.wfh = ut.read_comp_data(
             self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
@@ -640,52 +682,33 @@ class Graphics(BaseGraphics):
     def age_plots(self):
         ''' Make age plot by sector for both base and PM '''
         cols = ['Residential', 'Commercial', 'Industrial']
-        res_age_pm = self.pm['avg_age'][self.res_nodes].mean(axis=1)
-        com_age_pm = self.pm['avg_age'][self.com_nodes].mean(axis=1)
-        ind_age_pm = self.pm['avg_age'][self.ind_nodes].mean(axis=1)
 
-        res_sd_pm = self.pm['var_age'][self.res_nodes].mean(axis=1)
-        com_sd_pm = self.pm['var_age'][self.com_nodes].mean(axis=1)
-        ind_sd_pm = self.pm['var_age'][self.ind_nodes].mean(axis=1)
+        age_pm = self.calc_sec_averages(self.pm['avg_age'])
+        age_sd_pm = self.calc_sec_averages(self.pm['var_age'])
+        age_pm_err = ut.calc_error(age_sd_pm, self.error)
 
-        res_age_base = self.base['avg_age'][self.res_nodes].mean(axis=1)
-        com_age_base = self.base['avg_age'][self.com_nodes].mean(axis=1)
-        ind_age_base = self.base['avg_age'][self.ind_nodes].mean(axis=1)
+        age_base = self.calc_sec_averages(self.base['avg_age'])
+        age_sd_base = self.calc_sec_averages(self.base['var_age'])
+        age_base_err = ut.calc_error(age_sd_base, self.error)
 
-        res_sd_base = self.base['var_age'][self.res_nodes].mean(axis=1)
-        com_sd_base = self.base['var_age'][self.com_nodes].mean(axis=1)
-        ind_sd_base = self.base['var_age'][self.ind_nodes].mean(axis=1)
+        age_basebw = self.calc_sec_averages(self.basebw['avg_age'])
+        age_sd_basebw = self.calc_sec_averages(self.basebw['var_age'])
+        age_basebw_err = ut.calc_error(age_sd_basebw, self.error)
 
-        # make input data and sd
-        pm_age = pd.concat([res_age_pm.rolling(24).mean(),
-                            com_age_pm.rolling(24).mean(),
-                            ind_age_pm.rolling(24).mean()],
-                           axis=1, keys=cols)
-        pm_age_var = pd.concat([res_sd_pm.rolling(24).mean(),
-                                com_sd_pm.rolling(24).mean(),
-                                ind_sd_pm.rolling(24).mean()],
-                               axis=1, keys=cols)
-        pm_age_err = ut.calc_error(pm_age_var, self.error)
-        base_age = pd.concat([res_age_base.rolling(24).mean(),
-                              com_age_base.rolling(24).mean(),
-                              ind_age_base.rolling(24).mean()],
-                             axis=1, keys=cols)
-        base_age_var = pd.concat([res_sd_base.rolling(24).mean(),
-                                  com_sd_base.rolling(24).mean(),
-                                  ind_sd_base.rolling(24).mean()],
-                                 axis=1, keys=cols)
-        base_age_err = ut.calc_error(base_age_var, self.error)
-
-        fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
-        axes[0] = self.make_avg_plot(axes[0], base_age / 3600, base_age_err / 3600,
+        fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
+        axes[0] = self.make_avg_plot(axes[0], age_base / 3600, age_base_err / 3600,
                                      cols, self.x_values_hour)
-        axes[1] = self.make_avg_plot(axes[1], pm_age / 3600, pm_age_err / 3600,
+        axes[1] = self.make_avg_plot(axes[1], age_basebw / 3600, age_basebw_err / 3600,
+                                     cols, self.x_values_hour)
+        axes[2] = self.make_avg_plot(axes[2], age_pm / 3600, age_pm_err / 3600,
                                      cols, self.x_values_hour)
 
         axes[0].legend(cols)
         axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
                      transform=axes[0].transAxes)
         axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        axes[2].text(0.5, -0.14, "(c)", size=12, ha="center",
                      transform=axes[1].transAxes)
         fig.supxlabel('Time (days)', y=-0.03)
         fig.supylabel('Age (hrs)', x=0.04)
@@ -703,17 +726,31 @@ class Graphics(BaseGraphics):
 
         pm_age = self.calc_age_diff(self.pm['avg_age'])
         base_age = self.calc_age_diff(self.base['avg_age'])
+        basebw_age = self.calc_age_diff(self.basebw['avg_age'])
 
-        ax = wntr.graphics.plot_network(self.wn, node_attribute=pm_age,
-                                        node_colorbar_label='Age (hrs)',
-                                        node_size=4, link_width=0.3)
+        wntr.graphics.plot_network(
+            self.wn, node_attribute=pm_age,
+            node_colorbar_label='Age (hrs)',
+            node_size=4, link_width=0.3
+        )
         plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        ax = wntr.graphics.plot_network(self.wn, node_attribute=base_age,
-                                        node_colorbar_label='Age (hrs)',
-                                        node_size=4, link_width=0.3)
+        wntr.graphics.plot_network(
+            self.wn, node_attribute=basebw_age,
+            node_colorbar_label='Age (hrs)',
+            node_size=4, link_width=0.3
+        )
+        plt.savefig(self.pub_loc + 'age_network_basebw.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        wntr.graphics.plot_network(
+            self.wn, node_attribute=base_age,
+            node_colorbar_label='Age (hrs)',
+            node_size=4, link_width=0.3
+        )
         plt.savefig(self.pub_loc + 'age_network_base.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -935,36 +972,42 @@ class Graphics(BaseGraphics):
         # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
         # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
-        level_cowpi_b = self.base['cowpi'][
-            self.base['cowpi']['cowpi'] < 1
-        ].groupby('level').mean()['cowpi']
-        print(level_cowpi_b)
-        level_cowpi_p = self.pm['cowpi'][
-            self.pm['cowpi']['cowpi'] < 1
-        ].groupby('level').mean()['cowpi']
+        # level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
+        # print(level_cowpi_b)
+
+        level_cowpi_bbw = self.basebw['cowpi'].groupby('level').mean()['cowpi']
+        print(level_cowpi_bbw)
+
+        level_cowpi_p = self.pm['cowpi'].groupby('level').mean()['cowpi']
         print(level_cowpi_p)
+
         cost_comp = pd.DataFrame(
-            {'Base': level_cowpi_b,
+            # {'Base': level_cowpi_b,
+            {'Base+BW': level_cowpi_bbw,
              'PM': level_cowpi_p},
-            index=[1, 2, 3]
+            index=[0, 1, 2, 3]
         )
+
+        # convert to percentages
+        cost_comp = cost_comp * 100
 
         # cost_comp.reset_index(inplace=True)
         # print(cost_comp)
-        cost_comp = cost_comp.rename({1: 'Low', 2: 'Medium', 3: 'High'})
+        cost_comp = cost_comp.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
         print(cost_comp)
 
-        # cost_comp = pd.DataFrame(
-        #     {'Lower Quintile': [base_mean_cost / base_lower_income, pm_mean_cost / pm_lower_income],
-        #      'Mean': [base_mean_cost / base_mean_income, pm_mean_cost / pm_mean_income]},
-        #     index=['Base', 'PM']
-        # )
-
-        # print(cost_comp)
-
-        ax = cost_comp.plot.bar(ylabel='% of Income', rot=0)
+        cost_comp.plot(kind='bar', log=True, ylabel='% of Income', rot=0)
         plt.gcf().set_size_inches(3, 3.5)
         plt.savefig(self.pub_loc + 'cow_comparison.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        # plot without the extremely low income households
+        cost_comp = cost_comp.iloc[1:4, :]
+        print(cost_comp)
+        cost_comp.plot(kind='bar', ylabel='% of Income', rot=0)
+        plt.gcf().set_size_inches(3, 3.5)
+        plt.savefig(self.pub_loc + 'cow_comparison_no_low_in.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
