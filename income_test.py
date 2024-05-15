@@ -66,8 +66,8 @@ def scatter_plot(ind_dist, model, i):
     print(lr_model.coef_)
     print(lr_model.intercept_)
 
-    plt.scatter(x, y)
     plt.plot(x, lr_model.predict(x))
+    plt.scatter(x, y)
     plt.xlabel('Normalized Industrial Distance')
     plt.ylabel('Median BG Income')
     plt.savefig(

@@ -57,14 +57,21 @@ class BaseGraphics:
         self.ind_nodes_obj = [name for name, node in wn.junctions()
                               if node.demand_timeseries_list[0].pattern_name == '3']
 
-    def calc_sec_averages(self, data, rolling=True):
+    def calc_sec_averages(self, data, op='mean', rolling=True):
         '''
         Calculate the average of the input data by sector
         '''
         output = dict()
-        output['res'] = data[self.res_nodes].mean(axis=1)
-        output['com'] = data[self.com_nodes].mean(axis=1)
-        output['ind'] = data[self.ind_nodes].mean(axis=1)
+        if op == 'mean':
+            output['res'] = data[self.res_nodes].mean(axis=1)
+            output['com'] = data[self.com_nodes].mean(axis=1)
+            output['ind'] = data[self.ind_nodes].mean(axis=1)
+        elif op == 'sum':
+            output['res'] = data[self.res_nodes].sum(axis=1)
+            output['com'] = data[self.com_nodes].sum(axis=1)
+            output['ind'] = data[self.ind_nodes].sum(axis=1)
+        else:
+            raise NotImplementedError(f"Operation {op} not implemented.")
 
         if rolling:
             cols = ['Residential', 'Commercial', 'Industrial']
@@ -72,6 +79,19 @@ class BaseGraphics:
                                 output['com'].rolling(24).mean(),
                                 output['ind'].rolling(24).mean()],
                                axis=1, keys=cols)
+
+        return output
+
+    def calc_twa_averages(self, data, keys):
+        '''
+        Calculate the average and package TWA data for plotting
+        '''
+        output = pd.concat(
+            [data['hygiene'].sum(axis=0),
+             data['drink'].sum(axis=0),
+             data['cook'].sum(axis=0)],
+            axis=1, keys=keys
+        )
 
         return output
 
@@ -155,7 +175,7 @@ class BaseGraphics:
 
         return output
 
-    def pre_household(self, folder, param):
+    def get_household(self, folder, param):
         '''
         Combine per household data from a group of n runs
 
@@ -176,69 +196,52 @@ class BaseGraphics:
 
         return output
 
+    def package_household(self, data, dir, base=False):
+        '''
+        Package household data necessary for plotting later
+        '''
+        # data interpolated from HUD extremely low income values using average
+        # clinton household size of 2.56
+        extreme_income = 23452.8
+
+        cow = self.get_household(
+            dir + '/hh_results/', ['bw_cost', 'tw_cost'] if not base else ['tw_cost']
+        )
+        data['twa'] = self.get_household(
+            dir + '/hh_results/', ['drink', 'cook', 'hygiene']
+        )
+        data['income'] = self.get_household(
+            dir + '/hh_results/', 'income'
+        )['income']
+
+        if base:
+            # no bottled water cost in the base case
+            tot_cost = cow['tw_cost'].iloc[:, -1]
+        else:
+            tot_cost = cow['bw_cost'].iloc[:, -1] + cow['tw_cost'].iloc[:, -1]
+
+        data['cowpi'] = pd.DataFrame(
+            {'level': data['income'].loc[:, 'level'],
+             'cowpi': tot_cost / (data['income'].loc[:, 'income'] * self.days / 365),
+             'tot_cost': tot_cost,
+             'income': data['income'].loc[:, 'income']},
+            index=tot_cost.index
+        )
+
+        data['cowpi'].loc[data['cowpi']['income'] < extreme_income, 'level'] = 0
+
     def post_household(self):
         '''
         Manipulate household data to be ready to plot
         '''
-
-        # data interpolated from HUD extremely low income values using average
-        # clinton household size of 2.56
-        extreme_income = 23452.8
         # get base data ready
-        # cow_base = self.pre_household(
-        #     self.base_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
-        # )
-        # self.base['income'] = self.pre_household(
-        #     self.base_comp_dir + '/hh_results/', 'income'
-        # )['income']
-        # print(cow_base)
-
-        # tot_cost_base = cow_base['bw_cost'].iloc[:, -1] + cow_base['tw_cost'].iloc[:, -1]
-        # self.base['cowpi'] = pd.DataFrame(
-        #     {'level': self.base['income'].loc[:, 'level'],
-        #      'cowpi': tot_cost_base / self.base['income'].loc[:, 'income'],
-        #      'tot_cost': tot_cost_base,
-        #      'income': self.base['income'].loc[:, 'income']},
-        #     index=tot_cost_base.index
-        # )
+        # self.package_household(self.base, self.base_comp_dir, base=True)
 
         # get base+bw data ready
-        cow_basebw = self.pre_household(
-            self.base_bw_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
-        )
-        self.basebw['income'] = self.pre_household(
-            self.base_bw_comp_dir + '/hh_results/', 'income'
-        )['income']
-
-        tot_cost_basebw = cow_basebw['bw_cost'].iloc[:, -1] + cow_basebw['tw_cost'].iloc[:, -1]
-        self.basebw['cowpi'] = pd.DataFrame(
-            {'level': self.basebw['income'].loc[:, 'level'],
-             'cowpi': tot_cost_basebw / self.basebw['income'].loc[:, 'income'],
-             'tot_cost': tot_cost_basebw,
-             'income': self.basebw['income'].loc[:, 'income']},
-            index=tot_cost_basebw.index
-        )
-
-        self.basebw['cowpi'].loc[self.basebw['cowpi']['income'] < extreme_income, 'level'] = 0
+        self.package_household(self.basebw, self.base_bw_comp_dir)
 
         # get pm data ready
-        cow_pm = self.pre_household(
-            self.pm_comp_dir + '/hh_results/', ['bw_cost', 'tw_cost']
-        )
-        self.pm['income'] = self.pre_household(
-            self.pm_comp_dir + '/hh_results/', 'income'
-        )['income']
-
-        tot_cost_pm = cow_pm['bw_cost'].iloc[:, -1] + cow_pm['tw_cost'].iloc[:, -1]
-        self.pm['cowpi'] = pd.DataFrame(
-            {'level': self.pm['income'].loc[:, 'level'],
-             'cowpi': tot_cost_pm / self.pm['income'].loc[:, 'income'],
-             'tot_cost': tot_cost_pm,
-             'income': self.pm['income'].loc[:, 'income']},
-            index=tot_cost_pm.index
-        )
-
-        self.pm['cowpi'].loc[self.pm['cowpi']['income'] < extreme_income, 'level'] = 0
+        self.package_household(self.pm, self.pm_comp_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -612,25 +615,9 @@ class Graphics(BaseGraphics):
         # define the columns of the input data and the x_values
         cols = ['Residential', 'Commercial', 'Industrial']
 
-        # collect demands
-        res_dem = self.pm['avg_demand'][self.res_nodes]
-        com_dem = self.pm['avg_demand'][self.com_nodes]
-        ind_dem = self.pm['avg_demand'][self.ind_nodes]
-
-        res_var = self.pm['var_demand'][self.res_nodes]
-        com_var = self.pm['var_demand'][self.com_nodes]
-        ind_var = self.pm['var_demand'][self.ind_nodes]
-
-        # make input data and sd
-        sector_dem = pd.concat([res_dem.sum(axis=1).rolling(24).mean(),
-                                com_dem.sum(axis=1).rolling(24).mean(),
-                                ind_dem.sum(axis=1).rolling(24).mean()],
-                               axis=1, keys=cols)
-        sector_dem_var = pd.concat([res_var.sum(axis=1).rolling(24).mean(),
-                                    com_var.sum(axis=1).rolling(24).mean(),
-                                    ind_var.sum(axis=1).rolling(24).mean()],
-                                   axis=1, keys=cols)
-
+        # sort data
+        sector_dem = self.calc_sec_averages(self.pm['avg_demand'], op='sum')
+        sector_dem_var = self.calc_sec_averages(self.pm['var_demand'], op='sum')
         sector_dem_err = ut.calc_error(sector_dem_var, self.error)
 
         # plot demand by sector
@@ -728,30 +715,27 @@ class Graphics(BaseGraphics):
         base_age = self.calc_age_diff(self.base['avg_age'])
         basebw_age = self.calc_age_diff(self.basebw['avg_age'])
 
+        fig, axes = plt.subplots(nrows=1, ncols=3)
         wntr.graphics.plot_network(
             self.wn, node_attribute=pm_age,
             node_colorbar_label='Age (hrs)',
-            node_size=4, link_width=0.3
+            add_colorbar=False, node_range=[0, 450],
+            node_size=4, link_width=0.3, ax=axes[0]
         )
-        plt.savefig(self.pub_loc + 'age_network_pm.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
 
         wntr.graphics.plot_network(
             self.wn, node_attribute=basebw_age,
-            node_colorbar_label='Age (hrs)',
-            node_size=4, link_width=0.3
+            node_colorbar_label='Age (hrs)', node_range=[0, 450],
+            node_size=4, link_width=0.3, ax=axes[1]
         )
-        plt.savefig(self.pub_loc + 'age_network_basebw.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
 
         wntr.graphics.plot_network(
             self.wn, node_attribute=base_age,
-            node_colorbar_label='Age (hrs)',
-            node_size=4, link_width=0.3
+            add_colorbar=False, node_range=[0, 450],
+            node_size=4, link_width=0.3, ax=axes[2]
         )
-        plt.savefig(self.pub_loc + 'age_network_base.' + self.format,
+        plt.gcf().set_size_inches(7, 3.5)
+        plt.savefig(self.pub_loc + 'age_network_comp.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -1011,6 +995,50 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
+    def make_twa_plots(self):
+        '''
+        Tap water avoidance adoption plots
+        '''
+        print(self.pm['twa'])
+        twas = ['Hygiene', 'Drink', 'Cook']
+        twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
+        twa_basebw.index = twa_basebw.index - 719
+        twa_basebw.loc[0] = [0, 0, 0]
+        twa_basebw.sort_index(inplace=True)
+
+        twa_pm = self.calc_twa_averages(self.pm['twa'], twas)
+        twa_pm.index = twa_pm.index - 719
+        twa_pm.loc[0] = [0, 0, 0]
+        twa_pm.sort_index(inplace=True)
+
+        households = len(self.pm['twa']['hygiene'].index)
+        print(twa_pm)
+
+        fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
+        axes[0] = self.make_avg_plot(
+            axes[0], twa_basebw / households * 100, None,
+            twas, twa_basebw.index / 24,
+            sd_plot=False
+        )
+        axes[1] = self.make_avg_plot(
+            axes[1], twa_pm / households * 100, None,
+            twas, twa_pm.index / 24,
+            sd_plot=False
+        )
+        axes[0].legend(twas)
+
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        fig.supxlabel('Time (days)', y=-0.03)
+        fig.supylabel('Percent of Households', x=0.04)
+        plt.gcf().set_size_inches(7, 3.5)
+
+        plt.savefig(self.pub_loc + 'twa_comp.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
     def make_single_plots(self, file, days):
         ''' Set the warmup period '''
         x_len = days * 24
@@ -1168,10 +1196,11 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
+        print(data['income'])
         ax = wntr.graphics.plot_network(
             self.wn,
-            node_attribute=data['income'].iloc[0, :].groupby(level=0).mean(),
-            node_size=5
+            node_attribute=data['income'].iloc[:, 0].groupby(level=0).mean(),
+            node_size=5, node_range=[0, 200000]
         )
         plt.savefig(loc + 'income_map.' + self.format,
                     format=self.format, bbox_inches='tight')
