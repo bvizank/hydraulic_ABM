@@ -177,6 +177,11 @@ class BaseGraphics:
              'income': self.base['income'].loc[:, 'income']},
             index=tot_cost_base.index
         )
+        self.base['cowpi']['level'].loc[
+            self.base['cowpi']['income'] < 10000, 'level'
+        ] = 0
+        
+        print(self.base['cowpi'])
         # for i, row in self.base['cowpi'].iterrows():
         #     if row['cowpi'] > 1:
         #         print(row)
@@ -938,9 +943,9 @@ class Graphics(BaseGraphics):
             self.pm['cowpi']['cowpi'] < 1
         ].groupby('level').mean()['cowpi']
         print(level_cowpi_p)
-        diff = (level_cowpi_p - level_cowpi_b)
         cost_comp = pd.DataFrame(
-            {'Diff': diff},
+            {'Base': level_cowpi_b,
+             'PM': level_cowpi_p},
             index=[1, 2, 3]
         )
 
