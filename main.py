@@ -16,9 +16,9 @@ logger.addHandler(fh)
 
 # run the simulation
 run_sim(
-    id=0,
-    days=60,
-    seed=123,
+    id=6,
+    days=180,
+    seed=6,
     wfh_lag=0,
     no_wfh_perc=0,
     bbn_models=[],
