@@ -635,9 +635,15 @@ class Graphics(BaseGraphics):
 
         # plot demand by sector
         ax = plt.subplot()
-        self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour,
-                           'Time (days)', 'Demand (L)',
-                           show_labels=True) 
+        self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour) 
+        ax1 = ax.twinx()
+        self.make_avg_plot(
+            ax1, self.pm['avg_wfh'].mean(axis=1), self.pm['var_wfh'].mean(axis=1),
+            ['WFH'], self.x_values_hour, show_labels=False
+        )
+        ax.set_xlabel('Time (days)')
+        ax.set_ylabel('Demand (L)')
+        ax1.set_ylabel('Percent of Population WFH')
         plt.savefig(self.pub_loc + 'sector_demand' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -984,7 +990,7 @@ class Graphics(BaseGraphics):
         cost_comp = pd.DataFrame(
             # {'Base': level_cowpi_b,
             {'Base+BW': level_cowpi_bbw,
-             'PM': level_cowpi_p},
+             'Social Distancing+BW': level_cowpi_p},
             index=[0, 1, 2, 3]
         )
 
