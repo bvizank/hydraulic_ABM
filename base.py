@@ -235,7 +235,7 @@ class BaseGraphics:
         Manipulate household data to be ready to plot
         '''
         # get base data ready
-        # self.package_household(self.base, self.base_comp_dir, base=True)
+        self.package_household(self.base, self.base_comp_dir, base=True)
 
         # get base+bw data ready
         self.package_household(self.basebw, self.base_bw_comp_dir)
@@ -261,10 +261,13 @@ class BaseGraphics:
         ''' Plot a single figure with the input data '''
         # set multiplier m to ensure plots with 3 or less lines
         # get the correct colors.
-        if data.shape[1] > 3:
+        if isinstance(data, pd.Series):
             m = 1
         else:
-            m = 2
+            if len(data.columns) > 3:
+                m = 1
+            else:
+                m = 2
 
         # plot each column of data
         for i, col in enumerate(cols):
@@ -573,7 +576,7 @@ class Graphics(BaseGraphics):
             x for x in np.arange(0, days, days / len(self.pm['avg_demand']))
         ])
         self.x_values_day = np.array([
-            x for x in range(183)
+            x for x in range(180)
         ])
 
         ''' Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh '''
@@ -624,10 +627,8 @@ class Graphics(BaseGraphics):
         ax = plt.subplot()
         self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour) 
         ax1 = ax.twinx()
-        self.make_avg_plot(
-            ax1, self.pm['avg_wfh'].mean(axis=1), self.pm['var_wfh'].mean(axis=1),
-            ['WFH'], self.x_values_hour, show_labels=False
-        )
+        ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
+        ax.legend(['Residential', 'Commercial', 'Industrial'])
         ax.set_xlabel('Time (days)')
         ax.set_ylabel('Demand (L)')
         ax1.set_ylabel('Percent of Population WFH')
@@ -702,10 +703,10 @@ class Graphics(BaseGraphics):
         axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
                      transform=axes[1].transAxes)
         axes[2].text(0.5, -0.14, "(c)", size=12, ha="center",
-                     transform=axes[1].transAxes)
-        fig.supxlabel('Time (days)', y=-0.03)
+                     transform=axes[2].transAxes)
+        fig.supxlabel('Time (days)', y=-0.06)
         fig.supylabel('Age (hrs)', x=0.04)
-        plt.gcf().set_size_inches(7, 3.5)
+        plt.gcf().set_size_inches(8, 3.5)
 
         plt.savefig(self.pub_loc + 'mean_age_sector.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -962,8 +963,8 @@ class Graphics(BaseGraphics):
         # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
         # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
-        # level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
-        # print(level_cowpi_b)
+        level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
+        print(level_cowpi_b)
 
         level_cowpi_bbw = self.basebw['cowpi'].groupby('level').mean()['cowpi']
         print(level_cowpi_bbw)
@@ -972,8 +973,8 @@ class Graphics(BaseGraphics):
         print(level_cowpi_p)
 
         cost_comp = pd.DataFrame(
-            # {'Base': level_cowpi_b,
-            {'Base+BW': level_cowpi_bbw,
+            {'Base': level_cowpi_b,
+             'Base+BW': level_cowpi_bbw,
              'Social Distancing+BW': level_cowpi_p},
             index=[0, 1, 2, 3]
         )
@@ -987,7 +988,7 @@ class Graphics(BaseGraphics):
         print(cost_comp)
 
         cost_comp.plot(kind='bar', log=True, ylabel='% of Income', rot=0)
-        plt.gcf().set_size_inches(3, 3.5)
+        plt.gcf().set_size_inches(3.5, 3.5)
         plt.savefig(self.pub_loc + 'cow_comparison.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -996,7 +997,7 @@ class Graphics(BaseGraphics):
         cost_comp = cost_comp.iloc[1:4, :]
         print(cost_comp)
         cost_comp.plot(kind='bar', ylabel='% of Income', rot=0)
-        plt.gcf().set_size_inches(3, 3.5)
+        plt.gcf().set_size_inches(3.5, 3.5)
         plt.savefig(self.pub_loc + 'cow_comparison_no_low_in.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
