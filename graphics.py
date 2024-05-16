@@ -5,7 +5,7 @@ days = 180
 plots = Graphics(publication=False, error='se', days=days)
 
 ''' Demand plots '''
-# plots.demand_plots()
+plots.demand_plots()
 
 ''' Flow plots '''
 # plots.flow_plots()
