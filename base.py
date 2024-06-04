@@ -532,6 +532,8 @@ class Graphics(BaseGraphics):
             self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
         )
 
+        print(self.pm['avg_wfh'])
+
         ''' Read and distill household level data '''
         self.post_household()
 
