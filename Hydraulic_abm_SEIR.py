@@ -190,6 +190,14 @@ class ConsumerModel(Model):
         else:
             self.twa_mods = [130, 150, 140]
 
+        '''
+        self.ind_min_demand is the minimum industrial demand as a percentage
+        '''
+        if 'ind_min_demand' in kwargs:
+            self.ind_min_demand = kwargs['ind_min_demand']
+        else:
+            self.ind_min_demand = 0
+
         ''' Setup and mapping of variables from various sources. For more information
         see utils.py '''
         setup_out = setup(city)
@@ -1070,7 +1078,19 @@ class ConsumerModel(Model):
                 step_agents.append(agents_at_node)
                 # agents_wfh = len([a for a in agents_at_node_list if a.wfh == 1])
                 if capacity_node != 0:
-                    step_demand[i] = agents_at_node/capacity_node
+                    multiplier = agents_at_node / capacity_node
+                    if node in self.ind_nodes:
+                        ''' Industrial demand multiplier should include some
+                        portion that is not based on agent movement.
+                        This is accounted for by self.ind_min_demand '''
+                        step_demand[i] = (
+                            multiplier * (1 - self.ind_min_demand)
+                            + self.ind_min_demand
+                        )
+                    else:
+                        ''' Non-industrial nodes are solely based on the
+                        number of agents at them '''
+                        step_demand[i] = multiplier
                 else:
                     step_demand[i] = 0
             else:
@@ -1120,7 +1140,10 @@ class ConsumerModel(Model):
         for i, node in enumerate(self.nodes_w_demand):
             curr_node = self.wn.get_node(node)
             # curr_demand = curr_node.demand_timeseries_list[0].base_value
+            ''' list of demand multipliers from agent locations '''
             new_mult = self.daily_demand[:, i]  # np.array
+            ''' multiple the location multiplier by the demand multiplier
+            calcualted by tap water avoidance behaviors '''
             new_mult = new_mult * self.demand_multiplier[node]
             agents_at_node = self.grid.G.nodes[node]['agent']
             agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
@@ -1255,12 +1278,18 @@ class ConsumerModel(Model):
                             node_age.iloc[-1] / 3600
                         ))
 
-                self.demand_multiplier[node] = sum(demand_list) / len(demand_list)
+                    ''' set the demand multiplier based on the average
+                    household demand at the node '''
+                    self.demand_multiplier[node] = (
+                        sum(demand_list) / len(demand_list)
+                    )
+
+                ''' collect household level data '''
                 self.collect_household_data()
-                self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
-                    np.array(self.income),
-                    np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
-                )
+                # self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
+                #     np.array(self.income),
+                #     np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
+                # )
 
             # if we aren't allowing bottled water buying then we still need to
             # calculate the cost of tap water

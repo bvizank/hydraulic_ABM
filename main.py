@@ -27,5 +27,6 @@ run_sim(
     verbose=0.5,
     hyd_sim='monthly',
     warmup=True,
-    bw=False
+    bw=False,
+    ind_min_demand=0.5
 )

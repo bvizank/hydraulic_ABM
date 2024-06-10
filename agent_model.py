@@ -455,6 +455,13 @@ class Household:
             'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
         }
 
+        # 
+        self.demand_reduction = {
+            'drink':   model.random.uniform(2.6, 5.3),
+            'cook':    model.random.uniform(5.3, 10.6),
+            'hygiene': model.random.uniform(5.3, 10.6)
+        }
+
     def update_household(self, age):
         '''
         Perform updating methods. Update behaviors, calculate demand
@@ -513,11 +520,11 @@ class Household:
         '''
         change = 1
         if 'hygiene' not in self.tap:
-            change -= 0.106
+            change -= self.demand_reduction['hygiene'] / 100
         if 'cook' not in self.tap:
-            change -= 0.106
+            change -= self.demand_reduction['cook'] / 100
         if 'drink' not in self.tap:
-            change -= 0.053
+            change -= self.demand_reduction['drink'] / 100
 
         return change
 
