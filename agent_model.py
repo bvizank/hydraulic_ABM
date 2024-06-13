@@ -551,7 +551,6 @@ class Household:
         # set the households tap demand and bottled water demand
         # conversion of 1,000,000 is ML -> L
         self.demand = total_demand * self.change * 1000000
-        print(self.demand)
         self.bottled = total_demand * 1000000 - self.demand
 
     def calc_tap_cost(self, demand, structure='simple'):
@@ -580,7 +579,6 @@ class Household:
                 demand * self.cons_rate_sewer
             )
             self.tap_cost += water + sewer
-            print(self.tap_cost)
 
     def calc_cost(self):
         '''

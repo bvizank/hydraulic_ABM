@@ -37,7 +37,7 @@ for i in range(0+rank, 30, nprocs):
         hyd_sim='monthly',
         warmup=True,
         bw=True,
-        ind_min_demand=0.5
+        ind_min_demand=0.75
     )
     os.remove('temp' + str(i) + '.bin')
     os.remove('temp' + str(i) + '.rpt')
