@@ -49,7 +49,6 @@ class ConsumerModel(Model):
                  **kwargs):
         super().__init__()
         init_start = time.perf_counter()
-        print(f"Seed: {self._seed}")
         self.days = days
         self.id = id
         self.num_agents = N
@@ -533,7 +532,6 @@ class ConsumerModel(Model):
             data={'income': self.income, 'level': self.income_level},
             index=[h.node for n, i in self.households.items() for h in i]
         )
-        print(self.income_comb)
 
         if self.network == 'mesopolis':
             '''
