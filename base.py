@@ -495,7 +495,7 @@ class Graphics(BaseGraphics):
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/30_base_equity/'
         self.base_bw_comp_dir = 'Output Files/30_base-bw_equity/'
-        self.base_50ind_comp_dir = 'Output Files/30_base_50ind_equity/'
+        self.pm_50ind_comp_dir = 'Output Files/30_all_pm_50ind_equity/'
         self.pm_comp_dir = 'Output Files/30_all_pm-bw_equity/'
         self.wfh_loc = 'Output Files/30_wfh_equity/'
         self.dine_loc = 'Output Files/30_dine_equity/'
@@ -520,8 +520,8 @@ class Graphics(BaseGraphics):
         self.basebw = ut.read_comp_data(
             self.base_bw_comp_dir, self.comp_list, days, self.truncate_list
         )
-        self.base50ind = ut.read_comp_data(
-            self.base_50ind_comp_dir, self.comp_list, days, self.truncate_list
+        self.pm50ind = ut.read_comp_data(
+            self.pm_50ind_comp_dir, self.comp_list, days, self.truncate_list
         )
         self.wfh = ut.read_comp_data(
             self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
@@ -629,16 +629,34 @@ class Graphics(BaseGraphics):
         sector_dem_var = self.calc_sec_averages(self.pm['var_demand'], op='sum')
         sector_dem_err = ut.calc_error(sector_dem_var, self.error)
 
+        # sort data for 50ind case
+        sector_dem50 = self.calc_sec_averages(self.pm50ind['avg_demand'], op='sum')
+        sector_dem_var50 = self.calc_sec_averages(self.pm50ind['var_demand'], op='sum')
+        sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
+
         # plot demand by sector
         ax = plt.subplot()
         self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour) 
-        ax1 = ax.twinx()
-        ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
+        # ax1 = ax.twinx()
+        # ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
         ax.legend(['Residential', 'Commercial', 'Industrial'])
         ax.set_xlabel('Time (days)')
         ax.set_ylabel('Demand (L)')
-        ax1.set_ylabel('Percent of Population WFH')
+        # ax1.set_ylabel('Percent of Population WFH')
         plt.savefig(self.pub_loc + 'sector_demand' + '.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        # plot demand by sector for 50ind
+        ax = plt.subplot()
+        self.make_avg_plot(ax, sector_dem50, sector_dem_err50, cols, self.x_values_hour) 
+        # ax1 = ax.twinx()
+        # ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
+        ax.legend(['Residential', 'Commercial', 'Industrial'])
+        ax.set_xlabel('Time (days)')
+        ax.set_ylabel('Demand (L)')
+        # ax1.set_ylabel('Percent of Population WFH')
+        plt.savefig(self.pub_loc + 'sector_demand_50ind' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 

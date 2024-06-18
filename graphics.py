@@ -26,10 +26,10 @@ plots.age_plots()
 # plots.make_equity_plots()
 
 ''' Cost plots '''
-plots.make_cost_plots()
+# plots.make_cost_plots()
 
 ''' Tap water avoidance plots '''
-plots.make_twa_plots()
+# plots.make_twa_plots()
 
 ''' SEIR plot '''
 # plots.make_seir_plot(100)
