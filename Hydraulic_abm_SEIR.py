@@ -1089,6 +1089,11 @@ class ConsumerModel(Model):
                         ''' Non-industrial nodes are solely based on the
                         number of agents at them '''
                         step_demand[i] = multiplier
+
+                        ''' Count the number of agents at each household '''
+                        if node in self.households.keys():
+                            for house in self.households[node]:
+                                house.count_agents()
                 else:
                     step_demand[i] = 0
             else:
@@ -1138,9 +1143,11 @@ class ConsumerModel(Model):
         for i, node in enumerate(self.nodes_w_demand):
             curr_node = self.wn.get_node(node)
             # curr_demand = curr_node.demand_timeseries_list[0].base_value
+
             ''' list of demand multipliers from agent locations '''
             new_mult = self.daily_demand[:, i]  # np.array
-            ''' multiple the location multiplier by the demand multiplier
+
+            ''' multiply the location multiplier by the demand multiplier
             calcualted by tap water avoidance behaviors '''
             new_mult = new_mult * self.demand_multiplier[node]
             agents_at_node = self.grid.G.nodes[node]['agent']
@@ -1224,9 +1231,9 @@ class ConsumerModel(Model):
     def run_hyd_monthly(self):
         '''
         Run the hydraulic simulation for a month. This method handles all funcs
-        necessary to run the weekly simulation, including collecting the demand
+        necessary to run the monthly simulation, including collecting the demand
         values for each node at each hour, making the new demand patterns each
-        day, and running the simulation every week.
+        day, and running the simulation every month.
         '''
         # first we need to collect the nodal demands at each hour. That means
         # we run self.collect_demands() each time this method is called.
@@ -1238,6 +1245,7 @@ class ConsumerModel(Model):
         # also run the sim at the end of the simulation
         if (((self.timestep + 1) / 24) % 30 == 0 and self.timestep != 0 or
            (self.timestep + 1) / 24 == self.days):
+            print("Run hydraulic")
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
                 if node in self.nodes_capacity:

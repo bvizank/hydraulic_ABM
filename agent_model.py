@@ -366,7 +366,7 @@ class Household:
     def __init__(self, start_id, end_id, node, node_dist, twa_mods, model):
         self.agent_ids = list()  # list of agent that are in the household
         self.agent_obs = list()  # list of agent objects that are in the household
-        self.tap = ['drink', 'hygiene', 'cook']  # the actions using tap water
+        self.tap = ['drink', 'cook']  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.demand = 0  # the tap water demand
         self.bottled_water = 0  # the bottled water demand
@@ -381,10 +381,12 @@ class Household:
 
         self.tap_cost = 0  # the total cost of tap water
         self.bottle_cost = 0  # the total cost of bottled water
-        self.change = 1  # the demand change multiplier for the last 168 hours
+        self.reduction = 0  # the demand reduction for the last 168 hours
         self.model = model
         self.node = node
         self.ind_dist = node_dist
+
+        self.agent_hours = 0  # the total number of hours agents spend at the home node
 
         for i in range(start_id, end_id):
             a = ConsumerAgent(i, self, model)
@@ -452,25 +454,34 @@ class Household:
         self.twa_thresholds = {
             'drink':   model.random.betavariate(3, 1) * twa_mods[0] + 24,
             'cook':    model.random.betavariate(3, 1) * twa_mods[1] + 24,
-            'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
+            # 'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
         }
 
         # 
         self.demand_reduction = {
             'drink':   model.random.uniform(2.6, 5.3),
             'cook':    model.random.uniform(5.3, 10.6),
-            'hygiene': model.random.uniform(5.3, 10.6)
+            # 'hygiene': model.random.uniform(5.3, 10.6)
         }
+
+    def count_agents(self):
+        '''
+        Count the number of agents that are currently at this household
+        '''
+        for agent in self.agent_obs:
+            if agent.pos == self.node:
+                self.agent_hours += 1
 
     def update_household(self, age):
         '''
         Perform updating methods. Update behaviors, calculate demand
         and calculate bottled water use.
         '''
+        # print(age)
         self.update_behaviors(age)
         self.calc_demand()
         self.calc_cost()
-        self.change = self.calc_demand_change()
+        self.reduction = self.calc_demand_change()
 
         return self.change
 
@@ -485,9 +496,9 @@ class Household:
         behavior. I think that makes sense as once we perceive something
         as unsafe we are unlikely to go back.
         '''
-        if age > self.twa_thresholds['hygiene'] and 'hygiene' in self.tap:
-            self.tap.remove('hygiene')
-            self.bottle.append('hygiene')
+        # if age > self.twa_thresholds['hygiene'] and 'hygiene' in self.tap:
+        #     self.tap.remove('hygiene')
+        #     self.bottle.append('hygiene')
         if age > self.twa_thresholds['drink'] and 'drink' in self.tap:
             self.tap.remove('drink')
             self.bottle.append('drink')
@@ -498,35 +509,36 @@ class Household:
     def calc_demand_change(self):
         '''
         Calculates the demand change for the hour based on the behaviors
-
-        Values come from minimum emergency water use values:
-        https://handbook.spherestandards.org/en/sphere/#ch006_004_001
-
-        And are converted to percentage of household demand using data
-        from:
-
-        DeOreo, W. B., Mayer, P., Dziegielewski, B., & Kiefer, J. (2016).
-            Residential End Uses of Water, Version 2: Executive Report.
-
-        Calculate the amount of water needed for each use given the total
-        necessary amount is 50 L/P/D (from Sphere report).
-        Drink:   3 L/P/D / 15 L/P/D = 20% * 50 L/P/D = 10 L/P/D
-        Hygiene: 6 L/P/D / 15 L/P/D = 40% * 50 L/P/D = 20 L/P/D
-        Cook:    6 L/P/D / 15 L/P/D = 40% * 50 L/P/D = 20 L/P/D
-
-        Calculate percentage using DeOreo data: 522 L/H/D and 2.77 P/H
-        10L * 2.77 P/H / 522 L/H/D = 5.3%
-        20L * 2.77 P/H / 522 L/H/D = 10.6%
         '''
-        change = 1
-        if 'hygiene' not in self.tap:
-            change -= self.demand_reduction['hygiene'] / 100
+        # change = 1
+        reduction = 0
+        avg_agents = self.agent_hours / 30 / 24
+        # if 'hygiene' not in self.tap:
+        #     change -= self.demand_reduction['hygiene'] / 100
         if 'cook' not in self.tap:
-            change -= self.demand_reduction['cook'] / 100
-        if 'drink' not in self.tap:
-            change -= self.demand_reduction['drink'] / 100
+            # change -= self.demand_reduction['cook'] / 100
+            ''''
+            add the amount of water used for cooking to the reduction
 
-        return change
+            this value is 11.5 L/c/d multiplied by the average number of agents
+            that were at this node for the past month. Then multiply by 30 to
+            get the monthly use in L.
+            '''
+            reduction += 11.5 * avg_agents * 30  # L/month
+        if 'drink' not in self.tap:
+            # change -= self.demand_reduction['drink'] / 100
+            one_day_demand = self.model.random.lognormvariate(
+                2, 0.75
+            )
+
+            # set minimum of 0.25 L/c/d
+            if one_day_demand < 0.25:
+                one_day_demand = 0.25
+            reduction += one_day_demand * 30 * avg_agents
+
+        # need to reset the agent_hours each month
+        self.agent_hours = 0
+        return reduction
 
     def calc_demand(self):
         '''
@@ -546,12 +558,25 @@ class Household:
         multiplier = len(self.agent_ids) / self.model.nodes_capacity[self.node]
 
         # Calculate the actual demand for that period
-        total_demand = demand_pattern * self.base_demand * multiplier
+        total_demand = demand_pattern.sum() * self.base_demand * multiplier
 
         # set the households tap demand and bottled water demand
-        # conversion of 1,000,000 is ML -> L
-        self.demand = total_demand * self.change * 1000000
-        self.bottled = total_demand * 1000000 - self.demand
+        # need to convert from gallons to liters
+        self.sum_demand = total_demand * 1000000  # liters
+        self.demand = self.sum_demand - self.reduction  # liters
+        self.bottled = self.reduction  # liters
+
+        # need to return the percentage change in demand after bottled water
+        # to calculate future months demand
+        self.change = self.demand / self.sum_demand
+
+        # if self.reduction != 0:
+        #     print(f"Number of agents: {len(self.agent_ids)}")
+        #     print(f"Node: {self.node}")
+        #     print(f"Base demand: {self.base_demand}")
+        #     print(f"Demand pattern: {demand_pattern}")
+        #     print(f"Monthly demand: {self.sum_demand}")
+        #     print(f"Monthly reduction: {self.reduction}")
 
     def calc_tap_cost(self, demand, structure='simple'):
         '''
@@ -586,11 +611,11 @@ class Household:
         of tap water plus the cost of bottled water.
         '''
         # calculate cost of tap water
-        tap = self.demand.sum()
+        tap = self.demand
         self.calc_tap_cost(tap)
 
         # calculate cost of bottled water
-        bottle = self.bottled.sum()
+        bottle = self.bottled
         self.bottle_cost += bottle * self.bottle_cost_pl
 
         # calculate total cost

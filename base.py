@@ -1190,7 +1190,9 @@ class Graphics(BaseGraphics):
         #             format=self.format, bbox_inches='tight')
         # plt.close()
 
+        print(data['demand'])
         demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
+        print(demand)
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
         ])
