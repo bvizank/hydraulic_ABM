@@ -1245,7 +1245,6 @@ class ConsumerModel(Model):
         # also run the sim at the end of the simulation
         if (((self.timestep + 1) / 24) % 30 == 0 and self.timestep != 0 or
            (self.timestep + 1) / 24 == self.days):
-            print("Run hydraulic")
             # first set the demand patterns for each node
             for node in self.nodes_w_demand:
                 if node in self.nodes_capacity:
@@ -1280,6 +1279,7 @@ class ConsumerModel(Model):
                     demand_list = list()
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
+                        print(node_age)
                         demand_list.append(house.update_household(
                             node_age.iloc[-1] / 3600
                         ))
@@ -1289,6 +1289,7 @@ class ConsumerModel(Model):
                     self.demand_multiplier[node] = (
                         sum(demand_list) / len(demand_list)
                     )
+                    print(self.demand_multiplier)
 
                 ''' collect household level data '''
                 self.collect_household_data()

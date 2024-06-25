@@ -1150,11 +1150,11 @@ class Graphics(BaseGraphics):
                                       'burden']
         data = ut.read_data(loc, comp_list)
         print(data['demand'])
-        households = len(data['income'].columns)
+        print(data['age'] / 3600)
+        for i in data['age'].loc[:, 'TN49']:
+            print(i/3600)
+        households = len(data['income'])
         warmup = data['bw_cost'].index[-1] - x_len
-        # print(warmup)
-        # print(data['burden'] * 100)
-        # print(data['traditional'] * 100)
         data['tot_cost'] = data['bw_cost'] + data['tw_cost']
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
@@ -1191,7 +1191,6 @@ class Graphics(BaseGraphics):
         #             format=self.format, bbox_inches='tight')
         # plt.close()
 
-        print(data['demand'])
         demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
         print(demand)
         x_values = np.array([
@@ -1202,12 +1201,22 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        demand = data['demand'].loc[:, self.res_nodes].mean(axis=1)
-        demand = demand.rolling(30*24).sum()
+        cols = ['Residential', 'Commercial', 'Industrial']
+        demand_res = data['demand'].loc[:, self.res_nodes].sum(axis=1)
+        demand_ind = data['demand'].loc[:, self.ind_nodes].sum(axis=1)
+        demand_com = data['demand'].loc[:, self.com_nodes].sum(axis=1)
+        demand = pd.concat([demand_res.rolling(24).mean(),
+                            demand_ind.rolling(24).mean(),
+                            demand_com.rolling(24).mean()],
+                           axis=1, keys=cols)
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
         ])
-        plt.plot(x_values, demand.iloc[-x_len:])
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax, demand.iloc[-x_len:], sd=None, cols=cols, x_values=x_values,
+            sd_plot=False
+        )
         plt.savefig(loc + 'mean_res_demand' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -1221,7 +1230,6 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        cols = ['Residential', 'Commercial', 'Industrial']
         res_age_pm = data['age'][self.res_nodes].mean(axis=1)
         com_age_pm = data['age'][self.com_nodes].mean(axis=1)
         ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
@@ -1313,14 +1321,13 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Plot of TWA parameters '''
-        twa = pd.concat([data['hygiene'].sum(axis=1),
-                         data['drink'].sum(axis=1),
+        twa = pd.concat([data['drink'].sum(axis=1),
                          data['cook'].sum(axis=1)],
-                        axis=1, keys=['Hygiene', 'Drink', 'Cook'])
+                        axis=1, keys=['Drink', 'Cook'])
 
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, twa / households * 100, None, ['Hygiene', 'Drink', 'Cook'], twa.index / 24,
+            ax, twa / households * 100, None, ['Drink', 'Cook'], twa.index / 24,
             'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
         )
 

@@ -17,7 +17,7 @@ logger.addHandler(fh)
 # run the simulation
 run_sim(
     id=0,
-    days=180,
+    days=60,
     seed=0,
     wfh_lag=0,
     no_wfh_perc=0,
