@@ -527,14 +527,18 @@ class Household:
             reduction += 11.5 * avg_agents * 30  # L/month
         if 'drink' not in self.tap:
             # change -= self.demand_reduction['drink'] / 100
-            one_day_demand = self.model.random.lognormvariate(
-                2, 0.75
-            )
+            daily_drink_demand = 0
+            for _ in range(30):
+                one_day_demand = self.model.random.lognormvariate(
+                    2, 0.75
+                )
 
-            # set minimum of 0.25 L/c/d
-            if one_day_demand < 0.25:
-                one_day_demand = 0.25
-            reduction += one_day_demand * 30 * avg_agents
+                # set minimum of 0.25 L/c/d
+                if one_day_demand < 0.25:
+                    daily_drink_demand += 0.25
+                else:
+                    daily_drink_demand += one_day_demand
+            reduction += one_day_demand * avg_agents
 
         # need to reset the agent_hours each month
         self.agent_hours = 0

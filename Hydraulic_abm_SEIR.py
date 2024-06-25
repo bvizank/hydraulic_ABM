@@ -1276,8 +1276,8 @@ class ConsumerModel(Model):
             # update household avoidance behaviors and demand values
             # we don't want to update behaviors during the warmup period
             if not self.warmup and self.bw:
-                demand_list = list()
                 for node, houses in self.households.items():
+                    demand_list = list()
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
                         demand_list.append(house.update_household(

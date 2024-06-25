@@ -219,7 +219,7 @@ class BaseGraphics:
             tot_cost = cow['tw_cost'].iloc[:, -1]
         else:
             tot_cost = cow['bw_cost'].iloc[:, -1] + cow['tw_cost'].iloc[:, -1]
-
+            
         data['cowpi'] = pd.DataFrame(
             {'level': data['income'].loc[:, 'level'],
              'cowpi': tot_cost / (data['income'].loc[:, 'income'] * self.days / 365),
@@ -566,7 +566,7 @@ class Graphics(BaseGraphics):
         # print(self.pm['avg_wfh'])
 
         ''' Read and distill household level data '''
-        self.post_household()
+        # self.post_household()
 
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
@@ -1149,6 +1149,7 @@ class Graphics(BaseGraphics):
                                       'traditional',
                                       'burden']
         data = ut.read_data(loc, comp_list)
+        print(data['demand'])
         households = len(data['income'].columns)
         warmup = data['bw_cost'].index[-1] - x_len
         # print(warmup)
