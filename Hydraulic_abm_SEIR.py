@@ -1279,7 +1279,7 @@ class ConsumerModel(Model):
                     demand_list = list()
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
-                        print(node_age)
+                        print(node_age.iloc[-1])
                         demand_list.append(house.update_household(
                             node_age.iloc[-1] / 3600
                         ))
@@ -1289,7 +1289,7 @@ class ConsumerModel(Model):
                     self.demand_multiplier[node] = (
                         sum(demand_list) / len(demand_list)
                     )
-                    print(self.demand_multiplier)
+                print(self.demand_multiplier)
 
                 ''' collect household level data '''
                 self.collect_household_data()
@@ -1467,7 +1467,7 @@ class ConsumerModel(Model):
         step_bw_cost = list()
         step_tw_cost = list()
         step_bw_demand = list()
-        step_hygiene = list()
+        # step_hygiene = list()
         step_drink = list()
         step_cook = list()
 
@@ -1476,10 +1476,10 @@ class ConsumerModel(Model):
                 step_bw_cost.append(dcp(house.bottle_cost))
                 step_tw_cost.append(dcp(house.tap_cost))
                 step_bw_demand.append(dcp(house.bottled_water))
-                hygiene = 1 if 'hygiene' in house.bottle else 0
+                # hygiene = 1 if 'hygiene' in house.bottle else 0
                 drink = 1 if 'drink' in house.bottle else 0
                 cook = 1 if 'cook' in house.bottle else 0
-                step_hygiene.append(hygiene)
+                # step_hygiene.append(hygiene)
                 step_drink.append(drink)
                 step_cook.append(cook)
 
@@ -1487,7 +1487,7 @@ class ConsumerModel(Model):
         self.tw_cost[self.timestep] = step_tw_cost
         self.bw_demand[self.timestep] = step_bw_demand
 
-        self.hygiene[self.timestep] = step_hygiene
+        # self.hygiene[self.timestep] = step_hygiene
         self.drink[self.timestep] = step_drink
         self.cook[self.timestep] = step_cook
 

@@ -1150,9 +1150,14 @@ class Graphics(BaseGraphics):
                                       'burden']
         data = ut.read_data(loc, comp_list)
         print(data['demand'])
-        print(data['age'] / 3600)
-        for i in data['age'].loc[:, 'TN49']:
-            print(i/3600)
+        print(data['age'].loc[15559200, self.res_nodes].notna().sum())
+        for i, val in data['age'].items():
+            if 'TN' in i:
+                print(f"{i}: {val.iloc[-1] / 3600}")
+        # for i in data['age'].loc[:, 'TN49']:
+        #     print(i/3600)
+        # for i in data['demand'].loc[:, 'TN49']:
+        #     print(i)
         households = len(data['income'])
         warmup = data['bw_cost'].index[-1] - x_len
         data['tot_cost'] = data['bw_cost'] + data['tw_cost']
@@ -1324,10 +1329,11 @@ class Graphics(BaseGraphics):
         twa = pd.concat([data['drink'].sum(axis=1),
                          data['cook'].sum(axis=1)],
                         axis=1, keys=['Drink', 'Cook'])
+        print(twa)
 
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, twa / households * 100, None, ['Drink', 'Cook'], twa.index / 24,
+            ax, twa / households * 100, None, ['Drink', 'Cook'], (twa.index / 24) - 30,
             'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
         )
 
