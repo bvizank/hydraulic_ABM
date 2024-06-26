@@ -495,7 +495,7 @@ class Graphics(BaseGraphics):
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/30_base_equity/'
         self.base_bw_comp_dir = 'Output Files/30_base-bw_equity/'
-        self.base_50ind_comp_dir = 'Output Files/30_base_50ind_equity/'
+        self.base_50ind_comp_dir = 'Output Files/30_all_pm_50ind_equity/'
         self.pm_comp_dir = 'Output Files/30_all_pm-bw_equity/'
         self.wfh_loc = 'Output Files/30_wfh_equity/'
         self.dine_loc = 'Output Files/30_dine_equity/'
