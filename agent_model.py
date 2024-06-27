@@ -368,8 +368,8 @@ class Household:
         self.agent_obs = list()  # list of agent objects that are in the household
         self.tap = ['drink', 'cook']  # the actions using tap water
         self.bottle = []  # actions using bottled water
-        self.demand = 0  # the tap water demand
-        self.bottled_water = 0  # the bottled water demand
+        self.tap_demand = 0  # the tap water demand
+        self.bottle_demand = 0  # the bottled water demand
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
         self.base_rate_water = 15.55  # dollars per month; this is from the city of clinton, nc
@@ -382,6 +382,7 @@ class Household:
         self.tap_cost = 0  # the total cost of tap water
         self.bottle_cost = 0  # the total cost of bottled water
         self.reduction = 0  # the demand reduction for the last 168 hours
+        # self.change = 1
         self.model = model
         self.node = node
         self.ind_dist = node_dist
@@ -478,12 +479,22 @@ class Household:
         and calculate bottled water use.
         '''
         # print(age)
-        self.update_behaviors(age)
-        self.calc_demand()
-        self.calc_cost()
-        self.reduction = self.calc_demand_change()
 
-        return self.change
+        # update the behaviors that this household is adopting based on the
+        # water age
+        self.update_behaviors(age)
+
+        # calculate the demand for tap and bottled water for that last 30 days
+        # this uses the reduction value calcualted at the last call to 
+        # update_household
+        self.calc_demand()
+
+        # calculate the cost of the water for the last 30 days
+        self.calc_cost()
+
+        # calculate the demand change needed based on the behaviors adopted
+        # at this call to update_household
+        self.calc_demand_reduction()
 
     def update_behaviors(self, age):
         '''
@@ -506,44 +517,6 @@ class Household:
             self.tap.remove('cook')
             self.bottle.append('cook')
 
-    def calc_demand_change(self):
-        '''
-        Calculates the demand change for the hour based on the behaviors
-        '''
-        # change = 1
-        reduction = 0
-        avg_agents = self.agent_hours / 30 / 24
-        # if 'hygiene' not in self.tap:
-        #     change -= self.demand_reduction['hygiene'] / 100
-        if 'cook' not in self.tap:
-            # change -= self.demand_reduction['cook'] / 100
-            ''''
-            add the amount of water used for cooking to the reduction
-
-            this value is 11.5 L/c/d multiplied by the average number of agents
-            that were at this node for the past month. Then multiply by 30 to
-            get the monthly use in L.
-            '''
-            reduction += 11.5 * avg_agents * 30  # L/month
-        if 'drink' not in self.tap:
-            # change -= self.demand_reduction['drink'] / 100
-            one_month_demand = 0
-            for _ in range(30):
-                one_day_demand = self.model.random.lognormvariate(
-                    0.6273590016655857, 0.13157635778871926
-                )
-
-                # set minimum of 0.25 L/c/d
-                if one_day_demand < 0.25:
-                    one_month_demand += 0.25
-                else:
-                    one_month_demand += one_day_demand
-            reduction += one_month_demand * avg_agents
-
-        # need to reset the agent_hours each month
-        self.agent_hours = 0
-        return reduction
-
     def calc_demand(self):
         '''
         Calculate the actual demand for the hydraulic interval
@@ -554,25 +527,40 @@ class Household:
 
         # get the demand pattern from the model and subset for the last
         # hydraulic interval
-        demand_pattern = self.model.wn.get_pattern('node_'+self.node)
-        demand_pattern = demand_pattern.multipliers[timestep-hyd_step:timestep]
+        # demand_pattern = self.model.wn.get_pattern('node_'+self.node)
+        # demand_pattern = dcp(demand_pattern.multipliers[timestep-hyd_step:timestep])
 
         # need to get the demand of just this household if it is in a
         # multifamily housing node
-        multiplier = len(self.agent_ids) / self.model.nodes_capacity[self.node]
+        # multiplier = len(self.agent_ids) / self.model.nodes_capacity[self.node]
 
         # Calculate the actual demand for that period
-        total_demand = demand_pattern.sum() * self.base_demand * multiplier
+        # total_demand = demand_pattern.sum() * self.base_demand * multiplier
+
+        ''' get the demand from the last 30 days, this is the tap water demand '''
+        ''' TODO: Need to figure out multi-family housing '''
+        print(self.model.sim._results.node['demand'].loc[:, self.node])
+        total_demand = self.model.sim._results.node['demand'].loc[
+            timestep-hyd_step:timestep,
+            self.node
+        ].sum()
 
         # set the households tap demand and bottled water demand
         # need to convert from gallons to liters
-        self.sum_demand = total_demand * 1000000  # liters
-        self.demand = self.sum_demand - self.reduction  # liters
-        self.bottled = self.reduction  # liters
+        # self.sum_demand = total_demand * 1000000  # liters
+        # self.demand = self.sum_demand - self.reduction  # liters
+
+        ''' this assumes that the current value for self.reduction is the value
+        from the last 30 days. This is true because we have not run
+        self.calc_demand_change() and is only true if we actually reduce the
+        demand by the reduction amount '''
+        self.tap_demand = total_demand * 1000000
+        self.bottle_demand = self.reduction
+        # self.bottled = self.reduction  # liters
 
         # need to return the percentage change in demand after bottled water
         # to calculate future months demand
-        self.change = self.demand / self.sum_demand
+        # self.change = self.demand / self.sum_demand
 
         # if self.reduction != 0:
         #     print(f"Number of agents: {len(self.agent_ids)}")
@@ -582,7 +570,7 @@ class Household:
         #     print(f"Monthly demand: {self.sum_demand}")
         #     print(f"Monthly reduction: {self.reduction}")
 
-    def calc_tap_cost(self, demand, structure='simple'):
+    def calc_tap_cost(self, structure='simple'):
         '''
         Helper to calculate cost of tap water
         '''
@@ -595,7 +583,7 @@ class Household:
             cons_threshold = 300 * 28.3168  # 300 cu. ft. to L
             water = (
                 self.base_rate_water +
-                (demand - cons_threshold if demand > cons_threshold else 0) *
+                (self.tap_demand - cons_threshold if self.tap_demand > cons_threshold else 0) *
                 self.cons_rate_water
             )
 
@@ -605,7 +593,7 @@ class Household:
             '''
             sewer = (
                 self.base_rate_sewer +
-                demand * self.cons_rate_sewer
+                self.tap_demand * self.cons_rate_sewer
             )
             self.tap_cost += water + sewer
 
@@ -615,15 +603,14 @@ class Household:
         of tap water plus the cost of bottled water.
         '''
         # calculate cost of tap water
-        tap = self.demand
-        self.calc_tap_cost(tap)
+        self.calc_tap_cost()
 
         # calculate cost of bottled water
-        bottle = self.bottled
-        self.bottle_cost += bottle * self.bottle_cost_pl
+        self.bottle_cost += self.bottle_demand * self.bottle_cost_pl
 
         # calculate total cost
         self.cow = self.tap_cost + self.bottle_cost
+
         # if bottle > 0.0:
         #     print(self.node)
         #     print(tap)
@@ -631,3 +618,39 @@ class Household:
         #     print(bottle)
         #     print(self.bottle_cost)
         #     print(self.cow)
+
+    def calc_demand_reduction(self):
+        '''
+        Calculates the demand change for the hour based on the behaviors
+        '''
+        self.reduction = 0
+        # change = 1
+        # avg_agents = self.agent_hours / 30 / 24
+        # if 'hygiene' not in self.tap:
+        #     change -= self.demand_reduction['hygiene'] / 100
+        if 'cook' not in self.tap:
+            # change -= self.demand_reduction['cook'] / 100
+            ''''
+            add the amount of water used for cooking to the reduction
+
+            this value is 11.5 L/c/d multiplied by the average number of agents
+            that were at this node for the past month. Then multiply by 30 to
+            get the monthly use in L.
+            '''
+            self.reduction += 11.5 * len(self.agent_ids)  # L/day
+        if 'drink' not in self.tap:
+            # change -= self.demand_reduction['drink'] / 100
+            # one_month_demand = 0
+            # for _ in range(30):
+            one_day_demand = self.model.random.lognormvariate(
+                0.6273590016655857, 0.13157635778871926
+            )
+
+            # set minimum of 0.25 L/c/d
+            if one_day_demand < 0.25:
+                one_day_demand = 0.25
+
+            self.reduction += one_day_demand * len(self.agent_ids)  #L/day
+
+        # need to reset the agent_hours each month
+        # self.agent_hours = 0

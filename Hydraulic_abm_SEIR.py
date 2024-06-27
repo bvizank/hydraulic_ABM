@@ -436,7 +436,7 @@ class ConsumerModel(Model):
         self.base_demands = dict()
         self.base_pattern = dict()
         self.node_index = dict()
-        self.demand_multiplier = dict()
+        # self.demand_multiplier = dict()
         for node in self.nodes_w_demand:
             node_1 = self.wn.get_node(node)
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
@@ -456,7 +456,7 @@ class ConsumerModel(Model):
 
             # set demand multipliers for each node for the tap water avoidance
             # modeling
-            self.demand_multiplier[node] = 1
+            # self.demand_multiplier[node] = 1
 
     def set_age(self):
         ''' Set initial water age '''
@@ -1091,9 +1091,9 @@ class ConsumerModel(Model):
                         step_demand[i] = multiplier
 
                         ''' Count the number of agents at each household '''
-                        if node in self.households.keys():
-                            for house in self.households[node]:
-                                house.count_agents()
+                        # if node in self.households.keys():
+                        #     for house in self.households[node]:
+                        #         house.count_agents()
                 else:
                     step_demand[i] = 0
             else:
@@ -1142,34 +1142,51 @@ class ConsumerModel(Model):
 
         for i, node in enumerate(self.nodes_w_demand):
             curr_node = self.wn.get_node(node)
-            # curr_demand = curr_node.demand_timeseries_list[0].base_value
+            curr_demand = curr_node.demand_timeseries_list[0].base_value
 
             ''' list of demand multipliers from agent locations '''
             new_mult = self.daily_demand[:, i]  # np.array
 
             ''' multiply the location multiplier by the demand multiplier
-            calcualted by tap water avoidance behaviors '''
-            new_mult = new_mult * self.demand_multiplier[node]
+            calculated by tap water avoidance behaviors '''
+            # new_mult = new_mult * self.demand_multiplier[node]
             agents_at_node = self.grid.G.nodes[node]['agent']
             agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
             if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
                 perc_wfh = agents_wfh / len(agents_at_node)
                 if perc_wfh > 0.5 and node in self.res_nodes:
-                    old_pat = self.wn.get_pattern('wk1')
+                    base_pat = self.wn.get_pattern('wk1')
                 else:
-                    old_pat = self.base_pattern[node][1]
+                    base_pat = self.base_pattern[node][1]
             elif self.res_pat_select == 'pysimdeum':
                 if node in self.res_nodes:
                     self.set_patterns(curr_node)
             else:
-                old_pat = self.base_pattern[node][1]
+                base_pat = self.base_pattern[node][1]
 
-            new_pat = self.wn.get_pattern('node_'+node)
+            node_pat = self.wn.get_pattern('node_'+node)
+            if node in self.households.keys():
+                # print(node)
+                # print(base_pat.multipliers)
+                daily_demand = base_pat.multipliers.sum() * curr_demand * 1000000
+                # print(daily_demand)
+
+                reduction_val = 0
+                for house in self.households[node]:
+                    reduction_val += house.reduction
+
+                desired_demand = daily_demand - reduction_val
+                new_demand_multiplier = desired_demand / daily_demand
+                # print(new_demand_multiplier)
+
+                new_mult = new_mult * new_demand_multiplier
+
+            # add the last 24 hours of multipliers to the exisiting pattern
             if self.timestep_day == 1:
-                new_pat.multipliers = old_pat.multipliers * new_mult
+                node_pat.multipliers = base_pat.multipliers * new_mult
             else:
-                new_pat.multipliers = np.concatenate(
-                    (new_pat.multipliers, old_pat.multipliers * new_mult)
+                node_pat.multipliers = np.concatenate(
+                    (node_pat.multipliers, base_pat.multipliers * new_mult)
                 )
 
             # del curr_node.demand_timeseries_list[0]
@@ -1276,20 +1293,19 @@ class ConsumerModel(Model):
             # we don't want to update behaviors during the warmup period
             if not self.warmup and self.bw:
                 for node, houses in self.households.items():
-                    demand_list = list()
+                    # demand_list = list()
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
-                        print(node_age.iloc[-1])
-                        demand_list.append(house.update_household(
-                            node_age.iloc[-1] / 3600
-                        ))
+                        # print(node_age.iloc[-1])
+                        house.update_household(node_age.iloc[-1] / 3600)
+                        # demand_list.append(house.change)
 
                     ''' set the demand multiplier based on the average
                     household demand at the node '''
-                    self.demand_multiplier[node] = (
-                        sum(demand_list) / len(demand_list)
-                    )
-                print(self.demand_multiplier)
+                    # self.demand_multiplier[node] = (
+                    #     sum(demand_list) / len(demand_list)
+                    # )
+                # print(self.demand_multiplier)
 
                 ''' collect household level data '''
                 self.collect_household_data()
@@ -1475,7 +1491,7 @@ class ConsumerModel(Model):
             for house in houses:
                 step_bw_cost.append(dcp(house.bottle_cost))
                 step_tw_cost.append(dcp(house.tap_cost))
-                step_bw_demand.append(dcp(house.bottled_water))
+                step_bw_demand.append(dcp(house.bottle_demand))
                 # hygiene = 1 if 'hygiene' in house.bottle else 0
                 drink = 1 if 'drink' in house.bottle else 0
                 cook = 1 if 'cook' in house.bottle else 0

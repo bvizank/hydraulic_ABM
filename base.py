@@ -1150,10 +1150,10 @@ class Graphics(BaseGraphics):
                                       'burden']
         data = ut.read_data(loc, comp_list)
         print(data['demand'])
-        print(data['age'].loc[15559200, self.res_nodes].notna().sum())
-        for i, val in data['age'].items():
-            if 'TN' in i:
-                print(f"{i}: {val.iloc[-1] / 3600}")
+        # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
+        # for i, val in data['age'].items():
+        #     if 'TN' in i:
+        #         print(f"{i}: {val.iloc[-1] / 3600}")
         # for i in data['age'].loc[:, 'TN49']:
         #     print(i/3600)
         # for i in data['demand'].loc[:, 'TN49']:
