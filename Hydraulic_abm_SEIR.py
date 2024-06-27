@@ -1166,27 +1166,56 @@ class ConsumerModel(Model):
 
             node_pat = self.wn.get_pattern('node_'+node)
             if node in self.households.keys():
-                # print(node)
-                # print(base_pat.multipliers)
-                daily_demand = base_pat.multipliers.sum() * curr_demand * 1000000
-                # print(daily_demand)
+                ''' demand for the next 24 hours, not including reduction or
+                agent multiplier '''
+                curr_multipliers = (
+                    base_pat.multipliers * new_mult
+                )
+
+                daily_demand = curr_multipliers.sum() * curr_demand * 1000000
 
                 reduction_val = 0
+                # number of agents assigned to this node over all households
+                house_agents = sum([len(h.agent_ids) for h in self.households[node]])
                 for house in self.households[node]:
+                    # calculate the percent of this nodes demand is caused by
+                    # this household
+                    agent_percent = len(house.agent_ids) / house_agents
+                    # add the demand from this household to the tap_demand
+                    #
+                    # reduction value needs to be offset by the agent reduction
+                    # which is the average agent multiplier
+                    house.tap_demand += (
+                        daily_demand * agent_percent -
+                        house.reduction * (sum(new_mult) / len(new_mult))
+                    )
+                    # iterate the bottle_demand as well
+                    house.bottle_demand += house.reduction
+                    # increase the total reduction value for this node
                     reduction_val += house.reduction
 
+                # should check if the demand for the node is the same as the
+                # total from all the households
+                house_sum = sum([h.tap_demand for h in self.households[node]])
+                if daily_demand - house_sum > 0.001:
+                    msg = f"Total demand {daily_demand} does not equal the sum of houses {house_sum}"
+                    raise RuntimeError(msg)
+
+                # this is the demand we want for this node. It includes the
+                # reduction for agents at the node and for bw use.
                 desired_demand = daily_demand - reduction_val
                 new_demand_multiplier = desired_demand / daily_demand
-                # print(new_demand_multiplier)
 
                 new_mult = new_mult * new_demand_multiplier
+            else:
+                curr_multipliers = base_pat.multipliers * new_mult
 
             # add the last 24 hours of multipliers to the exisiting pattern
             if self.timestep_day == 1:
-                node_pat.multipliers = base_pat.multipliers * new_mult
+                node_pat.multipliers = curr_multipliers
             else:
                 node_pat.multipliers = np.concatenate(
-                    (node_pat.multipliers, base_pat.multipliers * new_mult)
+                    (node_pat.multipliers, curr_multipliers)
                 )
 
             # del curr_node.demand_timeseries_list[0]

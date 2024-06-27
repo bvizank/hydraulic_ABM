@@ -485,9 +485,9 @@ class Household:
         self.update_behaviors(age)
 
         # calculate the demand for tap and bottled water for that last 30 days
-        # this uses the reduction value calcualted at the last call to 
+        # this uses the reduction value calcualted at the last call to
         # update_household
-        self.calc_demand()
+        # self.calc_demand()
 
         # calculate the cost of the water for the last 30 days
         self.calc_cost()
@@ -605,8 +605,14 @@ class Household:
         # calculate cost of tap water
         self.calc_tap_cost()
 
+        # reset the monthly tap demand
+        self.tap_demand = 0
+
         # calculate cost of bottled water
         self.bottle_cost += self.bottle_demand * self.bottle_cost_pl
+
+        # reset the monthly bottled water demand
+        self.bottle_demand = 0
 
         # calculate total cost
         self.cow = self.tap_cost + self.bottle_cost
