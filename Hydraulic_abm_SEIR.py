@@ -1181,24 +1181,26 @@ class ConsumerModel(Model):
                     # calculate the percent of this nodes demand is caused by
                     # this household
                     agent_percent = len(house.agent_ids) / house_agents
+                    # average agent multiplier
+                    avg_agent_multiplier = sum(new_mult) / len(new_mult)
                     # add the demand from this household to the tap_demand
                     #
                     # reduction value needs to be offset by the agent reduction
                     # which is the average agent multiplier
                     house.tap_demand += (
                         daily_demand * agent_percent -
-                        house.reduction * (sum(new_mult) / len(new_mult))
+                        house.reduction * avg_agent_multiplier
                     )
                     # iterate the bottle_demand as well
-                    house.bottle_demand += house.reduction
+                    house.bottle_demand += house.reduction * avg_agent_multiplier
                     # increase the total reduction value for this node
-                    reduction_val += house.reduction
+                    reduction_val += house.reduction * avg_agent_multiplier
 
                 # should check if the demand for the node is the same as the
                 # total from all the households
                 house_sum = sum([h.tap_demand for h in self.households[node]])
-                if daily_demand - house_sum > 0.001:
-                    msg = f"Total demand {daily_demand} does not equal the sum of houses {house_sum}"
+                if (daily_demand - reduction_val) - house_sum > 0.001:
+                    msg = f"Total demand {daily_demand - reduction_val} does not equal the sum of houses {house_sum} for household of {len(self.households[node])}"
                     raise RuntimeError(msg)
 
                 # this is the demand we want for this node. It includes the
