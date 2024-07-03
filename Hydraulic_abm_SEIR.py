@@ -436,7 +436,7 @@ class ConsumerModel(Model):
         self.base_demands = dict()
         self.base_pattern = dict()
         self.node_index = dict()
-        self.demand_multiplier = dict()
+        # self.demand_multiplier = dict()
         for node in self.nodes_w_demand:
             node_1 = self.wn.get_node(node)
             self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
@@ -456,7 +456,7 @@ class ConsumerModel(Model):
 
             # set demand multipliers for each node for the tap water avoidance
             # modeling
-            self.demand_multiplier[node] = 1
+            # self.demand_multiplier[node] = 1
 
     def set_age(self):
         ''' Set initial water age '''
@@ -1089,6 +1089,11 @@ class ConsumerModel(Model):
                         ''' Non-industrial nodes are solely based on the
                         number of agents at them '''
                         step_demand[i] = multiplier
+
+                        ''' Count the number of agents at each household '''
+                        # if node in self.households.keys():
+                        #     for house in self.households[node]:
+                        #         house.count_agents()
                 else:
                     step_demand[i] = 0
             else:
@@ -1137,32 +1142,82 @@ class ConsumerModel(Model):
 
         for i, node in enumerate(self.nodes_w_demand):
             curr_node = self.wn.get_node(node)
-            # curr_demand = curr_node.demand_timeseries_list[0].base_value
+            curr_demand = curr_node.demand_timeseries_list[0].base_value
+
             ''' list of demand multipliers from agent locations '''
             new_mult = self.daily_demand[:, i]  # np.array
-            ''' multiple the location multiplier by the demand multiplier
-            calcualted by tap water avoidance behaviors '''
-            new_mult = new_mult * self.demand_multiplier[node]
+
+            ''' multiply the location multiplier by the demand multiplier
+            calculated by tap water avoidance behaviors '''
+            # new_mult = new_mult * self.demand_multiplier[node]
             agents_at_node = self.grid.G.nodes[node]['agent']
             agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
             if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
                 perc_wfh = agents_wfh / len(agents_at_node)
                 if perc_wfh > 0.5 and node in self.res_nodes:
-                    old_pat = self.wn.get_pattern('wk1')
+                    base_pat = self.wn.get_pattern('wk1')
                 else:
-                    old_pat = self.base_pattern[node][1]
+                    base_pat = self.base_pattern[node][1]
             elif self.res_pat_select == 'pysimdeum':
                 if node in self.res_nodes:
                     self.set_patterns(curr_node)
             else:
-                old_pat = self.base_pattern[node][1]
+                base_pat = self.base_pattern[node][1]
 
-            new_pat = self.wn.get_pattern('node_'+node)
-            if self.timestep_day == 1:
-                new_pat.multipliers = old_pat.multipliers * new_mult
+            node_pat = self.wn.get_pattern('node_'+node)
+            if node in self.households.keys():
+                ''' demand for the next 24 hours, not including reduction or
+                agent multiplier '''
+                curr_multipliers = (
+                    base_pat.multipliers * new_mult
+                )
+
+                daily_demand = curr_multipliers.sum() * curr_demand * 1000000
+
+                reduction_val = 0
+                # number of agents assigned to this node over all households
+                house_agents = sum([len(h.agent_ids) for h in self.households[node]])
+                for house in self.households[node]:
+                    # calculate the percent of this nodes demand is caused by
+                    # this household
+                    agent_percent = len(house.agent_ids) / house_agents
+                    # average agent multiplier
+                    avg_agent_multiplier = sum(new_mult) / len(new_mult)
+                    # add the demand from this household to the tap_demand
+                    #
+                    # reduction value needs to be offset by the agent reduction
+                    # which is the average agent multiplier
+                    house.tap_demand += (
+                        daily_demand * agent_percent -
+                        house.reduction * avg_agent_multiplier
+                    )
+                    # iterate the bottle_demand as well
+                    house.bottle_demand += house.reduction * avg_agent_multiplier
+                    # increase the total reduction value for this node
+                    reduction_val += house.reduction * avg_agent_multiplier
+
+                # should check if the demand for the node is the same as the
+                # total from all the households
+                house_sum = sum([h.tap_demand for h in self.households[node]])
+                if (daily_demand - reduction_val) - house_sum > 0.001:
+                    msg = f"Total demand {daily_demand - reduction_val} does not equal the sum of houses {house_sum} for household of {len(self.households[node])}"
+                    raise RuntimeError(msg)
+
+                # this is the demand we want for this node. It includes the
+                # reduction for agents at the node and for bw use.
+                desired_demand = daily_demand - reduction_val
+                new_demand_multiplier = desired_demand / daily_demand
+
+                new_mult = new_mult * new_demand_multiplier
             else:
-                new_pat.multipliers = np.concatenate(
-                    (new_pat.multipliers, old_pat.multipliers * new_mult)
+                curr_multipliers = base_pat.multipliers * new_mult
+
+            # add the last 24 hours of multipliers to the exisiting pattern
+            if self.timestep_day == 1:
+                node_pat.multipliers = curr_multipliers
+            else:
+                node_pat.multipliers = np.concatenate(
+                    (node_pat.multipliers, curr_multipliers)
                 )
 
             # del curr_node.demand_timeseries_list[0]
@@ -1224,9 +1279,9 @@ class ConsumerModel(Model):
     def run_hyd_monthly(self):
         '''
         Run the hydraulic simulation for a month. This method handles all funcs
-        necessary to run the weekly simulation, including collecting the demand
+        necessary to run the monthly simulation, including collecting the demand
         values for each node at each hour, making the new demand patterns each
-        day, and running the simulation every week.
+        day, and running the simulation every month.
         '''
         # first we need to collect the nodal demands at each hour. That means
         # we run self.collect_demands() each time this method is called.
@@ -1269,18 +1324,23 @@ class ConsumerModel(Model):
             # we don't want to update behaviors during the warmup period
             if not self.warmup and self.bw:
                 for node, houses in self.households.items():
+<<<<<<< HEAD
                     demand_list = list()
+=======
+                    # demand_list = list()
+>>>>>>> 8bd83ef0c968966f3b8a463ba7221343665de131
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
-                        demand_list.append(house.update_household(
-                            node_age.iloc[-1] / 3600
-                        ))
+                        # print(node_age.iloc[-1])
+                        house.update_household(node_age.iloc[-1] / 3600)
+                        # demand_list.append(house.change)
 
                     ''' set the demand multiplier based on the average
                     household demand at the node '''
-                    self.demand_multiplier[node] = (
-                        sum(demand_list) / len(demand_list)
-                    )
+                    # self.demand_multiplier[node] = (
+                    #     sum(demand_list) / len(demand_list)
+                    # )
+                # print(self.demand_multiplier)
 
                 ''' collect household level data '''
                 self.collect_household_data()
@@ -1458,7 +1518,7 @@ class ConsumerModel(Model):
         step_bw_cost = list()
         step_tw_cost = list()
         step_bw_demand = list()
-        step_hygiene = list()
+        # step_hygiene = list()
         step_drink = list()
         step_cook = list()
 
@@ -1466,11 +1526,11 @@ class ConsumerModel(Model):
             for house in houses:
                 step_bw_cost.append(dcp(house.bottle_cost))
                 step_tw_cost.append(dcp(house.tap_cost))
-                step_bw_demand.append(dcp(house.bottled_water))
-                hygiene = 1 if 'hygiene' in house.bottle else 0
+                step_bw_demand.append(dcp(house.bottle_demand))
+                # hygiene = 1 if 'hygiene' in house.bottle else 0
                 drink = 1 if 'drink' in house.bottle else 0
                 cook = 1 if 'cook' in house.bottle else 0
-                step_hygiene.append(hygiene)
+                # step_hygiene.append(hygiene)
                 step_drink.append(drink)
                 step_cook.append(cook)
 
@@ -1478,7 +1538,7 @@ class ConsumerModel(Model):
         self.tw_cost[self.timestep] = step_tw_cost
         self.bw_demand[self.timestep] = step_bw_demand
 
-        self.hygiene[self.timestep] = step_hygiene
+        # self.hygiene[self.timestep] = step_hygiene
         self.drink[self.timestep] = step_drink
         self.cook[self.timestep] = step_cook
 
