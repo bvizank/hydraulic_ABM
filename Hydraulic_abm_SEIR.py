@@ -1324,11 +1324,7 @@ class ConsumerModel(Model):
             # we don't want to update behaviors during the warmup period
             if not self.warmup and self.bw:
                 for node, houses in self.households.items():
-<<<<<<< HEAD
                     demand_list = list()
-=======
-                    # demand_list = list()
->>>>>>> 8bd83ef0c968966f3b8a463ba7221343665de131
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
                         # print(node_age.iloc[-1])
@@ -1356,8 +1352,8 @@ class ConsumerModel(Model):
                 # for each house, calculate the demand and cost of tap water
                 for node, houses in self.households.items():
                     for house in houses:
-                        house.calc_demand()
-                        house.calc_tap_cost(house.demand.sum())
+                        # house.calc_demand()
+                        house.calc_tap_cost()
                         step_tw_cost.append(dcp(house.tap_cost))
                 self.tw_cost[self.timestep] = step_tw_cost
 
