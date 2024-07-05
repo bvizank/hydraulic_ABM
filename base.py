@@ -168,6 +168,7 @@ class BaseGraphics:
         for file in os.listdir(folder):
             if param in file:
                 curr_data = pd.read_pickle(os.path.join(folder, file))
+                print(file)
                 if param == 'income':
                     output = pd.concat([output, curr_data])
                 else:
@@ -566,7 +567,7 @@ class Graphics(BaseGraphics):
         # print(self.pm['avg_wfh'])
 
         ''' Read and distill household level data '''
-        # self.post_household()
+        self.post_household()
 
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'

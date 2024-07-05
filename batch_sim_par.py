@@ -30,13 +30,13 @@ for i in range(0+rank, 30, nprocs):
         seed=i,
         wfh_lag=0,
         no_wfh_perc=0,
-        bbn_models=['all'],
+        bbn_models=[],
         daily_contacts=30,
         city='micropolis',
         verbose=0,
         hyd_sim='monthly',
         warmup=True,
-        bw=True,
+        bw=False,
         ind_min_demand=0
     )
     os.remove('temp' + str(i) + '.bin')
