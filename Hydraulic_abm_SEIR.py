@@ -1354,6 +1354,7 @@ class ConsumerModel(Model):
                     for house in houses:
                         # house.calc_demand()
                         house.calc_tap_cost()
+                        house.tap_demand = 0
                         step_tw_cost.append(dcp(house.tap_cost))
                 self.tw_cost[self.timestep] = step_tw_cost
 
