@@ -165,9 +165,12 @@ class BaseGraphics:
         Helper method for get_household. Collects data from n runs in folder
         '''
         output = pd.DataFrame()
-        for file in os.listdir(folder):
+        files = os.listdir(folder)
+        files.sort()
+        for file in files:
             if param in file:
                 curr_data = pd.read_pickle(os.path.join(folder, file))
+                print(file)
                 if param == 'income':
                     output = pd.concat([output, curr_data])
                 else:
@@ -219,7 +222,7 @@ class BaseGraphics:
             tot_cost = cow['tw_cost'].iloc[:, -1]
         else:
             tot_cost = cow['bw_cost'].iloc[:, -1] + cow['tw_cost'].iloc[:, -1]
-            
+
         data['cowpi'] = pd.DataFrame(
             {'level': data['income'].loc[:, 'level'],
              'cowpi': tot_cost / (data['income'].loc[:, 'income'] * self.days / 365),
@@ -566,7 +569,7 @@ class Graphics(BaseGraphics):
         # print(self.pm['avg_wfh'])
 
         ''' Read and distill household level data '''
-        # self.post_household()
+        self.post_household()
 
         # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
         # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'

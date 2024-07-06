@@ -11,7 +11,7 @@ plots.demand_plots()
 # plots.flow_plots()
 
 ''' Age plots '''
-# plots.age_plots()
+plots.age_plots()
 
 ''' Industrial distance plots '''
 # plots.ind_dist_plots()
@@ -26,13 +26,13 @@ plots.demand_plots()
 # plots.make_equity_plots()
 
 ''' Cost plots '''
-# plots.make_cost_plots()
+plots.make_cost_plots()
 
 ''' Tap water avoidance plots '''
-# plots.make_twa_plots()
+plots.make_twa_plots()
 
 ''' SEIR plot '''
-# plots.make_seir_plot(100)
+plots.make_seir_plot(days)
 
 ''' Make single plots '''
 # plots.make_single_plots('2024-07-02_11-15_0_results', 150)
