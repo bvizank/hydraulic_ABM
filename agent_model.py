@@ -41,65 +41,48 @@ class ConsumerAgent(Agent):
         # thresholds for covid stage. Represent the time an agent should spend
         # in each stage.
         # time after first exposure to infectious
-        self.exp_time = 24 * math.log(
-                                 self.random.lognormvariate(
-                                     self.model.e2i[0],
-                                     self.model.e2i[1]
-                                 )
-                             )
+        self.exp_time = 24 * self.sample_ln(self.model.e2i[0], self.model.e2i[1])
+
         # time between first infectious and symptomatic
-        self.inf_time = 24 * math.log(
-                                 self.random.lognormvariate(
-                                     self.model.i2s[0],
-                                     self.model.i2s[1]
-                                 )
-                             )
+        self.inf_time = 24 * self.sample_ln(self.model.i2s[0], self.model.i2s[1])
+
         # time between symptomatic and severe
-        self.sev_time = 24 * math.log(
-                                 self.random.lognormvariate(
-                                     self.model.s2sev[0],
-                                     self.model.s2sev[1]
-                                 )
-                             )
+        self.sev_time = 24 * self.sample_ln(self.model.s2sev[0], self.model.s2sev[1])
+
         # time between severe and critical
-        self.crit_time = 24 * math.log(
-                                  self.random.lognormvariate(
-                                      self.model.sev2c[0],
-                                      self.model.sev2c[1]
-                                  )
-                              )
+        self.crit_time = 24 * self.sample_ln(self.model.sev2c[0], self.model.sev2c[1])
 
         # recovery times for each covid stage
-        self.asymp_time = 24 * math.log(
-                                    self.random.lognormvariate(
-                                        self.model.recTimeAsym[0],
-                                        self.model.recTimeAsym[1]
-                                    )
-                                )
-        self.mild_time = 24 * math.log(
-                                  self.random.lognormvariate(
-                                      self.model.recTimeMild[0],
-                                      self.model.recTimeMild[1]
-                                  )
-                              )
-        self.sevRec_time = 24 * math.log(
-                                    self.random.lognormvariate(
-                                        self.model.recTimeSev[0],
-                                        self.model.recTimeSev[1]
-                                    )
-                                )
-        self.critRec_time = 24 * math.log(
-                                     self.random.lognormvariate(
-                                         self.model.recTimeC[0],
-                                         self.model.recTimeC[1]
-                                     )
-                                 )
-        self.death_time = 24 * math.log(
-                                   self.random.lognormvariate(
-                                       self.model.c2d[0],
-                                       self.model.c2d[1]
-                                   )
-                               )
+        self.asymp_time = 24 * self.sample_ln(
+            self.model.recTimeAsym[0],
+            self.model.recTimeAsym[1]
+        )
+        self.mild_time = 24 * self.sample_ln(
+            self.model.recTimeMild[0],
+            self.model.recTimeMild[1]
+        )
+        self.sevRec_time = 24 * self.sample_ln(
+            self.model.recTimeSev[0],
+            self.model.recTimeSev[1]
+        )
+        self.critRec_time = 24 * self.sample_ln(
+            self.model.recTimeC[0],
+            self.model.recTimeC[1]
+        )
+        self.death_time = 24 * self.sample_ln(
+           self.model.c2d[0],
+           self.model.c2d[1]
+        )
+
+    def sample_ln(self, mux, sigmax):
+        '''
+        Return a log-normal sample with the given mu and sigma.
+        '''
+
+        mu = math.log(mux**2 / math.sqrt(sigmax**2 + mux**2))
+        sigma = math.sqrt(math.log(sigmax**2/mux**2 + 1))
+    
+        return self.random.lognormvariate(mu, sigma)
 
     def complying(self):
         if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:
@@ -649,7 +632,7 @@ class Household:
             # one_month_demand = 0
             # for _ in range(30):
             one_day_demand = self.model.random.lognormvariate(
-                0.6273590016655857, 0.13157635778871926
+                0.6273590016655857, math.sqrt(0.13157635778871926)
             )
 
             # set minimum of 0.25 L/c/d
