@@ -627,6 +627,7 @@ class Household:
             get the monthly use in L.
             '''
             self.reduction += 11.5 * len(self.agent_ids)  # L/day
+
         if 'drink' not in self.tap:
             # change -= self.demand_reduction['drink'] / 100
             # one_month_demand = 0
