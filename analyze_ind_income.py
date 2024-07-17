@@ -8,7 +8,7 @@ import statsmodels.api as sm
 
 '''
     first make list of industrial node locations
-    list = {1: (-294,  59),
+    list = {1: (-294, 59),
             2: (-243, 04)}
 
     test the distance from each residential node to each ind node

@@ -5,8 +5,11 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy as dcp
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
 from scipy.stats import binned_statistic
 import utils as ut
+import statsmodels.api as sm
+from sklearn.linear_model import LinearRegression
 
 
 class BaseGraphics:
@@ -87,8 +90,7 @@ class BaseGraphics:
         Calculate the average and package TWA data for plotting
         '''
         output = pd.concat(
-            [data['hygiene'].sum(axis=0),
-             data['drink'].sum(axis=0),
+            [data['drink'].sum(axis=0),
              data['cook'].sum(axis=0)],
             axis=1, keys=keys
         )
@@ -170,7 +172,6 @@ class BaseGraphics:
         for file in files:
             if param in file:
                 curr_data = pd.read_pickle(os.path.join(folder, file))
-                print(file)
                 if param == 'income':
                     output = pd.concat([output, curr_data])
                 else:
@@ -211,7 +212,7 @@ class BaseGraphics:
             dir + '/hh_results/', ['bw_cost', 'tw_cost'] if not base else ['tw_cost']
         )
         data['twa'] = self.get_household(
-            dir + '/hh_results/', ['drink', 'cook', 'hygiene']
+            dir + '/hh_results/', ['drink', 'cook']
         )
         data['income'] = self.get_household(
             dir + '/hh_results/', 'income'
@@ -498,6 +499,104 @@ class BaseGraphics:
         plt.savefig(self.pub_loc + name + '_cow_comparison_no_low_in.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+        
+    def linear_regression(self, data, xname=None, yname=None, norm_x=True):
+        '''
+        Wrapper function to perform a linear regression.
+        '''
+        x = data[[xname]]
+        y = data[yname]
+        
+        if norm_x:
+            x = (
+                (x - np.min(x)) / (np.max(x) - np.min(x))
+            )
+
+        # x_with_intercept = np.empty(shape=(len(x_norm), 2), dtype=np.float64)
+        # x_with_intercept[:, 0] = 1
+        # x_with_intercept[:, 1] = x_norm
+
+        # model = sm.OLS(y_norm, x_with_intercept).fit()
+        # # sse = np.sum((model.fittedvalues - y_norm)**2)
+        # # ssr = np.sum((model.fittedvalues - y_norm.mean())**2)
+        # # sst = ssr + sse
+        # print(model.summary())
+
+        model = LinearRegression()
+        # x = x_norm[:, np.newaxis]
+        # y = y_norm[:, np.newaxis]
+        model.fit(x, y)
+        print(f"R^2: {model.score(x, y)}")
+        print(f"Intercept: {model.intercept_}")
+        print(f"Coefficient: {model.coef_}")
+        
+        return model, x
+        
+    def clinton_bg_plot(self, ax):
+        res_nodes = ut.calc_clinton_ind_dists()
+        results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
+
+        # read in income distribution data
+        income = pd.read_csv(
+            'Input Files/clinton_income_data.csv',
+            delimiter=',',
+            names=['bg', 'income']
+        )
+        
+        print(income)
+        print(pd.Series(results_ind.values))
+
+        data = pd.concat(
+            [income['income'], pd.Series(results_ind.values)],
+            axis=1,
+            keys=['Income', 'Distance']
+        )
+        
+        print(data)
+
+        # x = results_ind.values
+        # y = income[:, 1]
+        
+        model, mod_x = self.linear_regression(data, 'Distance', 'Income')
+
+        # ax.scatter(x, y)
+        ax.plot(mod_x, model.predict(mod_x))
+
+        return ax
+        
+    def scatter_plot(self, ind_dist, income, ax):
+        x = ind_dist
+        x_norm = (
+            (x - np.min(x)) / (np.max(x) - np.min(x))
+        )
+        x_with_intercept = np.empty(shape=(len(x_norm), 2), dtype=np.float64)
+        x_with_intercept[:, 0] = 1
+        x_with_intercept[:, 1] = x_norm
+
+        y = income
+
+        ols_model = sm.OLS(y, x_with_intercept).fit()
+        sse = np.sum((ols_model.fittedvalues - y)**2)
+        ssr = np.sum((ols_model.fittedvalues - y.mean())**2)
+        sst = ssr + sse
+        print(f'R2 = {ssr/sst}')
+        print(len(x_norm))
+        print(np.sqrt(sse/(len(x_norm) - 2)))
+        print(ols_model.summary())
+
+        lr_model = LinearRegression()
+        x = x_norm[:, np.newaxis]
+        lr_model.fit(x, y)
+        print(lr_model.score(x, y))
+        print(lr_model.coef_)
+        print(lr_model.intercept_)
+
+        ax.plot(x, lr_model.predict(x))
+        ax.scatter(x, y)
+        ax.set_xlabel('Normalized Industrial Distance')
+        ax.set_ylabel('Household Income')
+        
+        return ax
 
 
 class Graphics(BaseGraphics):
@@ -521,9 +620,12 @@ class Graphics(BaseGraphics):
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/30_base_equity/'
         self.base_bw_comp_dir = 'Output Files/30_base-bw_equity/'
+        self.pm_25ind_comp_dir = 'Output Files/30_all_pm_25ind_equity/'
         self.pm_50ind_comp_dir = 'Output Files/30_all_pm_50ind_equity/'
         self.pm_75ind_comp_dir = 'Output Files/30_all_pm_75ind_equity/'
+        self.pm_100ind_comp_dir = 'Output Files/30_all_pm_100ind_equity/'
         self.pm_comp_dir = 'Output Files/30_all_pm-bw_equity/'
+        self.pm_nobw_comp_dir = 'Output Files/30_all_pm_no-bw_equity/'
         self.wfh_loc = 'Output Files/30_wfh_equity/'
         self.dine_loc = 'Output Files/30_dine_equity/'
         self.groc_loc = 'Output Files/30_groc_equity/'
@@ -547,11 +649,17 @@ class Graphics(BaseGraphics):
         self.basebw = ut.read_comp_data(
             self.base_bw_comp_dir, self.comp_list, days, self.truncate_list
         )
+        self.pm25ind = ut.read_comp_data(
+            self.pm_25ind_comp_dir, self.comp_list, days, self.truncate_list
+        )
         self.pm50ind = ut.read_comp_data(
             self.pm_50ind_comp_dir, self.comp_list, days, self.truncate_list
         )
         self.pm75ind = ut.read_comp_data(
             self.pm_75ind_comp_dir, self.comp_list, days, self.truncate_list
+        )
+        self.pm100ind = ut.read_comp_data(
+            self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
         )
         self.wfh = ut.read_comp_data(
             self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
@@ -620,6 +728,10 @@ class Graphics(BaseGraphics):
 
         ''' Set the various node lists '''
         self.get_nodes(self.wn)
+        
+        ''' Get industrial distances for each residential node in the network '''
+        self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
+        # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
 
     def flow_plots(self):
         ''' Make the flow direction changes plot '''
@@ -659,10 +771,25 @@ class Graphics(BaseGraphics):
         sector_dem_var = self.calc_sec_averages(self.pm['var_demand'], op='sum')
         sector_dem_err = ut.calc_error(sector_dem_var, self.error)
 
+        # sort data for 25ind case
+        sector_dem50 = self.calc_sec_averages(self.pm25ind['avg_demand'], op='sum')
+        sector_dem_var50 = self.calc_sec_averages(self.pm25ind['var_demand'], op='sum')
+        sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
+
         # sort data for 50ind case
         sector_dem50 = self.calc_sec_averages(self.pm50ind['avg_demand'], op='sum')
         sector_dem_var50 = self.calc_sec_averages(self.pm50ind['var_demand'], op='sum')
         sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
+
+        # sort data for 75ind case
+        sector_dem75 = self.calc_sec_averages(self.pm75ind['avg_demand'], op='sum')
+        sector_dem_var75 = self.calc_sec_averages(self.pm75ind['var_demand'], op='sum')
+        sector_dem_err75 = ut.calc_error(sector_dem_var75, self.error)
+
+        # sort data for 100ind case
+        sector_dem100 = self.calc_sec_averages(self.pm100ind['avg_demand'], op='sum')
+        sector_dem_var100 = self.calc_sec_averages(self.pm100ind['var_demand'], op='sum')
+        sector_dem_err100 = ut.calc_error(sector_dem_var100, self.error)
 
         # plot demand by sector
         ax = plt.subplot()
@@ -694,35 +821,99 @@ class Graphics(BaseGraphics):
         demand_base = self.base['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
         ]
+        demand_basebw = self.basebw['avg_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
         demand_pm = self.pm['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
         ]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
+             demand_basebw.sum(axis=1).rolling(24).mean(),
              demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'PM']
+            keys=['Base', 'Base+BW', 'PM']
         )
 
-        var_base = self.base['avg_demand'][
+        var_base = self.base['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
         ]
-        var_pm = self.pm['avg_demand'][
+        var_basebw = self.basebw['var_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        var_pm = self.pm['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
         ]
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
+             var_basebw.sum(axis=1).rolling(24).mean(),
              var_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'PM']
+            keys=['Base', 'Base+BW', 'PM']
         )
 
         demand_err = ut.calc_error(demand_var, self.error)
 
-        ax = plt.subplot()
-        self.make_avg_plot(ax, demand, demand_err, ['Base', 'PM'],
-                           self.x_values_hour,
-                           'Time (days)', 'Demand (L)', show_labels=True)
+        fig, axes = plt.subplots(1, 2)
+        # format the y axis ticks to have a dollar sign and thousands commas
+        fmt = '{x:,.0f}'
+        tick = mtick.StrMethodFormatter(fmt)
+        axes[0].yaxis.set_major_formatter(tick) 
+        axes[1].yaxis.set_major_formatter(tick) 
+
+        axes[0] = self.make_avg_plot(axes[0], demand, demand_err, ['Base', 'Base+BW', 'PM'],
+                           self.x_values_hour, show_labels=False)
+
+        ''' Plot residential demand in a subfigure '''
+        demand_base = self.base['avg_demand'][
+            self.res_nodes
+        ]
+        demand_basebw = self.basebw['avg_demand'][
+            self.res_nodes
+        ]
+        demand_pm = self.pm['avg_demand'][
+            self.res_nodes
+        ]
+        demand = pd.concat(
+            [demand_base.sum(axis=1).rolling(24).mean(),
+             demand_basebw.sum(axis=1).rolling(24).mean(),
+             demand_pm.sum(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'Base+BW', 'PM']
+        )
+
+        var_base = self.base['var_demand'][
+            self.res_nodes
+        ]
+        var_basebw = self.basebw['var_demand'][
+            self.res_nodes
+        ]
+        var_pm = self.pm['var_demand'][
+            self.res_nodes
+        ]
+        demand_var = pd.concat(
+            [var_base.sum(axis=1).rolling(24).mean(),
+             var_basebw.sum(axis=1).rolling(24).mean(),
+             var_pm.sum(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'Base+BW', 'PM']
+        )
+
+        demand_err = ut.calc_error(demand_var, self.error)
+
+        axes[1] = self.make_avg_plot(
+            axes[1], demand, demand_err, ['Base', 'Base+BW', 'PM'], self.x_values_hour
+        )
+
+        axes[0].legend(['Base', 'Base+BW', 'PM'])
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        fig.supxlabel('Time (days)', y=-0.06)
+        fig.supylabel('Demand (L)', x=0.04)
+        plt.gcf().set_size_inches(7, 3.5)
+
         plt.savefig(self.pub_loc + 'sum_demand_aggregate' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -831,6 +1022,8 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'age_network_comp.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+
+        ''' Make plot comparing pm with pm+bw '''
 
     def ind_dist_plots(self):
         ''' Calculate the distance to the closest industrial node '''
@@ -1097,18 +1290,18 @@ class Graphics(BaseGraphics):
         Tap water avoidance adoption plots
         '''
         # print(self.pm['twa'])
-        twas = ['Hygiene', 'Drink', 'Cook']
+        twas = ['Drink', 'Cook']
         twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
         twa_basebw.index = twa_basebw.index - 719
-        twa_basebw.loc[0] = [0, 0, 0]
+        twa_basebw.loc[0] = [0, 0]
         twa_basebw.sort_index(inplace=True)
 
         twa_pm = self.calc_twa_averages(self.pm['twa'], twas)
         twa_pm.index = twa_pm.index - 719
-        twa_pm.loc[0] = [0, 0, 0]
+        twa_pm.loc[0] = [0, 0]
         twa_pm.sort_index(inplace=True)
 
-        households = len(self.pm['twa']['hygiene'].index)
+        households = len(self.pm['twa']['drink'].index)
         # print(twa_pm)
 
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
@@ -1135,7 +1328,58 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'twa_comp.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
+        
+    def income_plots(self):
+        '''
+        Make plot of Clinton, NC income by BG and micropolis income
+        '''
+        ax0 = plt.subplot()
+        ax0 = self.clinton_bg_plot(ax0)
+        
+        income = self.base['income'].iloc[:, 0].groupby(level=0).median()
+        dist_income = pd.concat(
+            [income, pd.Series(self.ind_distances)],
+            axis=1,
+            keys=['Income', 'Distance']
+        )
+        print(dist_income)
+        model, x = self.linear_regression(dist_income, 'Distance', 'Income')
+        
+        ax0.plot(x, model.predict(x))
+        ax0.set(
+            xlabel='Minimum Industrial Distance (normalized)',
+            ylabel='Median Income'
+        )
+        
+        # format the y axis ticks to have a dollar sign and thousands commas
+        fmt = '${x:,.0f}'
+        tick = mtick.StrMethodFormatter(fmt)
+        ax0.yaxis.set_major_formatter(tick) 
 
+        ax0.legend(['Clinton, NC', 'Micropolis'])
+        plt.savefig(self.pub_loc + 'income_bg-micropolis.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Income map '''
+        loc = 'Output Files/30_base-bw_equity/2024-07-04_14-31_0_results/'
+        comp_list = ['income']
+        data = ut.read_data(loc, comp_list)
+
+        income = data['income'].loc[:, 'income'].groupby(level=0).mean()
+
+        ax1 = plt.subplot()
+        ax1 = wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=income,
+            node_size=5, node_range=[0, 200000], node_colorbar_label='Income ($)',
+            ax=ax1
+        ) 
+        plt.gcf().set_size_inches(4, 3.5)
+        plt.savefig(self.pub_loc + 'income_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+        
     def make_single_plots(self, file, days):
         ''' Set the warmup period '''
         x_len = days * 24
@@ -1146,13 +1390,11 @@ class Graphics(BaseGraphics):
                                       'tw_cost',
                                       'bw_demand',
                                       'income',
-                                      'hygiene',
                                       'drink',
                                       'cook',
                                       'traditional',
                                       'burden']
         data = ut.read_data(loc, comp_list)
-        print(data['demand'])
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
         #     if 'TN' in i:
@@ -1200,7 +1442,6 @@ class Graphics(BaseGraphics):
         # plt.close()
 
         demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
-        print(demand)
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
         ])
@@ -1284,8 +1525,6 @@ class Graphics(BaseGraphics):
                               data['bw_cost'].max(axis=1),
                               data['tot_cost'].max(axis=1)],
                              axis=1, keys=cols)
-        for i in cost.items():
-            print(i)
 
         # average cost plot
         ax = plt.subplot()
@@ -1309,12 +1548,23 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        # print(data['income'])
-        ax = wntr.graphics.plot_network(
+        ''' Plot the income by node '''
+        fig, axes = plt.subplots(1, 2)
+        ind_distances, ind_closest = self.calc_industry_distance(self.wn)
+        dist_values = [v for k, v in ind_distances.items() if k in data['income'].index]
+        income = data['income'].loc[:, 'income'].groupby(level=0).mean()
+        print(len(dist_values))
+        print(len(income))
+
+        axes[0] = self.scatter_plot(dist_values, income, axes[0])
+
+        axes[1] = wntr.graphics.plot_network(
             self.wn,
-            node_attribute=data['income'].iloc[:, 0].groupby(level=0).mean(),
-            node_size=5, node_range=[0, 200000]
+            node_attribute=income,
+            node_size=5, node_range=[0, 200000], node_colorbar_label='Income ($)',
+            ax=axes[1]
         )
+        plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(loc + 'income_map.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -1332,7 +1582,6 @@ class Graphics(BaseGraphics):
         twa = pd.concat([data['drink'].sum(axis=1),
                          data['cook'].sum(axis=1)],
                         axis=1, keys=['Drink', 'Cook'])
-        print(twa)
 
         ax = plt.subplot()
         self.make_avg_plot(

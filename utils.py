@@ -371,3 +371,61 @@ def output_age_data(file):
     data = data['age'].mean(axis=0)
     print(data.mean() / 3600)
     data.to_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')
+
+
+def calc_clinton_ind_dists():
+    '''
+    Calculate the average minimum distance to industrial for each residential
+    node in Clinton and average by block group.
+    '''
+    # see: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#indexing-view-versus-copy
+    pd.options.mode.copy_on_write = True
+    # import the data the includes residential and industrial nodes and spatial data
+    col_names = ['lon', 'lat', 'val', 'struct', 'sec', 'group', 'bg', 'city']
+    data = pd.read_csv(
+        'Input Files/clinton_data.csv',
+        delimiter=',',
+        names=col_names
+    )
+
+    # convert lat and lon to radians
+    data['lat'] = data['lat'] * np.pi / 180
+    data['lon'] = data['lon'] * np.pi / 180
+
+    # ind_nodes = data[(data['sec'] == 3) & (data['city'] == 1)]
+    # res_nodes = data[(data['sec'] == 1) & (data['city'] == 1)]
+    ind_nodes = data[(data['sec'] == 3)]
+    res_nodes = data[(data['sec'] == 1)]
+    res_nodes = res_nodes[res_nodes.loc[:, 'struct'] == 1]
+
+    # make a dict of industrial parcel locations
+    ind_loc = dict()
+    for i, row in ind_nodes.iterrows():
+        ind_loc[row.name] = (row['lat'], row['lon'])
+
+    for i, key in enumerate(ind_loc):
+        '''
+        Using haversine formula to calculate distance
+
+        More information found here:
+        https://www.movable-type.co.uk/scripts/latlong.html
+        '''
+        res_nodes = res_nodes.assign(del_lat=res_nodes['lat'] - ind_loc[key][0])
+        res_nodes = res_nodes.assign(del_lon=res_nodes['lon'] - ind_loc[key][1])
+        res_nodes = res_nodes.assign(a=(
+            np.sin(res_nodes['del_lat']/2) ** 2 +
+            np.cos(res_nodes['lat']) * np.cos(ind_loc[key][0]) *
+            np.sin(res_nodes['del_lon']/2) ** 2
+        ))
+        res_nodes.loc[:, str(key)] = (
+            2 * np.arctan2(
+                    np.sqrt(res_nodes['a']), np.sqrt(1 - res_nodes['a'])
+                ) *
+            6371000
+        )
+
+    col_names.extend(['del_lat', 'del_lon', 'a'])
+    res_nodes.loc[:, 'min'] = res_nodes.loc[:, ~res_nodes.columns.isin(col_names)].min(axis=1)
+    
+    return res_nodes
+
