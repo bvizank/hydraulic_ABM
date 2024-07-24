@@ -643,6 +643,9 @@ class Graphics(BaseGraphics):
         self.pm = ut.read_comp_data(
             self.pm_comp_dir, self.comp_list, days, self.truncate_list
         )
+        self.pm_nobw = ut.read_comp_data(
+            self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
+        )
         self.base = ut.read_comp_data(
             self.base_comp_dir, self.comp_list, days, self.truncate_list
         )
@@ -827,12 +830,16 @@ class Graphics(BaseGraphics):
         demand_pm = self.pm['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
         ]
+        demand_pm_nobw = self.pm_nobw['avg_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
              demand_basebw.sum(axis=1).rolling(24).mean(),
+             demand_pm_nobw.sum(axis=1).rolling(24).mean(),
              demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM']
+            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
         )
 
         var_base = self.base['var_demand'][
@@ -844,12 +851,16 @@ class Graphics(BaseGraphics):
         var_pm = self.pm['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
         ]
+        var_pm_nobw = self.pm_nobw['var_demand'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
              var_basebw.sum(axis=1).rolling(24).mean(),
+             var_pm_nobw.sum(axis=1).rolling(24).mean(),
              var_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM']
+            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
         )
 
         demand_err = ut.calc_error(demand_var, self.error)
@@ -861,8 +872,10 @@ class Graphics(BaseGraphics):
         axes[0].yaxis.set_major_formatter(tick) 
         axes[1].yaxis.set_major_formatter(tick) 
 
-        axes[0] = self.make_avg_plot(axes[0], demand, demand_err, ['Base', 'Base+BW', 'PM'],
-                           self.x_values_hour, show_labels=False)
+        axes[0] = self.make_avg_plot(
+            axes[0], demand, demand_err, ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            self.x_values_hour, show_labels=False
+        )
 
         ''' Plot residential demand in a subfigure '''
         demand_base = self.base['avg_demand'][
@@ -874,12 +887,16 @@ class Graphics(BaseGraphics):
         demand_pm = self.pm['avg_demand'][
             self.res_nodes
         ]
+        demand_pm_nobw = self.pm_nobw['avg_demand'][
+            self.res_nodes
+        ]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
              demand_basebw.sum(axis=1).rolling(24).mean(),
+             demand_pm_nobw.sum(axis=1).rolling(24).mean(),
              demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM']
+            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
         )
 
         var_base = self.base['var_demand'][
@@ -891,21 +908,26 @@ class Graphics(BaseGraphics):
         var_pm = self.pm['var_demand'][
             self.res_nodes
         ]
+        var_pm_nobw = self.pm_nobw['var_demand'][
+            self.res_nodes
+        ]
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
              var_basebw.sum(axis=1).rolling(24).mean(),
+             var_pm_nobw.sum(axis=1).rolling(24).mean(),
              var_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM']
+            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
         )
 
         demand_err = ut.calc_error(demand_var, self.error)
 
         axes[1] = self.make_avg_plot(
-            axes[1], demand, demand_err, ['Base', 'Base+BW', 'PM'], self.x_values_hour
+            axes[1], demand, demand_err,
+            ['Base', 'Base+BW', 'PM', 'PM+BW'], self.x_values_hour
         )
 
-        axes[0].legend(['Base', 'Base+BW', 'PM'])
+        axes[0].legend(['Base', 'Base+BW', 'PM', 'PM+BW'])
         axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
                      transform=axes[0].transAxes)
         axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
@@ -926,6 +948,10 @@ class Graphics(BaseGraphics):
         age_sd_pm = self.calc_sec_averages(self.pm['var_age'])
         age_pm_err = ut.calc_error(age_sd_pm, self.error)
 
+        age_pm_nobw = self.calc_sec_averages(self.pm_nobw['avg_age'])
+        age_sd_pm_nobw = self.calc_sec_averages(self.pm_nobw['var_age'])
+        age_pm_nobw_err = ut.calc_error(age_sd_pm_nobw, self.error)
+
         age_base = self.calc_sec_averages(self.base['avg_age'])
         age_sd_base = self.calc_sec_averages(self.base['var_age'])
         age_base_err = ut.calc_error(age_sd_base, self.error)
@@ -945,7 +971,7 @@ class Graphics(BaseGraphics):
         fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
         axes[0] = self.make_avg_plot(axes[0], age_base / 3600, age_base_err / 3600,
                                      cols, self.x_values_hour)
-        axes[1] = self.make_avg_plot(axes[1], age_basebw / 3600, age_basebw_err / 3600,
+        axes[1] = self.make_avg_plot(axes[1], age_pm_nobw / 3600, age_pm_nobw_err / 3600,
                                      cols, self.x_values_hour)
         axes[2] = self.make_avg_plot(axes[2], age_pm / 3600, age_pm_err / 3600,
                                      cols, self.x_values_hour)
