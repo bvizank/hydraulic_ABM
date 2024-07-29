@@ -4,6 +4,7 @@ import math
 import wntr
 import copy
 import os
+import shutil
 import matplotlib.pyplot as plt
 
 
@@ -426,6 +427,25 @@ def calc_clinton_ind_dists():
 
     col_names.extend(['del_lat', 'del_lon', 'a'])
     res_nodes.loc[:, 'min'] = res_nodes.loc[:, ~res_nodes.columns.isin(col_names)].min(axis=1)
-    
+
     return res_nodes
+
+
+def delete_contents(loc):
+    '''
+    Delete everything in provided file location.
+
+    parameters:
+        loc   (str): location to delete files and folders
+    '''
+
+    for filename in os.listdir(loc):
+        file_path = os.path.join(loc, filename)
+        try:
+            if os.path.isfile(file_path) or os.path.islink(file_path):
+                os.unlink(file_path)
+            elif os.path.isdir(file_path):
+                shutil.rmtree(file_path)
+        except Exception as e:
+            print('Failed to delete %s. Reason: %s' % (file_path, e))
 

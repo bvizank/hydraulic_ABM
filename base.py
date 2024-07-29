@@ -208,7 +208,7 @@ class BaseGraphics:
         # clinton household size of 2.56
         extreme_income = 23452.8
 
-        cow = self.get_household(
+        data['cost'] = self.get_household(
             dir + '/hh_results/', ['bw_cost', 'tw_cost'] if not base else ['tw_cost']
         )
         data['twa'] = self.get_household(
@@ -220,16 +220,15 @@ class BaseGraphics:
 
         if base:
             # no bottled water cost in the base case
-            tot_cost = cow['tw_cost'].iloc[:, -1]
+            data['cost']['total'] = data['cost']['tw_cost']
         else:
-            tot_cost = cow['bw_cost'].iloc[:, -1] + cow['tw_cost'].iloc[:, -1]
+            data['cost']['total'] = data['cost']['bw_cost'] + data['cost']['tw_cost']
 
         data['cowpi'] = pd.DataFrame(
             {'level': data['income'].loc[:, 'level'],
-             'cowpi': tot_cost / (data['income'].loc[:, 'income'] * self.days / 365),
-             'tot_cost': tot_cost,
+             'cowpi': data['cost']['total'].iloc[:, -1] / (data['income'].loc[:, 'income'] * self.days / 365),
              'income': data['income'].loc[:, 'income']},
-            index=tot_cost.index
+            index=data['cost']['total'].index
         )
 
         data['cowpi'].loc[data['cowpi']['income'] < extreme_income, 'level'] = 0
@@ -247,11 +246,17 @@ class BaseGraphics:
         # get pm data ready
         self.package_household(self.pm, self.pm_comp_dir)
 
+        # get pm 25ind data ready
+        self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
+
         # get pm 50ind data ready
         self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
 
         # get pm 75ind data ready
         self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
+
+        # get pm 100ind data ready
+        self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -367,7 +372,7 @@ class BaseGraphics:
         pm_data = pm_data * 100
         base_sd = base_sd * 100
         pm_sd = pm_sd * 100
-        
+
         input = ['S', 'E', 'I', 'R', 'wfh']
         leg_text = ['Susceptible', 'Exposed', 'Infected', 'Recovered', 'WFH']
 
@@ -483,9 +488,13 @@ class BaseGraphics:
 
         return old_stats
 
-    def make_cowpi_plot(self, data, name):
+    def make_cowpi_plot(self, data, err, name):
         ''' Make barchart of cowpi '''
-        data.plot(kind='bar', log=True, ylabel='% of Income', rot=0)
+        data.plot(
+            kind='bar', log=True,
+            yerr=err, capsize=3,
+            ylabel='% of Income', rot=0
+        )
         plt.gcf().set_size_inches(3.5, 3.5)
         plt.savefig(self.pub_loc + name + '_cow_comparison.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -494,19 +503,22 @@ class BaseGraphics:
         # plot without the extremely low income households
         data = data.iloc[1:4, :]
         # print(cost_comp)
-        data.plot(kind='bar', ylabel='% of Income', rot=0)
+        data.plot(
+            kind='bar', ylabel='% of Income',
+            yerr=err, capsize=3, rot=0
+        )
         plt.gcf().set_size_inches(3.5, 3.5)
         plt.savefig(self.pub_loc + name + '_cow_comparison_no_low_in.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
     def linear_regression(self, data, xname=None, yname=None, norm_x=True):
         '''
         Wrapper function to perform a linear regression.
         '''
         x = data[[xname]]
         y = data[yname]
-        
+
         if norm_x:
             x = (
                 (x - np.min(x)) / (np.max(x) - np.min(x))
@@ -529,9 +541,9 @@ class BaseGraphics:
         print(f"R^2: {model.score(x, y)}")
         print(f"Intercept: {model.intercept_}")
         print(f"Coefficient: {model.coef_}")
-        
+
         return model, x
-        
+
     def clinton_bg_plot(self, ax):
         res_nodes = ut.calc_clinton_ind_dists()
         results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
@@ -542,7 +554,7 @@ class BaseGraphics:
             delimiter=',',
             names=['bg', 'income']
         )
-        
+
         print(income)
         print(pd.Series(results_ind.values))
 
@@ -551,19 +563,19 @@ class BaseGraphics:
             axis=1,
             keys=['Income', 'Distance']
         )
-        
+
         print(data)
 
         # x = results_ind.values
         # y = income[:, 1]
-        
+
         model, mod_x = self.linear_regression(data, 'Distance', 'Income')
 
         # ax.scatter(x, y)
         ax.plot(mod_x, model.predict(mod_x))
 
         return ax
-        
+
     def scatter_plot(self, ind_dist, income, ax):
         x = ind_dist
         x_norm = (
@@ -595,7 +607,7 @@ class BaseGraphics:
         ax.scatter(x, y)
         ax.set_xlabel('Normalized Industrial Distance')
         ax.set_ylabel('Household Income')
-        
+
         return ax
 
 
@@ -731,7 +743,7 @@ class Graphics(BaseGraphics):
 
         ''' Set the various node lists '''
         self.get_nodes(self.wn)
-        
+
         ''' Get industrial distances for each residential node in the network '''
         self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
         # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
@@ -1236,17 +1248,15 @@ class Graphics(BaseGraphics):
         plt.close()
 
     def make_cost_plots(self):
-        # base_tot_cost = self.base['avg_bw_cost'] + self.base['avg_tw_cost']
-        # ax = wntr.graphics.plot_network(
-        #     self.wn,
-        #     node_attribute=base_tot_cost.iloc[-1, :],
-        #     node_size=5,
-        #     node_range=[0, 15000],
-        #     node_colorbar_label='Water Cost ($)'
-        # )
-        # plt.savefig(self.pub_loc + 'tot_cost_base_map.' + self.format,
-        #             format=self.format, bbox_inches='tight')
-        # plt.close()
+        wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=self.base['cost']['total'].iloc[:, -1].groupby(level=0).mean(),
+            node_size=5,
+            node_colorbar_label='Water Cost ($)'
+        )
+        plt.savefig(self.pub_loc + 'tot_cost_base_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
         # pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
         # ax = wntr.graphics.plot_network(
@@ -1268,17 +1278,103 @@ class Graphics(BaseGraphics):
         # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
         # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
+        ''' Make total cost plots showing tap, bottle, and total cost '''
+        exclude = ['TN460', 'TN459', 'TN458']
+        print(
+            self.basebw['cost']['bw_cost'].loc[
+                [r for r in self.basebw['cost']['bw_cost'].index if r not in exclude],
+                :
+            ].std(axis=0)
+        )
+        print(self.pm['cost']['bw_cost'].mean(axis=0))
+        print(self.basebw['cost']['tw_cost'].mean(axis=0))
+        print(self.pm['cost']['tw_cost'].mean(axis=0))
+        print(self.basebw['cost']['total'].mean(axis=0))
+        print(self.pm['cost']['total'].mean(axis=0))
+
+        plt.boxplot(self.base['cost']['total'].groupby(level=0).mean())
+        plt.savefig(self.pub_loc + 'cost_box.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        cost_leg = ['Bottled Water', 'Tap Water', 'Total']
+        cost_b = pd.concat(
+            [self.basebw['cost']['bw_cost'].mean(axis=0),
+             self.basebw['cost']['tw_cost'].mean(axis=0),
+             self.basebw['cost']['total'].mean(axis=0)],
+            axis=1,
+            keys=cost_leg
+        )
+        cost_p = pd.concat(
+            [self.pm['cost']['bw_cost'].mean(axis=0),
+             self.pm['cost']['tw_cost'].mean(axis=0),
+             self.pm['cost']['total'].mean(axis=0)],
+            axis=1,
+            keys=cost_leg
+        )
+
+        fig, axes = plt.subplots(1, 2, sharey=True)
+        axes[0] = self.make_avg_plot(
+            axes[0], cost_b, None, cost_leg,
+            cost_b.index / 24, sd_plot=False
+        )
+        axes[1] = self.make_avg_plot(
+            axes[1], cost_p, None, cost_leg,
+            cost_b.index / 24, sd_plot=False
+        )
+
+        fmt = '${x:,.0f}'
+        tick = mtick.StrMethodFormatter(fmt)
+        axes[0].yaxis.set_major_formatter(tick)
+
+        plt.gcf().set_size_inches(7, 3.5)
+        fig.supxlabel('Time (days)', y=-0.03)
+        fig.supylabel('Cost', x=0.04)
+        axes[0].legend(cost_leg, loc='upper left')
+        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+
+        plt.savefig(self.pub_loc + 'cost.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Make cowpi plots (boxplots or barcharts) '''
+        print(self.base['cowpi'][self.base['cowpi']['level'] == 1])
+
+        cowpi_b = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
+            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+        ]
+
+        plt.boxplot(cowpi_b)
+        plt.savefig(self.pub_loc + 'cow_boxplot.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
         level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
+        std_cowpi_b = self.base['cowpi'].groupby('level').std()['cowpi']
         # print(level_cowpi_b)
 
         level_cowpi_bbw = self.basebw['cowpi'].groupby('level').mean()['cowpi']
+        std_cowpi_bbw = self.basebw['cowpi'].groupby('level').std()['cowpi']
         # print(level_cowpi_bbw)
 
         level_cowpi_p = self.pm['cowpi'].groupby('level').mean()['cowpi']
+        std_cowpi_p = self.pm['cowpi'].groupby('level').std()['cowpi']
         # print(level_cowpi_p)
 
+        level_cowpi_p25 = self.pm25ind['cowpi'].groupby('level').mean()['cowpi']
         level_cowpi_p50 = self.pm50ind['cowpi'].groupby('level').mean()['cowpi']
         level_cowpi_p75 = self.pm75ind['cowpi'].groupby('level').mean()['cowpi']
+        level_cowpi_p100 = self.pm100ind['cowpi'].groupby('level').mean()['cowpi']
+
+        std_cowpi_p25 = self.pm25ind['cowpi'].groupby('level').std()['cowpi']
+        std_cowpi_p50 = self.pm50ind['cowpi'].groupby('level').std()['cowpi']
+        std_cowpi_p75 = self.pm75ind['cowpi'].groupby('level').std()['cowpi']
+        std_cowpi_p100 = self.pm100ind['cowpi'].groupby('level').std()['cowpi']
 
         cost_comp_basepm = pd.DataFrame(
             {'Base': level_cowpi_b,
@@ -1287,29 +1383,54 @@ class Graphics(BaseGraphics):
             index=[0, 1, 2, 3]
         )
 
+        cost_std_basepm = pd.DataFrame(
+            {'Base': std_cowpi_b,
+             'Base+BW': std_cowpi_bbw,
+             'Social Distancing+BW': std_cowpi_p},
+            index=[0, 1, 2, 3]
+        )
+
         # convert to percentages
         cost_comp_basepm = cost_comp_basepm * 100
+        cost_std_basepm = cost_std_basepm
+        print(cost_comp_basepm)
+        print(cost_std_basepm)
 
         cost_comp_basepm = cost_comp_basepm.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
+        cost_std_basepm = cost_std_basepm.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
 
         # make the barchart
-        self.make_cowpi_plot(cost_comp_basepm, 'basepm')
+        self.make_cowpi_plot(cost_comp_basepm, cost_std_basepm, 'basepm')
 
         cost_comp_sa = pd.DataFrame(
             {'No Minimum': level_cowpi_p,
+             '25%': level_cowpi_p25,
              '50%': level_cowpi_p50,
              '75%': level_cowpi_p75,
+             '100%': level_cowpi_p100,
              'Base': level_cowpi_b},
+            index=[0, 1, 2, 3]
+        )
+
+        cost_std_sa = pd.DataFrame(
+            {'No Minimum': std_cowpi_p,
+             '25%': std_cowpi_p25,
+             '50%': std_cowpi_p50,
+             '75%': std_cowpi_p75,
+             '100%': std_cowpi_p100,
+             'Base': std_cowpi_b},
             index=[0, 1, 2, 3]
         )
 
         # convert to percentages
         cost_comp_sa = cost_comp_sa * 100
+        cost_std_sa = cost_std_sa
 
         cost_comp_sa = cost_comp_sa.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
+        cost_std_sa = cost_std_sa.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
 
         # make barchart
-        self.make_cowpi_plot(cost_comp_sa, 'sa')
+        self.make_cowpi_plot(cost_comp_sa, cost_std_sa, 'sa')
 
     def make_twa_plots(self):
         '''
@@ -1317,6 +1438,7 @@ class Graphics(BaseGraphics):
         '''
         # print(self.pm['twa'])
         twas = ['Drink', 'Cook']
+        print(self.basebw['twa'])
         twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
         twa_basebw.index = twa_basebw.index - 719
         twa_basebw.loc[0] = [0, 0]
@@ -1354,14 +1476,14 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'twa_comp.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
     def income_plots(self):
         '''
         Make plot of Clinton, NC income by BG and micropolis income
         '''
         ax0 = plt.subplot()
         ax0 = self.clinton_bg_plot(ax0)
-        
+
         income = self.base['income'].iloc[:, 0].groupby(level=0).median()
         dist_income = pd.concat(
             [income, pd.Series(self.ind_distances)],
@@ -1370,17 +1492,17 @@ class Graphics(BaseGraphics):
         )
         print(dist_income)
         model, x = self.linear_regression(dist_income, 'Distance', 'Income')
-        
+
         ax0.plot(x, model.predict(x))
         ax0.set(
             xlabel='Minimum Industrial Distance (normalized)',
             ylabel='Median Income'
         )
-        
+
         # format the y axis ticks to have a dollar sign and thousands commas
         fmt = '${x:,.0f}'
         tick = mtick.StrMethodFormatter(fmt)
-        ax0.yaxis.set_major_formatter(tick) 
+        ax0.yaxis.set_major_formatter(tick)
 
         ax0.legend(['Clinton, NC', 'Micropolis'])
         plt.savefig(self.pub_loc + 'income_bg-micropolis.' + self.format,
@@ -1405,7 +1527,7 @@ class Graphics(BaseGraphics):
         plt.savefig(self.pub_loc + 'income_map.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
     def make_single_plots(self, file, days):
         ''' Set the warmup period '''
         x_len = days * 24

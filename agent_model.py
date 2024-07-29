@@ -402,7 +402,10 @@ class Household:
 
         # the scaling factor represents the median income at the distance this
         # node is away from industrial
-        scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
+        if self.model.dist_income:
+            scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
+        else:
+            scaling_factor = 1
         # pick an income from the gamma distribution trained with clinton
         # income ranges
         mean = 61628.09180717512

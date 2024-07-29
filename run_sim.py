@@ -21,7 +21,10 @@ warnings.simplefilter("ignore", UserWarning)
 
 def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
-    output_loc = 'Output Files/' + curr_dt + '_results'
+    if 'output_loc' in kwargs:
+        output_loc = kwargs['output_loc'] + id
+    else:
+        output_loc = 'Output Files/' + curr_dt + '_results'
     os.mkdir(output_loc)
     output_file = 'datasheet.xlsx'
 

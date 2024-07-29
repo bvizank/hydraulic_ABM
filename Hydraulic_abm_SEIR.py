@@ -137,16 +137,6 @@ class ConsumerModel(Model):
             '''
             self.ppe_reduction = 0.34
 
-        if 'ind_ring' in kwargs:
-            self.ind_ring = kwargs['ind_ring']
-        else:
-            self.ind_ring = 500
-
-        if 'ind_factor' in kwargs:
-            self.ind_factor = kwargs['ind_factor']
-        else:
-            self.ind_factor = 0.8
-
         '''
         hyd_sim represents the way the hydraulic simulation is to take place
         options are 'eos' (end of simulation) and 'hourly' with the default 'eos'
@@ -196,6 +186,14 @@ class ConsumerModel(Model):
             self.ind_min_demand = kwargs['ind_min_demand']
         else:
             self.ind_min_demand = 0
+
+        '''
+        dist_income is whether income is industrial distance based
+        '''
+        if 'dist_income' in kwargs:
+            self.dist_income = kwargs['dist_income']
+        else:
+            self.dist_income = True
 
         ''' Setup and mapping of variables from various sources. For more information
         see utils.py '''
@@ -298,16 +296,12 @@ class ConsumerModel(Model):
                               columns=['Param', 'value1'])
         ppe_reduc = pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
                                  columns=['Param', 'value1'])
-        ind_ring = pd.DataFrame([['ind_ring', self.ind_ring]],
-                                columns=['Param', 'value1'])
-        ind_fact = pd.DataFrame([['ind_factor', self.ind_factor]],
-                                columns=['Param', 'value1'])
 
         self.param_out = pd.concat([covid_exp, hh_rate, wp_rate, inf_time,
                                    syp_time, sev_time, crit_time, death_time,
                                    asymp_rec_time, mild_rec_time, sev_rec_time,
                                    crit_rec_time, daily_cont, bbn_mod, res_pat,
-                                   wfh_lag, no_wfh, ppe_reduc, ind_ring, ind_fact])
+                                   wfh_lag, no_wfh, ppe_reduc])
 
         ''' Initialize the hydraulic information collectors '''
         # these are nodes with demands (there are also nodes without demand):
@@ -528,8 +522,13 @@ class ConsumerModel(Model):
         # collect income and income level from each household that was just created
         self.income = [h.income for n, i in self.households.items() for h in i]
         self.income_level = [h.income_level for n, i in self.households.items() for h in i]
+        self.hh_size = [len(h.agent_ids) for n, i in self.households.items() for h in i]
         self.income_comb = pd.DataFrame(
-            data={'income': self.income, 'level': self.income_level},
+            data={
+                'income': self.income,
+                'level': self.income_level,
+                'hh_size': self.hh_size
+            },
             index=[h.node for n, i in self.households.items() for h in i]
         )
 

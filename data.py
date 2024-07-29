@@ -69,3 +69,41 @@ susDict = {1: [0.525, 0.001075, 0.000055, 0.00002],
            8: [0.9, 0.2457, 0.1742, 0.08292],
            9: [0.9, 0.2457, 0.1742, 0.1619]
 }
+
+''' Data for data synthesis '''
+read_list = [
+    'age',
+    'agent_loc',
+    'burden',
+    'bw_cost',
+    'bw_demand',
+    'cook',
+    'cov_ff',
+    'cov_pers',
+    'demand',
+    'dine',
+    'drink',
+    'flow',
+    'groc',
+    'hygiene',
+    'income',
+    'media',
+    'ppe',
+    'pressure',
+    'seir_data',
+    'traditional',
+    'tw_cost',
+    'wfh'
+]
+
+avg_list = [
+    'income',
+    'bw_cost',
+    'bw_demand',
+    'tw_cost',
+    'cook',
+    'hygiene',
+    'drink',
+    'burden',
+    'traditional'
+]
