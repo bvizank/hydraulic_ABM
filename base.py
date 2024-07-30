@@ -488,11 +488,11 @@ class BaseGraphics:
 
         return old_stats
 
-    def make_cowpi_plot(self, data, err, name):
+    def make_cowpi_plot(self, data, name):
         ''' Make barchart of cowpi '''
         data.plot(
             kind='bar', log=True,
-            yerr=err, capsize=3,
+            # yerr=err, capsize=3,
             ylabel='% of Income', rot=0
         )
         plt.gcf().set_size_inches(3.5, 3.5)
@@ -505,7 +505,8 @@ class BaseGraphics:
         # print(cost_comp)
         data.plot(
             kind='bar', ylabel='% of Income',
-            yerr=err, capsize=3, rot=0
+            # yerr=err, capsize=3,
+            rot=0
         )
         plt.gcf().set_size_inches(3.5, 3.5)
         plt.savefig(self.pub_loc + name + '_cow_comparison_no_low_in.' + self.format,
@@ -1343,13 +1344,31 @@ class Graphics(BaseGraphics):
         ''' Make cowpi plots (boxplots or barcharts) '''
         print(self.base['cowpi'][self.base['cowpi']['level'] == 1])
 
-        cowpi_b = [
+        cowpi_low = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
         ]
 
-        plt.boxplot(cowpi_b)
+        cowpi_med = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+        ]
+
+        cowpi_high = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+        ]
+
+        fig, axes = plt.subplots(1, 3, sharey=True)
+
+        axes[0].boxplot(cowpi_low)
+        axes[1].boxplot(cowpi_med)
+        axes[2].boxplot(cowpi_high)
+
+        plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(self.pub_loc + 'cow_boxplot.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
@@ -1400,37 +1419,37 @@ class Graphics(BaseGraphics):
         cost_std_basepm = cost_std_basepm.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
 
         # make the barchart
-        self.make_cowpi_plot(cost_comp_basepm, cost_std_basepm, 'basepm')
+        self.make_cowpi_plot(cost_comp_basepm, 'basepm')
 
         cost_comp_sa = pd.DataFrame(
             {'No Minimum': level_cowpi_p,
-             '25%': level_cowpi_p25,
+             # '25%': level_cowpi_p25,
              '50%': level_cowpi_p50,
-             '75%': level_cowpi_p75,
+             # '75%': level_cowpi_p75,
              '100%': level_cowpi_p100,
              'Base': level_cowpi_b},
             index=[0, 1, 2, 3]
         )
 
-        cost_std_sa = pd.DataFrame(
-            {'No Minimum': std_cowpi_p,
-             '25%': std_cowpi_p25,
-             '50%': std_cowpi_p50,
-             '75%': std_cowpi_p75,
-             '100%': std_cowpi_p100,
-             'Base': std_cowpi_b},
-            index=[0, 1, 2, 3]
-        )
+        # cost_std_sa = pd.DataFrame(
+        #     {'No Minimum': std_cowpi_p,
+        #      '25%': std_cowpi_p25,
+        #      '50%': std_cowpi_p50,
+        #      '75%': std_cowpi_p75,
+        #      '100%': std_cowpi_p100,
+        #      'Base': std_cowpi_b},
+        #     index=[0, 1, 2, 3]
+        # )
 
         # convert to percentages
         cost_comp_sa = cost_comp_sa * 100
-        cost_std_sa = cost_std_sa
+        # cost_std_sa = cost_std_sa
 
         cost_comp_sa = cost_comp_sa.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
-        cost_std_sa = cost_std_sa.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
+        # cost_std_sa = cost_std_sa.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
 
         # make barchart
-        self.make_cowpi_plot(cost_comp_sa, cost_std_sa, 'sa')
+        self.make_cowpi_plot(cost_comp_sa, 'sa')
 
     def make_twa_plots(self):
         '''
