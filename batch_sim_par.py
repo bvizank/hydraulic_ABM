@@ -30,6 +30,8 @@ if rank == 0:
         os.mkdir(output_loc)
         os.mkdir(output_loc + 'hh_results')
 
+comm.Barrier()
+
 # set a new file logger in place of the stream handler
 # this will eliminate errors being sent to sys.stderr
 fh = logging.FileHandler('logs/log' + str(rank), 'w')
