@@ -261,6 +261,9 @@ class BaseGraphics:
         # get pm 100ind data ready
         self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
+        # get pm_nodi data ready
+        self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
+
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
                       show_labels=False, logx=False, sd_plot=True):
@@ -491,30 +494,57 @@ class BaseGraphics:
 
         return old_stats
 
-    def make_cowpi_plot(self, data, name):
-        ''' Make barchart of cowpi '''
-        data.plot(
-            kind='bar', log=True,
-            # yerr=err, capsize=3,
-            ylabel='% of Income', rot=0
-        )
-        plt.gcf().set_size_inches(3.5, 3.5)
-        plt.savefig(self.pub_loc + name + '_cow_comparison.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+    def make_cowpi_plot(self, data, name, xlabel=None, box=True, outliers=None):
+        if box:
+            fig, axes = plt.subplots(1, 3, sharey=True)
 
-        # plot without the extremely low income households
-        data = data.iloc[1:4, :]
-        # print(cost_comp)
-        data.plot(
-            kind='bar', ylabel='% of Income',
-            # yerr=err, capsize=3,
-            rot=0
-        )
-        plt.gcf().set_size_inches(3.5, 3.5)
-        plt.savefig(self.pub_loc + name + '_cow_comparison_no_low_in.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+            axes[0].boxplot(data['low'], sym=outliers)
+            axes[1].boxplot(data['med'], sym=outliers)
+            axes[2].boxplot(data['high'], sym=outliers)
+
+            # set the x ticks for each subplot
+            for ax in axes:
+                ax.set_xticklabels(xlabel, rotation=45)
+
+            # set the ylabel
+            axes[0].set_ylabel("%HI")
+
+            # add the subplot labels
+            axes[0].text(0.5, -0.24, "(a)", size=12, ha="center",
+                         transform=axes[0].transAxes)
+            axes[1].text(0.5, -0.24, "(b)", size=12, ha="center",
+                         transform=axes[1].transAxes)
+            axes[2].text(0.5, -0.24, "(c)", size=12, ha="center",
+                         transform=axes[2].transAxes)
+
+            plt.gcf().set_size_inches(7, 3.5)
+            plt.savefig(self.pub_loc + name + '.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
+        else:
+            ''' Make barchart of cowpi '''
+            data.plot(
+                kind='bar', log=True,
+                # yerr=err, capsize=3,
+                ylabel='% of Income', rot=0
+            )
+            plt.gcf().set_size_inches(3.5, 3.5)
+            plt.savefig(self.pub_loc + name + '_cow_comparison.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
+
+            # plot without the extremely low income households
+            data = data.iloc[1:4, :]
+            # print(cost_comp)
+            data.plot(
+                kind='bar', ylabel='% of Income',
+                # yerr=err, capsize=3,
+                rot=0
+            )
+            plt.gcf().set_size_inches(3.5, 3.5)
+            plt.savefig(self.pub_loc + name + '_cow_comparison_no_low_in.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
 
     def linear_regression(self, data, xname=None, yname=None, norm_x=True):
         '''
@@ -640,7 +670,8 @@ class Graphics(BaseGraphics):
         self.pm_50ind_comp_dir = 'Output Files/30_all_pm_50ind_equity/'
         self.pm_75ind_comp_dir = 'Output Files/30_all_pm_75ind_equity/'
         self.pm_100ind_comp_dir = 'Output Files/30_all_pm_100ind_equity/'
-        self.pm_comp_dir = 'Output Files/30_all_pm-bw_equity/'
+        self.pm_comp_dir = 'Output Files/30_pmbw_di/'
+        self.pm_nodi_comp_dir = 'Output Files/30_pmbw/'
         self.pm_nobw_comp_dir = 'Output Files/30_all_pm_no-bw_equity/'
         self.wfh_loc = 'Output Files/30_wfh_equity/'
         self.dine_loc = 'Output Files/30_dine_equity/'
@@ -661,6 +692,9 @@ class Graphics(BaseGraphics):
         )
         self.pm_nobw = ut.read_comp_data(
             self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
+        )
+        self.pm_nodi = ut.read_comp_data(
+            self.pm_nodi_comp_dir, self.comp_list, days, self.truncate_list
         )
         self.base = ut.read_comp_data(
             self.base_comp_dir, self.comp_list, days, self.truncate_list
@@ -1344,7 +1378,8 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        ''' Make cowpi plots (boxplots or barcharts) '''
+    def cowpi_boxplot(self):
+        ''' Make cowpi boxplots '''
         print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1])
 
         cowpi_low = [
@@ -1368,43 +1403,58 @@ class Graphics(BaseGraphics):
             self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
         ]
 
-        fig, axes = plt.subplots(1, 3, sharey=True)
+        data = {
+            'low': cowpi_low,
+            'med': cowpi_med,
+            'high': cowpi_high
+        }
 
-        axes[0].boxplot(cowpi_low)
-        axes[1].boxplot(cowpi_med)
-        axes[2].boxplot(cowpi_high)
+        self.make_cowpi_plot(
+            data,
+            'cow_boxplot',
+            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            box=True,
+        )
 
-        plt.gcf().set_size_inches(7, 3.5)
-        plt.savefig(self.pub_loc + 'cow_boxplot.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        self.make_cowpi_plot(
+            data,
+            'cow_boxplot',
+            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            box=True,
+            outliers=""
+        )
 
-        fig, axes = plt.subplots(1, 3, sharey=True)
+        ''' Make plots comparing income distance scenarios '''
+        cowpi_low = [
+            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
+        ]
 
-        axes[0].boxplot(cowpi_low, sym="")
-        axes[1].boxplot(cowpi_med, sym="")
-        axes[2].boxplot(cowpi_high, sym="")
+        cowpi_med = [
+            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+        ]
 
-        # set the x ticks for each subplot
-        for ax in axes:
-            ax.set_xticklabels(['Base', 'Base+BW', 'PM', 'PM+BW'], rotation=45)
+        cowpi_high = [
+            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+        ]
 
-        # set the ylabel
-        axes[0].set_ylabel("%HI")
+        data = {
+            'low': cowpi_low,
+            'med': cowpi_med,
+            'high': cowpi_high
+        }
 
-        # add the subplot labels
-        axes[0].text(0.5, -0.24, "(a)", size=12, ha="center",
-                     transform=axes[0].transAxes)
-        axes[1].text(0.5, -0.24, "(b)", size=12, ha="center",
-                     transform=axes[1].transAxes)
-        axes[2].text(0.5, -0.24, "(c)", size=12, ha="center",
-                     transform=axes[2].transAxes)
+        self.make_cowpi_plot(
+            data,
+            'cow_boxplot_di',
+            ['No DI', 'DI'],
+            box=True,
+            outliers=""
+        )
 
-        plt.gcf().set_size_inches(7, 3.5)
-        plt.savefig(self.pub_loc + 'cow_boxplot_no-outliers.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
-
+    def cowpi_barchart(self):
         level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
         std_cowpi_b = self.base['cowpi'].groupby('level').std()['cowpi']
         # print(level_cowpi_b)
