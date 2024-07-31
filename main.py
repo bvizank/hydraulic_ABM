@@ -28,6 +28,6 @@ run_sim(
     hyd_sim='monthly',
     warmup=True,
     bw=True,
-    ind_min_demand=0.75,
-    dist_income=False
+    ind_min_demand=0,
+    twa_process='percentage'
 )

@@ -195,6 +195,17 @@ class ConsumerModel(Model):
         else:
             self.dist_income = True
 
+        '''
+        twa_process dictates whether the twas are represented as absolute
+        reductions or percentage reductions
+
+        two options are absolute and percentage
+        '''
+        if 'twa_process' in kwargs:
+            self.twa_process = kwargs['twa_process']
+        else:
+            self.twa_process = 'absolute'
+
         ''' Setup and mapping of variables from various sources. For more information
         see utils.py '''
         setup_out = setup(city)
@@ -1183,17 +1194,30 @@ class ConsumerModel(Model):
                     # average agent multiplier
                     avg_agent_multiplier = sum(new_mult) / len(new_mult)
                     # add the demand from this household to the tap_demand
-                    #
-                    # reduction value needs to be offset by the agent reduction
-                    # which is the average agent multiplier
-                    house.tap_demand += (
-                        daily_demand * agent_percent -
-                        house.reduction * avg_agent_multiplier
-                    )
-                    # iterate the bottle_demand as well
-                    house.bottle_demand += house.reduction * avg_agent_multiplier
-                    # increase the total reduction value for this node
-                    reduction_val += house.reduction * avg_agent_multiplier
+
+                    if self.twa_process == 'absolute':
+                        # reduction value needs to be offset by the agent reduction
+                        # which is the average agent multiplier
+                        house.tap_demand += (
+                            daily_demand * agent_percent -
+                            house.reduction * avg_agent_multiplier
+                        )
+                        # iterate the bottle_demand as well
+                        house.bottle_demand += house.reduction * avg_agent_multiplier
+                        # increase the total reduction value for this node
+                        reduction_val += house.reduction * avg_agent_multiplier
+                    elif self.twa_process == 'percentage':
+                        # daily demand already has information about the number
+                        # of agents at this house from new_mult
+                        house.tap_demand += (
+                            daily_demand * agent_percent * house.change
+                        )
+                        # iterate the bottle_demand as well
+                        house.bottle_demand += (
+                            daily_demand * agent_percent * (1 - house.change)
+                        )
+                        # increase the total reduction value for this node
+                        reduction_val += house.bottle_demand
 
                 # should check if the demand for the node is the same as the
                 # total from all the households

@@ -47,6 +47,16 @@ low_income = {
     6: 68050
 }
 
+''' Extremely low income values by household size '''
+ex_low_income = {
+    1: 15400,
+    2: 20440,
+    3: 25820,
+    4: 31200,
+    5: 36580,
+    6: 41960
+}
+
 ''' Gamma parameters for income based on size for Clinton, NC '''
 size_income = {
     1: (0.22849, 96694.59),
