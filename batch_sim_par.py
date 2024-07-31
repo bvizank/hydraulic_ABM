@@ -10,8 +10,8 @@ import logging
 
 bw = True
 bbn_models = ['all']
-dist_income = False
-output_loc = 'Output Files/30_pmbw/'
+dist_income = True
+output_loc = 'Output Files/30_pmbw_di/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
