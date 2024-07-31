@@ -91,7 +91,8 @@ class BaseGraphics:
         '''
         output = pd.concat(
             [data['drink'].sum(axis=0),
-             data['cook'].sum(axis=0)],
+             data['cook'].sum(axis=0),
+             data['hygiene'].sum(axis=0)],
             axis=1, keys=keys
         )
 
@@ -200,7 +201,7 @@ class BaseGraphics:
 
         return output
 
-    def package_household(self, data, dir, base=False):
+    def package_household(self, data, dir, bw=True):
         '''
         Package household data necessary for plotting later
         '''
@@ -209,17 +210,16 @@ class BaseGraphics:
         extreme_income = 23452.8
 
         data['cost'] = self.get_household(
-            dir + '/hh_results/', ['bw_cost', 'tw_cost'] if not base else ['tw_cost']
+            dir + '/hh_results/', ['bw_cost', 'tw_cost'] if bw else ['tw_cost']
         )
         data['twa'] = self.get_household(
-            dir + '/hh_results/', ['drink', 'cook']
+            dir + '/hh_results/', ['drink', 'cook', 'hygiene']
         )
         data['income'] = self.get_household(
             dir + '/hh_results/', 'income'
         )['income']
 
-        if base:
-            # no bottled water cost in the base case
+        if not bw:
             data['cost']['total'] = data['cost']['tw_cost']
         else:
             data['cost']['total'] = data['cost']['bw_cost'] + data['cost']['tw_cost']
@@ -238,12 +238,15 @@ class BaseGraphics:
         Manipulate household data to be ready to plot
         '''
         # get base data ready
-        self.package_household(self.base, self.base_comp_dir, base=True)
+        self.package_household(self.base, self.base_comp_dir, bw=False)
 
         # get base+bw data ready
         self.package_household(self.basebw, self.base_bw_comp_dir)
 
         # get pm data ready
+        self.package_household(self.pm_nobw, self.pm_nobw_comp_dir, bw=False)
+
+        # get pm+bw data ready
         self.package_household(self.pm, self.pm_comp_dir)
 
         # get pm 25ind data ready
@@ -1280,13 +1283,13 @@ class Graphics(BaseGraphics):
         # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
         ''' Make total cost plots showing tap, bottle, and total cost '''
-        exclude = ['TN460', 'TN459', 'TN458']
-        print(
-            self.basebw['cost']['bw_cost'].loc[
-                [r for r in self.basebw['cost']['bw_cost'].index if r not in exclude],
-                :
-            ].std(axis=0)
-        )
+        # exclude = ['TN460', 'TN459', 'TN458']
+        # print(
+        #     self.basebw['cost']['bw_cost'].loc[
+        #         [r for r in self.basebw['cost']['bw_cost'].index if r not in exclude],
+        #         :
+        #     ].std(axis=0)
+        # )
         print(self.pm['cost']['bw_cost'].mean(axis=0))
         print(self.basebw['cost']['tw_cost'].mean(axis=0))
         print(self.pm['cost']['tw_cost'].mean(axis=0))
@@ -1342,23 +1345,26 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make cowpi plots (boxplots or barcharts) '''
-        print(self.base['cowpi'][self.base['cowpi']['level'] == 1])
+        print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1])
 
         cowpi_low = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
         ]
 
         cowpi_med = [
             self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
         ]
 
         cowpi_high = [
             self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
         ]
 
@@ -1370,6 +1376,32 @@ class Graphics(BaseGraphics):
 
         plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(self.pub_loc + 'cow_boxplot.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        fig, axes = plt.subplots(1, 3, sharey=True)
+
+        axes[0].boxplot(cowpi_low, sym="")
+        axes[1].boxplot(cowpi_med, sym="")
+        axes[2].boxplot(cowpi_high, sym="")
+
+        # set the x ticks for each subplot
+        for ax in axes:
+            ax.set_xticklabels(['Base', 'Base+BW', 'PM', 'PM+BW'], rotation=45)
+
+        # set the ylabel
+        axes[0].set_ylabel("%HI")
+
+        # add the subplot labels
+        axes[0].text(0.5, -0.24, "(a)", size=12, ha="center",
+                     transform=axes[0].transAxes)
+        axes[1].text(0.5, -0.24, "(b)", size=12, ha="center",
+                     transform=axes[1].transAxes)
+        axes[2].text(0.5, -0.24, "(c)", size=12, ha="center",
+                     transform=axes[2].transAxes)
+
+        plt.gcf().set_size_inches(7, 3.5)
+        plt.savefig(self.pub_loc + 'cow_boxplot_no-outliers.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -1456,7 +1488,7 @@ class Graphics(BaseGraphics):
         Tap water avoidance adoption plots
         '''
         # print(self.pm['twa'])
-        twas = ['Drink', 'Cook']
+        twas = ['Drink', 'Cook', 'Hygiene']
         print(self.basebw['twa'])
         twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
         twa_basebw.index = twa_basebw.index - 719
@@ -1559,6 +1591,7 @@ class Graphics(BaseGraphics):
                                       'income',
                                       'drink',
                                       'cook',
+                                      'hygiene',
                                       'traditional',
                                       'burden']
         data = ut.read_data(loc, comp_list)
@@ -1747,12 +1780,13 @@ class Graphics(BaseGraphics):
 
         ''' Plot of TWA parameters '''
         twa = pd.concat([data['drink'].sum(axis=1),
-                         data['cook'].sum(axis=1)],
-                        axis=1, keys=['Drink', 'Cook'])
+                         data['cook'].sum(axis=1),
+                         data['hygiene'].sum(axis=1)],
+                        axis=1, keys=['Drink', 'Cook', 'Hygiene'])
 
         ax = plt.subplot()
         self.make_avg_plot(
-            ax, twa / households * 100, None, ['Drink', 'Cook'], (twa.index / 24) - 30,
+            ax, twa / households * 100, None, ['Drink', 'Cook', 'Hygiene'], (twa.index / 24) - 30,
             'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
         )
 
