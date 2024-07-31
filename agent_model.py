@@ -349,7 +349,7 @@ class Household:
     def __init__(self, start_id, end_id, node, node_dist, twa_mods, model):
         self.agent_ids = list()  # list of agent that are in the household
         self.agent_obs = list()  # list of agent objects that are in the household
-        self.tap = ['drink', 'cook']  # the actions using tap water
+        self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
@@ -441,14 +441,14 @@ class Household:
         self.twa_thresholds = {
             'drink':   model.random.betavariate(3, 1) * twa_mods[0] + 24,
             'cook':    model.random.betavariate(3, 1) * twa_mods[1] + 24,
-            # 'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
+            'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
         }
 
         # 
         self.demand_reduction = {
             'drink':   model.random.uniform(2.6, 5.3),
             'cook':    model.random.uniform(5.3, 10.6),
-            # 'hygiene': model.random.uniform(5.3, 10.6)
+            'hygiene': model.random.uniform(5.3, 10.6)
         }
 
     def count_agents(self):
@@ -644,6 +644,11 @@ class Household:
                 one_day_demand = 0.25
 
             self.reduction += one_day_demand * len(self.agent_ids)  #L/day
+
+        if 'hygiene' not in self.tap:
+            ''' update the reduction value with the amount we expect agents
+            to reduce their demand when buying bottled water for hygiene
+            purposes '''
 
         # need to reset the agent_hours each month
         # self.agent_hours = 0
