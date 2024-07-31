@@ -8,10 +8,10 @@ import data as dt
 import logging
 
 
-bw = True
-bbn_models = ['all']
+bw = False
+bbn_models = []
 dist_income = True
-output_loc = 'Output Files/30_pmbw_di/'
+output_loc = 'Output Files/30_base/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
