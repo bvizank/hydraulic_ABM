@@ -365,7 +365,7 @@ class Household:
         self.tap_cost = 0  # the total cost of tap water
         self.bottle_cost = 0  # the total cost of bottled water
         self.reduction = 0  # the demand reduction for the last 168 hours
-        # self.change = 1
+        self.change = 1
         self.model = model
         self.node = node
         self.ind_dist = node_dist
@@ -429,7 +429,10 @@ class Household:
         # low income is set using HUD thresholds by household size
         # https://www.huduser.gov/portal/datasets/il.html
         high_income = 150000
-        if self.income < dt.low_income[int(len(self.agent_ids))]:
+        if self.income < dt.ex_low_income[int(len(self.agent_ids))]:
+            self.income_level = 0
+        if (self.income < dt.low_income[int(len(self.agent_ids))]
+           and self.income > dt.ex_low_income[int(len(self.agent_ids))]):
             self.income_level = 1
         if (self.income >= dt.low_income[int(len(self.agent_ids))]
            and self.income < high_income):
@@ -446,9 +449,9 @@ class Household:
 
         # 
         self.demand_reduction = {
-            'drink':   model.random.uniform(2.6, 5.3),
-            'cook':    model.random.uniform(5.3, 10.6),
-            'hygiene': model.random.uniform(5.3, 10.6)
+            'drink':   5.3,
+            'cook':    10.6,
+            'hygiene': 10.6
         }
 
     def count_agents(self):
@@ -615,40 +618,51 @@ class Household:
         '''
         Calculates the demand change for the hour based on the behaviors
         '''
-        self.reduction = 0
-        # change = 1
         # avg_agents = self.agent_hours / 30 / 24
-        # if 'hygiene' not in self.tap:
-        #     change -= self.demand_reduction['hygiene'] / 100
-        if 'cook' not in self.tap:
-            # change -= self.demand_reduction['cook'] / 100
-            ''''
-            add the amount of water used for cooking to the reduction
+        if self.model.twa_process == 'absolute':
+            self.reduction = 0
+            if 'cook' not in self.tap:
+                ''''
+                add the amount of water used for cooking to the reduction
 
-            this value is 11.5 L/c/d multiplied by the average number of agents
-            that were at this node for the past month. Then multiply by 30 to
-            get the monthly use in L.
-            '''
-            self.reduction += 11.5 * len(self.agent_ids)  # L/day
+                this value is 11.5 L/c/d multiplied by the average number of agents
+                that were at this node for the past month. Then multiply by 30 to
+                get the monthly use in L.
+                '''
+                self.reduction += 11.5 * len(self.agent_ids)  # L/day
 
-        if 'drink' not in self.tap:
-            # change -= self.demand_reduction['drink'] / 100
-            # one_month_demand = 0
-            # for _ in range(30):
-            one_day_demand = self.model.random.lognormvariate(
-                0.6273590016655857, math.sqrt(0.13157635778871926)
-            )
+            if 'drink' not in self.tap:
+                # change -= self.demand_reduction['drink'] / 100
+                # one_month_demand = 0
+                # for _ in range(30):
+                one_day_demand = self.model.random.lognormvariate(
+                    0.6273590016655857, math.sqrt(0.13157635778871926)
+                )
 
-            # set minimum of 0.25 L/c/d
-            if one_day_demand < 0.25:
-                one_day_demand = 0.25
+                # set minimum of 0.25 L/c/d
+                if one_day_demand < 0.25:
+                    one_day_demand = 0.25
 
-            self.reduction += one_day_demand * len(self.agent_ids)  #L/day
+                self.reduction += one_day_demand * len(self.agent_ids)  # L/day
 
-        if 'hygiene' not in self.tap:
-            ''' update the reduction value with the amount we expect agents
-            to reduce their demand when buying bottled water for hygiene
-            purposes '''
+            if 'hygiene' not in self.tap:
+                ''' update the reduction value with the amount we expect agents
+                to reduce their demand when buying bottled water for hygiene
+                purposes '''
+                events_per_day = 2
+                one_day_demand = self.model.random.triangular(0.25, 1.5, 0.5)
+
+                self.reduction += events_per_day * one_day_demand * len(self.agent_ids)
+
+        elif self.model.twa_process == 'percentage':
+            self.change = 1
+            if 'hygiene' not in self.tap:
+                self.change -= self.demand_reduction['hygiene'] / 100
+            if 'cook' not in self.tap:
+                self.change -= self.demand_reduction['cook'] / 100
+            if 'drink' not in self.tap:
+                self.change -= self.demand_reduction['drink'] / 100
 
         # need to reset the agent_hours each month
         # self.agent_hours = 0
+
