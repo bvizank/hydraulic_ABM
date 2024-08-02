@@ -496,9 +496,9 @@ class Household:
         behavior. I think that makes sense as once we perceive something
         as unsafe we are unlikely to go back.
         '''
-        # if age > self.twa_thresholds['hygiene'] and 'hygiene' in self.tap:
-        #     self.tap.remove('hygiene')
-        #     self.bottle.append('hygiene')
+        if age > self.twa_thresholds['hygiene'] and 'hygiene' in self.tap:
+            self.tap.remove('hygiene')
+            self.bottle.append('hygiene')
         if age > self.twa_thresholds['drink'] and 'drink' in self.tap:
             self.tap.remove('drink')
             self.bottle.append('drink')
