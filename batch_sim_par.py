@@ -9,10 +9,10 @@ import logging
 
 
 bw = False
-bbn_models = []
+bbn_models = ['all']
 dist_income = True
 twa_process = 'absolute'
-output_loc = 'Output Files/30_base/'
+output_loc = 'Output Files/30_pm_di/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
