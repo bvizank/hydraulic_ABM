@@ -13,7 +13,7 @@ rank = comm.Get_rank()
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='logs/log'+str(rank), filemode='w', level=logging.INFO)
 
-data_dir = 'Output Files/30_all_pm_no-bw_equity/'
+data_dir = 'Output Files/30_pmbw_di/'
 # data_dir = '/Users/vizan/Library/CloudStorage/OneDrive-NorthCarolinaStateUniversity/Research/Equity/excess_data/30_base_equity'
 # data_dir = 'D:/OneDrive - North Carolina State University/Research/Code/ABM/Excess Data/wfh_30/'
 
