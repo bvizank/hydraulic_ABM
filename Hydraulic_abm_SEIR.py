@@ -1538,7 +1538,7 @@ class ConsumerModel(Model):
         step_bw_cost = list()
         step_tw_cost = list()
         step_bw_demand = list()
-        # step_hygiene = list()
+        step_hygiene = list()
         step_drink = list()
         step_cook = list()
 
@@ -1547,10 +1547,10 @@ class ConsumerModel(Model):
                 step_bw_cost.append(dcp(house.bottle_cost))
                 step_tw_cost.append(dcp(house.tap_cost))
                 step_bw_demand.append(dcp(house.bottle_demand))
-                # hygiene = 1 if 'hygiene' in house.bottle else 0
+                hygiene = 1 if 'hygiene' in house.bottle else 0
                 drink = 1 if 'drink' in house.bottle else 0
                 cook = 1 if 'cook' in house.bottle else 0
-                # step_hygiene.append(hygiene)
+                step_hygiene.append(hygiene)
                 step_drink.append(drink)
                 step_cook.append(cook)
 
@@ -1558,7 +1558,7 @@ class ConsumerModel(Model):
         self.tw_cost[self.timestep] = step_tw_cost
         self.bw_demand[self.timestep] = step_bw_demand
 
-        # self.hygiene[self.timestep] = step_hygiene
+        self.hygiene[self.timestep] = step_hygiene
         self.drink[self.timestep] = step_drink
         self.cook[self.timestep] = step_cook
 

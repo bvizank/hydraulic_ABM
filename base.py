@@ -104,6 +104,7 @@ class BaseGraphics:
         for (pipe, colData) in data.items():
             if 'MA' in pipe:
                 curr_flow_changes = list()
+                print(colData)
                 for i in range(len(colData) - 1):
                     if colData[(i+1)*3600] * colData[i*3600] < 0:
                         curr_flow_changes.append(1)
@@ -231,7 +232,7 @@ class BaseGraphics:
             index=data['cost']['total'].index
         )
 
-        data['cowpi'].loc[data['cowpi']['income'] < extreme_income, 'level'] = 0
+        # data['cowpi'].loc[data['cowpi']['income'] < extreme_income, 'level'] = 0
 
     def post_household(self):
         '''
@@ -263,6 +264,9 @@ class BaseGraphics:
 
         # get pm_nodi data ready
         self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
+
+        # get pm_perc data ready
+        self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -664,19 +668,20 @@ class Graphics(BaseGraphics):
         ''' Define data directories '''
         # self.base_comp_dir = 'Output Files/30_no_pm/'
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
-        self.base_comp_dir = 'Output Files/30_base_equity/'
-        self.base_bw_comp_dir = 'Output Files/30_base-bw_equity/'
+        self.base_comp_dir = 'Output Files/Distance Based Income/30_base_di/'
+        self.base_bw_comp_dir = 'Output Files/Distance Based Income/30_basebw_di/'
         self.pm_25ind_comp_dir = 'Output Files/30_all_pm_25ind_equity/'
         self.pm_50ind_comp_dir = 'Output Files/30_all_pm_50ind_equity/'
         self.pm_75ind_comp_dir = 'Output Files/30_all_pm_75ind_equity/'
         self.pm_100ind_comp_dir = 'Output Files/30_all_pm_100ind_equity/'
-        self.pm_comp_dir = 'Output Files/30_pmbw_di/'
-        self.pm_nodi_comp_dir = 'Output Files/30_pmbw/'
-        self.pm_nobw_comp_dir = 'Output Files/30_all_pm_no-bw_equity/'
-        self.wfh_loc = 'Output Files/30_wfh_equity/'
-        self.dine_loc = 'Output Files/30_dine_equity/'
-        self.groc_loc = 'Output Files/30_groc_equity/'
-        self.ppe_loc = 'Output Files/30_ppe_equity/'
+        self.pm_comp_dir = 'Output Files/Distance Based Income/30_pmbw_di/'
+        self.pm_comp_perc_dir = 'Output Files/Distance Based Income/30_pmbw_di_perc/'
+        self.pm_nodi_comp_dir = 'Output Files/Non-distance Based Income/30_pmbw/'
+        self.pm_nobw_comp_dir = 'Output Files/Distance Based Income/30_pm_di/'
+        # self.wfh_loc = 'Output Files/30_wfh_equity/'
+        # self.dine_loc = 'Output Files/30_dine_equity/'
+        # self.groc_loc = 'Output Files/30_groc_equity/'
+        # self.ppe_loc = 'Output Files/30_ppe_equity/'
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers', 'agent_loc',
                           'wfh', 'dine', 'groc', 'ppe']
@@ -689,6 +694,9 @@ class Graphics(BaseGraphics):
         ''' Read in data from data directories '''
         self.pm = ut.read_comp_data(
             self.pm_comp_dir, self.comp_list, days, self.truncate_list
+        )
+        self.pm_perc = ut.read_comp_data(
+            self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
         )
         self.pm_nobw = ut.read_comp_data(
             self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
@@ -714,18 +722,18 @@ class Graphics(BaseGraphics):
         self.pm100ind = ut.read_comp_data(
             self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
         )
-        self.wfh = ut.read_comp_data(
-            self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
-        )
-        self.dine = ut.read_comp_data(
-            self.dine_loc, ['seir_data', 'age'], days, self.truncate_list
-        )
-        self.grocery = ut.read_comp_data(
-            self.groc_loc, ['seir_data', 'age'], days, self.truncate_list
-        )
-        self.ppe = ut.read_comp_data(
-            self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
-        )
+        # self.wfh = ut.read_comp_data(
+        #     self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
+        # )
+        # self.dine = ut.read_comp_data(
+        #     self.dine_loc, ['seir_data', 'age'], days, self.truncate_list
+        # )
+        # self.grocery = ut.read_comp_data(
+        #     self.groc_loc, ['seir_data', 'age'], days, self.truncate_list
+        # )
+        # self.ppe = ut.read_comp_data(
+        #     self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
+        # )
 
         # print(self.pm['avg_wfh'])
 
@@ -1018,24 +1026,28 @@ class Graphics(BaseGraphics):
         age_sd_pm75 = self.calc_sec_averages(self.pm75ind['var_age'])
         age_pm75_err = ut.calc_error(age_sd_pm75, self.error)
 
-        fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
-        axes[0] = self.make_avg_plot(axes[0], age_base / 3600, age_base_err / 3600,
+        fig, axes = plt.subplots(nrows=2, ncols=2, sharey=True, sharex=True)
+        axes[0, 0] = self.make_avg_plot(axes[0, 0], age_base / 3600, age_base_err / 3600,
                                      cols, self.x_values_hour)
-        axes[1] = self.make_avg_plot(axes[1], age_pm_nobw / 3600, age_pm_nobw_err / 3600,
+        axes[0, 1] = self.make_avg_plot(axes[0, 1], age_basebw / 3600, age_basebw_err / 3600,
                                      cols, self.x_values_hour)
-        axes[2] = self.make_avg_plot(axes[2], age_pm / 3600, age_pm_err / 3600,
+        axes[1, 0] = self.make_avg_plot(axes[1, 0], age_pm_nobw / 3600, age_pm_nobw_err / 3600,
+                                     cols, self.x_values_hour)
+        axes[1, 1] = self.make_avg_plot(axes[1, 1], age_pm / 3600, age_pm_err / 3600,
                                      cols, self.x_values_hour)
 
-        axes[0].legend(cols)
-        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
-                     transform=axes[0].transAxes)
-        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
-                     transform=axes[1].transAxes)
-        axes[2].text(0.5, -0.14, "(c)", size=12, ha="center",
-                     transform=axes[2].transAxes)
-        fig.supxlabel('Time (days)', y=-0.06)
+        axes[0, 0].legend(cols)
+        axes[0, 0].text(0.5, -0.14, "(a)", size=12, ha="center",
+                     transform=axes[0, 0].transAxes)
+        axes[0, 1].text(0.5, -0.14, "(b)", size=12, ha="center",
+                     transform=axes[0, 1].transAxes)
+        axes[1, 0].text(0.5, -0.23, "(c)", size=12, ha="center",
+                     transform=axes[1, 0].transAxes)
+        axes[1, 1].text(0.5, -0.23, "(d)", size=12, ha="center",
+                     transform=axes[1, 1].transAxes)
+        fig.supxlabel('Time (days)', y=0)
         fig.supylabel('Age (hrs)', x=0.04)
-        plt.gcf().set_size_inches(8, 3.5)
+        plt.gcf().set_size_inches(4, 4)
 
         plt.savefig(self.pub_loc + 'mean_age_sector.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -1539,7 +1551,7 @@ class Graphics(BaseGraphics):
         '''
         # print(self.pm['twa'])
         twas = ['Drink', 'Cook', 'Hygiene']
-        print(self.basebw['twa'])
+        # print(self.basebw['twa'])
         twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
         twa_basebw.index = twa_basebw.index - 719
         twa_basebw.loc[0] = [0, 0]
