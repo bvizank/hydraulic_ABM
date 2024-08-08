@@ -10,9 +10,9 @@ import logging
 
 bw = True
 bbn_models = ['all']
-dist_income = True
-twa_process = 'percentage'
-output_loc = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
+dist_income = False
+twa_process = 'absolute'
+output_loc = 'Output Files/2_Non-distance Based Income/30_pmbw/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
