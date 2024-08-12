@@ -1392,7 +1392,7 @@ class Graphics(BaseGraphics):
 
     def cowpi_boxplot(self):
         ''' Make cowpi boxplots '''
-        print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1])
+        # print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1])
 
         cowpi_low = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
@@ -1430,7 +1430,7 @@ class Graphics(BaseGraphics):
 
         self.make_cowpi_plot(
             data,
-            'cow_boxplot',
+            'cow_boxplot_no_outliers',
             ['Base', 'Base+BW', 'PM', 'PM+BW'],
             box=True,
             outliers=""
@@ -1462,6 +1462,36 @@ class Graphics(BaseGraphics):
             data,
             'cow_boxplot_di',
             ['No DI', 'DI'],
+            box=True,
+            outliers=""
+        )
+
+        ''' Make plots comparing income distance scenarios '''
+        cowpi_low = [
+            self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
+        ]
+
+        cowpi_med = [
+            self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+        ]
+
+        cowpi_high = [
+            self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+        ]
+
+        data = {
+            'low': cowpi_low,
+            'med': cowpi_med,
+            'high': cowpi_high
+        }
+
+        self.make_cowpi_plot(
+            data,
+            'cow_boxplot_perc',
+            ['Percentage', 'Absolute'],
             box=True,
             outliers=""
         )
