@@ -250,6 +250,12 @@ class BaseGraphics:
         # get pm+bw data ready
         self.package_household(self.pm, self.pm_comp_dir)
 
+        # get pm_nodi data ready
+        self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
+
+        # get pm_perc data ready
+        self.package_household(self.pm_perc, self.pm_comp_perc_dir)
+
         # get pm 25ind data ready
         self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
 
@@ -261,12 +267,6 @@ class BaseGraphics:
 
         # get pm 100ind data ready
         self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
-
-        # get pm_nodi data ready
-        self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
-
-        # get pm_perc data ready
-        self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -502,9 +502,9 @@ class BaseGraphics:
         if box:
             fig, axes = plt.subplots(1, 3, sharey=True)
 
-            axes[0].boxplot(data['low'], sym=outliers)
-            axes[1].boxplot(data['med'], sym=outliers)
-            axes[2].boxplot(data['high'], sym=outliers)
+            axes[0].boxplot(data['low'], sym=outliers, showmeans=True)
+            axes[1].boxplot(data['med'], sym=outliers, showmeans=True)
+            axes[2].boxplot(data['high'], sym=outliers, showmeans=True)
 
             # set the x ticks for each subplot
             for ax in axes:
@@ -670,10 +670,10 @@ class Graphics(BaseGraphics):
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/1_Distance Based Income/30_base_di/'
         self.base_bw_comp_dir = 'Output Files/1_Distance Based Income/30_basebw_di/'
-        self.pm_25ind_comp_dir = 'Output Files/1_Distance Based Income/30_all_pm_25ind_equity/'
-        self.pm_50ind_comp_dir = 'Output Files/1_Distance Based Income/30_all_pm_50ind_equity/'
-        self.pm_75ind_comp_dir = 'Output Files/1_Distance Based Income/30_all_pm_75ind_equity/'
-        self.pm_100ind_comp_dir = 'Output Files/1_Distance Based Income/30_all_pm_100ind_equity/'
+        self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_25ind_equity/'
+        self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_50ind_equity/'
+        self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_75ind_equity/'
+        self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
         self.pm_comp_dir = 'Output Files/1_Distance Based Income/30_pmbw_di/'
         self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
         self.pm_nodi_comp_dir = 'Output Files/2_Non-distance Based Income/30_pmbw/'
@@ -1584,12 +1584,12 @@ class Graphics(BaseGraphics):
         # print(self.basebw['twa'])
         twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
         twa_basebw.index = twa_basebw.index - 719
-        twa_basebw.loc[0] = [0, 0]
+        twa_basebw.loc[0] = [0, 0, 0]
         twa_basebw.sort_index(inplace=True)
 
         twa_pm = self.calc_twa_averages(self.pm['twa'], twas)
         twa_pm.index = twa_pm.index - 719
-        twa_pm.loc[0] = [0, 0]
+        twa_pm.loc[0] = [0, 0, 0]
         twa_pm.sort_index(inplace=True)
 
         households = len(self.pm['twa']['drink'].index)
@@ -1653,7 +1653,7 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Income map '''
-        loc = 'Output Files/30_base-bw_equity/2024-07-04_14-31_0_results/'
+        loc = 'Output Files/1_Distance Based Income/30_basebw_di/0/'
         comp_list = ['income']
         data = ut.read_data(loc, comp_list)
 
