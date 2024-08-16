@@ -1347,7 +1347,7 @@ class ConsumerModel(Model):
             # we don't want to update behaviors during the warmup period
             if not self.warmup and self.bw:
                 for node, houses in self.households.items():
-                    demand_list = list()
+                    # demand_list = list()
                     for house in houses:
                         node_age = self.sim._results.node['quality'].loc[:, node]
                         # print(node_age.iloc[-1])
