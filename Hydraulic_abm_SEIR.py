@@ -177,7 +177,7 @@ class ConsumerModel(Model):
         if 'twa_mods' in kwargs:
             self.twa_mods = kwargs['twa_mods']
         else:
-            self.twa_mods = [130, 150, 140]
+            self.twa_mods = [130, 140, 150]
 
         '''
         self.ind_min_demand is the minimum industrial demand as a percentage
