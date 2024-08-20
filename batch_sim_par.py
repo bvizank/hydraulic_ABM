@@ -9,11 +9,11 @@ import logging
 
 
 bw = True
-bbn_models = ['all']
+bbn_models = []
 dist_income = True
 twa_process = 'absolute'
 twa_mods = [130, 140, 150]
-output_loc = 'Output Files/3_Sensitivity Analysis/30_pmbw_di/'
+output_loc = 'Output Files/1_Distance Based Income/30_basebw_di/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
