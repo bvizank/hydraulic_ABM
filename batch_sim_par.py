@@ -12,7 +12,8 @@ bw = True
 bbn_models = ['all']
 dist_income = True
 twa_process = 'absolute'
-output_loc = 'Output Files/3_Sensitivity Analysis/30_pmbw_50ind/'
+twa_mods = [130, 140, 150]
+output_loc = 'Output Files/3_Sensitivity Analysis/30_pmbw_di/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
@@ -55,6 +56,7 @@ for i in range(0+rank, 30, nprocs):
         verbose=0,
         hyd_sim='monthly',
         warmup=True,
+        twa_mods=twa_mods,
         bw=bw,
         ind_min_demand=0,
         dist_income=dist_income,
