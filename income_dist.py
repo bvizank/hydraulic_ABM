@@ -65,11 +65,13 @@ b_arr = bootstrap(data, 10000)
 mean_b = np.mean(b_arr)
 med_b = np.median(b_arr, axis=1)
 up_b = np.percentile(b_arr, 90, axis=1)
+low_b = np.percentile(b_arr, 20, axis=1)
 var_b = np.var(b_arr, ddof=1)
 print(f"mean = {(mean_b)}")
 print(f"var = {(var_b)}")
-print(f"90th percentile: {np.percentile(up_b, 90)}")
+print(f"90th percentile: {np.percentile(up_b, 50)}")
 print(f"50th percentile: {np.percentile(med_b, 50)}")
+print(f"20th percentile: {np.percentile(low_b, 50)}")
 
 a = mean_b**2/var_b
 b = var_b/mean_b

@@ -1392,27 +1392,33 @@ class Graphics(BaseGraphics):
 
     def cowpi_boxplot(self):
         ''' Make cowpi boxplots '''
-        # print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1])
+        # print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi'])
+        cowpi_elow = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+        ]
 
         cowpi_low = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
+            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
         cowpi_med = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
         ]
 
         cowpi_high = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
         ]
 
         data = {
@@ -1436,21 +1442,96 @@ class Graphics(BaseGraphics):
             outliers=""
         )
 
-        ''' Make plots comparing income distance scenarios '''
+        cowpi_lower20 = [
+            self.base['cowpi'].quantile(0.2)['income'],
+            self.base['cowpi'].quantile(0.5)['income'],
+            self.base['cowpi'].quantile(0.9)['income']
+        ]
+        print(cowpi_lower20)
+        pm_lower20 = [
+            self.pm['cowpi'].quantile(0.2)['income'],
+            self.pm['cowpi'].quantile(0.5)['income'],
+            self.pm['cowpi'].quantile(0.9)['income']
+        ]
+        print(cowpi_lower20)
+
+        cowpi_elow = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+        ]
+
         cowpi_low = [
-            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
+            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
         cowpi_med = [
-            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
         ]
 
         cowpi_high = [
-            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
         ]
+
+        data = {
+            'low': cowpi_low,
+            'med': cowpi_med,
+            'high': cowpi_high
+        }
+
+        # self.make_cowpi_plot(
+        #     data,
+        #     'cow_boxplot_no_outliers',
+        #     ['Base', 'Base+BW', 'PM', 'PM+BW'],
+        #     box=True,
+        #     outliers=""
+        # )
+
+        print(len(cowpi_elow[0])/30)
+        print(len(cowpi_low[0])/30)
+        print(len(cowpi_med[0])/30)
+        print(len(cowpi_high[0])/30)
+        plt.boxplot(
+            cowpi_elow, sym="",
+            labels=['Base', 'Base+BW', 'PM', 'PM+BW']
+        )
+
+        plt.savefig(self.pub_loc + 'elow_boxplot.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Make plots comparing income distance scenarios '''
+        cowpi_low = [
+            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+        ]
+
+        cowpi_med = [
+            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
+        ]
+
+        cowpi_high = [
+            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
+        ]
+
+        cowpi_lower20 = [
+            self.pm_nodi['cowpi'].quantile(0.2)['income'],
+            self.pm_nodi['cowpi'].quantile(0.5)['income'],
+            self.pm_nodi['cowpi'].quantile(0.9)['income']
+        ]
+        print(cowpi_lower20)
 
         data = {
             'low': cowpi_low,
@@ -1466,35 +1547,35 @@ class Graphics(BaseGraphics):
             outliers=""
         )
 
-        ''' Make plots comparing income distance scenarios '''
-        cowpi_low = [
-            self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
-        ]
+        # ''' Make plots comparing income distance scenarios '''
+        # cowpi_low = [
+        #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
+        # ]
 
-        cowpi_med = [
-            self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
-        ]
+        # cowpi_med = [
+        #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+        # ]
 
-        cowpi_high = [
-            self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
-        ]
+        # cowpi_high = [
+        #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+        # ]
 
-        data = {
-            'low': cowpi_low,
-            'med': cowpi_med,
-            'high': cowpi_high
-        }
+        # data = {
+        #     'low': cowpi_low,
+        #     'med': cowpi_med,
+        #     'high': cowpi_high
+        # }
 
-        self.make_cowpi_plot(
-            data,
-            'cow_boxplot_perc',
-            ['Percentage', 'Absolute'],
-            box=True,
-            outliers=""
-        )
+        # self.make_cowpi_plot(
+        #     data,
+        #     'cow_boxplot_perc',
+        #     ['Percentage', 'Absolute'],
+        #     box=True,
+        #     outliers=""
+        # )
 
     def cowpi_barchart(self):
         level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
