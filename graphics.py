@@ -2,7 +2,7 @@ from base import Graphics
 
 
 days = 180
-plots = Graphics(publication=False, error='se', days=days)
+plots = Graphics(publication=True, error='se', days=days)
 
 ''' Demand plots '''
 # plots.demand_plots()
