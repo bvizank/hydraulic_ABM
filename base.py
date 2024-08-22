@@ -176,12 +176,16 @@ class BaseGraphics:
                 curr_data = pd.read_pickle(os.path.join(folder, file))
                 if param == 'income':
                     output = pd.concat([output, curr_data])
+                    print(param)
+                    print(output)
                 else:
                     output = pd.concat([output, curr_data.T])
+                    print(param)
+                    print(output)
 
         return output
 
-    def get_household(self, folder, param):
+    def get_household(self, folder, param, skip=None):
         '''
         Combine per household data from a group of n runs
 
@@ -193,12 +197,26 @@ class BaseGraphics:
         param : (str | list)
             param(s) to combine
         '''
-        output = dict()
+        # output = dict()
+        output = pd.DataFrame()
         if isinstance(param, str):
-            output[param] = self.collect_data(folder, param)
+            for i in range(30):
+                if i not in skip:
+                    file = os.path.join(folder, param + '_' + i + '.pkl')
+                    curr_data = pd.read_pickle(file)
+                    output = pd.concat([output, curr_data])
+            # output[param] = self.collect_data(folder, param)
         elif isinstance(param, list):
-            for item in param:
-                output[item] = self.collect_data(folder, item)
+            for i in range(30):
+                if i not in skip:
+                    curr_param = pd.DataFrame()
+                    for j in param:
+                        file = os.path.join(folder, j + '_' + i + '.pkl')
+                        curr_data = pd.read_pickle(file)
+                        curr_param = pd.concat([curr_param, curr_data], axis=1)
+                    output = pd.concat([output, curr_param])
+            # for item in param:
+            #     output[item] = self.collect_data(folder, item)
 
         return output
 
@@ -254,7 +272,7 @@ class BaseGraphics:
         self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
 
         # get pm_perc data ready
-        self.package_household(self.pm_perc, self.pm_comp_perc_dir)
+        # self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
         # get pm 25ind data ready
         self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
@@ -695,9 +713,9 @@ class Graphics(BaseGraphics):
         self.pm = ut.read_comp_data(
             self.pm_comp_dir, self.comp_list, days, self.truncate_list
         )
-        self.pm_perc = ut.read_comp_data(
-            self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
-        )
+        # self.pm_perc = ut.read_comp_data(
+        #     self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
+        # )
         self.pm_nobw = ut.read_comp_data(
             self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
         )
