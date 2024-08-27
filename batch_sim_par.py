@@ -12,8 +12,8 @@ bw = True
 bbn_models = ['all']
 dist_income = True
 twa_process = 'absolute'
-twa_mods = [130, 140, 1000000]
-output_loc = 'Output Files/1_Distance Based Income/30_basebw_di_noH/'
+twa_mods = [1000000, 140, 150]
+output_loc = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
