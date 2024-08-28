@@ -36,7 +36,7 @@ plots.make_cost_plots()
 # plots.income_plots()
 
 ''' Tap water avoidance plots '''
-# plots.make_twa_plots()
+plots.make_twa_plots()
 
 ''' SEIR plot '''
 # plots.make_seir_plot(days)
