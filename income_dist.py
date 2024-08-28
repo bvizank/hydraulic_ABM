@@ -32,6 +32,9 @@ def bootstrap(data, b):
     n = sum(list(data.values()))
     print(n)
     output = np.empty((b, n))
+    a = list()
+    scale = list()
+    loc = list()
     for i in range(b):
         bootstrap = np.empty(n)
         index = 0
@@ -55,12 +58,20 @@ def bootstrap(data, b):
                 )
             index += data[key]
 
+        # curr_mean = np.mean(bootstrap)
+        # curr_var = np.var(bootstrap, ddof=1)
+
+        fit_alpha, fit_loc, fit_beta = stats.gamma.fit(bootstrap)
+        a.append(fit_alpha)
+        scale.append(fit_beta)
+        loc.append(fit_loc)
+
         output[i, :] = bootstrap
 
-    return output
+    return output, a, scale, loc
 
 
-b_arr = bootstrap(data, 10000)
+b_arr, a, scale, loc = bootstrap(data, 10000)
 # bootstrap = np.array(random.choices(list(data.keys()), weights=list(data.values()), k=10000))
 mean_b = np.mean(b_arr)
 med_b = np.median(b_arr, axis=1)
@@ -73,25 +84,40 @@ print(f"90th percentile: {np.percentile(up_b, 50)}")
 print(f"50th percentile: {np.percentile(med_b, 50)}")
 print(f"20th percentile: {np.percentile(low_b, 50)}")
 
-a = mean_b**2/var_b
-b = var_b/mean_b
+# a = mean_b**2/var_b
+# b = var_b/mean_b
 
-print(f"median from gamma: {np.median(stats.gamma.rvs(a, scale=b, size=1000))}")
+mean_a = np.mean(np.array(a))
+mean_b = np.mean(np.array(scale))
+mean_loc = np.mean(np.array(loc))
+# mean_a = a[0]
+# mean_b = scale[0]
+# mean_loc = loc[0]
 
-fig, ax = plt.subplots(1, 1)
-x = np.linspace(stats.gamma.ppf(0.001, a, scale=b),
-                stats.gamma.ppf(0.999, a, scale=b), 100)
+# fit_alpha, fit_loc, fit_beta = stats.gamma.fit(b_arr[0, :])
+# print(fit_alpha)
+# print(fit_loc)
+# print(fit_beta)
 
-ax.plot(x, stats.gamma.pdf(x, a, scale=b),
-        'r-', lw=5, alpha=0.6, label='gamma pdf')
+# gamma_data = stats.gamma.rvs(fit_alpha, loc=fit_loc, scale=fit_beta, size=10000)
+gamma_data = stats.gamma.rvs(mean_a, loc=mean_loc, scale=mean_b, size=10000)
+print(f"median from gamma: {np.median(gamma_data)}")
+print(f"20th percentile from gamma: {np.percentile(gamma_data, 20)}")
 
-rv = stats.gamma(a, scale=b)
-ax.plot(x, rv.pdf(x), 'k-', lw=2, label='frozen pdf')
+# fig, ax = plt.subplots(1, 1)
+# x = np.linspace(stats.gamma.ppf(0.001, a, scale=b),
+#                 stats.gamma.ppf(0.999, a, scale=b), 100)
 
-r = stats.gamma.rvs(a, scale=b, size=1000)
-ax.hist(r, density=True, bins='auto', histtype='stepfilled', alpha=0.2)
-ax.set_xlim([x[0], x[-1]])
+# ax.plot(x, stats.gamma.pdf(x, a, scale=b),
+#         'r-', lw=5, alpha=0.6, label='gamma pdf')
 
-ax.legend(loc='best', frameon=False)
+# rv = stats.gamma(a, scale=b)
+# ax.plot(x, rv.pdf(x), 'k-', lw=2, label='frozen pdf')
 
-plt.show()
+# r = stats.gamma.rvs(a, scale=b, size=1000)
+# ax.hist(r, density=True, bins='auto', histtype='stepfilled', alpha=0.2)
+# ax.set_xlim([x[0], x[-1]])
+
+# ax.legend(loc='best', frameon=False)
+
+# plt.show()

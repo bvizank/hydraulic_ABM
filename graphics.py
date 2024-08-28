@@ -26,11 +26,11 @@ plots = Graphics(publication=True, error='se', days=days)
 # plots.make_equity_plots()
 
 ''' Cost plots '''
-# plots.make_cost_plots()
+plots.make_cost_plots()
 
 ''' #HI (cowpi) plots '''
 # plots.cowpi_barchart()
-plots.cowpi_boxplot()
+# plots.cowpi_boxplot()
 
 ''' Income plots '''
 # plots.income_plots()
