@@ -3,13 +3,16 @@ import sys
 if sys.platform == "darwin":
     os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-from Hydraulic_abm_SEIR import ConsumerModel
+import random
+# from Hydraulic_abm_SEIR import ConsumerModel
 import numpy as np
-import pandas as pd
+import math
+# import pandas as pd
 import matplotlib.pyplot as plt
 import wntr
 import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression
+from income_dist import data
 
 
 plt.rcParams['figure.dpi'] = 500
@@ -95,33 +98,60 @@ def dist_hist(ind_dist, i):
     plt.close()
 
 
-for i in range(10):
-    model = ConsumerModel(
-        4606,
-        'micropolis',
-        days=1,
-        id=i,
-        seed=i,
-        bbn_models=[],
-        verbose=0.5
-    )
-    # households = [h.node for i, hs in model.households.items() for h in hs]
-    ind_dist = np.array(
-        [h.ind_dist for i, hs in model.households.items() for h in hs]
-    )
+income = list()
+index = 0
+for i, key in enumerate(data):
+    '''
+    Get a set of samples for the given income range that is 100
+    times longer than the percentage given by the data.
+    e.g. for $0 - $10,000, we want 76 samples uniformly distributed
+    between 0 and 10000.
+    '''
+    if i != (len(data) - 1):
+        for j in range(math.ceil(data[key]/1000*4606)):
+            income.append(random.uniform(
+                list(data.keys())[i], list(data.keys())[i+1]
+            ))
+    else:
+        # at the end we need to arbitrarily set an upper bound
+        for j in range(math.ceil(data[key]/1000*4606)):
+            income.append(random.uniform(
+                list(data.keys())[i], list(data.keys())[i]*3
+            ))
+    index += data[key]
 
-    # box_plots(ind_dist, model, i)
+income = np.array(income)
+print(len(income))
+print(np.median(income))
+print(np.mean(income))
+print(np.quantile(income, 0.2))
+# for i in range(10):
+#     model = ConsumerModel(
+#         4606,
+#         'micropolis',
+#         days=1,
+#         id=i,
+#         seed=i,
+#         bbn_models=[],
+#         verbose=0.5
+#     )
+#     # households = [h.node for i, hs in model.households.items() for h in hs]
+#     ind_dist = np.array(
+#         [h.ind_dist for i, hs in model.households.items() for h in hs]
+#     )
 
-    scatter_plot(ind_dist, model, i)
+#     # box_plots(ind_dist, model, i)
 
-    # dist_hist(ind_dist, i)
+#     scatter_plot(ind_dist, model, i)
 
-    # network_plot(model, i)
+#     # dist_hist(ind_dist, i)
 
-    high_income.append(np.percentile(np.array(model.income), 90))
-    med_income.append(np.percentile(np.array(model.income), 50))
-    low_income.append(model.income_comb['level'].value_counts()[1])
+#     # network_plot(model, i)
 
-print(sum(high_income) / len(high_income))
-print(sum(med_income) / len(med_income))
-print(sum(low_income) / len(low_income))
+#     high_income.append(np.percentile(np.array(model.income), 90))
+#     med_income.append(np.percentile(np.array(model.income), 50))
+#     low_income.append(model.income_comb['level'].value_counts()[1])
+
+# print(sum(high_income) / len(high_income))
+# print(sum(med_income) / len(med_income))
+# print(sum(low_income) / len(low_income))
