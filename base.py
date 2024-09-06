@@ -185,7 +185,7 @@ class BaseGraphics:
 
         return output
 
-    def get_household(self, folder, param, skip=None):
+    def get_household(self, folder, param, skip=[]):
         '''
         Combine per household data from a group of n runs
 
@@ -194,27 +194,33 @@ class BaseGraphics:
         folder : str
             data folder
 
-        param : (str | list)
-            param(s) to combine
+        param : (list)
+            params to combine
         '''
         # output = dict()
-        output = pd.DataFrame()
-        if isinstance(param, str):
-            for i in range(30):
-                if i not in skip:
-                    file = os.path.join(folder, param + '_' + i + '.pkl')
-                    curr_data = pd.read_pickle(file)
-                    output = pd.concat([output, curr_data])
+        output = dict()
+        # if isinstance(param, str):
+        #     for i in range(30):
+        #         if i not in skip:
+        #             file = os.path.join(folder, param + '_' + str(i) + '.pkl')
+        #             curr_data = pd.read_pickle(file)
+        #             curr_data['i'] = i
+        #             output = pd.concat([output, curr_data])
             # output[param] = self.collect_data(folder, param)
-        elif isinstance(param, list):
-            for i in range(30):
-                if i not in skip:
-                    curr_param = pd.DataFrame()
-                    for j in param:
-                        file = os.path.join(folder, j + '_' + i + '.pkl')
-                        curr_data = pd.read_pickle(file)
-                        curr_param = pd.concat([curr_param, curr_data], axis=1)
-                    output = pd.concat([output, curr_param])
+        # elif isinstance(param, list):
+        for i in param:
+            curr_param = pd.DataFrame()
+            for j in range(30):
+                if j not in skip:
+                    file = os.path.join(folder, i + '_' + str(j) + '.pkl')
+                    curr_data = pd.read_pickle(file)
+                    if i != 'income':
+                        curr_data = curr_data.T
+                    curr_data['i'] = j
+                    curr_param = pd.concat([curr_param, curr_data])
+            output[i] = curr_param
+
+        # print(output)
             # for item in param:
             #     output[item] = self.collect_data(folder, item)
 
@@ -235,18 +241,26 @@ class BaseGraphics:
             dir + '/hh_results/', ['drink', 'cook', 'hygiene']
         )
         data['income'] = self.get_household(
-            dir + '/hh_results/', 'income'
+            dir + '/hh_results/', ['income']
         )['income']
 
         if not bw:
             data['cost']['total'] = data['cost']['tw_cost']
         else:
-            data['cost']['total'] = data['cost']['bw_cost'] + data['cost']['tw_cost']
+            data['cost']['total'] = (
+                data['cost']['bw_cost'].iloc[:, :-1] +
+                data['cost']['tw_cost'].iloc[:, :-1]
+            )
+            data['cost']['total']['i'] = data['cost']['bw_cost']['i']
 
+        # data['cowpi'] = data['cost']['total'].iloc[:, -1] / (data['income'].loc[:, 'income'] * self.days / 365)
+        # print(data['cost']['total'].iloc[:, -2])
         data['cowpi'] = pd.DataFrame(
             {'level': data['income'].loc[:, 'level'],
-             'cowpi': data['cost']['total'].iloc[:, -1] / (data['income'].loc[:, 'income'] * self.days / 365),
-             'income': data['income'].loc[:, 'income']},
+             'cowpi': data['cost']['total'].iloc[:, -2] / (data['income'].loc[:, 'income'] * self.days / 365),
+             'cost': data['cost']['total'].iloc[:, -2],
+             'income': data['income'].loc[:, 'income'],
+             'i': data['income'].loc[:, 'i']},
             index=data['cost']['total'].index
         )
 
@@ -275,16 +289,16 @@ class BaseGraphics:
         # self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
         # get pm 25ind data ready
-        self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
+        # self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
 
         # get pm 50ind data ready
-        self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
+        # self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
 
         # get pm 75ind data ready
-        self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
+        # self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
 
         # get pm 100ind data ready
-        self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
+        # self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -516,7 +530,8 @@ class BaseGraphics:
 
         return old_stats
 
-    def make_cowpi_plot(self, data, name, xlabel=None, box=True, outliers=None):
+    def make_income_comp_plot(self, data, name, xlabel=None, ylabel='%HI',
+                              box=True, outliers=None):
         if box:
             fig, axes = plt.subplots(1, 3, sharey=True)
 
@@ -529,7 +544,7 @@ class BaseGraphics:
                 ax.set_xticklabels(xlabel, rotation=45)
 
             # set the ylabel
-            axes[0].set_ylabel("%HI")
+            axes[0].set_ylabel(ylabel)
 
             # add the subplot labels
             axes[0].text(0.5, -0.24, "(a)", size=12, ha="center",
@@ -548,7 +563,7 @@ class BaseGraphics:
             data.plot(
                 kind='bar', log=True,
                 # yerr=err, capsize=3,
-                ylabel='% of Income', rot=0
+                ylabel=ylabel, rot=0
             )
             plt.gcf().set_size_inches(3.5, 3.5)
             plt.savefig(self.pub_loc + name + '_cow_comparison.' + self.format,
@@ -559,7 +574,7 @@ class BaseGraphics:
             data = data.iloc[1:4, :]
             # print(cost_comp)
             data.plot(
-                kind='bar', ylabel='% of Income',
+                kind='bar', ylabel=ylabel,
                 # yerr=err, capsize=3,
                 rot=0
             )
@@ -1129,7 +1144,41 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        ''' Make plot comparing pm with pm+bw '''
+        ''' Make plot comparing age by income bracket '''
+        age_low = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+        ]
+
+        cowpi_med = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
+        ]
+
+        cowpi_high = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
+        ]
+
+        data = {
+            'low': cowpi_low,
+            'med': cowpi_med,
+            'high': cowpi_high
+        }
+
+        self.make_income_comp_plot(
+            data,
+            'cow_boxplot_no_outliers',
+            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            box=True,
+            outliers=""
+        )
 
     def ind_dist_plots(self):
         ''' Calculate the distance to the closest industrial node '''
@@ -1365,52 +1414,91 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        cost_leg = ['Bottled Water', 'Tap Water', 'Total']
-        cost_b = pd.concat(
-            [self.basebw['cost']['bw_cost'].mean(axis=0),
-             self.basebw['cost']['tw_cost'].mean(axis=0),
-             self.basebw['cost']['total'].mean(axis=0)],
-            axis=1,
-            keys=cost_leg
-        )
-        cost_p = pd.concat(
-            [self.pm['cost']['bw_cost'].mean(axis=0),
-             self.pm['cost']['tw_cost'].mean(axis=0),
-             self.pm['cost']['total'].mean(axis=0)],
-            axis=1,
-            keys=cost_leg
-        )
+        # cost_leg = ['Bottled Water', 'Tap Water', 'Total']
+        # cost_b = pd.concat(
+        #     [self.basebw['cost']['bw_cost'].mean(axis=0),
+        #      self.basebw['cost']['tw_cost'].mean(axis=0),
+        #      self.basebw['cost']['total'].mean(axis=0)],
+        #     axis=1,
+        #     keys=cost_leg
+        # )
+        # cost_p = pd.concat(
+        #     [self.pm['cost']['bw_cost'].mean(axis=0),
+        #      self.pm['cost']['tw_cost'].mean(axis=0),
+        #      self.pm['cost']['total'].mean(axis=0)],
+        #     axis=1,
+        #     keys=cost_leg
+        # )
 
-        fig, axes = plt.subplots(1, 2, sharey=True)
-        axes[0] = self.make_avg_plot(
-            axes[0], cost_b, None, cost_leg,
-            cost_b.index / 24, sd_plot=False
+        # fig, axes = plt.subplots(1, 2, sharey=True)
+        # axes[0] = self.make_avg_plot(
+        #     axes[0], cost_b, None, cost_leg,
+        #     cost_b.index / 24, sd_plot=False
+        # )
+        # axes[1] = self.make_avg_plot(
+        #     axes[1], cost_p, None, cost_leg,
+        #     cost_b.index / 24, sd_plot=False
+        # )
+
+        # fmt = '${x:,.0f}'
+        # tick = mtick.StrMethodFormatter(fmt)
+        # axes[0].yaxis.set_major_formatter(tick)
+
+        # plt.gcf().set_size_inches(7, 3.5)
+        # fig.supxlabel('Time (days)', y=-0.03)
+        # fig.supylabel('Cost', x=0.04)
+        # axes[0].legend(cost_leg, loc='upper left')
+        # axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
+        #              transform=axes[0].transAxes)
+        # axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
+        #              transform=axes[1].transAxes)
+
+        # plt.savefig(self.pub_loc + 'cost.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
+
+        ''' Make income based cost plots '''
+        cost_low = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cost'],
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cost'],
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cost'],
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cost']
+        ]
+
+        cost_med = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cost'],
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cost'],
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cost'],
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cost']
+        ]
+
+        cost_high = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cost'],
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cost'],
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cost'],
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cost']
+        ]
+
+        data = {
+            'low': cost_low,
+            'med': cost_med,
+            'high': cost_high
+        }
+
+        self.make_income_comp_plot(
+            data,
+            'cost_boxplot',
+            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ylabel='Cost ($)',
+            box=True,
+            outliers=""
         )
-        axes[1] = self.make_avg_plot(
-            axes[1], cost_p, None, cost_leg,
-            cost_b.index / 24, sd_plot=False
-        )
-
-        fmt = '${x:,.0f}'
-        tick = mtick.StrMethodFormatter(fmt)
-        axes[0].yaxis.set_major_formatter(tick)
-
-        plt.gcf().set_size_inches(7, 3.5)
-        fig.supxlabel('Time (days)', y=-0.03)
-        fig.supylabel('Cost', x=0.04)
-        axes[0].legend(cost_leg, loc='upper left')
-        axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
-                     transform=axes[0].transAxes)
-        axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
-                     transform=axes[1].transAxes)
-
-        plt.savefig(self.pub_loc + 'cost.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
 
     def cowpi_boxplot(self):
         ''' Make cowpi boxplots '''
-        # print(self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi'])
+        print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
+        print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<15000].count() /
+              len(self.pm_nodi['cowpi']['income']))
         cowpi_elow = [
             self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
@@ -1445,14 +1533,14 @@ class Graphics(BaseGraphics):
             'high': cowpi_high
         }
 
-        self.make_cowpi_plot(
+        self.make_income_comp_plot(
             data,
             'cow_boxplot',
             ['Base', 'Base+BW', 'PM', 'PM+BW'],
             box=True,
         )
 
-        self.make_cowpi_plot(
+        self.make_income_comp_plot(
             data,
             'cow_boxplot_no_outliers',
             ['Base', 'Base+BW', 'PM', 'PM+BW'],
@@ -1507,7 +1595,7 @@ class Graphics(BaseGraphics):
             'high': cowpi_high
         }
 
-        # self.make_cowpi_plot(
+        # self.make_income_comp_plot(
         #     data,
         #     'cow_boxplot_no_outliers',
         #     ['Base', 'Base+BW', 'PM', 'PM+BW'],
@@ -1557,7 +1645,7 @@ class Graphics(BaseGraphics):
             'high': cowpi_high
         }
 
-        self.make_cowpi_plot(
+        self.make_income_comp_plot(
             data,
             'cow_boxplot_di',
             ['No DI', 'DI'],
@@ -1587,7 +1675,7 @@ class Graphics(BaseGraphics):
         #     'high': cowpi_high
         # }
 
-        # self.make_cowpi_plot(
+        # self.make_income_comp_plot(
         #     data,
         #     'cow_boxplot_perc',
         #     ['Percentage', 'Absolute'],
@@ -1642,7 +1730,7 @@ class Graphics(BaseGraphics):
         cost_std_basepm = cost_std_basepm.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
 
         # make the barchart
-        self.make_cowpi_plot(cost_comp_basepm, 'basepm')
+        self.make_income_comp_plot(cost_comp_basepm, 'basepm')
 
         cost_comp_sa = pd.DataFrame(
             {'No Minimum': level_cowpi_p,
@@ -1672,7 +1760,7 @@ class Graphics(BaseGraphics):
         # cost_std_sa = cost_std_sa.rename({0: 'Extremely Low', 1: 'Low', 2: 'Medium', 3: 'High'})
 
         # make barchart
-        self.make_cowpi_plot(cost_comp_sa, 'sa')
+        self.make_income_comp_plot(cost_comp_sa, 'sa')
 
     def make_twa_plots(self):
         '''
