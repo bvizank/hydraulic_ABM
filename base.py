@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from scipy.stats import binned_statistic
 import utils as ut
+import data as dt
 import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression
 
@@ -89,14 +90,31 @@ class BaseGraphics:
         '''
         Calculate the average and package TWA data for plotting
         '''
-        output = pd.concat(
-            [data['drink'].sum(axis=0),
-             data['cook'].sum(axis=0),
-             data['hygiene'].sum(axis=0)],
-            axis=1, keys=keys
-        )
+        average = dict()
+        variance = dict()
+        for i in keys:
+            tmp = data[i].groupby('i').sum() / data[i].groupby('i').count()
+            average[i] = tmp.mean(axis=0)
+            variance[i] = tmp.var(axis=0)
 
-        return output
+        average = pd.DataFrame(average)
+        variance = pd.DataFrame(variance)
+
+        # average = pd.concat(
+        #     [data['drink'].groupby('i').sum().mean(axis=0),
+        #      data['cook'].groupby('i').sum().mean(axis=0),
+        #      data['hygiene'].groupby('i').sum().mean(axis=0)],
+        #     axis=1, keys=keys
+        # )
+
+        # variance = pd.concat(
+        #     [data['drink'].groupby('i').sum().var(axis=0),
+        #      data['cook'].groupby('i').sum().var(axis=0),
+        #      data['hygiene'].groupby('i').sum().var(axis=0)],
+        #     axis=1, keys=keys
+        # )
+
+        return average, variance
 
     def calc_flow_diff(self, data, hours):
         flow_data = dict()
@@ -232,7 +250,7 @@ class BaseGraphics:
         '''
         # data interpolated from HUD extremely low income values using average
         # clinton household size of 2.56
-        extreme_income = 23452.8
+        # extreme_income = 23452.8
 
         data['cost'] = self.get_household(
             dir + '/hh_results/', ['bw_cost', 'tw_cost'] if bw else ['tw_cost']
@@ -243,6 +261,28 @@ class BaseGraphics:
         data['income'] = self.get_household(
             dir + '/hh_results/', ['income']
         )['income']
+
+        for i in range(30):
+            curr_income = ut.income_list(
+                data=dt.clinton_income,
+                n_house=len(data['income'][data['income']['i'] == i]),
+                s=i
+            )
+            data['income'].loc[data['income']['i'] == i, 'income'] = (
+                curr_income[0:len(data['income'][data['income']['i'] == i])]
+            )
+
+            # set the level as 1 if above 20 %-tile and 0 if below
+            bot20 = np.percentile(
+                data['income'].loc[data['income']['i'] == i, 'income'],
+                20
+            )
+            data['income'].loc[data['income']['i'] == i, 'level'] = (
+                np.where(
+                    data['income'].loc[data['income']['i'] == i, 'income'] > bot20,
+                    1, 0
+                )
+            )
 
         if not bw:
             data['cost']['total'] = data['cost']['tw_cost']
@@ -533,11 +573,15 @@ class BaseGraphics:
     def make_income_comp_plot(self, data, name, xlabel=None, ylabel='%HI',
                               box=True, outliers=None):
         if box:
-            fig, axes = plt.subplots(1, 3, sharey=True)
+            fig, axes = plt.subplots(1, 2, sharey=True)
 
             axes[0].boxplot(data['low'], sym=outliers, showmeans=True)
-            axes[1].boxplot(data['med'], sym=outliers, showmeans=True)
-            axes[2].boxplot(data['high'], sym=outliers, showmeans=True)
+            axes[1].boxplot(data['high'], sym=outliers, showmeans=True)
+            # fig, axes = plt.subplots(1, 3, sharey=True)
+
+            # axes[0].boxplot(data['low'], sym=outliers, showmeans=True)
+            # axes[1].boxplot(data['med'], sym=outliers, showmeans=True)
+            # axes[2].boxplot(data['high'], sym=outliers, showmeans=True)
 
             # set the x ticks for each subplot
             for ax in axes:
@@ -551,8 +595,8 @@ class BaseGraphics:
                          transform=axes[0].transAxes)
             axes[1].text(0.5, -0.24, "(b)", size=12, ha="center",
                          transform=axes[1].transAxes)
-            axes[2].text(0.5, -0.24, "(c)", size=12, ha="center",
-                         transform=axes[2].transAxes)
+            # axes[2].text(0.5, -0.24, "(c)", size=12, ha="center",
+            #              transform=axes[2].transAxes)
 
             plt.gcf().set_size_inches(7, 3.5)
             plt.savefig(self.pub_loc + name + '.' + self.format,
@@ -1146,30 +1190,41 @@ class Graphics(BaseGraphics):
 
         ''' Make plot comparing age by income bracket '''
         age_low = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+        ]
+
+        age_high = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
             self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
-        cowpi_med = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
-        ]
+        # cowpi_med = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
+        # ]
 
-        cowpi_high = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
-        ]
+        # cowpi_high = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
+        # ]
 
+        # data = {
+        #     'low': cowpi_low,
+        #     'med': cowpi_med,
+        #     'high': cowpi_high
+        # }
         data = {
-            'low': cowpi_low,
-            'med': cowpi_med,
-            'high': cowpi_high
+            'low': age_low,
+            'high': age_high
         }
 
         self.make_income_comp_plot(
@@ -1403,11 +1458,11 @@ class Graphics(BaseGraphics):
         #         :
         #     ].std(axis=0)
         # )
-        print(self.pm['cost']['bw_cost'].mean(axis=0))
-        print(self.basebw['cost']['tw_cost'].mean(axis=0))
-        print(self.pm['cost']['tw_cost'].mean(axis=0))
-        print(self.basebw['cost']['total'].mean(axis=0))
-        print(self.pm['cost']['total'].mean(axis=0))
+        # print(self.pm['cost']['bw_cost'].mean(axis=0))
+        # print(self.basebw['cost']['tw_cost'].mean(axis=0))
+        # print(self.pm['cost']['tw_cost'].mean(axis=0))
+        # print(self.basebw['cost']['total'].mean(axis=0))
+        # print(self.pm['cost']['total'].mean(axis=0))
 
         plt.boxplot(self.base['cost']['total'].groupby(level=0).mean())
         plt.savefig(self.pub_loc + 'cost_box.' + self.format,
@@ -1459,31 +1514,44 @@ class Graphics(BaseGraphics):
 
         ''' Make income based cost plots '''
         cost_low = [
+            self.base['cowpi'][self.base['cowpi']['level'] == 0]['cost'],
+            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cost'],
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cost'],
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cost']
+        ]
+
+        cost_high = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cost'],
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cost'],
             self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cost'],
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cost']
         ]
 
-        cost_med = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cost'],
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cost'],
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cost'],
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cost']
-        ]
+        # cost_med = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cost'],
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cost'],
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cost'],
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cost']
+        # ]
 
-        cost_high = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cost'],
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cost'],
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cost'],
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cost']
-        ]
+        # cost_high = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 3]['cost'],
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cost'],
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cost'],
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cost']
+        # ]
 
+        # data = {
+        #     'low': cost_low,
+        #     'med': cost_med,
+        #     'high': cost_high
+        # }
         data = {
             'low': cost_low,
-            'med': cost_med,
             'high': cost_high
         }
+
+        print(data)
 
         self.make_income_comp_plot(
             data,
@@ -1499,38 +1567,56 @@ class Graphics(BaseGraphics):
         print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
         print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<15000].count() /
               len(self.pm_nodi['cowpi']['income']))
-        cowpi_elow = [
+        # cowpi_elow = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+        # ]
+
+        # cowpi_low = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+        # ]
+
+        # cowpi_med = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
+        # ]
+
+        # cowpi_high = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
+        # ]
+        # data = {
+        #     'low': cowpi_low,
+        #     'med': cowpi_med,
+        #     'high': cowpi_high
+        # }
+
+        cowpi_bot20 = [
             self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
             self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
         ]
 
-        cowpi_low = [
+        cowpi_top80 = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
             self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
-        cowpi_med = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
-        ]
-
-        cowpi_high = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
-        ]
-
         data = {
-            'low': cowpi_low,
-            'med': cowpi_med,
-            'high': cowpi_high
+            'low': cowpi_bot20,
+            'high': cowpi_top80,
         }
 
         self.make_income_comp_plot(
@@ -1548,112 +1634,66 @@ class Graphics(BaseGraphics):
             outliers=""
         )
 
-        cowpi_lower20 = [
-            self.base['cowpi'].quantile(0.2)['income'],
-            self.base['cowpi'].quantile(0.5)['income'],
-            self.base['cowpi'].quantile(0.9)['income']
-        ]
-        print(cowpi_lower20)
-        pm_lower20 = [
-            self.pm['cowpi'].quantile(0.2)['income'],
-            self.pm['cowpi'].quantile(0.5)['income'],
-            self.pm['cowpi'].quantile(0.9)['income']
-        ]
-        print(cowpi_lower20)
+        # cowpi_lower20 = [
+        #     self.base['cowpi'].quantile(0.2)['income'],
+        #     self.base['cowpi'].quantile(0.5)['income'],
+        #     self.base['cowpi'].quantile(0.9)['income']
+        # ]
+        # print(cowpi_lower20)
+        # pm_lower20 = [
+        #     self.pm['cowpi'].quantile(0.2)['income'],
+        #     self.pm['cowpi'].quantile(0.5)['income'],
+        #     self.pm['cowpi'].quantile(0.9)['income']
+        # ]
+        # print(cowpi_lower20)
 
-        cowpi_elow = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
-        ]
+        # plt.boxplot(
+        #     cowpi_elow, sym="",
+        #     labels=['Base', 'Base+BW', 'PM', 'PM+BW']
+        # )
 
-        cowpi_low = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
-        ]
+        # plt.savefig(self.pub_loc + 'elow_boxplot.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
-        cowpi_med = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
-        ]
+        ''' Make plots comparing income distance scenarios '''
+        # cowpi_low = [
+        #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+        # ]
 
-        cowpi_high = [
-            self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
-            self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
-        ]
+        # cowpi_med = [
+        #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
+        # ]
 
-        data = {
-            'low': cowpi_low,
-            'med': cowpi_med,
-            'high': cowpi_high
-        }
+        # cowpi_high = [
+        #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi']*100,
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
+        # ]
+
+        # cowpi_lower20 = [
+        #     self.pm_nodi['cowpi'].quantile(0.2)['income'],
+        #     self.pm_nodi['cowpi'].quantile(0.5)['income'],
+        #     self.pm_nodi['cowpi'].quantile(0.9)['income']
+        # ]
+        # print(cowpi_lower20)
+
+        # data = {
+        #     'low': cowpi_low,
+        #     'med': cowpi_med,
+        #     'high': cowpi_high
+        # }
 
         # self.make_income_comp_plot(
         #     data,
-        #     'cow_boxplot_no_outliers',
-        #     ['Base', 'Base+BW', 'PM', 'PM+BW'],
+        #     'cow_boxplot_di',
+        #     ['No DI', 'DI'],
         #     box=True,
         #     outliers=""
         # )
 
-        print(len(cowpi_elow[0])/30)
-        print(len(cowpi_low[0])/30)
-        print(len(cowpi_med[0])/30)
-        print(len(cowpi_high[0])/30)
-        plt.boxplot(
-            cowpi_elow, sym="",
-            labels=['Base', 'Base+BW', 'PM', 'PM+BW']
-        )
-
-        plt.savefig(self.pub_loc + 'elow_boxplot.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
-
-        ''' Make plots comparing income distance scenarios '''
-        cowpi_low = [
-            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
-        ]
-
-        cowpi_med = [
-            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
-        ]
-
-        cowpi_high = [
-            self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi']*100,
-            self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
-        ]
-
-        cowpi_lower20 = [
-            self.pm_nodi['cowpi'].quantile(0.2)['income'],
-            self.pm_nodi['cowpi'].quantile(0.5)['income'],
-            self.pm_nodi['cowpi'].quantile(0.9)['income']
-        ]
-        print(cowpi_lower20)
-
-        data = {
-            'low': cowpi_low,
-            'med': cowpi_med,
-            'high': cowpi_high
-        }
-
-        self.make_income_comp_plot(
-            data,
-            'cow_boxplot_di',
-            ['No DI', 'DI'],
-            box=True,
-            outliers=""
-        )
-
-        # ''' Make plots comparing income distance scenarios '''
+        ''' Make plots comparing percentage vs absolute twa scenarios '''
         # cowpi_low = [
         #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
         #     self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
@@ -1767,32 +1807,45 @@ class Graphics(BaseGraphics):
         Tap water avoidance adoption plots
         '''
         # print(self.pm['twa'])
+        twa_keys = ['drink', 'cook', 'hygiene']
         twas = ['Drink', 'Cook', 'Hygiene']
         # print(self.basebw['twa'])
-        twa_basebw = self.calc_twa_averages(self.basebw['twa'], twas)
-        twa_basebw.index = twa_basebw.index - 719
-        twa_basebw.loc[0] = [0, 0, 0]
-        twa_basebw.sort_index(inplace=True)
+        twa_basebw = self.calc_twa_averages(self.basebw['twa'], twa_keys)
+        for i in range(len(twa_basebw)):
+            twa_basebw[i].index = twa_basebw[i].index - 719
+            twa_basebw[i].loc[0] = [0, 0, 0]
+            twa_basebw[i].sort_index(inplace=True)
 
-        twa_pm = self.calc_twa_averages(self.pm['twa'], twas)
-        twa_pm.index = twa_pm.index - 719
-        twa_pm.loc[0] = [0, 0, 0]
-        twa_pm.sort_index(inplace=True)
+        twa_pm = self.calc_twa_averages(self.pm['twa'], twa_keys)
+        for i in range(len(twa_pm)):
+            twa_pm[i].index = twa_pm[i].index - 719
+            twa_pm[i].loc[0] = [0, 0, 0]
+            twa_pm[i].sort_index(inplace=True)
 
-        households = len(self.pm['twa']['drink'].index)
+        # households = len(self.pm['twa']['drink'].index)
         # print(twa_pm)
 
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
         axes[0] = self.make_avg_plot(
-            axes[0], twa_basebw / households * 100, None,
-            twas, twa_basebw.index / 24,
-            sd_plot=False
+            axes[0], twa_basebw[0] * 100,
+            ut.calc_error(twa_basebw[1], 'ci95') * 100,
+            twa_keys, twa_basebw[0].index / 24
         )
         axes[1] = self.make_avg_plot(
-            axes[1], twa_pm / households * 100, None,
-            twas, twa_pm.index / 24,
-            sd_plot=False
+            axes[1], twa_pm[0] * 100, 
+            ut.calc_error(twa_pm[1], 'ci95') * 100,
+            twa_keys, twa_pm[0].index / 24
         )
+        # axes[0] = self.make_avg_plot(
+        #     axes[0], twa_basebw / households * 100, None,
+        #     twas, twa_basebw.index / 24,
+        #     sd_plot=False
+        # )
+        # axes[1] = self.make_avg_plot(
+        #     axes[1], twa_pm / households * 100, None,
+        #     twas, twa_pm.index / 24,
+        #     sd_plot=False
+        # )
         axes[0].legend(twas)
 
         axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",

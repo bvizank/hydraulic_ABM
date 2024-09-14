@@ -1,20 +1,7 @@
 import numpy as np
 import scipy.stats as stats
+import data as dt
 # import matplotlib.pyplot as plt
-
-
-data = {
-    0: 76,
-    10000: 119,
-    15000: 133,
-    25000: 146,
-    35000: 123,
-    50000: 143,
-    75000: 93,
-    100000: 111,
-    150000: 26,
-    200000: 30
-}
 
 
 def bootstrap(data, b):
@@ -72,7 +59,7 @@ def bootstrap(data, b):
 
 
 if __name__ in "__main__":
-    b_arr, a, scale, loc = bootstrap(data, 10000)
+    b_arr, a, scale, loc = bootstrap(dt.clinton_income, 10000)
     # bootstrap = np.array(random.choices(list(data.keys()), weights=list(data.values()), k=10000))
     mean_b = np.mean(b_arr)
     med_b = np.median(b_arr, axis=1)
