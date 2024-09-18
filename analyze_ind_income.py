@@ -64,24 +64,27 @@ for i, key in enumerate(ind_loc):
     )
 
 col_names.extend(['del_lat', 'del_lon', 'a'])
+
+# calculate the minimum industrial distance for each residential node
 res_nodes.loc[:, 'min'] = res_nodes.loc[:, ~res_nodes.columns.isin(col_names)].min(axis=1)
 
-model = LinearRegression()
-x = res_nodes[['min']]
-y = res_nodes[['val']]
-model.fit(x, y)
-print(model.score(x, y))
-print(model.coef_)
-print(model.intercept_)
+# model = LinearRegression()
+# x = res_nodes[['min']]
+# y = res_nodes[['val']]
+# model.fit(x, y)
+# print(model.score(x, y))
+# print(model.coef_)
+# print(model.intercept_)
 
-plt.scatter(x, y)
-plt.plot(x, model.predict(x))
-plt.xlabel('Industrial Distance')
-plt.ylabel('Parcel Value')
-plt.savefig('clinton_parcel_val.png', format='png', bbox_inches='tight')
-plt.close()
+# plt.scatter(x, y)
+# plt.plot(x, model.predict(x))
+# plt.xlabel('Industrial Distance')
+# plt.ylabel('Parcel Value')
+# plt.savefig('clinton_parcel_val.png', format='png', bbox_inches='tight')
+# plt.close()
+
+# calculate the average minimum industrial distance for each block group
 results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
-# print(res_nodes.groupby(['group', 'bg']).count())
 
 # read in income distribution data
 income = np.genfromtxt(
@@ -89,10 +92,11 @@ income = np.genfromtxt(
     delimiter=',',
 )
 
-y = income[:, 1]
+y = income[:, 5] # + income[:, 4] + income[:, 5]
 
 print(results_ind)
 x = results_ind.values
+
 x_norm = (
     (x - np.min(x)) / (np.max(x) - np.min(x))
 )
@@ -100,8 +104,12 @@ y_norm = (y)
 #     (y - np.min(y)) / (np.max(y) - np.min(y))
 # )
 x_with_intercept = np.empty(shape=(len(x_norm), 2), dtype=np.float64)
+# add the intercept column
 x_with_intercept[:, 0] = 1
+# add the industrial distance column
 x_with_intercept[:, 1] = x_norm
+# add the race column
+# x_with_intercept[:, 1] = income[:, 2]  # income[:, 3] + income[:, 4] + income[:, 5]
 
 print(x_with_intercept)
 print(y_norm)
@@ -118,7 +126,9 @@ print(np.sqrt(sse/(len(x_norm) - 2)))
 print(model.summary())
 
 model = LinearRegression()
-x = x_norm[:, np.newaxis]
+# x = income[:, 2]
+x = x[:, np.newaxis]
+# x = x_norm[:, np.newaxis]
 y = y_norm[:, np.newaxis]
 model.fit(x, y)
 print(model.score(x, y))
@@ -129,9 +139,10 @@ plt.scatter(x, y)
 plt.plot(x, model.predict(x))
 plt.xlabel('Normalized Industrial Distance')
 plt.ylabel('Normalized Median BG Income')
-plt.savefig('clinton_bg_income.png', format='png', bbox_inches='tight')
+plt.savefig('clinton_bg_perc_other.png', format='png', bbox_inches='tight')
 plt.close()
 
+# calculate odds ratio
 print(x)
 y = np.ravel(y) > 38880
 print(y)
