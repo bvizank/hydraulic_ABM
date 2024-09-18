@@ -26,17 +26,17 @@ plots = Graphics(publication=True, error='se', days=days)
 # plots.make_equity_plots()
 
 ''' Cost plots '''
-plots.make_cost_plots()
+# plots.make_cost_plots()
 
-''' #HI (cowpi) plots '''
+''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
-plots.cowpi_boxplot()
+plots.cowpi_boxplot(di=True, perc=False, sa=True)
 
 ''' Income plots '''
 # plots.income_plots()
 
 ''' Tap water avoidance plots '''
-plots.make_twa_plots()
+# plots.make_twa_plots()
 
 ''' SEIR plot '''
 # plots.make_seir_plot(days)

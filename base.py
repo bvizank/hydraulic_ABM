@@ -328,6 +328,15 @@ class BaseGraphics:
         # get pm_perc data ready
         # self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
+        # get pm_noD data ready
+        self.package_household(self.pm_noD, self.pm_comp_noD_dir)
+
+        # get pm_noC data ready
+        self.package_household(self.pm_noC, self.pm_comp_noC_dir)
+
+        # get pm_noH data ready
+        self.package_household(self.pm_noH, self.pm_comp_noH_dir)
+
         # get pm 25ind data ready
         # self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
 
@@ -571,12 +580,13 @@ class BaseGraphics:
         return old_stats
 
     def make_income_comp_plot(self, data, name, xlabel=None, ylabel='%HI',
-                              box=True, outliers=None):
+                              box=True, outliers=None, means=True,
+                              income_line=4.6):
         if box:
             fig, axes = plt.subplots(1, 2, sharey=True)
 
-            axes[0].boxplot(data['low'], sym=outliers, showmeans=True)
-            axes[1].boxplot(data['high'], sym=outliers, showmeans=True)
+            axes[0].boxplot(data['low'], sym=outliers, showmeans=means)
+            axes[1].boxplot(data['high'], sym=outliers, showmeans=means)
             # fig, axes = plt.subplots(1, 3, sharey=True)
 
             # axes[0].boxplot(data['low'], sym=outliers, showmeans=True)
@@ -586,6 +596,11 @@ class BaseGraphics:
             # set the x ticks for each subplot
             for ax in axes:
                 ax.set_xticklabels(xlabel, rotation=45)
+
+            # add a red dashed line at 4.6%
+            if income_line:
+                for ax in axes:
+                    ax.axhline(y = income_line, color = 'r', linestyle = 'dashed') 
 
             # set the ylabel
             axes[0].set_ylabel(ylabel)
@@ -753,6 +768,9 @@ class Graphics(BaseGraphics):
         self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
         self.pm_comp_dir = 'Output Files/1_Distance Based Income/30_pmbw_di/'
         self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
+        self.pm_comp_noD_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
+        self.pm_comp_noC_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noC/'
+        self.pm_comp_noH_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noH/'
         self.pm_nodi_comp_dir = 'Output Files/2_Non-distance Based Income/30_pmbw/'
         self.pm_nobw_comp_dir = 'Output Files/1_Distance Based Income/30_pm_di/'
         # self.wfh_loc = 'Output Files/30_wfh_equity/'
@@ -775,6 +793,15 @@ class Graphics(BaseGraphics):
         # self.pm_perc = ut.read_comp_data(
         #     self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
         # )
+        self.pm_noD = ut.read_comp_data(
+            self.pm_comp_noD_dir, self.comp_list, days, self.truncate_list
+        )
+        self.pm_noC = ut.read_comp_data(
+            self.pm_comp_noC_dir, self.comp_list, days, self.truncate_list
+        )
+        self.pm_noH = ut.read_comp_data(
+            self.pm_comp_noH_dir, self.comp_list, days, self.truncate_list
+        )
         self.pm_nobw = ut.read_comp_data(
             self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
         )
@@ -1232,6 +1259,7 @@ class Graphics(BaseGraphics):
             'cow_boxplot_no_outliers',
             ['Base', 'Base+BW', 'PM', 'PM+BW'],
             box=True,
+            means=False,
             outliers=""
         )
 
@@ -1559,13 +1587,17 @@ class Graphics(BaseGraphics):
             ['Base', 'Base+BW', 'PM', 'PM+BW'],
             ylabel='Cost ($)',
             box=True,
+            means=False,
+            income_line=None,
             outliers=""
         )
 
-    def cowpi_boxplot(self):
+    def cowpi_boxplot(self, di=False, perc=False, sa=False):
         ''' Make cowpi boxplots '''
         print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
         print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<15000].count() /
+              len(self.pm_nodi['cowpi']['income']))
+        print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<130000].count() /
               len(self.pm_nodi['cowpi']['income']))
         # cowpi_elow = [
         #     self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
@@ -1631,6 +1663,7 @@ class Graphics(BaseGraphics):
             'cow_boxplot_no_outliers',
             ['Base', 'Base+BW', 'PM', 'PM+BW'],
             box=True,
+            means=False,
             outliers=""
         )
 
@@ -1657,71 +1690,125 @@ class Graphics(BaseGraphics):
         # plt.close()
 
         ''' Make plots comparing income distance scenarios '''
-        # cowpi_low = [
-        #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi']*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
-        # ]
+        if di:
+            # need to change 0 to 1 here if reverting back low medium and high
+            cowpi_low = [
+                self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+            ]
 
-        # cowpi_med = [
-        #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi']*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
-        # ]
+            cowpi_high = [
+                self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+            ]
 
-        # cowpi_high = [
-        #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi']*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
-        # ]
+            # cowpi_med = [
+            #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 2]['cowpi']*100,
+            #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
+            # ]
 
-        # cowpi_lower20 = [
-        #     self.pm_nodi['cowpi'].quantile(0.2)['income'],
-        #     self.pm_nodi['cowpi'].quantile(0.5)['income'],
-        #     self.pm_nodi['cowpi'].quantile(0.9)['income']
-        # ]
-        # print(cowpi_lower20)
+            # cowpi_high = [
+            #     self.pm_nodi['cowpi'][self.pm_nodi['cowpi']['level'] == 3]['cowpi']*100,
+            #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
+            # ]
 
-        # data = {
-        #     'low': cowpi_low,
-        #     'med': cowpi_med,
-        #     'high': cowpi_high
-        # }
+            # cowpi_lower20 = [
+            #     self.pm_nodi['cowpi'].quantile(0.2)['income'],
+            #     self.pm_nodi['cowpi'].quantile(0.5)['income'],
+            #     self.pm_nodi['cowpi'].quantile(0.9)['income']
+            # ]
+            # print(cowpi_lower20)
 
-        # self.make_income_comp_plot(
-        #     data,
-        #     'cow_boxplot_di',
-        #     ['No DI', 'DI'],
-        #     box=True,
-        #     outliers=""
-        # )
+            # data = {
+            #     'low': cowpi_low,
+            #     'med': cowpi_med,
+            #     'high': cowpi_high
+            # }
+
+            data = {
+                'low': cowpi_low,
+                'high': cowpi_high
+            }
+
+            self.make_income_comp_plot(
+                data,
+                'cow_boxplot_di',
+                ['No DI', 'DI'],
+                box=True,
+                means=False,
+                outliers=""
+            )
 
         ''' Make plots comparing percentage vs absolute twa scenarios '''
-        # cowpi_low = [
-        #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi'].groupby(level=0).mean()*100
-        # ]
+        if perc:
+            cowpi_low = [
+                self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+            ]
 
-        # cowpi_med = [
-        #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
-        # ]
+            cowpi_high = [
+                self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+            ]
 
-        # cowpi_high = [
-        #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
-        # ]
+            # cowpi_med = [
+            #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100,
+            #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi'].groupby(level=0).mean()*100
+            # ]
 
-        # data = {
-        #     'low': cowpi_low,
-        #     'med': cowpi_med,
-        #     'high': cowpi_high
-        # }
+            # cowpi_high = [
+            #     self.pm_perc['cowpi'][self.pm_perc['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100,
+            #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi'].groupby(level=0).mean()*100
+            # ]
 
-        # self.make_income_comp_plot(
-        #     data,
-        #     'cow_boxplot_perc',
-        #     ['Percentage', 'Absolute'],
-        #     box=True,
-        #     outliers=""
-        # )
+            # data = {
+            #     'low': cowpi_low,
+            #     'med': cowpi_med,
+            #     'high': cowpi_high
+            # }
+            data = {
+                'low': cowpi_low,
+                'high': cowpi_high
+            }
+
+            self.make_income_comp_plot(
+                data,
+                'cow_boxplot_perc',
+                ['Percentage', 'Absolute'],
+                box=True,
+                outliers=""
+            )
+        
+        ''' Make plots for each SA scenario, no drinking, no cooking, and no
+        hygiene '''
+        if sa:
+            cowpi_low = [
+                self.pm_noD['cowpi'][self.pm_noD['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm_noC['cowpi'][self.pm_noC['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm_noH['cowpi'][self.pm_noH['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
+            ]
+
+            cowpi_high = [
+                self.pm_noD['cowpi'][self.pm_noD['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm_noC['cowpi'][self.pm_noC['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm_noH['cowpi'][self.pm_noH['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
+            ]
+
+            data = {
+                'low': cowpi_low,
+                'high': cowpi_high
+            }
+
+            self.make_income_comp_plot(
+                data,
+                'cow_boxplot_exclusion',
+                ['Excluding Drink', 'Excluding Cook', 'Excluding Hygience', 'No Exclusions'],
+                box=True,
+                means=False,
+                outliers=""
+            )
 
     def cowpi_barchart(self):
         level_cowpi_b = self.base['cowpi'].groupby('level').mean()['cowpi']
