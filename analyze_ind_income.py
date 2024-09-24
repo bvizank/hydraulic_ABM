@@ -92,7 +92,7 @@ income = np.genfromtxt(
     delimiter=',',
 )
 
-y = income[:, 5] # + income[:, 4] + income[:, 5]
+y = income[:, 1] # + income[:, 4] + income[:, 5]
 
 print(results_ind)
 x = results_ind.values
@@ -135,11 +135,16 @@ print(model.score(x, y))
 print(model.coef_)
 print(model.intercept_)
 
+# format the y axis ticks to have a dollar sign and thousands commas
+fmt = '${x:,.0f}'
+tick = mtick.StrMethodFormatter(fmt)
+ax0.yaxis.set_major_formatter(tick)
+
 plt.scatter(x, y)
 plt.plot(x, model.predict(x))
 plt.xlabel('Normalized Industrial Distance')
-plt.ylabel('Normalized Median BG Income')
-plt.savefig('clinton_bg_perc_other.png', format='png', bbox_inches='tight')
+plt.ylabel('Median Income')
+plt.savefig('clinton_bg_income.png', format='png', bbox_inches='tight')
 plt.close()
 
 # calculate odds ratio

@@ -2,7 +2,7 @@ from base import Graphics
 
 
 days = 180
-plots = Graphics(publication=True, error='se', days=days)
+plots = Graphics(publication=False, error='se', days=days)
 
 ''' Demand plots '''
 # plots.demand_plots()
@@ -30,10 +30,10 @@ plots = Graphics(publication=True, error='se', days=days)
 
 ''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(di=True, perc=False, sa=True)
+plots.cowpi_boxplot(di=False, perc=False, sa=True)
 
 ''' Income plots '''
-# plots.income_plots()
+plots.income_plots()
 
 ''' Tap water avoidance plots '''
 # plots.make_twa_plots()

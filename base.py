@@ -262,27 +262,27 @@ class BaseGraphics:
             dir + '/hh_results/', ['income']
         )['income']
 
-        for i in range(30):
-            curr_income = ut.income_list(
-                data=dt.clinton_income,
-                n_house=len(data['income'][data['income']['i'] == i]),
-                s=i
-            )
-            data['income'].loc[data['income']['i'] == i, 'income'] = (
-                curr_income[0:len(data['income'][data['income']['i'] == i])]
-            )
+        # for i in range(30):
+        #     curr_income = ut.income_list(
+        #         data=dt.clinton_income,
+        #         n_house=len(data['income'][data['income']['i'] == i]),
+        #         s=i
+        #     )
+        #     data['income'].loc[data['income']['i'] == i, 'income'] = (
+        #         curr_income[0:len(data['income'][data['income']['i'] == i])]
+        #     )
 
-            # set the level as 1 if above 20 %-tile and 0 if below
-            bot20 = np.percentile(
-                data['income'].loc[data['income']['i'] == i, 'income'],
-                20
-            )
-            data['income'].loc[data['income']['i'] == i, 'level'] = (
-                np.where(
-                    data['income'].loc[data['income']['i'] == i, 'income'] > bot20,
-                    1, 0
-                )
-            )
+        #     # set the level as 1 if above 20 %-tile and 0 if below
+        #     bot20 = np.percentile(
+        #         data['income'].loc[data['income']['i'] == i, 'income'],
+        #         20
+        #     )
+        #     data['income'].loc[data['income']['i'] == i, 'level'] = (
+        #         np.where(
+        #             data['income'].loc[data['income']['i'] == i, 'income'] > bot20,
+        #             1, 0
+        #         )
+        #     )
 
         if not bw:
             data['cost']['total'] = data['cost']['tw_cost']
@@ -679,21 +679,20 @@ class BaseGraphics:
         results_ind = res_nodes.groupby(['group', 'bg']).mean().loc[:, 'min']
 
         # read in income distribution data
-        income = pd.read_csv(
+        income = np.genfromtxt(
             'Input Files/clinton_income_data.csv',
             delimiter=',',
-            names=['bg', 'income']
         )
 
         print(income)
         print(pd.Series(results_ind.values))
 
         data = pd.concat(
-            [income['income'], pd.Series(results_ind.values)],
+            [pd.Series(income[:, 1]), pd.Series(results_ind.values)],
             axis=1,
             keys=['Income', 'Distance']
         )
-
+        
         print(data)
 
         # x = results_ind.values
@@ -701,7 +700,7 @@ class BaseGraphics:
 
         model, mod_x = self.linear_regression(data, 'Distance', 'Income')
 
-        # ax.scatter(x, y)
+        ax.scatter(mod_x, data['Income'])
         ax.plot(mod_x, model.predict(mod_x))
 
         return ax
@@ -1635,14 +1634,14 @@ class Graphics(BaseGraphics):
         cowpi_bot20 = [
             self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
+            # self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
         ]
 
         cowpi_top80 = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
-            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
+            # self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
@@ -1654,14 +1653,16 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cow_boxplot',
-            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            # ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ['Base', 'Base+BW', 'SD+BW'],
             box=True,
         )
 
         self.make_income_comp_plot(
             data,
             'cow_boxplot_no_outliers',
-            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            # ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ['Base', 'Base+BW', 'SD+BW'],
             box=True,
             means=False,
             outliers=""
@@ -1954,13 +1955,13 @@ class Graphics(BaseGraphics):
         ax0 = plt.subplot()
         ax0 = self.clinton_bg_plot(ax0)
 
-        income = self.base['income'].iloc[:, 0].groupby(level=0).median()
+        income = self.base['income'].loc[:, 'income'].groupby(level=0).median()
+        print(income)
         dist_income = pd.concat(
             [income, pd.Series(self.ind_distances)],
             axis=1,
             keys=['Income', 'Distance']
         )
-        print(dist_income)
         model, x = self.linear_regression(dist_income, 'Distance', 'Income')
 
         ax0.plot(x, model.predict(x))
@@ -1974,7 +1975,7 @@ class Graphics(BaseGraphics):
         tick = mtick.StrMethodFormatter(fmt)
         ax0.yaxis.set_major_formatter(tick)
 
-        ax0.legend(['Clinton, NC', 'Micropolis'])
+        ax0.legend(['Clinton, NC Data', 'Clinton, NC Regression', 'Micropolis'])
         plt.savefig(self.pub_loc + 'income_bg-micropolis.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
