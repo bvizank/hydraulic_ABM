@@ -30,7 +30,7 @@ plots = Graphics(publication=False, error='se', days=days)
 
 ''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(di=False, perc=False, sa=True)
+plots.cowpi_boxplot(di=True, perc=False, sa=True)
 
 ''' Income plots '''
 plots.income_plots()

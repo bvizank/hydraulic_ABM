@@ -1594,6 +1594,7 @@ class Graphics(BaseGraphics):
     def cowpi_boxplot(self, di=False, perc=False, sa=False):
         ''' Make cowpi boxplots '''
         print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
+        print(self.pm_nodi['cowpi']['level'])
         print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<15000].count() /
               len(self.pm_nodi['cowpi']['income']))
         print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<130000].count() /
