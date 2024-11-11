@@ -1,25 +1,21 @@
 import os
 import sys
 if sys.platform == "darwin":
-    os.environ['KMP_DUPLICATE_LIB_OK']='True'
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 import warnings
 from Hydraulic_abm_SEIR import ConsumerModel
 import pandas as pd
-import matplotlib.pyplot as plt
 from time import localtime, strftime, perf_counter
 # from utils import clean_epanet
 import os
 import wntr
 from tqdm import tqdm
-import logging
-import numpy as np
-from wntr.network.io import write_inpfile
 
 warnings.simplefilter("ignore", UserWarning)
 
 
-def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
+def run_sim(city, id=0, days=90, seed=218, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
     if 'output_loc' in kwargs:
         output_loc = kwargs['output_loc'] + str(id)
@@ -59,65 +55,12 @@ def run_sim(city, id=0, days=90, plot=False, seed=218, **kwargs):
         for _ in range(1, 24*days+1):
             model.step()
 
-    # save the input file to test run time
-    # write_inpfile(
-    #     model.wn,
-    #     'final_wnm.inp',
-    #     units=model.wn.options.hydraulic.inpfile_units,
-    #     version=2.2
-    # )
-
     stop = perf_counter()
 
     if kwargs['verbose'] != 0:
         print('Time to complete: ', stop - start)
 
-    # model.status_tot['t'] = pop * model.status_tot['t'] / 24
-
-    if plot:
-        Demands_test = np.zeros(24 * days + 1)
-        # print(model.demand_matrix)
-        for node in model.terminal_nodes:
-            add_demands = model.demand_matrix[node]
-            Demands_test = np.add(Demands_test, add_demands)
-        plt.plot(Demands_test)
-        # plt.plot(Demands_test, label='Total Demand')
-        plt.xlabel("Time (sec)")
-        plt.ylabel("Demand (L)")
-        plt.legend(loc='best')
-        plt.savefig(output_loc + '/' + 'demands.png')
-        plt.close()
-        print('Total demands are ' + str(Demands_test.sum(axis = 0)))
-
-        # print(Demands_test[:,0])
-
-        plt.plot('t', 'S', data = model.status_tot, label = 'Susceptible')
-        plt.plot('t', 'E', data = model.status_tot, label = 'Exposed')
-        plt.plot('t', 'I', data = model.status_tot, label = 'Infected')
-        plt.plot('t', 'R', data = model.status_tot, label = 'Recovered')
-        plt.plot('t', 'D', data = model.status_tot, label = 'Dead')
-        plt.xlabel('Time (days)')
-        plt.ylabel('Percent Population')
-        plt.legend()
-        plt.savefig(output_loc + '/' + 'seir.png')
-        plt.close()
-
-        plt.plot('t', 'I', data=model.status_tot, label='Infected')
-        plt.plot('t', 'sum_I', data=model.status_tot, label='Cumulative I')
-        plt.xlabel('Time (days)')
-        plt.ylabel('Population')
-        plt.legend()
-        plt.savefig(output_loc + '/' + 'infected.png')
-        plt.close()
-
     ''' Save the model outputs '''
-    # model.status_tot['t'] = model.status_tot['t'] * 24 * 3600
-    # model.status_tot['t'] = pd.to_numeric(model.status_tot['t'],downcast="integer")
-    # model.status_tot = model.status_tot.set_index('t')
-    # model.status_tot = pd.concat([model.status_tot, Demands_test], axis=1)
-
-    # convert list of lists to pandas dataframes
-    # print(model.status_tot)
     status_tot = convert_to_pd(
         model.status_tot,
         ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild',

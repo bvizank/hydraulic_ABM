@@ -26,6 +26,10 @@ class ConsumerModel(Model):
     '''
     ABM model class. Contains all methods to run the ABM simulation
 
+    to do:
+        - Figure out a better way to handle the keyword arguments
+        -
+
     Parameters
     ----------
     N : int
