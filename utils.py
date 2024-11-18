@@ -458,9 +458,15 @@ def income_list(data, n_house, s):
 
     parameters:
     ----------
-        data   (dict): income data formatted as key: income bracket,
-                       value: percentage of population in income bracket
-        n_house (int): size of synthetic dataset (number of households)
+        data   (dict):
+            income data formatted as key: income bracket,
+            value: percentage of population in income bracket
+
+        n_house (int):
+            size of synthetic dataset (number of households)
+
+        s       (int):
+            seed
     '''
 
     random.seed(s)

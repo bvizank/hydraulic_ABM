@@ -215,17 +215,7 @@ class BaseGraphics:
         param : (list)
             params to combine
         '''
-        # output = dict()
         output = dict()
-        # if isinstance(param, str):
-        #     for i in range(30):
-        #         if i not in skip:
-        #             file = os.path.join(folder, param + '_' + str(i) + '.pkl')
-        #             curr_data = pd.read_pickle(file)
-        #             curr_data['i'] = i
-        #             output = pd.concat([output, curr_data])
-            # output[param] = self.collect_data(folder, param)
-        # elif isinstance(param, list):
         for i in param:
             curr_param = pd.DataFrame()
             for j in range(30):
@@ -238,6 +228,15 @@ class BaseGraphics:
                     curr_param = pd.concat([curr_param, curr_data])
             output[i] = curr_param
 
+        # if isinstance(param, str):
+        #     for i in range(30):
+        #         if i not in skip:
+        #             file = os.path.join(folder, param + '_' + str(i) + '.pkl')
+        #             curr_data = pd.read_pickle(file)
+        #             curr_data['i'] = i
+        #             output = pd.concat([output, curr_data])
+            # output[param] = self.collect_data(folder, param)
+        # elif isinstance(param, list):
         # print(output)
             # for item in param:
             #     output[item] = self.collect_data(folder, item)
@@ -262,27 +261,27 @@ class BaseGraphics:
             dir + '/hh_results/', ['income']
         )['income']
 
-        # for i in range(30):
-        #     curr_income = ut.income_list(
-        #         data=dt.clinton_income,
-        #         n_house=len(data['income'][data['income']['i'] == i]),
-        #         s=i
-        #     )
-        #     data['income'].loc[data['income']['i'] == i, 'income'] = (
-        #         curr_income[0:len(data['income'][data['income']['i'] == i])]
-        #     )
+        for i in range(30):
+            curr_income = ut.income_list(
+                data=dt.clinton_income,
+                n_house=len(data['income'][data['income']['i'] == i]),
+                s=i
+            )
+            data['income'].loc[data['income']['i'] == i, 'income'] = (
+                curr_income[0:len(data['income'][data['income']['i'] == i])]
+            )
 
-        #     # set the level as 1 if above 20 %-tile and 0 if below
-        #     bot20 = np.percentile(
-        #         data['income'].loc[data['income']['i'] == i, 'income'],
-        #         20
-        #     )
-        #     data['income'].loc[data['income']['i'] == i, 'level'] = (
-        #         np.where(
-        #             data['income'].loc[data['income']['i'] == i, 'income'] > bot20,
-        #             1, 0
-        #         )
-        #     )
+            # set the level as 1 if above 20 %-tile and 0 if below
+            bot20 = np.percentile(
+                data['income'].loc[data['income']['i'] == i, 'income'],
+                20
+            )
+            data['income'].loc[data['income']['i'] == i, 'level'] = (
+                np.where(
+                    data['income'].loc[data['income']['i'] == i, 'income'] > bot20,
+                    1, 0
+                )
+            )
 
         if not bw:
             data['cost']['total'] = data['cost']['tw_cost']
@@ -338,16 +337,16 @@ class BaseGraphics:
         self.package_household(self.pm_noH, self.pm_comp_noH_dir)
 
         # get pm 25ind data ready
-        # self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
+        self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
 
         # get pm 50ind data ready
-        # self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
+        self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
 
         # get pm 75ind data ready
-        # self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
+        self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
 
         # get pm 100ind data ready
-        # self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
+        self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -1591,7 +1590,7 @@ class Graphics(BaseGraphics):
             outliers=""
         )
 
-    def cowpi_boxplot(self, di=False, perc=False, sa=False):
+    def cowpi_boxplot(self, di=False, perc=False, exclusion=False, sa=False):
         ''' Make cowpi boxplots '''
         print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
         print(self.pm_nodi['cowpi']['level'])
@@ -1635,14 +1634,14 @@ class Graphics(BaseGraphics):
         cowpi_bot20 = [
             self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
-            # self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 0]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100
         ]
 
         cowpi_top80 = [
             self.base['cowpi'][self.base['cowpi']['level'] == 1]['cowpi']*100,
             self.basebw['cowpi'][self.basebw['cowpi']['level'] == 1]['cowpi']*100,
-            # self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
+            self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 1]['cowpi']*100,
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
@@ -1654,16 +1653,16 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cow_boxplot',
-            # ['Base', 'Base+BW', 'PM', 'PM+BW'],
-            ['Base', 'Base+BW', 'SD+BW'],
+            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            # ['Base', 'Base+BW', 'SD+BW'],
             box=True,
         )
 
         self.make_income_comp_plot(
             data,
             'cow_boxplot_no_outliers',
-            # ['Base', 'Base+BW', 'PM', 'PM+BW'],
-            ['Base', 'Base+BW', 'SD+BW'],
+            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            # ['Base', 'Base+BW', 'SD+BW'],
             box=True,
             means=False,
             outliers=""
@@ -1780,10 +1779,10 @@ class Graphics(BaseGraphics):
                 box=True,
                 outliers=""
             )
-        
+
         ''' Make plots for each SA scenario, no drinking, no cooking, and no
         hygiene '''
-        if sa:
+        if exclusion:
             cowpi_low = [
                 self.pm_noD['cowpi'][self.pm_noD['cowpi']['level'] == 0]['cowpi']*100,
                 self.pm_noC['cowpi'][self.pm_noC['cowpi']['level'] == 0]['cowpi']*100,
@@ -1807,6 +1806,37 @@ class Graphics(BaseGraphics):
                 data,
                 'cow_boxplot_exclusion',
                 ['Excluding Drink', 'Excluding Cook', 'Excluding Hygience', 'No Exclusions'],
+                box=True,
+                means=False,
+                outliers=""
+            )
+
+        if sa:
+            cowpi_low = [
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 0]['cowpi']*100,
+                self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cowpi']*100
+            ]
+
+            cowpi_high = [
+                self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 1]['cowpi']*100,
+                self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cowpi']*100
+            ]
+
+            data = {
+                'low': cowpi_low,
+                'high': cowpi_high
+            }
+
+            self.make_income_comp_plot(
+                data,
+                'cow_boxplot_sa',
+                ['PM', 'PM-25', 'PM-50', 'PM-75', 'PM-100'],
                 box=True,
                 means=False,
                 outliers=""
@@ -1921,7 +1951,7 @@ class Graphics(BaseGraphics):
             twa_keys, twa_basebw[0].index / 24
         )
         axes[1] = self.make_avg_plot(
-            axes[1], twa_pm[0] * 100, 
+            axes[1], twa_pm[0] * 100,
             ut.calc_error(twa_pm[1], 'ci95') * 100,
             twa_keys, twa_pm[0].index / 24
         )
