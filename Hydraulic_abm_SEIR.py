@@ -1743,5 +1743,5 @@ class ConsumerModel(Model):
             self.print_func()
         self.timestep += 1
 
-        if abs(self.water_age_slope) < self.tol:
+        if self.water_age_slope < self.tol:
             self.warmup = False

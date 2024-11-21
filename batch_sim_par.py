@@ -10,10 +10,10 @@ import logging
 
 bw = True
 bbn_models = ['all']
-dist_income = True
+dist_income = False
 twa_process = 'absolute'
-twa_mods = [1000000, 140, 150]
-output_loc = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
+twa_mods = [130, 140, 150]
+output_loc = 'Output Files/3_Sensitivity Analysis/30_pm50ind/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
@@ -58,7 +58,7 @@ for i in range(0+rank, 30, nprocs):
         warmup=True,
         twa_mods=twa_mods,
         bw=bw,
-        ind_min_demand=0,
+        ind_min_demand=0.5,
         dist_income=dist_income,
         output_loc=output_loc
     )
