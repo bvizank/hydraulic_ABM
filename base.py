@@ -346,7 +346,7 @@ class BaseGraphics:
         self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
 
         # get pm 100ind data ready
-        self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
+        # self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -580,7 +580,7 @@ class BaseGraphics:
 
     def make_income_comp_plot(self, data, name, xlabel=None, ylabel='%HI',
                               box=True, outliers=None, means=True,
-                              income_line=4.6):
+                              income_line=4.6, text_y=-0.24):
         if box:
             fig, axes = plt.subplots(1, 2, sharey=True)
 
@@ -599,15 +599,15 @@ class BaseGraphics:
             # add a red dashed line at 4.6%
             if income_line:
                 for ax in axes:
-                    ax.axhline(y = income_line, color = 'r', linestyle = 'dashed') 
+                    ax.axhline(y=income_line, color='r', linestyle='dashed') 
 
             # set the ylabel
             axes[0].set_ylabel(ylabel)
 
             # add the subplot labels
-            axes[0].text(0.5, -0.24, "(a)", size=12, ha="center",
+            axes[0].text(0.5, text_y, "(a)", size=12, ha="center",
                          transform=axes[0].transAxes)
-            axes[1].text(0.5, -0.24, "(b)", size=12, ha="center",
+            axes[1].text(0.5, text_y, "(b)", size=12, ha="center",
                          transform=axes[1].transAxes)
             # axes[2].text(0.5, -0.24, "(c)", size=12, ha="center",
             #              transform=axes[2].transAxes)
@@ -760,10 +760,10 @@ class Graphics(BaseGraphics):
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
         self.base_comp_dir = 'Output Files/1_Distance Based Income/30_base_di/'
         self.base_bw_comp_dir = 'Output Files/1_Distance Based Income/30_basebw_di/'
-        self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_25ind_equity/'
-        self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_50ind_equity/'
-        self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_75ind_equity/'
-        self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
+        self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_pm25ind/'
+        self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_pm50ind/'
+        self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_pm75ind/'
+        self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_pm100ind/'
         self.pm_comp_dir = 'Output Files/1_Distance Based Income/30_pmbw_di/'
         self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
         self.pm_comp_noD_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
@@ -821,9 +821,9 @@ class Graphics(BaseGraphics):
         self.pm75ind = ut.read_comp_data(
             self.pm_75ind_comp_dir, self.comp_list, days, self.truncate_list
         )
-        self.pm100ind = ut.read_comp_data(
-            self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
-        )
+        # self.pm100ind = ut.read_comp_data(
+        #     self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
+        # )
         # self.wfh = ut.read_comp_data(
         #     self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
         # )
@@ -1148,7 +1148,7 @@ class Graphics(BaseGraphics):
         axes[1, 1].text(0.5, -0.23, "(d)", size=12, ha="center",
                      transform=axes[1, 1].transAxes)
         fig.supxlabel('Time (days)', y=0)
-        fig.supylabel('Age (hrs)', x=0.04)
+        fig.supylabel('Age (hrs)', x=0)
         plt.gcf().set_size_inches(4, 4)
 
         plt.savefig(self.pub_loc + 'mean_age_sector.' + self.format,
@@ -1590,6 +1590,61 @@ class Graphics(BaseGraphics):
             outliers=""
         )
 
+        ''' Make income based cost plots for SA '''
+        cost_low = [
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 0]['cost'],
+            self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 0]['cost'],
+            self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 0]['cost'],
+            self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 0]['cost'],
+            # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cost'],
+        ]
+
+        cost_high = [
+            self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cost'],
+            self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 1]['cost'],
+            self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 1]['cost'],
+            self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 1]['cost'],
+            # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cost'],
+        ]
+
+        # cost_med = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cost'],
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cost'],
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cost'],
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cost']
+        # ]
+
+        # cost_high = [
+        #     self.base['cowpi'][self.base['cowpi']['level'] == 3]['cost'],
+        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cost'],
+        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cost'],
+        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cost']
+        # ]
+
+        # data = {
+        #     'low': cost_low,
+        #     'med': cost_med,
+        #     'high': cost_high
+        # }
+        data = {
+            'low': cost_low,
+            'high': cost_high
+        }
+
+        print(data)
+
+        self.make_income_comp_plot(
+            data,
+            'cost_boxplot_SA',
+            # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
+            ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
+            ylabel='Cost ($)',
+            box=True,
+            means=False,
+            income_line=None,
+            outliers=""
+        )
+
     def cowpi_boxplot(self, di=False, perc=False, exclusion=False, sa=False):
         ''' Make cowpi boxplots '''
         print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
@@ -1805,10 +1860,11 @@ class Graphics(BaseGraphics):
             self.make_income_comp_plot(
                 data,
                 'cow_boxplot_exclusion',
-                ['Excluding Drink', 'Excluding Cook', 'Excluding Hygience', 'No Exclusions'],
+                ['No Drink', 'No Cook', 'No Hygience', 'No Exclusions'],
                 box=True,
                 means=False,
-                outliers=""
+                outliers="",
+                text_y=-0.3
             )
 
         if sa:
@@ -1817,7 +1873,7 @@ class Graphics(BaseGraphics):
                 self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 0]['cowpi']*100,
                 self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 0]['cowpi']*100,
                 self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 0]['cowpi']*100,
-                self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cowpi']*100
+                # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cowpi']*100
             ]
 
             cowpi_high = [
@@ -1825,7 +1881,7 @@ class Graphics(BaseGraphics):
                 self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 1]['cowpi']*100,
                 self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 1]['cowpi']*100,
                 self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 1]['cowpi']*100,
-                self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cowpi']*100
+                # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cowpi']*100
             ]
 
             data = {
@@ -1836,7 +1892,8 @@ class Graphics(BaseGraphics):
             self.make_income_comp_plot(
                 data,
                 'cow_boxplot_sa',
-                ['PM', 'PM-25', 'PM-50', 'PM-75', 'PM-100'],
+                # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
+                ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
                 box=True,
                 means=False,
                 outliers=""
