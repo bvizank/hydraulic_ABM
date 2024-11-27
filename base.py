@@ -346,7 +346,7 @@ class BaseGraphics:
         self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
 
         # get pm 100ind data ready
-        # self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
+        self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
     def make_avg_plot(self, ax, data, sd, cols, x_values,
                       xlabel=None, ylabel=None, fig_name=None,
@@ -821,9 +821,9 @@ class Graphics(BaseGraphics):
         self.pm75ind = ut.read_comp_data(
             self.pm_75ind_comp_dir, self.comp_list, days, self.truncate_list
         )
-        # self.pm100ind = ut.read_comp_data(
-        #     self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
-        # )
+        self.pm100ind = ut.read_comp_data(
+            self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
+        )
         # self.wfh = ut.read_comp_data(
         #     self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
         # )
@@ -1596,7 +1596,7 @@ class Graphics(BaseGraphics):
             self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 0]['cost'],
             self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 0]['cost'],
             self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 0]['cost'],
-            # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cost'],
+            self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cost'],
         ]
 
         cost_high = [
@@ -1604,7 +1604,7 @@ class Graphics(BaseGraphics):
             self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 1]['cost'],
             self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 1]['cost'],
             self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 1]['cost'],
-            # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cost'],
+            self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cost'],
         ]
 
         # cost_med = [
@@ -1636,8 +1636,8 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cost_boxplot_SA',
-            # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
-            ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
+            ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
+            # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
             ylabel='Cost ($)',
             box=True,
             means=False,
@@ -1873,7 +1873,7 @@ class Graphics(BaseGraphics):
                 self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 0]['cowpi']*100,
                 self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 0]['cowpi']*100,
                 self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 0]['cowpi']*100,
-                # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cowpi']*100
+                self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 0]['cowpi']*100
             ]
 
             cowpi_high = [
@@ -1881,7 +1881,7 @@ class Graphics(BaseGraphics):
                 self.pm25ind['cowpi'][self.pm25ind['cowpi']['level'] == 1]['cowpi']*100,
                 self.pm50ind['cowpi'][self.pm50ind['cowpi']['level'] == 1]['cowpi']*100,
                 self.pm75ind['cowpi'][self.pm75ind['cowpi']['level'] == 1]['cowpi']*100,
-                # self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cowpi']*100
+                self.pm100ind['cowpi'][self.pm100ind['cowpi']['level'] == 1]['cowpi']*100
             ]
 
             data = {
@@ -1892,11 +1892,12 @@ class Graphics(BaseGraphics):
             self.make_income_comp_plot(
                 data,
                 'cow_boxplot_sa',
-                # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
-                ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
+                ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
+                # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
                 box=True,
                 means=False,
-                outliers=""
+                outliers="",
+                text_y=-0.3
             )
 
     def cowpi_barchart(self):
