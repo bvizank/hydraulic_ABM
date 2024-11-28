@@ -1,16 +1,11 @@
 # Consumer Model WNTR- MESA
+from parameters import Parameters
 import warnings
-from mesa import Model
-from mesa.time import RandomActivation
-from utils import setup
 from hydraulic import EpanetSimulator_Stepwise
-import networkx as nx
-from mesa.space import NetworkGrid
 from agent_model import Household
 import data as dt
 import math
 import time
-import bnlearn as bn
 import numpy as np
 import pandas as pd
 from copy import deepcopy as dcp
@@ -22,7 +17,7 @@ import matplotlib.pyplot as plt
 warnings.simplefilter("ignore", UserWarning)
 
 
-class ConsumerModel(Model):
+class ConsumerModel(Parameters):
     '''
     ABM model class. Contains all methods to run the ABM simulation
 
@@ -51,272 +46,15 @@ class ConsumerModel(Model):
                  id=0,    # id of simulation
                  seed=None,
                  **kwargs):
-        super().__init__()
+        super().__init__(N, city, days, id, seed, **kwargs)
         init_start = time.perf_counter()
-        self.days = days
-        self.id = id
-        self.num_agents = N
-        self.network = city
-        self.t = 0
-        self.schedule = RandomActivation(self)
-        self.timestep = 0
-        self.timestep_day = 0
-        self.timestepN = 0
-        # self.base_demands_previous = {}
-        self.swn = nx.watts_strogatz_graph(
-            n=self.num_agents, p=0.2, k=6, seed=seed
-        )
-        self.snw_agents = {}
-        # self.nodes_endangered = All_terminal_nodes
-        self.demand_test = []
-
-        if 'start_inf' in kwargs:
-            self.covid_exposed = kwargs['start_inf'] #round(0.001*N) # number of starting infectious
-        else:
-            self.covid_exposed = int(0.001 * self.num_agents)
-
-        self.exposure_rate = 0.05  # infection rate per contact per day in households
-        self.exposure_rate_large = 0.01  # infection rate per contact per day in workplaces
-        self.e2i = (4.5, 1.5)  # mean and sd number of days before infection shows
-        self.i2s = (1.1, 0.9)  # time after viral shedding before individual shows sypmtoms
-        self.s2sev = (6.6, 4.9)  # time after symptoms start before individual develops potential severe covid
-        self.sev2c = (1.5, 2.0)  # time after severe symptoms before critical status
-        self.c2d = (10.7, 4.8)  # time between critical dianosis to death
-        self.recTimeAsym = (8.0, 2.0)  # time for revovery for asymptomatic cases
-        self.recTimeMild = (8.0, 2.0)  # mean and sd number of days for recovery: mild cases
-        self.recTimeSev = (18.1, 6.3)
-        self.recTimeC = (18.1, 6.3)
-
-        if 'daily_contacts' in kwargs:
-            self.daily_contacts = kwargs['daily_contacts']
-        else:
-            self.daily_contacts = 10
-        self.cumm_infectious = self.covid_exposed
-
-        ''' Import the four DAGs for the BBNs '''
-        self.wfh_dag = bn.import_DAG('Input Files/data_driven_models/work_from_home.bif', verbose=0)
-        self.dine_less_dag = bn.import_DAG('Input Files/pmt_models/dine_out_less_pmt-6.bif', verbose=0)
-        self.grocery_dag = bn.import_DAG('Input Files/pmt_models/shop_groceries_less_pmt-6.bif', verbose=0)
-        self.ppe_dag = bn.import_DAG('Input Files/data_driven_models/mask.bif', verbose=0)
-
-        if 'res_pat_select' in kwargs:
-            self.res_pat_select = kwargs['res_pat_select']
-        else:
-            self.res_pat_select = 'lakewood'
-
-        if 'wfh_lag' in kwargs:
-            self.wfh_lag = kwargs['wfh_lag']  # infection percent before work from home allowed
-        else:
-            self.wfh_lag = 0
-        self.wfh_thres = False  # whether wfh lag has been reached
-
-        if 'no_wfh_perc' in kwargs:
-            self.no_wfh_perc = kwargs['no_wfh_perc']
-        else:
-            self.no_wfh_perc = 0.5
-
-        if 'bbn_models' in kwargs:
-            if 'all' in kwargs['bbn_models']:
-                self.bbn_models = ['wfh', 'dine', 'grocery', 'ppe']
-            else:
-                self.bbn_models = kwargs['bbn_models']
-        else:
-            self.bbn_models = ['wfh', 'dine', 'grocery', 'ppe']
-
-        if 'verbose' in kwargs:
-            self.verbose = kwargs['verbose']
-        else:
-            self.verbose = 1
-
-        if 'ppe_reduction' in kwargs:
-            self.ppe_reduction = kwargs['ppe_reduction']
-        else:
-            '''
-            This value comes from this paper:
-            https://www.cdc.gov/mmwr/volumes/71/wr/mm7106e1.htm#T3_down
-
-            Odds that you will get covid if you wear a mask is
-            66% less likely than without a mask, therefore, the new
-            exposure rate is 34% of the original.
-            '''
-            self.ppe_reduction = 0.34
-
-        '''
-        hyd_sim represents the way the hydraulic simulation is to take place
-        options are 'eos' (end of simulation) and 'hourly' with the default 'eos'
-        '''
-        if 'hyd_sim' in kwargs:
-            self.hyd_sim = kwargs['hyd_sim']
-        else:
-            self.hyd_sim = 'eos'
-
-        '''
-        The warmup input dictates whether a warmup period is run to reach steady
-        state water age values. Default is true
-        '''
-        if 'warmup' in kwargs:
-            self.warmup = kwargs['warmup']
-        else:
-            self.warmup = True
-
-        '''
-        Warmup tolerance is the threshold for when warmup period is complete
-        '''
-        if 'tol' in kwargs:
-            self.tol = kwargs['tol']
-        else:
-            self.tol = 0.001
-
-        '''
-        bw dictates whether bottled water buying is modeled. Defaults to True
-        '''
-        if 'bw' in kwargs:
-            self.bw = kwargs['bw']
-        else:
-            self.bw = True
-
-        '''
-        twa_mods are the modulators to the twa thresholds passed to households
-        '''
-        if 'twa_mods' in kwargs:
-            self.twa_mods = kwargs['twa_mods']
-        else:
-            self.twa_mods = [130, 140, 150]
-
-        '''
-        self.ind_min_demand is the minimum industrial demand as a percentage
-        '''
-        if 'ind_min_demand' in kwargs:
-            self.ind_min_demand = kwargs['ind_min_demand']
-        else:
-            self.ind_min_demand = 0
-
-        '''
-        dist_income is whether income is industrial distance based
-        '''
-        if 'dist_income' in kwargs:
-            self.dist_income = kwargs['dist_income']
-        else:
-            self.dist_income = True
-
-        '''
-        twa_process dictates whether the twas are represented as absolute
-        reductions or percentage reductions
-
-        two options are absolute and percentage
-        '''
-        if 'twa_process' in kwargs:
-            self.twa_process = kwargs['twa_process']
-        else:
-            self.twa_process = 'absolute'
 
         ''' Setup and mapping of variables from various sources. For more information
-        see utils.py '''
-        setup_out = setup(city)
-
-        ''' need to check whether these are mapped correctly. '''
-        self.res_nodes = setup_out[0]['res']
-        self.ind_nodes = setup_out[0]['ind']
-        self.com_nodes = setup_out[0]['com']
-        self.cafe_nodes = setup_out[0]['cafe']  # There is no node assigned to "dairy queen" so it was neglected
-        if city == 'micropolis':
-            self.nav_nodes = []  # placeholder for agent assignment
-        if city == 'mesopolis':
-            self.air_nodes = setup_out[0]['air']
-            self.nav_nodes = setup_out[0]['nav']
-
-        self.nodes_capacity = setup_out[1]
-        self.house_num = setup_out[2]
-
-        self.age_nodes = [n for n in self.nodes_capacity if self.nodes_capacity[n] != 0]
-
-        self.res_dist = setup_out[3]['res']  # residential capacities at each hour
-        self.com_dist = setup_out[3]['com']  # commercial capacities at each hour
-        self.ind_dist = setup_out[3]['ind']  # industrial capacities at each hour
-        self.sum_dist = setup_out[3]['sum']  # sum of capacities
-        self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
-        if city == 'micropolis':
-            # self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
-            self.nav_dist = [0]  # placeholder for agent assignment
-        if city == 'mesopolis':
-            self.air_dist = setup_out[3]['air']
-            self.nav_dist = setup_out[3]['nav']
-
-        # self.sleep = setup_out[4]['sleep']
-        # self.radio = dcp(setup_out[4]['radio'])
-        # self.tv = dcp(setup_out[4]['tv'])
-        # self.bbn_params = setup_out[5]  # pandas dataframe of bbn parameters
-        # wfh_patterns = setup_out[6]
-        self.terminal_nodes = setup_out[4]
-        self.wn = setup_out[5]
-        self.ind_node_dist = setup_out[6]  # distance between res nodes and closest ind node
-
-        self.G = self.wn.get_graph()
-        self.grid = NetworkGrid(self.G)
-        self.num_nodes = len(self.G.nodes)
-        for i in range(dt.wfh_patterns.shape[1]):
-            self.wn.add_pattern(
-                'wk'+str(i+1), dt.wfh_patterns[:, i]
-            )
-
-        """
-        Save parameters to a DataFrame, param_out, to save at the end of the
-        simulation. This helps with data organization.
-        """
-        self.param_out = pd.DataFrame(columns=['Param', 'value1', 'value2'])
-        covid_exp = pd.DataFrame([['covid_exposed', self.covid_exposed]],
-                                 columns=['Param', 'value1'])
-        hh_rate = pd.DataFrame([['household_rate', self.exposure_rate]],
-                               columns=['Param', 'value1'])
-        wp_rate = pd.DataFrame([['workplace_rate', self.exposure_rate_large]],
-                               columns=['Param', 'value1'])
-        inf_time = pd.DataFrame([['infection_time', self.e2i[0], self.e2i[1]]],
-                                columns=['Param', 'value1', 'value2'])
-        syp_time = pd.DataFrame([['symptomatic_time', self.i2s[0],
-                                  self.i2s[1]]],
-                                columns=['Param', 'value1', 'value2'])
-        sev_time = pd.DataFrame([['severe_time', self.s2sev[0],
-                                  self.s2sev[1]]],
-                                columns=['Param', 'value1', 'value2'])
-        crit_time = pd.DataFrame([['critical_time', self.sev2c[0],
-                                   self.sev2c[1]]],
-                                 columns=['Param', 'value1', 'value2'])
-        death_time = pd.DataFrame([['death_time', self.c2d[0], self.c2d[1]]],
-                                  columns=['Param', 'value1', 'value2'])
-        asymp_rec_time = pd.DataFrame([['asymp_recovery_time',
-                                        self.recTimeAsym[0],
-                                        self.recTimeAsym[1]]],
-                                      columns=['Param', 'value1', 'value2'])
-        mild_rec_time = pd.DataFrame([['mild_recovery_time',
-                                       self.recTimeMild[0],
-                                       self.recTimeMild[1]]],
-                                     columns=['Param', 'value1', 'value2'])
-        sev_rec_time = pd.DataFrame([['severe_recovery_time',
-                                      self.recTimeSev[0],
-                                      self.recTimeSev[1]]],
-                                    columns=['Param', 'value1', 'value2'])
-        crit_rec_time = pd.DataFrame([['critical_recovery_time',
-                                       self.recTimeC[0],
-                                       self.recTimeC[1]]],
-                                     columns=['Param', 'value1', 'value2'])
-        daily_cont = pd.DataFrame([['daily_contacts', self.daily_contacts]],
-                                  columns=['Param', 'value1'])
-        bbn_mod = pd.DataFrame([['bbn_models', self.bbn_models]],
-                               columns=['Param', 'value1'])
-        res_pat = pd.DataFrame([['res pattern', self.res_pat_select]],
-                               columns=['Param', 'value1'])
-        wfh_lag = pd.DataFrame([['wfh_lag', self.wfh_lag]],
-                               columns=['Param', 'value1'])
-        no_wfh = pd.DataFrame([['percent ind no wfh', self.no_wfh_perc]],
-                              columns=['Param', 'value1'])
-        ppe_reduc = pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
-                                 columns=['Param', 'value1'])
-
-        self.param_out = pd.concat([covid_exp, hh_rate, wp_rate, inf_time,
-                                   syp_time, sev_time, crit_time, death_time,
-                                   asymp_rec_time, mild_rec_time, sev_rec_time,
-                                   crit_rec_time, daily_cont, bbn_mod, res_pat,
-                                   wfh_lag, no_wfh, ppe_reduc])
+        see utils.py and parameters.py '''
+        if city == 'micropolis' or city == 'mesopolis':
+            self.setup_virtual(city)
+        else:
+            self.setup_real(city)
 
         ''' Initialize the hydraulic information collectors '''
         # these are nodes with demands (there are also nodes without demand):
@@ -327,14 +65,26 @@ class ConsumerModel(Model):
 
         if self.hyd_sim == 'eos':
             self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
-            self.demand_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                              columns=self.G.nodes)
-            self.pressure_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                                columns=self.G.nodes)
-            self.age_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                           columns=self.G.nodes)
-            self.flow_matrix = pd.DataFrame(0, index=np.arange(0, 86400*days, 3600),
-                                            columns=[name for name, link in self.wn.links()])
+            self.demand_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*days, 3600),
+                columns=self.G.nodes
+            )
+            self.pressure_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*days, 3600),
+                columns=self.G.nodes
+            )
+            self.age_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*days, 3600),
+                columns=self.G.nodes
+            )
+            self.flow_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*days, 3600),
+                columns=[name for name, link in self.wn.links()]
+            )
         elif self.hyd_sim == 'hourly':
             self.current_demand = pd.Series(
                 0,
@@ -343,48 +93,6 @@ class ConsumerModel(Model):
         elif self.hyd_sim == 'monthly':
             self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
             self.current_age = None
-
-        self.agent_matrix = dict()
-
-        ''' Initialize the COVID state variable collectors '''
-        self.cov_pers = dict()
-        self.cov_ff = dict()
-        self.media_exp = dict()
-
-        ''' Initialize the PM adoption collectors '''
-        self.wfh_dec = dict()
-        self.dine_dec = dict()
-        self.groc_dec = dict()
-        self.ppe_dec = dict()
-
-        ''' Initialize household income and COW collectors '''
-        self.bw_cost = dict()
-        self.tw_cost = dict()
-        self.bw_demand = dict()
-        self.traditional = dict()
-        self.burden = dict()
-
-        self.hygiene = dict()
-        self.drink = dict()
-        self.cook = dict()
-
-        status_tot = [
-            0,
-            self.num_agents-self.covid_exposed,
-            0,
-            self.covid_exposed,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            0,
-            self.cumm_infectious,
-            len(self.agents_wfh())
-        ]
-        status_tot = [i / self.num_agents for i in status_tot]
-        self.status_tot = {0: status_tot}
 
         # initialization methods
         self.base_demand_list()
@@ -418,17 +126,6 @@ class ConsumerModel(Model):
         if self.res_pat_select == 'pysimdeum':
             self.create_demand_houses()
         self.create_comm_network()
-
-        # # Create dictionary of work from home probabilities using bnlearn.
-        # self.rp_wfh_probs = {}
-        # for i in range(7):
-        #     query = bn.inference.fit(self.wfh_dag,
-        #                              variables = ['work_from_home'],
-        #                              evidence = {'risk_perception_r':(i)},
-        #                              verbose = 0)
-        #     self.rp_wfh_probs[i] = query.df['p'][1]
-        #
-        # print(self.rp_wfh_probs)
 
         init_stop = time.perf_counter()
 

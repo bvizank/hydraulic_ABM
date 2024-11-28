@@ -67,8 +67,8 @@ size_income = {
     6: (1.303040116, 50842.64038),
 }
 
-
-# Set values for susceptibility based on age. From https://doi.org/10.1371/journal.pcbi.1009149
+''' Values for susceptibility based on age.
+From https://doi.org/10.1371/journal.pcbi.1009149 '''
 susDict = {
     1: [0.525, 0.001075, 0.000055, 0.00002],
     2: [0.6, 0.0072, 0.00036, 0.0001],
@@ -133,24 +133,3 @@ clinton_income = {
     200000: 30
 }
 
-building_res = [
-    'apartments',
-    'barracks',
-    'bungalow',
-    'cabin',
-    'detached',
-    'annexe',
-    'dormitory',
-    'farm',
-    'ger',
-    'hotel',
-    'house',
-    'houseboat',
-    'residential',
-    'semidetached_house',
-    'static_caravan',
-    'stilt_house',
-    'terrace',
-    'tree_house',
-    'trulo',
-]

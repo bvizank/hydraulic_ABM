@@ -23,7 +23,7 @@ run_sim(
     no_wfh_perc=0,
     bbn_models=['all'],
     daily_contacts=30,
-    city='micropolis',
+    city='clinton',
     verbose=0.5,
     hyd_sim='monthly',
     warmup=True,

@@ -9,74 +9,6 @@ import shutil
 import matplotlib.pyplot as plt
 
 
-def setup(network):
-    # Create a water network model
-    if network == "micropolis":
-        inp_file = 'Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp'
-        data = pd.read_excel(r'Input Files/micropolis/Micropolis_pop_at_node.xlsx')
-    elif network == "mesopolis":
-        inp_file = 'Input Files/mesopolis/Mesopolis.inp'
-        data = pd.read_excel(r'Input Files/mesopolis/Mesopolis_pop_at_node.xlsx')
-    base_demands, pattern_list, wn = init_wntr(inp_file)
-
-    # input the number of agents required at each node type at each time
-    node_id = data['Node'].tolist()
-    maxpop_node = data['Max Population'].tolist()
-    if network == "mesopolis":
-        house_num = data['HOUSE'].tolist()
-        # create dictionary with the number of houses per node
-        house_num = dict(zip(node_id, house_num))
-    else:
-        house_num = None
-
-    # Creating dictionary with max pop at each terminal node
-    node_capacity = dict(zip(node_id, maxpop_node))
-
-    node_dict = dict()
-    if network == "micropolis":
-        # Node kinds are:(Pattern number - Kind of node)
-        # 1: Commercial – Cafe
-        # 2: Residential
-        # 3: Industrial, factory with 3 shifts
-        # 4: Commercial – Dairy Queen
-        # 5: Commercial – Curches, schools, city hall, post office
-        # Only terminal nodes count. So only nodes with prefix 'TN'
-
-        # Cafe nodes (only 1)
-        node_dict['cafe'] = find_nodes(1, pattern_list, network)
-        # residential nodes
-        node_dict['res'] = find_nodes(2, pattern_list, network)
-        # Industrial nodes
-        node_dict['ind'] = find_nodes(3, pattern_list, network)
-        # Nodes dairy queen
-        node_dict['dq'] = find_nodes(4, pattern_list, network)
-        # Rest of commercial nodes like schools, churches etc.
-        node_dict['com'] = find_nodes(5, pattern_list, network)
-        node_dict['com'] = node_dict['com'] + find_nodes(6, pattern_list, network)
-    elif network == "mesopolis":
-        # pattern types: air, com, res, ind, nav
-        node_dict['air'] = find_nodes('air', pattern_list, network)
-        node_dict['com'] = find_nodes('com', pattern_list, network)
-        node_dict['res'] = find_nodes('res', pattern_list, network)
-        node_dict['ind'] = find_nodes('ind', pattern_list, network)
-        node_dict['nav'] = find_nodes('nav', pattern_list, network)
-        node_dict['cafe'] = find_nodes('cafe', pattern_list, network)
-
-    terminal_nodes = list()
-    for key in node_dict:
-        terminal_nodes += node_dict[key]
-
-    # finish setup process by loading distributions of agents at each node type,
-    # media data, and the distance between residential nodes and closest ind.
-    # node.
-    pop_dict = load_distributions(network)
-    ind_node_dist, na = calc_industry_distance(
-        wn, node_dict['ind'], nodes=node_dict['res'])
-
-    return (node_dict, node_capacity, house_num, pop_dict,
-            terminal_nodes, wn, ind_node_dist)
-
-
 def init_wntr(inp_file):
     # initialize the water network model with wntr
     wn = wntr.network.WaterNetworkModel(inp_file)
@@ -97,7 +29,7 @@ def init_wntr(inp_file):
             # Find demand patterns for each node
             node_patterns[node] = copy.deepcopy(time_list.pattern_name)
 
-    return (lst_base_demands, node_patterns, wn)
+    return (node_patterns, wn)
 
 
 def find_nodes(type, pattern_list, network):
@@ -148,7 +80,7 @@ def load_distributions(network):
     # Comm_percentage = np.array(pop_dict['cafe'])/np.array(pop_dict['sum'])
     # Comm_rest_percentage = np.array(pop_dict['com'])/np.array(pop_dict['sum'])
 
-    return (pop_dict)
+    return pop_dict
 
 
 def load_clearance():
@@ -220,57 +152,6 @@ def calc_distance(node1, node2):
     p2x, p2y = node2.coordinates
 
     return math.sqrt((p2x-p1x)**2 + (p2y-p1y)**2)
-
-
-# def read_comp_data(loc, read_list, error):
-#     out_dict = dict()
-#     for item in read_list:
-#         out_dict['avg_'+item] = pd.read_pickle(loc + 'avg_' + item + '.pkl')
-#         out_dict['sd_'+item] = pd.read_pickle(loc + 'sd_' + item + '.pkl')
-#         if error == 'ci95':
-#             out_dict['sd_'+item] = out_dict['sd_'+item] * 1.96 / math.sqrt(30)
-#         elif error == 'se':
-#             out_dict['sd_'+item] = out_dict['sd_'+item] / math.sqrt(30)
-#         else:
-#             pass
-
-#     return out_dict
-
-
-# def read_data(loc, read_list, data_file=None):
-#     ''' Function to read in data from either excel or pickle '''
-#     output = dict()
-#     # data_file = loc + 'datasheet.xlsx'
-#     pkls = [file for file in os.listdir(loc) if file.endswith(".pkl")]
-
-#     for name in read_list:
-#         index_col = 0
-#         print("Reading " + name + " data")
-#         if name == 'seir':
-#             sheet_name = 'seir_data'
-#             index_col = 1
-#         elif name == 'agent':
-#             sheet_name = 'agent locations'
-#         else:
-#             sheet_name = name
-
-#         file_name = name + '.pkl'
-#         if file_name not in pkls:
-#             print("No pickle file found, importing from excel")
-#             locals()[name] = pd.read_excel(data_file,
-#                                            sheet_name=sheet_name,
-#                                            index_col=index_col)
-#             if name == 'seir':
-#                 locals()[name].index = locals()[name].index.astype("int64")
-
-#             locals()[name].to_pickle(loc + file_name)
-#         else:
-#             print("Pickle file found, unpickling")
-#             locals()[name] = pd.read_pickle(loc + name + '.pkl')
-
-#         output[name] = locals()[name]
-
-#     return output
 
 
 def read_comp_data(loc, read_list, days, truncate_list):

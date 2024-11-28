@@ -29,12 +29,13 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
     elif city == 'mesopolis':
         pop = 146716
     else:
-        print(f"City {city} not implemented.")
+        pop = 5000
+        # raise ValueError(f"City {city} not implemented.")
 
-    if 'hyd_sim' in kwargs:
-        hyd_sim = kwargs['hyd_sim']
-    else:
-        hyd_sim = 'eos'
+    # if 'hyd_sim' in kwargs:
+    #     hyd_sim = kwargs['hyd_sim']
+    # else:
+    #     hyd_sim = 'eos'
 
     start = perf_counter()
 
