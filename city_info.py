@@ -257,7 +257,7 @@ def ckdnearest(gdfA, gdfB):
     dist, idx = btree.query(nA, k=1)
     # print(gdfA)
     # print(gdfB)
-    gdB_nearest = gdfB.iloc[idx].drop(columns="geometry").reset_index()
+    gdB_nearest = gdfB.iloc[idx].drop(columns="geometry").rename_axis('wdn_node').reset_index()
     # print(gdB_nearest)
     gdf = pd.concat(
         [

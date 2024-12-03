@@ -172,6 +172,32 @@ class Parameters(Model):
             else:
                 print(f"Warning: {key} is not a valid attribute")
 
+    def demand_helper(self, x):
+        if x == 'res':
+            # NEED TO FIND ACTUAL DISTRIBUTIONS
+            return self.random.gauss(300, 20)
+        if x == 'com':
+            return self.random.gauss(1000, 100)
+        if x == 'ind':
+            return self.random.gammavariate(3, 4000)
+
+    def pattern_helper(self, x):
+        if x == 'res':
+            return self.demand_patterns['res'].to_numpy()
+        if x == 'com':
+            return self.demand_patterns['com'].to_numpy()
+        if x == 'ind':
+            return self.demand_patterns['ind'].to_numpy()
+
+    def capacity_helper(self, x):
+        if x == 'res':
+            return self.random.randint(1, 6)
+        if x == 'com':
+            return self.demand_patterns['com'].to_numpy()
+        if x == 'ind':
+            return self.demand_patterns['ind'].to_numpy()
+        
+
     def setup_real(self, name, wn_name=None):
         '''
         Import the required data for a real city with a synthetic WDN
@@ -205,6 +231,7 @@ class Parameters(Model):
             os.path.join(city_dir, 'patterns.csv'),
             delimiter=','
         )
+        print(self.demand_patterns['res'])
 
         ''' Import the distributions of agents '''
         self.node_distributions = pd.read_csv(
@@ -214,9 +241,21 @@ class Parameters(Model):
 
         ''' Assign each building a node in the WDN '''
         self.node_buildings = ci.make_building_list(self.wn, name, city_dir)
-        print(self.node_buildings)
-
+        print(self.node_buildings['type'])
         
+        self.node_buildings['demand'] = (
+            self.node_buildings['type'].apply(self.demand_helper)
+        )
+        self.node_buildings['pattern'] = (
+            self.node_buildings['type'].apply(self.pattern_helper)
+        )
+        self.node_buildings['capacity'] = (
+            self.node_buildings['type'].apply(self.capacity_helper)
+        )
+        
+        print(self.node_buildings.groupby('wdn_node')['demand'].mean())
+        print(self.node_buildings.groupby('wdn_node')['pattern'].mean())
+        print(self.node_buildings.columns)
 
         self.setup_grid()
 
