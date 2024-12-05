@@ -1,12 +1,16 @@
 from mesa import Model
 import pandas as pd
+import numpy as np
 import utils as ut
 import city_info as ci
+from agent_model import Household, Building
+from hydraulic import EpanetSimulator_Stepwise
 import data as dt
 import networkx as nx
 import bnlearn as bn
 import wntr
 import os
+from copy import deepcopy as dcp
 from mesa.time import RandomActivation
 from mesa.space import NetworkGrid
 
@@ -23,6 +27,7 @@ class Parameters(Model):
         self.days = days
         self.id = id
         self.num_agents = N
+        self.seed = seed
         self.network = city
         self.t = 0
         self.schedule = RandomActivation(self)
@@ -30,9 +35,6 @@ class Parameters(Model):
         self.timestep_day = 0
         self.timestepN = 0
         # self.base_demands_previous = {}
-        self.swn = nx.watts_strogatz_graph(
-            n=self.num_agents, p=0.2, k=6, seed=seed
-        )
         self.snw_agents = {}
         # self.nodes_endangered = All_terminal_nodes
         self.demand_test = []
@@ -116,6 +118,12 @@ class Parameters(Model):
         '''
         self.twa_process = 'absolute'
 
+        ''' weights of number of people per household from ACS S2501 '''
+        self.weights = [41.8, 28.5, 12.3, 17.4/3, 17.4/3, 17.4/3]
+
+        ''' skeletonized network '''
+        self.skeleton = False
+
         ''' Data collectors '''
         self.agent_matrix = dict()
 
@@ -172,10 +180,70 @@ class Parameters(Model):
             else:
                 print(f"Warning: {key} is not a valid attribute")
 
+    def save_pars(self):
+        """
+        Save parameters to a DataFrame, param_out, to save at the end of the
+        simulation. This helps with data organization.
+        """
+        self.param_out = pd.DataFrame(columns=['Param', 'value1', 'value2'])
+        covid_exp = pd.DataFrame([['covid_exposed', self.covid_exposed]],
+                                 columns=['Param', 'value1'])
+        hh_rate = pd.DataFrame([['household_rate', self.exposure_rate]],
+                               columns=['Param', 'value1'])
+        wp_rate = pd.DataFrame([['workplace_rate', self.exposure_rate_large]],
+                               columns=['Param', 'value1'])
+        inf_time = pd.DataFrame([['infection_time', self.e2i[0], self.e2i[1]]],
+                                columns=['Param', 'value1', 'value2'])
+        syp_time = pd.DataFrame([['symptomatic_time', self.i2s[0],
+                                  self.i2s[1]]],
+                                columns=['Param', 'value1', 'value2'])
+        sev_time = pd.DataFrame([['severe_time', self.s2sev[0],
+                                  self.s2sev[1]]],
+                                columns=['Param', 'value1', 'value2'])
+        crit_time = pd.DataFrame([['critical_time', self.sev2c[0],
+                                   self.sev2c[1]]],
+                                 columns=['Param', 'value1', 'value2'])
+        death_time = pd.DataFrame([['death_time', self.c2d[0], self.c2d[1]]],
+                                  columns=['Param', 'value1', 'value2'])
+        asymp_rec_time = pd.DataFrame([['asymp_recovery_time',
+                                        self.recTimeAsym[0],
+                                        self.recTimeAsym[1]]],
+                                      columns=['Param', 'value1', 'value2'])
+        mild_rec_time = pd.DataFrame([['mild_recovery_time',
+                                       self.recTimeMild[0],
+                                       self.recTimeMild[1]]],
+                                     columns=['Param', 'value1', 'value2'])
+        sev_rec_time = pd.DataFrame([['severe_recovery_time',
+                                      self.recTimeSev[0],
+                                      self.recTimeSev[1]]],
+                                    columns=['Param', 'value1', 'value2'])
+        crit_rec_time = pd.DataFrame([['critical_recovery_time',
+                                       self.recTimeC[0],
+                                       self.recTimeC[1]]],
+                                     columns=['Param', 'value1', 'value2'])
+        daily_cont = pd.DataFrame([['daily_contacts', self.daily_contacts]],
+                                  columns=['Param', 'value1'])
+        bbn_mod = pd.DataFrame([['bbn_models', self.bbn_models]],
+                               columns=['Param', 'value1'])
+        res_pat = pd.DataFrame([['res pattern', self.res_pat_select]],
+                               columns=['Param', 'value1'])
+        wfh_lag = pd.DataFrame([['wfh_lag', self.wfh_lag]],
+                               columns=['Param', 'value1'])
+        no_wfh = pd.DataFrame([['percent ind no wfh', self.no_wfh_perc]],
+                              columns=['Param', 'value1'])
+        ppe_reduc = pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
+                                 columns=['Param', 'value1'])
+
+        self.param_out = pd.concat([covid_exp, hh_rate, wp_rate, inf_time,
+                                   syp_time, sev_time, crit_time, death_time,
+                                   asymp_rec_time, mild_rec_time, sev_rec_time,
+                                   crit_rec_time, daily_cont, bbn_mod, res_pat,
+                                   wfh_lag, no_wfh, ppe_reduc])
+
     def demand_helper(self, x):
         if x == 'res':
             # NEED TO FIND ACTUAL DISTRIBUTIONS
-            return self.random.gauss(300, 20)
+            return 0
         if x == 'com':
             return self.random.gauss(1000, 100)
         if x == 'ind':
@@ -191,12 +259,22 @@ class Parameters(Model):
 
     def capacity_helper(self, x):
         if x == 'res':
-            return self.random.randint(1, 6)
+            return self.random.choices(range(1, 7), weights=self.weights, k=1)[0]
         if x == 'com':
-            return self.demand_patterns['com'].to_numpy()
+            return self.random.randint(10, 40)
         if x == 'ind':
-            return self.demand_patterns['ind'].to_numpy()
-        
+            return self.random.randint(50, 300)
+
+    def building_helper(self, x):
+        return Building(x.index, x['demand'], x['pattern'], x['capacity'], x['wdn_node'])
+
+    def household_helper(self, x):
+        house = Household(
+            x.index, x['total_res'] - x['capacity'], x['total_res'],
+            x['wdn_node'], None, self.twa_mods, self, x['demand'],
+            x['pattern'], x['capacity']
+        )
+        return house
 
     def setup_real(self, name, wn_name=None):
         '''
@@ -215,6 +293,10 @@ class Parameters(Model):
                 The name of the city. There is logic to weed out names
                 without data.
         '''
+        # set skeleton to true because most real networks will be skeletonized
+        # could add argument to setup_real to make this adjustable
+        self.skeleton = True
+
         city_dir = os.path.join('Input Files/cities', name)
 
         ''' Import the water network model using WNTR '''
@@ -231,7 +313,6 @@ class Parameters(Model):
             os.path.join(city_dir, 'patterns.csv'),
             delimiter=','
         )
-        print(self.demand_patterns['res'])
 
         ''' Import the distributions of agents '''
         self.node_distributions = pd.read_csv(
@@ -241,23 +322,85 @@ class Parameters(Model):
 
         ''' Assign each building a node in the WDN '''
         self.node_buildings = ci.make_building_list(self.wn, name, city_dir)
-        print(self.node_buildings['type'])
-        
+
+        # assign each building a demand
         self.node_buildings['demand'] = (
             self.node_buildings['type'].apply(self.demand_helper)
         )
+
+        # assign each building a pattern based on the type
         self.node_buildings['pattern'] = (
             self.node_buildings['type'].apply(self.pattern_helper)
         )
+
+        # assign each building a capacity based on type
         self.node_buildings['capacity'] = (
             self.node_buildings['type'].apply(self.capacity_helper)
         )
-        
-        print(self.node_buildings.groupby('wdn_node')['demand'].mean())
-        print(self.node_buildings.groupby('wdn_node')['pattern'].mean())
-        print(self.node_buildings.columns)
+
+        # make capacity an integer
+        self.node_buildings['capacity'] = self.node_buildings['capacity'].fillna(0).astype(int)
+
+        ''' Get a running tally of residential agents '''
+        self.node_buildings['total_res'] = (
+            self.node_buildings['capacity'][self.node_buildings['type'] == 'res'].cumsum()
+        )
+
+        self.num_agents = (
+            self.node_buildings.groupby('type')['capacity'].sum()['res']
+        )
+        self.ind_agent_n = int(self.num_agents * max(self.node_distributions['ind']))
+
+        # convert floats from cumsum to ints
+        self.node_buildings['total_res'] = self.node_buildings['total_res'].fillna(0).astype(int)
+
+        ''' Set the number of work agents and the locations that need workers '''
+        self.work_agents = self.node_buildings.groupby('type')['capacity'].sum()['ind']
+        print(self.work_agents)
+
+        # print(self.node_buildings[self.node_buildings['type'] == 'ind']['capacity'])
+        # print(self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
+        self.work_loc_list = self.node_list(
+            self.node_buildings[self.node_buildings['type'] == 'ind']['capacity'],
+            (self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list() +
+             self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
+        )
+
+        # define lists with each node type
+        self.nav_nodes = []
+        self.ind_nodes = self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list()
+        self.res_nodes = self.node_buildings[self.node_buildings['type'] == 'res'].index.to_list()
+        self.com_nodes = self.node_buildings[self.node_buildings['type'] == 'com'].index.to_list()
+
+        # define industrial nodes that do not allow work from home
+        self.total_no_wfh = self.random.choices(
+                                population=self.ind_nodes,
+                                k=int(len(self.ind_nodes)*self.no_wfh_perc)
+                            )
+
+        # print(self.work_loc_list)
 
         self.setup_grid()
+
+        # print(self.node_buildings)
+        # print(self.node_buildings[~self.node_buildings['type'].isin(['res'])])
+        self.buildings = (
+            self.node_buildings[~self.node_buildings['type'].isin(['res'])].apply(self.building_helper, axis=1)
+        ).to_dict()
+        self.households = (
+            self.node_buildings[self.node_buildings['type'].isin(['res'])].apply(self.household_helper, axis=1)
+        ).to_dict()
+        # print(self.households)
+
+        if self.verbose == 0.5:
+            print("Setting agent attributes ...............")
+        self.set_attributes()
+        self.dag_nodes()
+        self.create_comm_network()
+
+        # print(self.node_buildings.groupby('wdn_node')['demand'].mean())
+        # print(self.node_buildings.groupby('wdn_node')['pattern'].mean())
+        # print(self.node_buildings.columns)
 
     def setup_virtual(self, network):
         if network == "micropolis":
@@ -333,80 +476,379 @@ class Parameters(Model):
         if network == 'micropolis':
             # self.cafe_dist = setup_out[3]['cafe']  # restaurant capacities at each hour
             self.nav_dist = [0]  # placeholder for agent assignment
+            self.ind_agent_n = max(self.ind_dist)
         if network == 'mesopolis':
             self.air_dist = pop_dict['air']
             self.nav_dist = pop_dict['nav']
+            self.ind_agent_n = max(self.ind_dist) + max(self.nav_dist)
+
+        # calculate the distance to nearest industrial node
         self.ind_node_dist, na = ut.calc_industry_distance(
-            self.wn, node_dict['ind'], nodes=node_dict['res'])
+            self.wn, node_dict['ind'], nodes=node_dict['res']
+        )
 
         self.setup_grid()
+
+        ''' Set up the rest of the agent information '''
+        self.create_node_list()
+        if self.verbose == 0.5:
+            print("Creating agents ..............")
+        self.create_agents(virtual=True)
+        if self.verbose == 0.5:
+            print("Setting agent attributes ...............")
+        self.set_attributes()
+        self.dag_nodes()
+        self.create_comm_network()
 
     def setup_grid(self):
         ''' Set up the grid for agent movement '''
         self.G = self.wn.get_graph()
         self.grid = NetworkGrid(self.G)
         self.num_nodes = len(self.G.nodes)
+
+    def setup_loc_matrices(self):
+        ''' Setup the matrices that keep track of each agent at each building '''
+        # find the building ids that correspond to each building type
+        self.res_buildings = self.node_buildings[self.node_buildings['type'] == 'res'].index
+        self.com_buildings = self.node_buildings[self.node_buildings['type'] == 'com'].index
+        self.ind_buildings = self.node_buildings[self.node_buildings['type'] == 'ind'].index
+
+        # make the location matrices
+        self.res_loc = np.zeros((len(self.res_buildings), self.num_agents))
+        self.com_loc = np.zeros((len(self.com_buildings), self.num_agents))
+        self.ind_loc = np.zeros((len(self.ind_buildings), self.num_agents))
+
+    def dag_nodes(self):
+        self.wfh_nodes = dcp(self.wfh_dag['adjmat'].columns)
+        self.dine_nodes = dcp(self.dine_less_dag['adjmat'].columns)
+        self.grocery_nodes = dcp(self.grocery_dag['adjmat'].columns)
+        self.ppe_nodes = dcp(self.ppe_dag['adjmat'].columns)
+
+    def base_demand_list(self):
+        self.base_demands = dict()
+        self.base_pattern = dict()
+        self.node_index = dict()
+        # self.demand_multiplier = dict()
+        for node in self.nodes_w_demand:
+            node_1 = self.wn.get_node(node)
+            self.base_demands[node] = node_1.demand_timeseries_list[0].base_value
+
+            ''' Make a pattern for each node for hydraulic simulation '''
+            if self.hyd_sim == 'eos' or self.hyd_sim == 'monthly':
+                curr_pattern = dcp(node_1.demand_timeseries_list[0].pattern)
+                self.wn.add_pattern('node_'+node, curr_pattern.multipliers)
+                # set the demand pattern for the node to the new pattern
+                node_1.demand_timeseries_list[0].pattern_name = 'node_'+node
+            # elif self.hyd_sim == 'hourly' or isinstance(self.hyd_sim, int):
+            #     self.node_index[node] = dcp(self.sim._en.ENgetnodeindex(node))
+            self.base_pattern[node] = (
+                dcp(node_1.demand_timeseries_list[0].pattern_name),
+                dcp(self.wn.get_pattern(node_1.demand_timeseries_list[0].pattern_name))
+            )
+
+    def set_age(self):
+        ''' Set initial water age '''
+        init_age = pd.read_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')
+        for node in self.grid.G.nodes:
+            curr_node = self.wn.get_node(node)
+            curr_node.initial_quality = float(init_age.loc[[node]].values[0])
+
+    def node_list(self, list, nodes):
+        list_out = []
+        for node in nodes:
+            for i in range(int(list[node])):
+                list_out.append(node)
+        return list_out
+
+    def create_node_list(self):
+        nodes_industr_2x = self.ind_nodes + self.ind_nodes
+        nodes_nav_2x = self.nav_nodes + self.nav_nodes
+        self.work_loc_list = self.node_list(self.nodes_capacity, nodes_industr_2x + nodes_nav_2x)
+        self.res_loc_list = self.node_list(self.nodes_capacity, self.res_nodes)
+        # self.rest_loc_list = node_list(self.nodes_capacity, self.cafe_nodes)
+        # self.comm_loc_list = node_list(self.nodes_capacity, self.com_nodes)
+
+    def create_agents(self, virtual=True):
+        ''' Creating lists of nodes where employers have decided not to allow
+        working from home or jobs that are "essential". '''
+
+        if virtual:
+            ''' Potentially change this to include navy nodes '''
+            self.total_no_wfh = self.random.choices(
+                                    population=self.ind_nodes,
+                                    k=int(len(self.ind_nodes)*self.no_wfh_perc)
+                                )
+
+            # create dictionary of households
+            self.households = dict()
+            self.household_n = dict()
+
+            self.work_agents = (max(self.ind_dist) + max(self.nav_dist)) * 2
+
+            # CREATING AGENTS
+            res_nodes = dcp(self.res_nodes)
+            self.random.shuffle(res_nodes)
+            ids = 0
+            max_node_dist = max(self.ind_node_dist.values())
+
+            '''
+            Place all the agents in the residential nodes, each filled up to
+            its capacity
+
+            The self.households and self.households_n are filled in the household
+            methods (micro_ and meso_)
+            '''
+            for node in res_nodes:
+                # distance to closest industrial node relative to max distance
+                # essentially a normalized distance
+                node_dist = self.ind_node_dist[node] / max_node_dist
+                # for spot in range(int(self.nodes_capacity[node])):
+                if self.network == 'micropolis':
+                    ids = self.micro_household(ids, node, node_dist)
+                elif self.network == 'mesopolis':
+                    ids = self.meso_household(ids, node)
+
+        # collect income and income level from each household that was just created
+        self.income = [h.income for n, i in self.households.items() for h in i]
+        self.income_level = [h.income_level for n, i in self.households.items() for h in i]
+        self.hh_size = [len(h.agent_ids) for n, i in self.households.items() for h in i]
+        self.income_comb = pd.DataFrame(
+            data={
+                'income': self.income,
+                'level': self.income_level,
+                'hh_size': self.hh_size
+            },
+            index=[h.node for n, i in self.households.items() for h in i]
+        )
+
+        if self.network == 'mesopolis':
+            '''
+            Need to initialize the rest of the agents because there are only
+            139,654 residential spots. Currently we are assuming that the
+            remaining 7062 agents are at the airport, but this is a bad
+            assumption because the max capacity of the airport is 429.
+            '''
+            for pop in range(self.num_agents - ids):
+                a = ConsumerAgent(ids, self)
+                self.schedule.add(a)
+                a.home_node = 'TN1372'
+                ids += 1
+
+    def micro_household(self, init_id, curr_node, node_dist):
+        ''' Assigns each agent's housemates based on the number
+        of agents at the current node.
+
+        If the residential node is larger than 6, then we need to
+        artificially make households of 6 or less. '''
+        node_cap = dcp(self.nodes_capacity[curr_node])
+        node_cap_static = node_cap
+        if node_cap == 0:
+            return init_id
+
+        curr_ids = init_id
+
+        house_list = list()
+
+        '''
+        Need to account for multifamily housing, so iterating through
+        residential nodes and placing agents that way and then storing their
+        housemates in the agent object.
+
+        Iterate through the agents at the current res node
+        and add them to households of 1 to 6 agents
+        '''
+        while node_cap > 6:
+            # pick a random size for current household
+            home_size = self.random.choice(range(1, 7))
+            prev_id = curr_ids
+            curr_ids += home_size
+            # make the household and append it to a list of households
+            house_list.append(Household(
+                prev_id, curr_ids, curr_node, node_dist, self.twa_mods, self
+            ))
+            node_cap -= home_size
+        else:
+            # if the node size is 6 or fewer, we only need to do this once
+            house_list.append(Household(
+                curr_ids,
+                node_cap_static + init_id,
+                curr_node,
+                node_dist,
+                self.twa_mods,
+                self
+            ))
+
+        self.households[curr_node] = house_list
+        self.household_n[curr_node] = len(house_list)
+
+        return init_id + node_cap
+
+    def meso_household(self, curr_node):
+        ''' Assign each agent's housemates based on the current node.
+
+        The current plan is to fill all residential node spots and then
+        the rest of the agents are travellers at the airport. '''
+        # need to rectify the difference between the number of
+        # residential spots (139,654) and the total population
+        # (146,716)
+        ''' Iterate through the agents at the current res node
+        and add them to households of 1 to 6 agents '''
+        while len(curr_node) > 6:
+            # pick a random size for current household
+            # a uniform distribution between 1 and 7 will average to 4
+            home_size = int(self.random.uniform(1, 8))
+            # pick the agents that will occupy this household
+            curr_housemates = self.random.choices(curr_node, k=home_size)
+            # remake the curr_node variable without the agents just chosen
+            curr_node = [a for a in curr_node if a not in curr_housemates]
+            ''' Assign the current list of housemates to each agent
+            so they each know who their housemates are '''
+
+            for mate in curr_housemates:
+                agent = self.schedule._agents[mate]
+                # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+                agent.housemates = dcp(curr_housemates)  # this includes current agent
+
+        for mate in curr_node:
+            agent = self.schedule._agents[mate]
+            # agent = [a for a in self.schedule.agents if a.unique_id == mate][0]
+            agent.housemates = dcp(curr_node)
+
+    def create_demand_houses(self):
+        ''' Create houses using pysimdeum for stochastic demand simulation '''
+        self.res_houses = list()
+        for node in self.res_nodes:
+            agents_at_node = len(self.grid.G.nodes[node]['agent'])
+            if agents_at_node > 5 or agents_at_node < 2:
+                pass
+            elif agents_at_node == 1:
+                house = pysimdeum.built_house(house_type='one_person')
+                house.id = node
+                for user in house.users:
+                    user.age = 'work_ad'
+                    user.job = True
+                self.res_houses.append(house)
+            else:
+                house = pysimdeum.built_house(house_type='family', user_num=agents_at_node)
+                house.id = node
+                for user in house.users:
+                    user.age = 'work_ad'
+                    user.job = True
+                self.res_houses.append(house)
+
+    def check_houses(self):
+        for house in self.res_houses:
+            node = house.id
+            agents_at_node = self.grid.G.nodes[node]['agent']
+            for agent in agents_at_node:
+                if agent.wfh == 1 or agent.work_node == None:
+                    user.age = 'home_ad'
+                    user.job = True
+
+    def set_attributes(self):
+        '''
+        Assign agents an age 1 = 0-19, 2 = 20-29, 3 = 30-39, 4 = 40-49,
+        5 = 50-59, 6 = 60-69, 7 = 70-79, 8 = 80-89, 9 = 90+
+        '''
+        ages = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+        age_weights = [0.25, 0.18, 0.15, 0.14, 0.12, 0.08, 0.05, 0.01, 0.01]
+
+        '''
+        Assign agents either susceptible or infected to COVID based on initial
+        infected number.
+        '''
+        exposed_sample = self.random.sample(
+            [i for i, a in enumerate(self.schedule.agents)],
+            self.covid_exposed
+        )
+        for i, agent in enumerate(self.schedule.agents):
+            ''' Set age of each agent '''
+            agent.age = self.random.choices(population=ages,
+                                            weights=age_weights,
+                                            k=1)[0]
+
+            ''' Set covid infection for each agent '''
+            if i in exposed_sample:
+                agent.covid = 'infectious'
+            else:
+                agent.covid = 'susceptible'
+
+            ''' Set bbn parameters for each agent '''
+            agent_set_params = dt.bbn_params[
+                self.random.randint(0, dt.bbn_params.shape[0] - 1), :
+            ]
+            # agent_set_params = dt.bbn_params.sample()
+            # agent.agent_params['risk_perception_r'] = int(agent_set_params['risk_perception_r']) - 1
+            for i, param in enumerate(dt.bbn_param_list):
+                agent.agent_params[param] = agent_set_params[i] - 1
+
+    def create_comm_network(self):  # a random set of agents from household (all agents live at the same node)
+        '''
+        CREATING COMMUNICATION NETWORK WITH SWN = SMALL WORLD NETWORK
+        Assigning Agents randomly to nodes in SWN
+        '''
+        self.swn = nx.watts_strogatz_graph(
+            n=self.num_agents, p=0.2, k=6, seed=self.seed
+        )
+        for agent in self.schedule.agents:
+            agent.friends = self.swn.neighbors(agent.unique_id)
+
+    def init_hydraulic(self):
+        ''' Initialize the hydraulic information collectors '''
+        # add wfh patterns
         for i in range(dt.wfh_patterns.shape[1]):
             self.wn.add_pattern(
                 'wk'+str(i+1), dt.wfh_patterns[:, i]
             )
+        # these are nodes with demands (there are also nodes without demand):
+        self.nodes_w_demand = [
+            node for node in self.grid.G.nodes
+            if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
+        ]
 
-    def save_pars(self):
-        """
-        Save parameters to a DataFrame, param_out, to save at the end of the
-        simulation. This helps with data organization.
-        """
-        self.param_out = pd.DataFrame(columns=['Param', 'value1', 'value2'])
-        covid_exp = pd.DataFrame([['covid_exposed', self.covid_exposed]],
-                                 columns=['Param', 'value1'])
-        hh_rate = pd.DataFrame([['household_rate', self.exposure_rate]],
-                               columns=['Param', 'value1'])
-        wp_rate = pd.DataFrame([['workplace_rate', self.exposure_rate_large]],
-                               columns=['Param', 'value1'])
-        inf_time = pd.DataFrame([['infection_time', self.e2i[0], self.e2i[1]]],
-                                columns=['Param', 'value1', 'value2'])
-        syp_time = pd.DataFrame([['symptomatic_time', self.i2s[0],
-                                  self.i2s[1]]],
-                                columns=['Param', 'value1', 'value2'])
-        sev_time = pd.DataFrame([['severe_time', self.s2sev[0],
-                                  self.s2sev[1]]],
-                                columns=['Param', 'value1', 'value2'])
-        crit_time = pd.DataFrame([['critical_time', self.sev2c[0],
-                                   self.sev2c[1]]],
-                                 columns=['Param', 'value1', 'value2'])
-        death_time = pd.DataFrame([['death_time', self.c2d[0], self.c2d[1]]],
-                                  columns=['Param', 'value1', 'value2'])
-        asymp_rec_time = pd.DataFrame([['asymp_recovery_time',
-                                        self.recTimeAsym[0],
-                                        self.recTimeAsym[1]]],
-                                      columns=['Param', 'value1', 'value2'])
-        mild_rec_time = pd.DataFrame([['mild_recovery_time',
-                                       self.recTimeMild[0],
-                                       self.recTimeMild[1]]],
-                                     columns=['Param', 'value1', 'value2'])
-        sev_rec_time = pd.DataFrame([['severe_recovery_time',
-                                      self.recTimeSev[0],
-                                      self.recTimeSev[1]]],
-                                    columns=['Param', 'value1', 'value2'])
-        crit_rec_time = pd.DataFrame([['critical_recovery_time',
-                                       self.recTimeC[0],
-                                       self.recTimeC[1]]],
-                                     columns=['Param', 'value1', 'value2'])
-        daily_cont = pd.DataFrame([['daily_contacts', self.daily_contacts]],
-                                  columns=['Param', 'value1'])
-        bbn_mod = pd.DataFrame([['bbn_models', self.bbn_models]],
-                               columns=['Param', 'value1'])
-        res_pat = pd.DataFrame([['res pattern', self.res_pat_select]],
-                               columns=['Param', 'value1'])
-        wfh_lag = pd.DataFrame([['wfh_lag', self.wfh_lag]],
-                               columns=['Param', 'value1'])
-        no_wfh = pd.DataFrame([['percent ind no wfh', self.no_wfh_perc]],
-                              columns=['Param', 'value1'])
-        ppe_reduc = pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
-                                 columns=['Param', 'value1'])
+        if self.hyd_sim == 'eos':
+            self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
+            self.demand_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*self.days, 3600),
+                columns=self.G.nodes
+            )
+            self.pressure_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*self.days, 3600),
+                columns=self.G.nodes
+            )
+            self.age_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*self.days, 3600),
+                columns=self.G.nodes
+            )
+            self.flow_matrix = pd.DataFrame(
+                0,
+                index=np.arange(0, 86400*self.days, 3600),
+                columns=[name for name, link in self.wn.links()]
+            )
+        elif self.hyd_sim == 'hourly':
+            self.current_demand = pd.Series(
+                0,
+                index=self.G.nodes
+            )
+        elif self.hyd_sim == 'monthly':
+            self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
+            self.current_age = None
 
-        self.param_out = pd.concat([covid_exp, hh_rate, wp_rate, inf_time,
-                                   syp_time, sev_time, crit_time, death_time,
-                                   asymp_rec_time, mild_rec_time, sev_rec_time,
-                                   crit_rec_time, daily_cont, bbn_mod, res_pat,
-                                   wfh_lag, no_wfh, ppe_reduc])
+        # initialization methods
+        self.base_demand_list()
+        self.set_age()
+        if self.hyd_sim == 'hourly' or self.hyd_sim == 'monthly':
+            self.wn.options.time.pattern_timestep = 3600
+            self.wn.options.time.hydraulic_timestep = 3600
+            # self.wn.options.time.quality_timestep = 900
+            self.wn.options.quality.parameter = 'AGE'
+            self.sim = EpanetSimulator_Stepwise(self.wn,
+                                                file_prefix='temp' + str(self.id))
+            self.sim.initialize(file_prefix='temp' + str(self.id))
+            # self.current_demand = self.sim._results.node['demand']
+
+        # water age slope to determine the warmup period end
+        self.water_age_slope = 1

@@ -1,0 +1,6 @@
+To-do list for applying ABM to real cities
+
+1. Get weights of household numbers from census based on city name
+
+2. Calculate industrial distance
+

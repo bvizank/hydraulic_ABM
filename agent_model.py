@@ -12,6 +12,7 @@ class ConsumerAgent(Agent):
         self.household = household
         self.timestep = 0
         self.home_node = None
+        self.building = None
         self.work_node = None
         self.work_type = None
         self.demand = 0
@@ -81,7 +82,7 @@ class ConsumerAgent(Agent):
 
         mu = math.log(mux**2 / math.sqrt(sigmax**2 + mux**2))
         sigma = math.sqrt(math.log(sigmax**2/mux**2 + 1))
-    
+
         return self.random.lognormvariate(mu, sigma)
 
     def complying(self):
@@ -320,7 +321,20 @@ class ConsumerAgent(Agent):
         self.change_time()
 
 
-class Household:
+class Building:
+    '''
+    Container for building information
+    '''
+
+    def __init__(self, id, demand, pattern, capacity, node):
+        self.building_id = id
+        self.base_demand = demand
+        self.demand_pattern = pattern
+        self.capacity = capacity
+        self.node = node
+
+
+class Household(Building):
     '''
     Container for households. Contains a collection of agent objects
 
@@ -346,13 +360,15 @@ class Household:
         model object where agents are added
     '''
 
-    def __init__(self, start_id, end_id, node, node_dist, twa_mods, model):
-        self.agent_ids = list()  # list of agent that are in the household
-        self.agent_obs = list()  # list of agent objects that are in the household
+    def __init__(self, id, start_id, end_id, node, node_dist, twa_mods, model,
+                 demand=0, pattern=None, capacity=0):
+        super().__init__(id, demand, pattern, capacity, node)
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
+        self.agent_ids = list()  # list of agent that are in the household
+        self.agent_obs = list()  # list of agent objects that are in the household
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
         self.base_rate_water = 15.55  # dollars per month; this is from the city of clinton, nc
@@ -367,7 +383,6 @@ class Household:
         self.reduction = 0  # the demand reduction for the last 168 hours
         self.change = 1
         self.model = model
-        self.node = node
         self.ind_dist = node_dist
 
         self.agent_hours = 0  # the total number of hours agents spend at the home node
@@ -377,7 +392,10 @@ class Household:
             model.schedule.add(a)
             if model.work_agents != 0:
                 a.work_node = model.random.choice(model.work_loc_list)
-                a.home_node = node
+                # if the model is skeletonized, we need the home_node
+                # to be the building id not the wdn node
+                a.home_node = id if model.skeleton else node
+
                 model.work_loc_list.remove(a.work_node)
                 if a.work_node in model.nav_nodes:
                     a.work_type = 'navy'
@@ -385,17 +403,21 @@ class Household:
                     a.work_type = 'industrial'
                 model.work_agents -= 1
             else:
-                a.home_node = node
+                a.home_node = id if model.skeleton else node
 
             if a.work_node in model.total_no_wfh:
                 a.can_wfh = False
-            model.grid.place_agent(a, a.home_node)
+
+            # add the agent to the wdn grid: for skeletonized models that is
+            # the node, otherwise, that is the home_node
+            if model.skeleton:
+                model.grid.place_agent(a, a.node)
+            else:
+                model.grid.place_agent(a, a.home_node)
+
+            # add agent to the household list of agent objects and ids
             self.agent_obs.append(a)
             self.agent_ids.append(a.unique_id)
-
-        # get the base demand for this node
-        wn_node = model.wn.get_node(node)
-        self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
         # pick an income for the household based on the relative distance
         # to the nearest industrial node
@@ -447,12 +469,24 @@ class Household:
             'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
         }
 
-        # 
+        # demand reduction for percentage demand simulation
         self.demand_reduction = {
             'drink':   5.3,
             'cook':    10.6,
             'hygiene': 10.6
         }
+
+    def individual_demand(self):
+        return self.model.random.gauss(300, 20)
+
+    def get_demand(self):
+        if self.model.skeleton:
+            self.base_demand = [self.individual_demand() for i in range(len(self.agent_ids))]
+            self.base_demand = sum(self.base_demand)
+        else:
+            # get the base demand for this node
+            wn_node = self.model.wn.get_node(self.node)
+            self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
     def count_agents(self):
         '''
@@ -665,4 +699,3 @@ class Household:
 
         # need to reset the agent_hours each month
         # self.agent_hours = 0
-

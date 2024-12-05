@@ -26,6 +26,7 @@ run_sim(
     city='clinton',
     verbose=0.5,
     hyd_sim='monthly',
+    dist_income=False,
     warmup=True,
     bw=True,
     ind_min_demand=0,
