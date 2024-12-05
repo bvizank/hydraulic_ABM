@@ -240,39 +240,24 @@ class Parameters(Model):
                                    crit_rec_time, daily_cont, bbn_mod, res_pat,
                                    wfh_lag, no_wfh, ppe_reduc])
 
-    def demand_helper(self, x):
-        if x == 'res':
-            # NEED TO FIND ACTUAL DISTRIBUTIONS
-            return 0
-        if x == 'com':
-            return self.random.gauss(1000, 100)
-        if x == 'ind':
-            return self.random.gammavariate(3, 4000)
-
-    def pattern_helper(self, x):
-        if x == 'res':
-            return self.demand_patterns['res'].to_numpy()
-        if x == 'com':
-            return self.demand_patterns['com'].to_numpy()
-        if x == 'ind':
-            return self.demand_patterns['ind'].to_numpy()
-
     def capacity_helper(self, x):
         if x == 'res':
             return self.random.choices(range(1, 7), weights=self.weights, k=1)[0]
         if x == 'com':
             return self.random.randint(10, 40)
         if x == 'ind':
-            return self.random.randint(50, 300)
+            return self.random.randint(50, 800)
 
     def building_helper(self, x):
-        return Building(x.index, x['demand'], x['pattern'], x['capacity'], x['wdn_node'])
+        building = Building(
+            x.name, x['capacity'], x['wdn_node'], x['type']
+        )
+        return building
 
     def household_helper(self, x):
         house = Household(
-            x.index, x['total_res'] - x['capacity'], x['total_res'],
-            x['wdn_node'], None, self.twa_mods, self, x['demand'],
-            x['pattern'], x['capacity']
+            x.name, x['total_res'] - x['capacity'], x['total_res'],
+            x['wdn_node'], None, self.twa_mods, self, x['capacity']
         )
         return house
 
@@ -307,6 +292,7 @@ class Parameters(Model):
         else:
             inp_file = os.path.join(city_dir, name + '.inp')
         self.wn = wntr.network.WaterNetworkModel(inp_file)
+        self.nodes_w_demands = [j.name for j in self.wn.junctions()]
 
         ''' Import the demand patterns '''
         self.demand_patterns = pd.read_csv(
@@ -324,14 +310,14 @@ class Parameters(Model):
         self.node_buildings = ci.make_building_list(self.wn, name, city_dir)
 
         # assign each building a demand
-        self.node_buildings['demand'] = (
-            self.node_buildings['type'].apply(self.demand_helper)
-        )
+        # self.node_buildings['demand'] = (
+        #     self.node_buildings['type'].apply(self.demand_helper)
+        # )
 
-        # assign each building a pattern based on the type
-        self.node_buildings['pattern'] = (
-            self.node_buildings['type'].apply(self.pattern_helper)
-        )
+        # # assign each building a pattern based on the type
+        # self.node_buildings['pattern'] = (
+        #     self.node_buildings['type'].apply(self.pattern_helper)
+        # )
 
         # assign each building a capacity based on type
         self.node_buildings['capacity'] = (
@@ -368,9 +354,23 @@ class Parameters(Model):
 
         # define lists with each node type
         self.nav_nodes = []
-        self.ind_nodes = self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list()
-        self.res_nodes = self.node_buildings[self.node_buildings['type'] == 'res'].index.to_list()
-        self.com_nodes = self.node_buildings[self.node_buildings['type'] == 'com'].index.to_list()
+        self.ind_nodes = self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_numpy()
+        self.res_nodes = self.node_buildings[self.node_buildings['type'] == 'res'].index.to_numpy()
+        self.com_nodes = self.node_buildings[self.node_buildings['type'] == 'com'].index.to_numpy()
+
+        # select the number of cafe nodes
+        inds = self.random.sample(
+            range(len(self.com_nodes)), int(len(self.com_nodes)*0.05)
+        )
+        self.caf_nodes = self.com_nodes[inds]
+        self.com_nodes = np.delete(self.com_nodes, inds)
+
+        # select the number of cafe nodes
+        inds = self.random.sample(
+            range(len(self.com_nodes)), int(len(self.com_nodes)*0.01)
+        )
+        self.gro_nodes = self.com_nodes[inds]
+        self.com_nodes = np.delete(self.com_nodes, inds)
 
         # define industrial nodes that do not allow work from home
         self.total_no_wfh = self.random.choices(
@@ -380,17 +380,47 @@ class Parameters(Model):
 
         # print(self.work_loc_list)
 
-        self.setup_grid()
+        # init tracking arrays for each node type
+        self.ind_agents = np.zeros(self.num_agents, dtype=np.int64)
+        self.res_agents = np.zeros(self.num_agents, dtype=np.int64)
+        self.com_agents = np.zeros(self.num_agents, dtype=np.int64)
+        self.caf_agents = np.zeros(self.num_agents, dtype=np.int64)
 
-        # print(self.node_buildings)
-        # print(self.node_buildings[~self.node_buildings['type'].isin(['res'])])
+        # init dictionary of agents
+        self.agents = dict()
+
+        # self.setup_grid()
+
+        # make dictionary of building objects
         self.buildings = (
             self.node_buildings[~self.node_buildings['type'].isin(['res'])].apply(self.building_helper, axis=1)
         ).to_dict()
+
+        # make dictionary of household objects
         self.households = (
             self.node_buildings[self.node_buildings['type'].isin(['res'])].apply(self.household_helper, axis=1)
         ).to_dict()
-        # print(self.households)
+
+        # now it includes all of the households.
+        self.buildings.update(self.households)
+
+        # set the base demand for each node based on the buildings
+        for node in self.wn.junctions():
+            demand = 0
+            for building in self.buildings[node.name]:
+                demand += building.base_demand
+            node.demand_timeseries_list[0].base_value = demand
+
+        # make array indicating which agents have industrial worktypes
+        self.ind_work_nodes = np.zeros(self.num_agents, dtype=np.int64)
+        inds = list()
+        nodes = list()
+        for a, o in self.agents.items():
+            if o.work_type == 'industrial':
+                inds.append(a)
+                nodes.append(o.work_node)
+
+        self.ind_work_nodes[inds] = nodes
 
         if self.verbose == 0.5:
             print("Setting agent attributes ...............")
@@ -805,6 +835,10 @@ class Parameters(Model):
             node for node in self.grid.G.nodes
             if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
         ]
+
+        self.agent_matrix = np.zeros(
+            (len(self.buildings), self.days * 24), dtype=np.int64
+        )
 
         if self.hyd_sim == 'eos':
             self.daily_demand = np.empty((24, len(self.nodes_w_demand)))

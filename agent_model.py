@@ -75,6 +75,23 @@ class ConsumerAgent(Agent):
            self.model.c2d[1]
         )
 
+    def move(self, new_building, from_res=False, to_res=False):
+        ''' Move agent to new building '''
+        # remove agent from old building list
+        if from_res:
+            self.model.households[self.building].agent_ids.remove(self.unique_id)
+        else:
+            self.model.buildings[self.building].agent_ids.remove(self.unique_id)
+
+        # add agent to new building list
+        if to_res:
+            self.model.households[new_building].agent_ids.append(self.unique_id)
+        else:
+            self.model.buildings[new_building].agent_ids.append(self.unique_id)
+
+        # update agent's building
+        self.buildings = new_building
+
     def sample_ln(self, mux, sigmax):
         '''
         Return a log-normal sample with the given mu and sigma.
@@ -326,12 +343,51 @@ class Building:
     Container for building information
     '''
 
-    def __init__(self, id, demand, pattern, capacity, node):
-        self.building_id = id
-        self.base_demand = demand
-        self.demand_pattern = pattern
+    def __init__(self, id, capacity, node, type):
+        self.id = id
+        self.base_demand = self.define_demand(type)
+        self.demand_pattern = self.define_pattern(type)
         self.capacity = capacity
         self.node = node
+
+        self.type = type
+
+        ''' AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES '''
+        ''' AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS '''
+        self.agent_ids = list()  # list of agent that are in the household
+        self.agent_obs = list()  # list of agent objects that are in the household
+
+    def demand_helper(self, x):
+        ''' ASSUMES UNITS ON WN ARE LITERS PER SECOND '''
+        if x == 'res':
+            return self.res_demand()
+        if x == 'com':
+            return self.random.gauss(1000, 100) / 24 / 60
+        if x == 'ind':
+            return self.random.gammavariate(3, 4000) / 24 / 60
+
+    def pattern_helper(self, x):
+        if x == 'res':
+            return self.model.demand_patterns['res'].to_numpy()
+        if x == 'com':
+            return self.model.demand_patterns['com'].to_numpy()
+        if x == 'ind':
+            return self.model.demand_patterns['ind'].to_numpy()
+
+    def individual_demand(self):
+        return self.model.random.gauss(300, 20)
+
+    def res_demand(self):
+        if self.model.skeleton:
+            ind_demand = [self.individual_demand() for i in range(len(self.agent_ids))]
+            # need base demand to be in liters per hour from liters per day
+            demand = sum(ind_demand) / 24 / 60
+
+            return demand
+        else:
+            # get the base demand for this node
+            wn_node = self.model.wn.get_node(self.node)
+            self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
 
 class Household(Building):
@@ -361,14 +417,12 @@ class Household(Building):
     '''
 
     def __init__(self, id, start_id, end_id, node, node_dist, twa_mods, model,
-                 demand=0, pattern=None, capacity=0):
-        super().__init__(id, demand, pattern, capacity, node)
+                 capacity=0):
+        super().__init__(id, capacity, node, 'res')
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
-        self.agent_ids = list()  # list of agent that are in the household
-        self.agent_obs = list()  # list of agent objects that are in the household
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
         self.base_rate_water = 15.55  # dollars per month; this is from the city of clinton, nc
@@ -411,13 +465,21 @@ class Household(Building):
             # add the agent to the wdn grid: for skeletonized models that is
             # the node, otherwise, that is the home_node
             if model.skeleton:
-                model.grid.place_agent(a, a.node)
+                a.building = a.home_node
+                self.model.res_agents[a.unique_id] = 1
+                # model.grid.place_agent(a, a.node)
             else:
                 model.grid.place_agent(a, a.home_node)
 
             # add agent to the household list of agent objects and ids
             self.agent_obs.append(a)
             self.agent_ids.append(a.unique_id)
+
+        # add the newly made agents to the dictionary of agents
+        self.model.agents.update(zip(self.agent_ids, self.agent_obs))
+
+        # set the base demand for this household
+        self.get_demand()
 
         # pick an income for the household based on the relative distance
         # to the nearest industrial node
@@ -475,18 +537,6 @@ class Household(Building):
             'cook':    10.6,
             'hygiene': 10.6
         }
-
-    def individual_demand(self):
-        return self.model.random.gauss(300, 20)
-
-    def get_demand(self):
-        if self.model.skeleton:
-            self.base_demand = [self.individual_demand() for i in range(len(self.agent_ids))]
-            self.base_demand = sum(self.base_demand)
-        else:
-            # get the base demand for this node
-            wn_node = self.model.wn.get_node(self.node)
-            self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
     def count_agents(self):
         '''

@@ -283,8 +283,9 @@ def make_node_groups(buildings, wn):
             water network of the target city
     """
     wn_gis = wntr.network.to_gis(wn, crs="EPSG:4326")
+    # print(wn_gis.junctions.loc['1555', :])
 
-    wn_gis.junctions.plot()
+    # wn_gis.junctions.plot()
     # print(buildings['geometry'].centroid.index)
 
     wn_nearest = ckdnearest(buildings, wn_gis.junctions)

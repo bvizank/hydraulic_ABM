@@ -4,6 +4,7 @@ channels:
 dependencies:
   - numpy
   - pandas
+  - geopandas
   - mesa
   - networkx
   - matplotlib
@@ -13,3 +14,4 @@ dependencies:
   - pip:
       - wntr==1.0.*
       - bnlearn
+      - osmnx
