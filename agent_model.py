@@ -16,7 +16,7 @@ class ConsumerAgent(Agent):
         self.work_node = None
         self.work_type = None
         self.demand = 0
-        self.base_demand = 0
+        # self.base_demand = 0
         self.information = 0
         self.informed_by = None
         self.compliance = 0
@@ -75,22 +75,16 @@ class ConsumerAgent(Agent):
            self.model.c2d[1]
         )
 
-    def move(self, new_building, from_res=False, to_res=False):
+    def move(self, new_building):
         ''' Move agent to new building '''
         # remove agent from old building list
-        if from_res:
-            self.model.households[self.building].agent_ids.remove(self.unique_id)
-        else:
-            self.model.buildings[self.building].agent_ids.remove(self.unique_id)
+        self.model.buildings[self.building].agent_ids.remove(self.unique_id)
 
         # add agent to new building list
-        if to_res:
-            self.model.households[new_building].agent_ids.append(self.unique_id)
-        else:
-            self.model.buildings[new_building].agent_ids.append(self.unique_id)
+        self.model.buildings[new_building].agent_ids.append(self.unique_id)
 
         # update agent's building
-        self.buildings = new_building
+        self.building = new_building
 
     def sample_ln(self, mux, sigmax):
         '''
@@ -316,9 +310,11 @@ class ConsumerAgent(Agent):
     def change_house_adj(self):
         ''' Function to check whether agents in a given agents node have become
         infected with COVID '''
-        agents_in_house = self.household.agent_ids
-        agents_friends = [n for n in self.model.swn.neighbors(self.unique_id)]
-        agents_in_network = agents_in_house + agents_friends
+        agents_in_house = [a.unique_id for a in self.household.agent_obs]
+        # agents_friends = [n for n in self.model.swn.neighbors(self.unique_id)]
+        # print(self.unique_id)
+        agents_in_network = agents_in_house + self.friends
+        # print(agents_in_network)
         agents_in_network.remove(self.unique_id)
         for id in agents_in_network:
             adj_agent = self.model.schedule._agents[id]
@@ -356,14 +352,15 @@ class Building:
         self.agent_ids = list()  # list of agent that are in the household
         self.agent_obs = list()  # list of agent objects that are in the household
 
-        ''' Set the demand and pattern '''
-        self.base_demand = self.demand_helper(type)
-        self.demand_pattern = self.pattern_helper(type)
+        if self.type in ['com', 'ind']:
+            self.base_demand = self.demand_helper(type)
+            self.demand_pattern = self.pattern_helper(type)
 
     def demand_helper(self, x):
         ''' ASSUMES UNITS ON WN ARE LITERS PER SECOND '''
         if x == 'res':
-            return self.res_demand()
+            demand = self.res_demand()
+            return demand
         if x == 'com':
             return self.model.random.gauss(1000, 100) / 24 / 60
         if x == 'ind':
@@ -383,6 +380,7 @@ class Building:
     def res_demand(self):
         if self.model.skeleton:
             ind_demand = [self.individual_demand() for i in range(len(self.agent_ids))]
+            # print(ind_demand)
             # need base demand to be in liters per hour from liters per day
             demand = sum(ind_demand) / 24 / 60
 
@@ -479,6 +477,10 @@ class Household(Building):
 
         # add the newly made agents to the dictionary of agents
         self.model.agents_list.update(zip(self.agent_ids, self.agent_obs))
+
+        ''' Set the demand and pattern '''
+        self.base_demand = self.demand_helper('res')
+        self.demand_pattern = self.pattern_helper('res')
 
         # pick an income for the household based on the relative distance
         # to the nearest industrial node

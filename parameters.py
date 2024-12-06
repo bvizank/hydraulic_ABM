@@ -292,7 +292,7 @@ class Parameters(Model):
         else:
             inp_file = os.path.join(city_dir, name + '.inp')
         self.wn = wntr.network.WaterNetworkModel(inp_file)
-        self.nodes_w_demands = [j for j, _ in self.wn.junctions()]
+        self.nodes_w_demand = [j for j, _ in self.wn.junctions()]
 
         ''' Import the demand patterns '''
         self.demand_patterns = pd.read_csv(
@@ -336,6 +336,8 @@ class Parameters(Model):
             self.node_buildings.groupby('type')['capacity'].sum()['res']
         )
         self.ind_agent_n = int(self.num_agents * max(self.node_distributions['ind']))
+        self.com_dist = self.node_distributions['com'].tolist()
+        self.cafe_dist = self.node_distributions['caf'].tolist()
 
         # convert floats from cumsum to ints
         self.node_buildings['total_res'] = self.node_buildings['total_res'].fillna(0).astype(int)
@@ -405,12 +407,18 @@ class Parameters(Model):
         self.buildings.update(self.households)
 
         building_group = self.node_buildings.groupby('wdn_node')
-        print(building_group.indices)
+        self.wdn_nodes = building_group.indices
 
         # set the base demand for each node based on the buildings
         for name, node in self.wn.junctions():
             demand = 0
-            for building in self.buildings[int(name)]:
+            ''' Set demand to zero if there are no bulidings that are
+            assigned to the current node '''
+            if name not in self.wdn_nodes:
+                continue
+            for building_id in self.wdn_nodes[name]:
+                building = self.buildings[building_id]
+                # print(f"Building {building_id} with type {building.type} has a demand of {building.base_demand}")
                 demand += building.base_demand
             node.demand_timeseries_list[0].base_value = demand
 
@@ -430,6 +438,7 @@ class Parameters(Model):
         self.set_attributes()
         self.dag_nodes()
         self.create_comm_network()
+        self.init_hydraulic()
 
         # print(self.node_buildings.groupby('wdn_node')['demand'].mean())
         # print(self.node_buildings.groupby('wdn_node')['pattern'].mean())
@@ -532,6 +541,8 @@ class Parameters(Model):
         self.set_attributes()
         self.dag_nodes()
         self.create_comm_network()
+
+        self.init_hydraulic()
 
     def setup_grid(self):
         ''' Set up the grid for agent movement '''
@@ -824,7 +835,7 @@ class Parameters(Model):
             n=self.num_agents, p=0.2, k=6, seed=self.seed
         )
         for agent in self.schedule.agents:
-            agent.friends = self.swn.neighbors(agent.unique_id)
+            agent.friends = [x for x in self.swn.neighbors(agent.unique_id)]
 
     def init_hydraulic(self):
         ''' Initialize the hydraulic information collectors '''
@@ -834,10 +845,10 @@ class Parameters(Model):
                 'wk'+str(i+1), dt.wfh_patterns[:, i]
             )
         # these are nodes with demands (there are also nodes without demand):
-        self.nodes_w_demand = [
-            node for node in self.grid.G.nodes
-            if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
-        ]
+        # self.nodes_w_demand = [
+        #     node for node in self.grid.G.nodes
+        #     if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
+        # ]
 
         self.agent_matrix = np.zeros(
             (len(self.buildings), self.days * 24), dtype=np.int64
@@ -871,12 +882,12 @@ class Parameters(Model):
                 index=self.G.nodes
             )
         elif self.hyd_sim == 'monthly':
-            self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
+            # self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
             self.current_age = None
 
         # initialization methods
         self.base_demand_list()
-        self.set_age()
+        # self.set_age()
         if self.hyd_sim == 'hourly' or self.hyd_sim == 'monthly':
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600

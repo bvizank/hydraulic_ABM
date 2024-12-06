@@ -51,7 +51,7 @@ def get_water_utility_service_areas(city_name):
     Fetches water utility service areas from NCOneMap dataset.
     """
 
-    map_name = "Map_Water_Sewer_2004"    
+    map_name = "Map_Water_Sewer_2004"
     params = {
         "outFields": "wasyname",
         "outSR": "4326",
@@ -152,7 +152,7 @@ def get_parcel_data_within_area(service_area_geom):
     new_df = gpd.GeoDataFrame(out_features, geometry=geometry, crs="EPSG:4326")
     df = pd.concat([df, new_df])
 
-    df = gpd.sjoin(df, service_area_geom, op='within')
+    df = df.sjoin(service_area_geom)
 
     return df
 
@@ -232,6 +232,8 @@ def buildings_by_type(buildings):
         np.where(res_mask, 'res', '')
     )
     buildings['type'] = np.where(ind_mask, 'ind', buildings['type'])
+
+    buildings = buildings[buildings['type'] != '']
 
     building_stats(buildings)
 

@@ -1469,11 +1469,11 @@ UNITS                LPS
 HEADLOSS             H-W                 
 SPECIFIC GRAVITY     1
 VISCOSITY            1
-TRIALS               200
+TRIALS               40
 ACCURACY             0.001
 CHECKFREQ            2
 MAXCHECK             10
-UNBALANCED           STOP                
+UNBALANCED           Continue 10                
 PATTERN              1                   
 DEMAND MULTIPLIER    1
 EMITTER EXPONENT     0.5

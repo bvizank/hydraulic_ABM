@@ -24,11 +24,11 @@ run_sim(
     bbn_models=['all'],
     daily_contacts=30,
     city='clinton',
-    verbose=1,
+    verbose=0.5,
     hyd_sim='monthly',
     dist_income=False,
     warmup=True,
     bw=True,
     ind_min_demand=0,
-    twa_process='percentage'
+    twa_process='absolute'
 )
