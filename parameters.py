@@ -246,11 +246,11 @@ class Parameters(Model):
         if x == 'com':
             return self.random.randint(10, 40)
         if x == 'ind':
-            return self.random.randint(50, 800)
+            return self.random.randint(50, 600)
 
     def building_helper(self, x):
         building = Building(
-            x.name, x['capacity'], x['wdn_node'], x['type']
+            x.name, x['capacity'], x['wdn_node'], x['type'], self
         )
         return building
 
@@ -292,7 +292,7 @@ class Parameters(Model):
         else:
             inp_file = os.path.join(city_dir, name + '.inp')
         self.wn = wntr.network.WaterNetworkModel(inp_file)
-        self.nodes_w_demands = [j.name for j in self.wn.junctions()]
+        self.nodes_w_demands = [j for j, _ in self.wn.junctions()]
 
         ''' Import the demand patterns '''
         self.demand_patterns = pd.read_csv(
@@ -387,7 +387,7 @@ class Parameters(Model):
         self.caf_agents = np.zeros(self.num_agents, dtype=np.int64)
 
         # init dictionary of agents
-        self.agents = dict()
+        self.agents_list = dict()
 
         # self.setup_grid()
 
@@ -404,10 +404,12 @@ class Parameters(Model):
         # now it includes all of the households.
         self.buildings.update(self.households)
 
+        print(self.buildings[int('520')])
+
         # set the base demand for each node based on the buildings
-        for node in self.wn.junctions():
+        for name, node in self.wn.junctions():
             demand = 0
-            for building in self.buildings[node.name]:
+            for building in self.buildings[int(name)]:
                 demand += building.base_demand
             node.demand_timeseries_list[0].base_value = demand
 
@@ -415,7 +417,7 @@ class Parameters(Model):
         self.ind_work_nodes = np.zeros(self.num_agents, dtype=np.int64)
         inds = list()
         nodes = list()
-        for a, o in self.agents.items():
+        for a, o in self.agents_list.items():
             if o.work_type == 'industrial':
                 inds.append(a)
                 nodes.append(o.work_node)

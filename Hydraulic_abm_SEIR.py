@@ -262,7 +262,7 @@ class ConsumerModel(Parameters):
             agents_moved = list()
             for i in range(min(delta_agents_comm, len(res_agent_list))):
                 agent_id = self.random.choice(res_agent_list)
-                agent_to_move = self.agents[agent_id]
+                agent_to_move = self.agents_list[agent_id]
                 location = self.random.choice(nodes_comm)
                 if location in self.gro_nodes:
                     if agent_to_move.less_groceries == 1:
@@ -294,7 +294,7 @@ class ConsumerModel(Parameters):
             agents_moved = list()
             for i in range(min(abs(delta_agents_comm), len(com_agent_list))):
                 agent_id = self.random.choice(com_agent_list)
-                agent_to_move = self.agents[agent_id]
+                agent_to_move = self.agents_list[agent_id]
                 agent_to_move.move(agent_to_move.home_node, to_res=True)
                 com_agent_list = np.delete(
                     com_agent_list, np.where(com_agent_list == agent_id)[0][0]
@@ -329,7 +329,7 @@ class ConsumerModel(Parameters):
             agents_moved = list()
             for i in range(min(delta_agents_rest, len(res_agent_list))):
                 agent_id = self.random.choice(res_agent_list)
-                agent_to_move = self.agents[agent_id]
+                agent_to_move = self.agents_list[agent_id]
                 location = self.random.choice(nodes_cafe)
                 if agent_to_move.no_dine == 1:
                     continue
@@ -349,7 +349,7 @@ class ConsumerModel(Parameters):
             agents_moved = list()
             for i in range(min(abs(delta_agents_rest), len(caf_agent_list))):
                 agent_id = self.random.choice(caf_agent_list)
-                agent_to_move = self.agents[agent_id]
+                agent_to_move = self.agents_list[agent_id]
                 agent_to_move.move(agent_to_move.home_node, to_res=True)
                 caf_agent_list = np.delete(
                     caf_agent_list, np.where(caf_agent_list == agent_id)[0][0]
@@ -372,7 +372,7 @@ class ConsumerModel(Parameters):
         agents_moved = list()
         for i in range(agents_to_home):
             agent_id = self.random.choice(ind_agent_list)
-            agent_to_move = self.agents[agent_id]
+            agent_to_move = self.agents_list[agent_id]
             ''' CHANGED TO ACCOMODATE SKELETONIZED NETWORK '''
             agent_to_move.move(agent_to_move.home_node, to_res=True)
             ind_agent_list = np.delete(
@@ -407,10 +407,10 @@ class ConsumerModel(Parameters):
             work_node = self.random.choice(nodes_ind)
             agent_id = np.where(res_agent_ind == work_node)[0][0]
             res_agent_ind[np.where(res_agent_ind == work_node)[0][0]] = 0
-            agent_to_move = self.agents[agent_id]
+            agent_to_move = self.agents_list[agent_id]
             # print(agent_to_move.unique_id)
             # agent_id = self.random.choice(res_agent_list)
-            # agent_to_move = self.agents[agent_id]
+            # agent_to_move = self.agents_list[agent_id]
             # work_node = agent_to_move.work_node
             # print(len(self.buildings[work_node].agent_ids))
             # print(self.buildings[work_node].capacity)
@@ -418,7 +418,7 @@ class ConsumerModel(Parameters):
             # # pick a new agent with a new work node until we find one that has capacity
             # while len(self.buildings[work_node].agent_ids) > self.buildings[work_node].capacity:
             #     agent_id = self.random.choice(res_agent_list)
-            #     agent_to_move = self.agents[agent_id]
+            #     agent_to_move = self.agents_list[agent_id]
             #     work_node = agent_to_move.work_node
             #     print(len(self.buildings[work_node].agent_ids))
             #     print(self.buildings[work_node].capacity)
@@ -484,12 +484,13 @@ class ConsumerModel(Parameters):
         '''
 
         for i, node in enumerate(self.nodes_w_demand):
-            curr_node = self.wn.get_node(node)
-            curr_demand = curr_node.demand_timeseries_list[0].base_value
+            # curr_node = self.wn.get_node(node)
+            # curr_demand = curr_node.demand_timeseries_list[0].base_value
 
             ''' list of demand multipliers from agent locations '''
             # new_mult = self.daily_demand[:, i]  # np.array
 
+            node_pat = np.zeros(24)
             for building in self.buildings[node]:
                 new_mult = (
                     self.agent_matrix[building.id, self.timestep-24:self.timestep] /
@@ -498,7 +499,7 @@ class ConsumerModel(Parameters):
                 # if the building is a commercial or industrial building,
                 # multiply the demand pattern by the agent multiplier
                 if building.type == 'com' or building.type == 'ind':
-                    new_pat = (
+                    curr_pat = (
                         building.demand_pattern * new_mult
                     )
                 else:
@@ -508,20 +509,18 @@ class ConsumerModel(Parameters):
                     agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
                     if self.res_pat_select == 'lakewood' and len(agents_at_node) != 0:
                         perc_wfh = agents_wfh / len(agents_at_node)
-                        if perc_wfh > 0.5: 
+                        if perc_wfh > 0.5:
                             base_pat = self.wn.get_pattern('wk1')
                         else:
                             base_pat = building.demand_pattern
 
                     ''' demand for the next 24 hours, not including reduction or
                     agent multiplier '''
-                    curr_pat = (
-                        building.demand_pattern * new_mult
-                    )
+                    curr_pat = base_pat * new_mult
 
                     ''' Calculate the demand reduction given the total demand '''
                     # total demand in L/day
-                    daily_demand = curr_patt.sum() * building.base_demand * 60
+                    daily_demand = curr_pat.sum() * building.base_demand * 60
 
                     reduction_val = 0
                     # number of agents assigned to this node over all households
@@ -538,26 +537,26 @@ class ConsumerModel(Parameters):
                     if self.twa_process == 'absolute':
                         # reduction value needs to be offset by the agent reduction
                         # which is the average agent multiplier
-                        house.tap_demand += (
+                        building.tap_demand += (
                             daily_demand -
-                            house.reduction * avg_agent_multipler
+                            building.reduction * avg_agent_multiplier
                         )
                         # iterate the bottle_demand as well
-                        house.bottle_demand += house.reduction * avg_agent_multipler
+                        building.bottle_demand += building.reduction * avg_agent_multiplier
                         # increase the total reduction value for this node
-                        reduction_val += house.reduction * avg_agent_multipler
+                        reduction_val += building.reduction * avg_agent_multiplier
                     elif self.twa_process == 'percentage':
                         # daily demand already has information about the number
                         # of agents at this house from new_mult
-                        house.tap_demand += (
-                            daily_demand * house.change
+                        building.tap_demand += (
+                            daily_demand * building.change
                         )
                         # iterate the bottle_demand as well
-                        house.bottle_demand += (
-                            daily_demand * (1 - house.change)
+                        building.bottle_demand += (
+                            daily_demand * (1 - building.change)
                         )
                         # increase the total reduction value for this node
-                        reduction_val += house.bottle_demand
+                        reduction_val += building.bottle_demand
 
                     # should check if the demand for the node is the same as the
                     # total from all the households
@@ -573,17 +572,23 @@ class ConsumerModel(Parameters):
 
                     new_mult = new_mult * new_demand_multiplier
 
-            ''' NEED TO UPDATE THE FOLLOWING LINES OF CODE '''
+                    curr_pat = base_pat * new_mult
+
+                # Add the current buildings pattern to the past building's
+                # for this node
+                node_pat += curr_pat
+
+            # average the node pat based on the number of bulidings
+            node_pat /= len(self.buildings[node])
+
+            wn_node_pat = self.wn.get_pattern('node_' + node)
             # add the last 24 hours of multipliers to the exisiting pattern
             if self.timestep_day == 1:
-                node_pat.multipliers = curr_multipliers
+                wn_node_pat.multipliers = node_pat
             else:
-                node_pat.multipliers = np.concatenate(
-                    (node_pat.multipliers, curr_multipliers)
+                wn_node_pat.multipliers = np.concatenate(
+                    (wn_node_pat.multipliers, node_pat)
                 )
-
-            # del curr_node.demand_timeseries_list[0]
-            # curr_node.demand_timeseries_list.append((curr_demand, new_pat))
 
     def run_hyd_hour(self):
         '''

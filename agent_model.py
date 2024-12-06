@@ -343,10 +343,9 @@ class Building:
     Container for building information
     '''
 
-    def __init__(self, id, capacity, node, type):
+    def __init__(self, id, capacity, node, type, model):
         self.id = id
-        self.base_demand = self.define_demand(type)
-        self.demand_pattern = self.define_pattern(type)
+        self.model = model
         self.capacity = capacity
         self.node = node
 
@@ -357,14 +356,18 @@ class Building:
         self.agent_ids = list()  # list of agent that are in the household
         self.agent_obs = list()  # list of agent objects that are in the household
 
+        ''' Set the demand and pattern '''
+        self.base_demand = self.demand_helper(type)
+        self.demand_pattern = self.pattern_helper(type)
+
     def demand_helper(self, x):
         ''' ASSUMES UNITS ON WN ARE LITERS PER SECOND '''
         if x == 'res':
             return self.res_demand()
         if x == 'com':
-            return self.random.gauss(1000, 100) / 24 / 60
+            return self.model.random.gauss(1000, 100) / 24 / 60
         if x == 'ind':
-            return self.random.gammavariate(3, 4000) / 24 / 60
+            return self.model.random.gammavariate(3, 4000) / 24 / 60
 
     def pattern_helper(self, x):
         if x == 'res':
@@ -418,7 +421,7 @@ class Household(Building):
 
     def __init__(self, id, start_id, end_id, node, node_dist, twa_mods, model,
                  capacity=0):
-        super().__init__(id, capacity, node, 'res')
+        super().__init__(id, capacity, node, 'res', model)
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
@@ -436,7 +439,6 @@ class Household(Building):
         self.bottle_cost = 0  # the total cost of bottled water
         self.reduction = 0  # the demand reduction for the last 168 hours
         self.change = 1
-        self.model = model
         self.ind_dist = node_dist
 
         self.agent_hours = 0  # the total number of hours agents spend at the home node
@@ -476,10 +478,7 @@ class Household(Building):
             self.agent_ids.append(a.unique_id)
 
         # add the newly made agents to the dictionary of agents
-        self.model.agents.update(zip(self.agent_ids, self.agent_obs))
-
-        # set the base demand for this household
-        self.get_demand()
+        self.model.agents_list.update(zip(self.agent_ids, self.agent_obs))
 
         # pick an income for the household based on the relative distance
         # to the nearest industrial node
