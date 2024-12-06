@@ -404,7 +404,8 @@ class Parameters(Model):
         # now it includes all of the households.
         self.buildings.update(self.households)
 
-        print(self.buildings[int('520')])
+        building_group = self.node_buildings.groupby('wdn_node')
+        print(building_group.indices)
 
         # set the base demand for each node based on the buildings
         for name, node in self.wn.junctions():
