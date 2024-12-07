@@ -708,8 +708,8 @@ class ConsumerModel(Parameters):
                 for node, house in self.households.items():
                     # demand_list = list()
                     # for house in houses:
-                    print(self.sim._results.node['quality'])
-                    node_age = self.sim._results.node['quality'].loc[:, node]
+                    # print(self.sim._results.node['quality'].columns)
+                    node_age = self.sim._results.node['quality'].loc[:, house.node]
                     # print(node_age.iloc[-1])
                     house.update_household(node_age.iloc[-1] / 3600)
                     # demand_list.append(house.change)
@@ -904,17 +904,17 @@ class ConsumerModel(Parameters):
         step_drink = list()
         step_cook = list()
 
-        for node, houses in self.households.items():
-            for house in houses:
-                step_bw_cost.append(dcp(house.bottle_cost))
-                step_tw_cost.append(dcp(house.tap_cost))
-                step_bw_demand.append(dcp(house.bottle_demand))
-                hygiene = 1 if 'hygiene' in house.bottle else 0
-                drink = 1 if 'drink' in house.bottle else 0
-                cook = 1 if 'cook' in house.bottle else 0
-                step_hygiene.append(hygiene)
-                step_drink.append(drink)
-                step_cook.append(cook)
+        for node, house in self.households.items():
+            # for house in houses:
+            step_bw_cost.append(dcp(house.bottle_cost))
+            step_tw_cost.append(dcp(house.tap_cost))
+            step_bw_demand.append(dcp(house.bottle_demand))
+            hygiene = 1 if 'hygiene' in house.bottle else 0
+            drink = 1 if 'drink' in house.bottle else 0
+            cook = 1 if 'cook' in house.bottle else 0
+            step_hygiene.append(hygiene)
+            step_drink.append(drink)
+            step_cook.append(cook)
 
         self.bw_cost[self.timestep] = step_bw_cost
         self.tw_cost[self.timestep] = step_tw_cost

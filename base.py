@@ -2011,9 +2011,7 @@ class Graphics(BaseGraphics):
                                       'income',
                                       'drink',
                                       'cook',
-                                      'hygiene',
-                                      'traditional',
-                                      'burden']
+                                      'hygiene']
         data = ut.read_data(loc, comp_list)
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():

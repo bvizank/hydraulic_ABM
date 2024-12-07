@@ -22,7 +22,6 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
     else:
         output_loc = 'Output Files/' + curr_dt + '_results'
     os.mkdir(output_loc)
-    output_file = 'datasheet.xlsx'
 
     if city == 'micropolis':
         pop = 4606
@@ -32,14 +31,12 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
         pop = 5000
         # raise ValueError(f"City {city} not implemented.")
 
-    # if 'hyd_sim' in kwargs:
-    #     hyd_sim = kwargs['hyd_sim']
-    # else:
-    #     hyd_sim = 'eos'
-
     start = perf_counter()
 
     model = ConsumerModel(pop, city, days=days, id=id, seed=seed, **kwargs) #seed=123, wfh_lag=0, no_wfh_perc=0.4
+
+    ''' Save the parameters of the model '''
+    model.save_pars(output_loc)
 
     print('Starting simulation ............................')
     # run a warmup period if warmup appears in kwargs
@@ -67,19 +64,19 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
         ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild',
          'Sev', 'Crit', 'sum_I', 'wfh']
     )
-    agent_matrix = convert_to_pd(
+    agent_matrix = pd.DataFrame(
         model.agent_matrix,
-        [n for n in model.nodes_capacity]
+        index=[n for n in model.buildings]
     )
 
     status_tot.to_pickle(output_loc + "/seir_data.pkl")
-    model.param_out.to_pickle(output_loc + "/params.pkl")
-    if hyd_sim == 'eos':
+    # model.param_out.to_pickle(output_loc + "/params.pkl")
+    if model.hyd_sim == 'eos':
         model.demand_matrix.to_pickle(output_loc + "/demand.pkl")
         model.pressure_matrix.to_pickle(output_loc + "/pressure.pkl")
         model.age_matrix.to_pickle(output_loc + "/age.pkl")
         model.flow_matrix.to_pickle(output_loc + "/flow.pkl")
-    elif hyd_sim == 'hourly' or hyd_sim == 'monthly':
+    elif model.hyd_sim in ['hourly', 'monthly']:
         model.sim.close()
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
         demand = results.node['demand'] * 1000000
@@ -91,7 +88,7 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
-    households = [h.node for i, hs in model.households.items() for h in hs]
+    households = [h for h in model.households]
     # income = list()
     # for node, houses in model.households.items():
     #     for house in houses:
@@ -112,8 +109,8 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
     cook = convert_to_pd(model.cook, households)
     # income = convert_to_pd({0: model.income}, households)
     # income_level = convert_to_pd({0: model.income_level}, households)
-    traditional = convert_to_pd(model.traditional, [0])
-    burden = convert_to_pd(model.burden, [0])
+    # traditional = convert_to_pd(model.traditional, [0])
+    # burden = convert_to_pd(model.burden, [0])
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
@@ -131,11 +128,8 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
     # income.to_pickle(output_loc + "/income.pkl")
     # income_level.to_pickle(output_loc + "/income_level.pkl")
     model.income_comb.to_pickle(output_loc + "/income.pkl")
-    traditional.to_pickle(output_loc + "/traditional.pkl")
-    burden.to_pickle(output_loc + "/burden.pkl")
-
-    with pd.ExcelWriter(output_loc + '/' + output_file) as writer:
-        model.param_out.to_excel(writer, sheet_name='params')
+    # traditional.to_pickle(output_loc + "/traditional.pkl")
+    # burden.to_pickle(output_loc + "/burden.pkl")
 
 
 def convert_to_pd(in_list, columns):

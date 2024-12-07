@@ -238,9 +238,8 @@ class ConsumerAgent(Agent):
                 self.random.random() < death_prob):
             self.covid = 'dead'
             self.symptomatic = None
-            self.model.grid.remove_agent(self)
-        else:
-            pass
+            # self.model.grid.remove_agent(self)
+            self.model.schedule.remove(self)
 
     def predict_wfh(self):
         self.adj_covid_change = 0

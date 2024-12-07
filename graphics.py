@@ -30,10 +30,10 @@ plots = Graphics(publication=False, error='se', days=days)
 
 ''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(di=False, perc=False, sa=True)
+# plots.cowpi_boxplot(di=False, perc=False, sa=True)
 
 ''' Income plots '''
-plots.income_plots()
+# plots.income_plots()
 
 ''' Tap water avoidance plots '''
 # plots.make_twa_plots()
@@ -42,7 +42,7 @@ plots.income_plots()
 # plots.make_seir_plot(days)
 
 ''' Make single plots '''
-# plots.make_single_plots('30_base-bw_equity/2024-07-04_14-31_0_results', 180)
+plots.make_single_plots('2024-12-06_18-01_0_results', 150)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
