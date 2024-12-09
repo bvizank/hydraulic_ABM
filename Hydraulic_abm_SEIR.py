@@ -365,35 +365,64 @@ class ConsumerModel(Parameters):
     # are being replaced with Agents from Residential nodes. At 1, 9 and 17:00
     def move_ind(self):
         # Moving Agents from Industrial nodes back home to residential home nodes
-        ind_agent_list = self.industry_agents()
-        agents_to_home = int(min(self.ind_agent_n/2, len(ind_agent_list)))
+        ind_agent_list = dcp(self.industry_agents())
+        # print(ind_agent_list)
+        agents_to_home_n = int(min(self.ind_agent_n/2, len(ind_agent_list)))
         agents_to_work = int(self.ind_agent_n/2) if self.timestep != 0 else self.ind_agent_n
+
+        agents_to_home = np.random.choice(ind_agent_list, agents_to_home_n, False)
+        # print(agents_to_home)
         # print(len(ind_agent_list))
 
-        agents_moved = list()
-        for i in range(agents_to_home):
-            agent_id = self.random.choice(ind_agent_list)
-            agent_to_move = self.agents_list[agent_id]
-            ''' CHANGED TO ACCOMODATE SKELETONIZED NETWORK '''
+        # agents_moved = list()
+        for i in agents_to_home:
+            # agent_id = self.random.choice(ind_agent_list)
+            # agent_to_move = self.agents_list[agent_id]
+            # # print(f"{agent_id} is moving from {agent_to_move.building}")
+            # agent_to_move.move(agent_to_move.home_node)
+            # # print(f"{agent_id} moved to {agent_to_move.building} with type {self.buildings[agent_to_move.building].type}")
+            # ind_agent_list = np.delete(
+            #     ind_agent_list, np.where(ind_agent_list == agent_id)[0][0]
+            # )
+
+            # get the agent object
+            agent_to_move = self.agents_list[i]
+            # move the agent to their home node
             agent_to_move.move(agent_to_move.home_node)
-            ind_agent_list = np.delete(
-                ind_agent_list, np.where(ind_agent_list == agent_id)[0][0]
-            )
-            agents_moved.append(agent_to_move.unique_id)
+            # add the agent_id to the agents_moved list
+            # agents_moved.append(agent_to_move.unique_id)
+            # expose the agent based on the new node it moved to
             self.infect_agent(agent_to_move, 'residential')
 
-        self.res_agents[agents_moved] = 1
-        self.ind_agents[agents_moved] = 0
+        self.res_agents[agents_to_home] = 1
+        self.ind_agents[agents_to_home] = 0
 
         # Agents from Residential nodes to Industrial
         # list of agents that are at their home node and have
         # a work node. The list are indices of agents
-        res_agent_ind = self.res_agents * self.ind_work_nodes
+
+
+        '''
+        How agent's should move to industrial nodes
+
+        1. Agents that are at resdiential nodes and have work nodes
+           can move. That makes our list.
+        2. Because we give work nodes to twice as many agents as is
+           necessary, each industrial nodes has 2x it's capacity in
+           agents that have it as a work node. This means we need to
+           see whether the node that an agent is moving to is full,
+           and if it is, get another agent to move.
+        '''
+        res_agent_ind = dcp(self.res_agents * self.ind_work_nodes)
+        # print(res_agent_ind)
+        # agents_to_work = np.random.choice(res_agent_ind, agents_to_work_n, False)
         # res_agent_list = np.where(res_agent_ind > 0)[0]
 
         # for a in self.schedule.agents:
         #     print(a.building)
         # print(res_agent_list)
+
+        ''' Make a list of all of the empty spots at industrial nodes '''
         nodes_ind = list()
         for node in self.ind_nodes:
             avail_spots = (
@@ -403,82 +432,37 @@ class ConsumerModel(Parameters):
                 for i in range(int(avail_spots)):
                     nodes_ind.append(node)
 
-        self.agents_moved = list()
+        agents_moved = list()
         for i in range(agents_to_work):
+            # pick a work node from the pool of work nodes that have capacity
             work_node = self.random.choice(nodes_ind)
-            agent_id = np.where(res_agent_ind == work_node)[0][0]
-            res_agent_ind[np.where(res_agent_ind == work_node)[0][0]] = 0
+            # pick an agent that is at that work node
+            agent_ids = np.where(res_agent_ind == work_node)[0]
+            agent_id = np.random.choice(agent_ids)
+            # remove the current agent from the list of agent ind locations
+            res_agent_ind[agent_id] = 0
             agent_to_move = self.agents_list[agent_id]
-            # print(agent_to_move.unique_id)
-            # agent_id = self.random.choice(res_agent_list)
-            # agent_to_move = self.agents_list[agent_id]
-            # work_node = agent_to_move.work_node
-            # print(len(self.buildings[work_node].agent_ids))
-            # print(self.buildings[work_node].capacity)
-
-            # # pick a new agent with a new work node until we find one that has capacity
-            # while len(self.buildings[work_node].agent_ids) > self.buildings[work_node].capacity:
-            #     agent_id = self.random.choice(res_agent_list)
-            #     agent_to_move = self.agents_list[agent_id]
-            #     work_node = agent_to_move.work_node
-            #     print(len(self.buildings[work_node].agent_ids))
-            #     print(self.buildings[work_node].capacity)
             if (agent_to_move.wfh == 1 and
                 self.wfh_thres and
                 agent_to_move.can_wfh):
                 continue
-            self.agents_moved.append(agent_to_move.unique_id)
+            agents_moved.append(agent_to_move.unique_id)
             agent_to_move.move(agent_to_move.work_node)
             # res_agent_list = np.delete(
             #     res_agent_list, np.where(res_agent_list == agent_id)[0][0]
             # )
             self.infect_agent(agent_to_move, 'workplace')
 
-        self.res_agents[self.agents_moved] = 0
-        self.ind_agents[self.agents_moved] = 1
-
-    def set_patterns(self, node):
-        house = [house for house in self.res_houses if house.id == node.name][0]
-        consumption = house.simulate(num_patterns=10)
-        tot_cons = consumption.sum(['enduse', 'user']).mean([ 'patterns'])
-        hourly_cons = tot_cons.groupby('time.hour').mean()
-        self.wn.add_pattern(
-            'hs_' + house.id,
-            np.array(np.divide(hourly_cons, hourly_cons.mean()))
-        )
-        node.demand_timeseries_list[0].pattern_name = 'hs_' + house.id
+        self.res_agents[agents_moved] = 0
+        self.ind_agents[agents_moved] = 1
 
     def collect_demands(self):
-        # step_demand = np.empty(len(self.nodes_w_demand))
-        # step_agents = list()
-        for i, node in enumerate(self.nodes_w_demand):
-            # we need to iterate through all nodes with demand to be able to
-            # run the hydraulic simualation.
-            if node not in self.wdn_nodes:
-                continue
-            for building_id in self.wdn_nodes[node]:
-                building = self.buildings[building_id]
-                # capacity = building.capacity
-                agents_at_node = len(building.agent_ids)
-                self.agent_matrix[building.id, self.timestep] = agents_at_node
-                # step_agents.append(agents_at_node)
-                # multiplier = agents_at_node / capacity
-                # if node in self.ind_nodes:
-                #     ''' Industrial demand multiplier should include some
-                #     portion that is not based on agent movement.
-                #     This is accounted for by self.ind_min_demand '''
-                #     step_demand[i] += (
-                #         multiplier * (1 - self.ind_min_demand)
-                #         + self.ind_min_demand
-                #     )
-                # else:
-                #     ''' Non-industrial nodes are solely based on the
-                #     number of agents at them '''
-                #     step_demand[i] += multiplier
-
-        # assert len(step_agents) == len(self.nodes_capacity)
-
-        # self.daily_demand[self.timestepN, :] = step_demand
+        '''
+        Collect the location of each agent.
+        '''
+        for building_id, building in self.buildings.items():
+            agents_at_node = len(building.agent_ids)
+            self.agent_matrix[building_id, self.timestep] = agents_at_node
 
     # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
@@ -488,12 +472,6 @@ class ConsumerModel(Parameters):
         '''
 
         for i, node in enumerate(self.nodes_w_demand):
-            # curr_node = self.wn.get_node(node)
-            # curr_demand = curr_node.demand_timeseries_list[0].base_value
-
-            ''' list of demand multipliers from agent locations '''
-            # new_mult = self.daily_demand[:, i]  # np.array
-
             node_pat = np.zeros(24)
             if node not in self.wdn_nodes:
                 continue
@@ -505,6 +483,10 @@ class ConsumerModel(Parameters):
                     self.agent_matrix[building.id, self.timestep-23:self.timestep+1] /
                     building.capacity
                 )
+                # print(building.type)
+                # print(self.agent_matrix[building.id, self.timestep-23:self.timestep+1])
+                # print(building.capacity)
+                # print([self.buildings[a.building].type for a in building.agent_obs])
 
                 # if the building is a commercial or industrial building,
                 # multiply the demand pattern by the agent multiplier

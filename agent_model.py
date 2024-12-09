@@ -84,7 +84,7 @@ class ConsumerAgent(Agent):
         self.model.buildings[new_building].agent_ids.append(self.unique_id)
 
         # update agent's building
-        self.building = new_building
+        self.building = dcp(new_building)
 
     def sample_ln(self, mux, sigmax):
         '''
@@ -316,7 +316,7 @@ class ConsumerAgent(Agent):
         # print(agents_in_network)
         agents_in_network.remove(self.unique_id)
         for id in agents_in_network:
-            adj_agent = self.model.schedule._agents[id]
+            adj_agent = self.model.agents_list[id]
             adj_agent.adj_covid_change = 1
             if adj_agent.agent_params["COVIDeffect_4"] < 6:
                 adj_agent.agent_params["COVIDeffect_4"] += 1
@@ -378,7 +378,7 @@ class Building:
 
     def res_demand(self):
         if self.model.skeleton:
-            ind_demand = [self.individual_demand() for i in range(len(self.agent_ids))]
+            ind_demand = [self.individual_demand() for i in range(len(self.agent_obs))]
             # print(ind_demand)
             # need base demand to be in liters per hour from liters per day
             demand = sum(ind_demand) / 24 / 60
@@ -423,6 +423,7 @@ class Household(Building):
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
+        self.building = 0  # the agent's current building
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
         self.base_rate_water = 15.55  # dollars per month; this is from the city of clinton, nc

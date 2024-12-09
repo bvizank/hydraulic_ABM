@@ -341,7 +341,8 @@ class Parameters(Model):
         self.num_agents = (
             self.node_buildings.groupby('type')['capacity'].sum()['res']
         )
-        self.ind_agent_n = int(self.num_agents * max(self.node_distributions['ind']))
+        self.covid_exposed = int(0.001 * self.num_agents)
+        # self.ind_agent_n = int(self.num_agents * max(self.node_distributions['ind']))
         self.com_dist = self.node_distributions['com'].tolist()
         self.cafe_dist = self.node_distributions['caf'].tolist()
 
@@ -350,7 +351,8 @@ class Parameters(Model):
 
         ''' Set the number of work agents and the locations that need workers '''
         self.work_agents = self.node_buildings.groupby('type')['capacity'].sum()['ind']
-        print(self.work_agents)
+        print(f"Capacity of all industrial nodes: {self.work_agents}")
+        self.ind_agent_n = int(dcp(self.work_agents) / 2)
 
         # print(self.node_buildings[self.node_buildings['type'] == 'ind']['capacity'])
         # print(self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
@@ -359,6 +361,9 @@ class Parameters(Model):
             (self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list() +
              self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
         )
+
+        print(f"Distribution based industrial spots: {self.ind_agent_n}")
+        print(f"Total number of agents with a work node: {len(self.work_loc_list)}")
 
         # define lists with each node type
         self.nav_nodes = []
@@ -389,6 +394,7 @@ class Parameters(Model):
         # print(self.work_loc_list)
 
         # init tracking arrays for each node type
+        print(self.num_agents)
         self.ind_agents = np.zeros(self.num_agents, dtype=np.int64)
         self.res_agents = np.zeros(self.num_agents, dtype=np.int64)
         self.com_agents = np.zeros(self.num_agents, dtype=np.int64)

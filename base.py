@@ -753,7 +753,7 @@ class Graphics(BaseGraphics):
             options include: se, ci95, and sd
     '''
 
-    def __init__(self, publication, error, days):
+    def __init__(self, publication, error, days, inp_file=None):
         self.days = days
         self.x_len = days * 24
         ''' Define data directories '''
@@ -878,23 +878,24 @@ class Graphics(BaseGraphics):
         plt.rcParams['ytick.major.size'] = 3.0
 
         ''' Import water network and data '''
-        inp_file = 'Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp'
+        if not inp_file:
+            inp_file = 'Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp'
+            ''' Set the various node lists '''
+            self.get_nodes(self.wn)
+            ''' Get industrial distances for each residential node in the network '''
+            self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
+
         self.wn = wntr.network.WaterNetworkModel(inp_file)
         self.x_values_hour = np.array([
             x for x in np.arange(0, days, days / len(self.pm['avg_demand']))
         ])
         self.x_values_day = np.array([
-            x for x in range(180)
+            x for x in range(days)
         ])
 
         ''' Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh '''
         self.get_times(self.pm)
 
-        ''' Set the various node lists '''
-        self.get_nodes(self.wn)
-
-        ''' Get industrial distances for each residential node in the network '''
-        self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
         # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
 
     def flow_plots(self):
@@ -2003,6 +2004,9 @@ class Graphics(BaseGraphics):
         ''' Set the warmup period '''
         x_len = days * 24
 
+        nodes_w_demand = [name for name, node in self.wn.junctions()
+                          if node.demand_timeseries_list[0].base_value > 0]
+
         ''' Make SEIR plot without error '''
         loc = 'Output Files/' + file + '/'
         comp_list = self.comp_list + ['bw_cost',
@@ -2059,7 +2063,7 @@ class Graphics(BaseGraphics):
         #             format=self.format, bbox_inches='tight')
         # plt.close()
 
-        demand = data['demand'].loc[:, self.all_nodes].sum(axis=1)
+        demand = data['demand'][nodes_w_demand].sum(axis=1)
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
         ])
@@ -2068,28 +2072,29 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        cols = ['Residential', 'Commercial', 'Industrial']
-        demand_res = data['demand'].loc[:, self.res_nodes].sum(axis=1)
-        demand_ind = data['demand'].loc[:, self.ind_nodes].sum(axis=1)
-        demand_com = data['demand'].loc[:, self.com_nodes].sum(axis=1)
-        demand = pd.concat([demand_res.rolling(24).mean(),
-                            demand_ind.rolling(24).mean(),
-                            demand_com.rolling(24).mean()],
-                           axis=1, keys=cols)
-        x_values = np.array([
-            x for x in np.arange(0, days, days / x_len)
-        ])
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax, demand.iloc[-x_len:], sd=None, cols=cols, x_values=x_values,
-            sd_plot=False
-        )
-        plt.savefig(loc + 'mean_res_demand' + '.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # cols = ['Residential', 'Commercial', 'Industrial']
+        # demand_res = data['demand'].loc[:, self.res_nodes].sum(axis=1)
+        # demand_ind = data['demand'].loc[:, self.ind_nodes].sum(axis=1)
+        # demand_com = data['demand'].loc[:, self.com_nodes].sum(axis=1)
+        # demand = pd.concat([demand_res.rolling(24).mean(),
+        #                     demand_ind.rolling(24).mean(),
+        #                     demand_com.rolling(24).mean()],
+        #                    axis=1, keys=cols)
+        # x_values = np.array([
+        #     x for x in np.arange(0, days, days / x_len)
+        # ])
+        # ax = plt.subplot()
+        # self.make_avg_plot(
+        #     ax, demand.iloc[-x_len:], sd=None, cols=cols, x_values=x_values,
+        #     sd_plot=False
+        # )
+        # plt.savefig(loc + 'mean_res_demand' + '.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
         ''' Make age plots '''
-        age = data['age'][self.all_nodes].mean(axis=1)
+        age = data['age'][nodes_w_demand].mean(axis=1)
+        print(age)
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
         plt.plot(x_values, age.iloc[-x_len:] / 3600)
@@ -2097,29 +2102,29 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-        res_age_pm = data['age'][self.res_nodes].mean(axis=1)
-        com_age_pm = data['age'][self.com_nodes].mean(axis=1)
-        ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
+        # res_age_pm = data['age'][self.res_nodes].mean(axis=1)
+        # com_age_pm = data['age'][self.com_nodes].mean(axis=1)
+        # ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
 
-        # make input data and sd
-        pm_age = pd.concat([res_age_pm.rolling(24).mean(),
-                            com_age_pm.rolling(24).mean(),
-                            ind_age_pm.rolling(24).mean()],
-                           axis=1, keys=cols)
-        pm_age_sd = pd.concat([res_age_pm.rolling(24).std(),
-                               com_age_pm.rolling(24).std(),
-                               ind_age_pm.rolling(24).std()],
-                              axis=1, keys=cols)
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax, pm_age.iloc[-x_len:] / 3600, pm_age_sd[-x_len:] / 3600, cols,
-            x_values, 'Time (days)', 'Water Age (hr)', show_labels=True,
-            sd_plot=True
-        )
+        # # make input data and sd
+        # pm_age = pd.concat([res_age_pm.rolling(24).mean(),
+        #                     com_age_pm.rolling(24).mean(),
+        #                     ind_age_pm.rolling(24).mean()],
+        #                    axis=1, keys=cols)
+        # pm_age_sd = pd.concat([res_age_pm.rolling(24).std(),
+        #                        com_age_pm.rolling(24).std(),
+        #                        ind_age_pm.rolling(24).std()],
+        #                       axis=1, keys=cols)
+        # ax = plt.subplot()
+        # self.make_avg_plot(
+        #     ax, pm_age.iloc[-x_len:] / 3600, pm_age_sd[-x_len:] / 3600, cols,
+        #     x_values, 'Time (days)', 'Water Age (hr)', show_labels=True,
+        #     sd_plot=True
+        # )
 
-        plt.savefig(loc + '_sector_age.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # plt.savefig(loc + '_sector_age.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
         # plt.show()
 
@@ -2167,29 +2172,43 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Plot the income by node '''
-        fig, axes = plt.subplots(1, 2)
-        ind_distances, ind_closest = self.calc_industry_distance(self.wn)
-        dist_values = [v for k, v in ind_distances.items() if k in data['income'].index]
-        income = data['income'].loc[:, 'income'].groupby(level=0).mean()
-        print(len(dist_values))
-        print(len(income))
+        # fig, axes = plt.subplots(1, 2)
+        # ind_distances, ind_closest = self.calc_industry_distance(self.wn)
+        # dist_values = [v for k, v in ind_distances.items() if k in data['income'].index]
+        # income = data['income'].loc[:, 'income'].groupby(level=0).mean()
+        # print(len(dist_values))
+        # print(len(income))
 
-        axes[0] = self.scatter_plot(dist_values, income, axes[0])
+        # axes[0] = self.scatter_plot(dist_values, income, axes[0])
 
-        axes[1] = wntr.graphics.plot_network(
-            self.wn,
-            node_attribute=income,
-            node_size=5, node_range=[0, 200000], node_colorbar_label='Income ($)',
-            ax=axes[1]
-        )
-        plt.gcf().set_size_inches(7, 3.5)
-        plt.savefig(loc + 'income_map.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # axes[1] = wntr.graphics.plot_network(
+        #     self.wn,
+        #     node_attribute=income,
+        #     node_size=5, node_range=[0, 200000], node_colorbar_label='Income ($)',
+        #     ax=axes[1]
+        # )
+        # plt.gcf().set_size_inches(7, 3.5)
+        # plt.savefig(loc + 'income_map.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
+
+        # wntr.graphics.plot_network(self.wn, node_attribute='elevation')
+        # plt.show()
+
+        # print(data['tot_cost'].iloc[-1, :].groupby(level=0).mean())
+        # ax = wntr.graphics.plot_network(
+        #     self.wn,
+        #     node_attribute=data['tot_cost'].iloc[-1, :].groupby(level=0).mean(),
+        #     node_size=5
+        # )
+        # plt.savefig(loc + 'tot_cost_map.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
+        print(data['age'].iloc[-1, :])
 
         ax = wntr.graphics.plot_network(
             self.wn,
-            node_attribute=data['tot_cost'].iloc[-1, :].groupby(level=0).mean(),
+            node_attribute=data['age'].iloc[-1, :] / 3600,
             node_size=5
         )
         plt.savefig(loc + 'tot_cost_map.' + self.format,
@@ -2213,20 +2232,20 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Equity metric costs '''
-        metrics = pd.concat([data['traditional'],
-                             data['burden']],
-                            axis=1, keys=['Traditional', 'Burden'])
+        # metrics = pd.concat([data['traditional'],
+        #                      data['burden']],
+        #                     axis=1, keys=['Traditional', 'Burden'])
 
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax, metrics * 100, None, ['Traditional', 'Burden'],
-            (metrics.index - warmup) / 24,
-            'Time (days)', '% of Income', show_labels=True, sd_plot=False
-        )
+        # ax = plt.subplot()
+        # self.make_avg_plot(
+        #     ax, metrics * 100, None, ['Traditional', 'Burden'],
+        #     (metrics.index - warmup) / 24,
+        #     'Time (days)', '% of Income', show_labels=True, sd_plot=False
+        # )
 
-        plt.savefig(loc + 'equity_metrics.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # plt.savefig(loc + 'equity_metrics.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
         ''' % of income figure by income level '''
         # print('Income')
