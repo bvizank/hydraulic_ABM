@@ -361,9 +361,9 @@ class Building:
             demand = self.res_demand()
             return demand
         if x == 'com':
-            return self.model.random.gauss(1000, 100) / 24 / 60
+            return self.model.random.gauss(1000, 100) / 24 / 60 / 60
         if x == 'ind':
-            return self.model.random.gammavariate(3, 4000) / 24 / 60
+            return self.model.random.gammavariate(3, 4000) / 24 / 60 / 60
 
     def pattern_helper(self, x):
         if x == 'res':
@@ -381,7 +381,7 @@ class Building:
             ind_demand = [self.individual_demand() for i in range(len(self.agent_obs))]
             # print(ind_demand)
             # need base demand to be in liters per hour from liters per day
-            demand = sum(ind_demand) / 24 / 60
+            demand = sum(ind_demand) / 24 / 60 / 60
 
             return demand
         else:
