@@ -2016,6 +2016,7 @@ class Graphics(BaseGraphics):
                                       'drink',
                                       'cook',
                                       'hygiene']
+        comp_list.remove('agent_loc')
         data = ut.read_data(loc, comp_list)
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
@@ -2211,7 +2212,22 @@ class Graphics(BaseGraphics):
             node_attribute=data['age'].iloc[-1, :] / 3600,
             node_size=5
         )
-        plt.savefig(loc + 'tot_cost_map.' + self.format,
+        plt.savefig(loc + 'age_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Plot the number of residences '''
+        node_buildings = pd.read_pickle('buildings.pkl')
+        counts = node_buildings.value_counts(['wdn_node', 'type']).unstack()
+        perc_counts = counts.divide(counts.sum(axis=1), axis=0)
+        print(perc_counts)
+
+        ax = wntr.graphics.plot_network(
+            self.wn,
+            node_attribute=perc_counts['res'],
+            node_size=5
+        )
+        plt.savefig(loc + 'perc_res_map.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 

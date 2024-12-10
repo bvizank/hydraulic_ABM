@@ -191,60 +191,6 @@ class Parameters(Model):
             params.writerow(['Param', 'Value'])
             for key, value in self.__dict__.items():
                 params.writerow([key, value])
-        # self.param_out = pd.DataFrame(columns=['Param', 'value1', 'value2'])
-        # covid_exp = pd.DataFrame([['covid_exposed', self.covid_exposed]],
-        #                          columns=['Param', 'value1'])
-        # hh_rate = pd.DataFrame([['household_rate', self.exposure_rate]],
-        #                        columns=['Param', 'value1'])
-        # wp_rate = pd.DataFrame([['workplace_rate', self.exposure_rate_large]],
-        #                        columns=['Param', 'value1'])
-        # inf_time = pd.DataFrame([['infection_time', self.e2i[0], self.e2i[1]]],
-        #                         columns=['Param', 'value1', 'value2'])
-        # syp_time = pd.DataFrame([['symptomatic_time', self.i2s[0],
-        #                           self.i2s[1]]],
-        #                         columns=['Param', 'value1', 'value2'])
-        # sev_time = pd.DataFrame([['severe_time', self.s2sev[0],
-        #                           self.s2sev[1]]],
-        #                         columns=['Param', 'value1', 'value2'])
-        # crit_time = pd.DataFrame([['critical_time', self.sev2c[0],
-        #                            self.sev2c[1]]],
-        #                          columns=['Param', 'value1', 'value2'])
-        # death_time = pd.DataFrame([['death_time', self.c2d[0], self.c2d[1]]],
-        #                           columns=['Param', 'value1', 'value2'])
-        # asymp_rec_time = pd.DataFrame([['asymp_recovery_time',
-        #                                 self.recTimeAsym[0],
-        #                                 self.recTimeAsym[1]]],
-        #                               columns=['Param', 'value1', 'value2'])
-        # mild_rec_time = pd.DataFrame([['mild_recovery_time',
-        #                                self.recTimeMild[0],
-        #                                self.recTimeMild[1]]],
-        #                              columns=['Param', 'value1', 'value2'])
-        # sev_rec_time = pd.DataFrame([['severe_recovery_time',
-        #                               self.recTimeSev[0],
-        #                               self.recTimeSev[1]]],
-        #                             columns=['Param', 'value1', 'value2'])
-        # crit_rec_time = pd.DataFrame([['critical_recovery_time',
-        #                                self.recTimeC[0],
-        #                                self.recTimeC[1]]],
-        #                              columns=['Param', 'value1', 'value2'])
-        # daily_cont = pd.DataFrame([['daily_contacts', self.daily_contacts]],
-        #                           columns=['Param', 'value1'])
-        # bbn_mod = pd.DataFrame([['bbn_models', self.bbn_models]],
-        #                        columns=['Param', 'value1'])
-        # res_pat = pd.DataFrame([['res pattern', self.res_pat_select]],
-        #                        columns=['Param', 'value1'])
-        # wfh_lag = pd.DataFrame([['wfh_lag', self.wfh_lag]],
-        #                        columns=['Param', 'value1'])
-        # no_wfh = pd.DataFrame([['percent ind no wfh', self.no_wfh_perc]],
-        #                       columns=['Param', 'value1'])
-        # ppe_reduc = pd.DataFrame([['ppe_reduction', self.ppe_reduction]],
-        #                          columns=['Param', 'value1'])
-
-        # self.param_out = pd.concat([covid_exp, hh_rate, wp_rate, inf_time,
-        #                            syp_time, sev_time, crit_time, death_time,
-        #                            asymp_rec_time, mild_rec_time, sev_rec_time,
-        #                            crit_rec_time, daily_cont, bbn_mod, res_pat,
-        #                            wfh_lag, no_wfh, ppe_reduc])
 
     def capacity_helper(self, x):
         if x == 'res':
@@ -453,6 +399,9 @@ class Parameters(Model):
         self.init_hydraulic()
 
         self.init_income()
+
+        ''' Save the list of buildings and nodes '''
+        self.node_buildings.to_pickle('buildings.pkl')
 
         # print(self.node_buildings.groupby('wdn_node')['demand'].mean())
         # print(self.node_buildings.groupby('wdn_node')['pattern'].mean())
