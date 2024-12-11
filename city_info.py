@@ -40,7 +40,7 @@ def convert_geojson_gdf(data, filter, filter_key=None, filter_val=None):
                 geometry.append(shape(feature["geometry"]))
                 out_features.append(feature)
         else:
-            geomtry.append()
+            geometry.append()
     df = gpd.GeoDataFrame(out_features, geometry=geometry, crs="EPSG:4326")
 
     return df

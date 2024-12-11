@@ -2210,7 +2210,7 @@ class Graphics(BaseGraphics):
         ax = wntr.graphics.plot_network(
             self.wn,
             node_attribute=data['age'].iloc[-1, :] / 3600,
-            node_size=5
+            node_size=5, node_colorbar_label='Water Age (hr)'
         )
         plt.savefig(loc + 'age_map.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -2219,13 +2219,13 @@ class Graphics(BaseGraphics):
         ''' Plot the number of residences '''
         node_buildings = pd.read_pickle('buildings.pkl')
         counts = node_buildings.value_counts(['wdn_node', 'type']).unstack()
-        perc_counts = counts.divide(counts.sum(axis=1), axis=0)
+        perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
         print(perc_counts)
 
         ax = wntr.graphics.plot_network(
             self.wn,
             node_attribute=perc_counts['res'],
-            node_size=5
+            node_size=5, node_colorbar_label='% Residential'
         )
         plt.savefig(loc + 'perc_res_map.' + self.format,
                     format=self.format, bbox_inches='tight')
