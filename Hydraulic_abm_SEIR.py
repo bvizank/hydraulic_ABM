@@ -132,7 +132,7 @@ class ConsumerModel(Parameters):
         """
         agents_at_node = self.buildings[agent_to_move.building].agent_ids
         if node_type == 'residential':
-            agents_to_expose = [a for a in agent_to_move.household.agent_obs
+            agents_to_expose = [a for a in agent_to_move.household.agent_ids
                                 if a in agents_at_node]
         elif node_type == 'workplace':
             if len(agents_at_node) > self.daily_contacts:
@@ -436,10 +436,11 @@ class ConsumerModel(Parameters):
         for i in range(agents_to_work):
             # pick a work node from the pool of work nodes that have capacity
             work_node = self.random.choice(nodes_ind)
+            # remove the current agent from the list of agent ind locations
+            nodes_ind.remove(work_node)
             # pick an agent that is at that work node
             agent_ids = np.where(res_agent_ind == work_node)[0]
             agent_id = np.random.choice(agent_ids)
-            # remove the current agent from the list of agent ind locations
             res_agent_ind[agent_id] = 0
             agent_to_move = self.agents_list[agent_id]
             if (agent_to_move.wfh == 1 and
@@ -512,7 +513,7 @@ class ConsumerModel(Parameters):
 
                     ''' Calculate the demand reduction given the total demand '''
                     # total demand in L/day
-                    daily_demand = curr_pat.sum() * building.base_demand * 60
+                    daily_demand = curr_pat.sum() * building.base_demand * 60 * 60
 
                     reduction_val = 0
                     # number of agents assigned to this node over all households

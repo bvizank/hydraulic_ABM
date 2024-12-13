@@ -373,15 +373,17 @@ class Building:
         if x == 'ind':
             return self.model.demand_patterns['ind'].to_numpy()
 
-    def individual_demand(self):
-        return self.model.random.gauss(300, 20)
-
     def res_demand(self):
         if self.model.skeleton:
-            ind_demand = [self.individual_demand() for i in range(len(self.agent_obs))]
-            # print(ind_demand)
-            # need base demand to be in liters per hour from liters per day
-            demand = sum(ind_demand) / 24 / 60 / 60
+            # values for distribution come from Crouch 2021
+            # mu=175, sd=75 represents households that do not have irrigation
+            if self.model.random.random() > 0.5:
+                ind_demand = self.model.random.gauss(175, 75)
+            else:
+                ind_demand = self.model.random.gauss(227, 94)
+            # need base demand to be in liters per second from liters per day
+            # equation from Jacobs 2004 which was cited in Crouch 2021
+            demand = ind_demand * len(self.agent_obs)**(-0.439) / 24 / 60 / 60
 
             return demand
         else:
