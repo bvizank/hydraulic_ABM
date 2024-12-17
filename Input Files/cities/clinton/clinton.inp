@@ -1449,35 +1449,35 @@ GLOBAL PRICE           0.0000
 ;Tank ID             Model Fraction
 
 [TIMES]
-DURATION             00:00:00
-HYDRAULIC TIMESTEP   01:00:00
-QUALITY TIMESTEP     00:06:00
-PATTERN TIMESTEP     01:00:00
-PATTERN START        00:00:00
-REPORT TIMESTEP      01:00:00
-REPORT START         00:00:00
-START CLOCKTIME      00:00:00 AM
-RULE TIMESTEP        00:06:00
-STATISTIC            NONE      
+ DURATION             24:00:00
+ HYDRAULIC TIMESTEP   01:00:00
+ QUALITY TIMESTEP     00:05:00
+ PATTERN TIMESTEP     01:00:00
+ PATTERN START        00:00:00
+ REPORT TIMESTEP      01:00:00
+ REPORT START         00:00:00
+ START CLOCKTIME      00:00:00 AM
+ RULE TIMESTEP        00:06:00
+ STATISTIC            NONE      
 
 [REPORT]
 
 [OPTIONS]
-UNITS                LPS                 
-HEADLOSS             H-W                 
-SPECIFIC GRAVITY     1
-VISCOSITY            1
-TRIALS               200
-ACCURACY             0.001
-CHECKFREQ            2
-MAXCHECK             10
-UNBALANCED           STOP                
-PATTERN              1                   
-DEMAND MULTIPLIER    1
-EMITTER EXPONENT     0.5
-QUALITY              NONE                
-DIFFUSIVITY          1
-TOLERANCE            0.01
+ UNITS                LPS                 
+ HEADLOSS             H-W                 
+ SPECIFIC GRAVITY     1
+ VISCOSITY            1
+ TRIALS               40
+ ACCURACY             0.001
+ CHECKFREQ            2
+ MAXCHECK             10
+ UNBALANCED           Continue 10                
+ PATTERN              1                   
+ DEMAND MULTIPLIER    1
+ EMITTER EXPONENT     0.5
+ QUALITY	Chemical	mg/L
+ DIFFUSIVITY          1
+ TOLERANCE            0.01
 
 [COORDINATES]
 ;Node      X-Coord    Y-Coord   
