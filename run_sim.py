@@ -104,7 +104,7 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
             write_inpfile(
                 model.wn,
                 'final_wn_' + str(id) + '.inp',
-                units=self.wn.units
+                units=model.wn.options.hydraulic.inpfile_units
             )
         model.sim.close()
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')

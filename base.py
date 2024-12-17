@@ -2104,6 +2104,10 @@ class Graphics(BaseGraphics):
                                       'traditional',
                                       'burden']
         data = ut.read_data(loc, comp_list)
+
+        (data['age'].loc[:, 'TN514']/3600).plot()
+        plt.show()
+        plt.close()
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
         #     if 'TN' in i:
