@@ -82,7 +82,7 @@ class ENepanet_update(ENepanet):
             self.errcode = self.ENlib.ENgetpatternid(iIndex, byref(fId))
         self._error()
         return str(fId.value, 'UTF-8')
-        
+
     def ENclearreport(self):
         ''' Clear the report file from the current project '''
         self.errcode = self.ENlib.EN_clearreport(self._project)
@@ -163,7 +163,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
                     # do something
             sim.close()
             results = wntr.epanet.io.BinFile().read("temp2.bin")
-        
+
 
         Because of the way EPANET binary files are written, a warning will be issued
         when reading in the results - this is normal and is not a problem.

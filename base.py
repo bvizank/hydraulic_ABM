@@ -2095,7 +2095,10 @@ class Graphics(BaseGraphics):
 
         ''' Make age plots '''
         age = data['age'][nodes_w_demand].mean(axis=1)
-        print(age)
+        age_all = data['age'][nodes_w_demand]
+        data['age'][nodes_w_demand].plot()
+        plt.show()
+        plt.close()
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
         plt.plot(x_values, age.iloc[-x_len:] / 3600)
