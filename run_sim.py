@@ -10,12 +10,13 @@ from time import localtime, strftime, perf_counter
 # from utils import clean_epanet
 import os
 import wntr
+from wntr.network.io import write_inpfile
 from tqdm import tqdm
 
 warnings.simplefilter("ignore", UserWarning)
 
 
-def run_sim(city, id=0, days=90, seed=218, **kwargs):
+def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
     if 'output_loc' in kwargs:
         output_loc = kwargs['output_loc'] + str(id)
@@ -77,6 +78,12 @@ def run_sim(city, id=0, days=90, seed=218, **kwargs):
         model.age_matrix.to_pickle(output_loc + "/age.pkl")
         model.flow_matrix.to_pickle(output_loc + "/flow.pkl")
     elif model.hyd_sim in ['hourly', 'monthly']:
+        if write_inp:
+            write_inpfile(
+                model.wn,
+                'final_inp_' + str(id) + '.inp',
+                units=model.wn.options.hydraulic.inpfile_units
+            )
         model.sim.close()
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
         demand = results.node['demand'] * 1000000
