@@ -384,7 +384,7 @@ class Parameters(Model):
         self.dag_nodes()
         self.create_comm_network()
 
-        # self.save_wn(city)
+        self.save_wn(city)
         self.init_hydraulic(virtual=False)
 
         self.init_income()
@@ -815,7 +815,11 @@ class Parameters(Model):
             THE INPUT FOR WNTR '''
             node.demand_timeseries_list[0].base_value = demand * np.max(pattern) / 1000
 
-        wntr.network.write_inpfile(self.wn, city + '.inp')
+        wntr.network.write_inpfile(
+            self.wn,
+            city + '.inp',
+            units=self.wn.options.hydraulic.inpfile_units
+        )
 
     def init_hydraulic(self, virtual=True):
         ''' Initialize the hydraulic information collectors '''
@@ -868,7 +872,7 @@ class Parameters(Model):
         # initialization methods
         self.base_demand_list()
         # self.set_age()
-        if self.hyd_sim == 'hourly' or self.hyd_sim == 'monthly':
+        if self.hyd_sim in ['hourly', 'monthly']:
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
             # self.wn.options.time.quality_timestep = 900
@@ -893,6 +897,12 @@ class Parameters(Model):
                 ''' NEED TO CONVERT THE LPS FROM THE BUILDINGS TO CMS WHICH IS
                 THE INPUT FOR WNTR '''
                 node.demand_timeseries_list[0].base_value = demand / 1000
+
+            wntr.network.write_inpfile(
+                self.wn,
+                'init_wn.inp',
+                units=self.wn.options.hydraulic.inpfile_units
+            )
 
         # water age slope to determine the warmup period end
         self.water_age_slope = 1
