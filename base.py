@@ -2065,7 +2065,7 @@ class Graphics(BaseGraphics):
         # plt.close()
 
         data['demand'].loc[:, '58'].plot()
-        plt.show()
+        plt.savefig(loc + 'demand_58.png', bbox_inches='tight')
         plt.close()
 
         demand = data['demand'][nodes_w_demand].sum(axis=1)
@@ -2101,8 +2101,8 @@ class Graphics(BaseGraphics):
         age = data['age'][nodes_w_demand].mean(axis=1)
         age_all = data['age'][nodes_w_demand] / 3600
         print(age_all)
-        age_all.loc[:, '245'].plot()
-        plt.show()
+        age_all.loc[:, '58'].plot()
+        plt.savefig(loc + 'age_58.png', bbox_inches='tight')
         plt.close()
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)

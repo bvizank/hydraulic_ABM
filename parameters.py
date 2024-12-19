@@ -904,5 +904,7 @@ class Parameters(Model):
                 units=self.wn.options.hydraulic.inpfile_units
             )
 
+            print(self.wn.options.hydraulic.__dict__)
+
         # water age slope to determine the warmup period end
         self.water_age_slope = 1
