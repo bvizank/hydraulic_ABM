@@ -2105,8 +2105,11 @@ class Graphics(BaseGraphics):
                                       'burden']
         data = ut.read_data(loc, comp_list)
 
+        (data['demand'].loc[:, 'TN514']).plot()
+        plt.savefig(loc + 'demand_TN514.png', bbox_inches='tight')
+        plt.close()
         (data['age'].loc[:, 'TN514']/3600).plot()
-        plt.show()
+        plt.savefig(loc + 'age_TN514.png', bbox_inches='tight')
         plt.close()
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
