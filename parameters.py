@@ -873,10 +873,15 @@ class Parameters(Model):
         self.base_demand_list()
         # self.set_age()
         if self.hyd_sim in ['hourly', 'monthly']:
+            print("Set the pattern and hydraulic timestep values and quality parameter")
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
             # self.wn.options.time.quality_timestep = 900
             self.wn.options.quality.parameter = 'AGE'
+
+            print(self.wn.options.quality.parameter)
+
+            print("Initialize the EPANET simulator")
             self.sim = EpanetSimulator_Stepwise(self.wn,
                                                 file_prefix='temp' + str(self.id))
             self.sim.initialize(file_prefix='temp' + str(self.id))
