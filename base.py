@@ -599,7 +599,7 @@ class BaseGraphics:
             # add a red dashed line at 4.6%
             if income_line:
                 for ax in axes:
-                    ax.axhline(y=income_line, color='r', linestyle='dashed') 
+                    ax.axhline(y=income_line, color='r', linestyle='dashed')
 
             # set the ylabel
             axes[0].set_ylabel(ylabel)
@@ -883,7 +883,7 @@ class Graphics(BaseGraphics):
             x for x in np.arange(0, days, days / len(self.pm['avg_demand']))
         ])
         self.x_values_day = np.array([
-            x for x in range(180)
+            x for x in range(self.days)
         ])
 
         ''' Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh '''
@@ -897,32 +897,36 @@ class Graphics(BaseGraphics):
         # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
 
     def flow_plots(self):
+        ''' Calculate the difference in flow between the first and last 30 days '''
+        print(self.basebw['avg_flow'])
+        # self.pm['avg_flow']
+
         ''' Make the flow direction changes plot '''
-        pm_flow_change, pm_flow_sum = self.calc_flow_diff(
-            self.pm['avg_flow'],
-            self.times[len(self.times) - 1]
-        )
-        base_flow_change, base_flow_sum = self.calc_flow_diff(
-            self.base['avg_flow'],
-            self.times[len(self.times) - 1]
-        )
+        # pm_flow_change, pm_flow_sum = self.calc_flow_diff(
+        #     self.pm['avg_flow'],
+        #     self.times[len(self.times) - 1]
+        # )
+        # base_flow_change, base_flow_sum = self.calc_flow_diff(
+        #     self.base['avg_flow'],
+        #     self.times[len(self.times) - 1]
+        # )
 
         # print(pm_flow_sum['MA728'])
         # print(base_flow_sum['MA728'])
 
-        ax = wntr.graphics.plot_network(self.wn, link_attribute=pm_flow_sum,
-                                        link_colorbar_label='Flow Changes',
-                                        node_size=0, link_width=2)
-        plt.savefig(self.pub_loc + 'flow_network_pm.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # wntr.graphics.plot_network(self.wn, link_attribute=pm_flow_sum,
+        #                            link_colorbar_label='Flow Changes',
+        #                            node_size=0, link_width=2)
+        # plt.savefig(self.pub_loc + 'flow_network_pm.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
-        ax = wntr.graphics.plot_network(self.wn, link_attribute=base_flow_sum,
-                                        link_colorbar_label='Flow Changes',
-                                        node_size=0, link_width=2)
-        plt.savefig(self.pub_loc + 'flow_network_base.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        # wntr.graphics.plot_network(self.wn, link_attribute=base_flow_sum,
+        #                            link_colorbar_label='Flow Changes',
+        #                            node_size=0, link_width=2)
+        # plt.savefig(self.pub_loc + 'flow_network_base.' + self.format,
+        #             format=self.format, bbox_inches='tight')
+        # plt.close()
 
     def demand_plots(self):
         ''' Make demand plots by sector with PM data '''
@@ -983,118 +987,123 @@ class Graphics(BaseGraphics):
         ''' Make plots of aggregate demand data '''
         demand_base = self.base['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         demand_basebw = self.basebw['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         demand_pm = self.pm['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         demand_pm_nobw = self.pm_nobw['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
              demand_basebw.sum(axis=1).rolling(24).mean(),
              demand_pm_nobw.sum(axis=1).rolling(24).mean(),
              demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
         )
 
         var_base = self.base['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         var_basebw = self.basebw['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         var_pm = self.pm['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         var_pm_nobw = self.pm_nobw['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ]
+        ] / 1000 * 3600
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
              var_basebw.sum(axis=1).rolling(24).mean(),
              var_pm_nobw.sum(axis=1).rolling(24).mean(),
              var_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
         )
 
         demand_err = ut.calc_error(demand_var, self.error)
 
-        fig, axes = plt.subplots(1, 2)
+        fig, axes = plt.subplots(2, 1)
         # format the y axis ticks to have a dollar sign and thousands commas
         fmt = '{x:,.0f}'
         tick = mtick.StrMethodFormatter(fmt)
         axes[0].yaxis.set_major_formatter(tick) 
         axes[1].yaxis.set_major_formatter(tick) 
 
-        axes[0] = self.make_avg_plot(
-            axes[0], demand, demand_err, ['Base', 'Base+BW', 'PM', 'PM+BW'],
+        axes[1] = self.make_avg_plot(
+            axes[1], demand, demand_err, ['Base', 'TWA', 'PM', 'TWA+PM'],
             self.x_values_hour, show_labels=False
         )
+
+        ''' Calculate the change in demand between Base/TWA and PM/TWA+PM '''
+        print(demand[720:].mean())
+        print(demand[-720:].mean())
 
         ''' Plot residential demand in a subfigure '''
         demand_base = self.base['avg_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         demand_basebw = self.basebw['avg_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         demand_pm = self.pm['avg_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         demand_pm_nobw = self.pm_nobw['avg_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
              demand_basebw.sum(axis=1).rolling(24).mean(),
              demand_pm_nobw.sum(axis=1).rolling(24).mean(),
              demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
         )
 
         var_base = self.base['var_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         var_basebw = self.basebw['var_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         var_pm = self.pm['var_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         var_pm_nobw = self.pm_nobw['var_demand'][
             self.res_nodes
-        ]
+        ] / 1000 * 3600
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
              var_basebw.sum(axis=1).rolling(24).mean(),
              var_pm_nobw.sum(axis=1).rolling(24).mean(),
              var_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
         )
 
         demand_err = ut.calc_error(demand_var, self.error)
 
-        axes[1] = self.make_avg_plot(
-            axes[1], demand, demand_err,
-            ['Base', 'Base+BW', 'PM', 'PM+BW'], self.x_values_hour
+        axes[0] = self.make_avg_plot(
+            axes[0], demand, demand_err,
+            ['Base', 'TWA', 'PM', 'TWA+PM'], self.x_values_hour
         )
 
-        axes[0].legend(['Base', 'Base+BW', 'PM', 'PM+BW'])
+        axes[0].legend(['Base', 'TWA', 'PM', 'TWA+PM'])
         axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
                      transform=axes[0].transAxes)
         axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
                      transform=axes[1].transAxes)
-        fig.supxlabel('Time (days)', y=-0.06)
-        fig.supylabel('Demand (L)', x=0.04)
-        plt.gcf().set_size_inches(7, 3.5)
+        fig.supxlabel('Time (days)', y=0.03)
+        fig.supylabel('Demand (L)', x=0.06)
+        plt.gcf().set_size_inches(3.5, 7)
+        plt.tight_layout()
 
         plt.savefig(self.pub_loc + 'sum_demand_aggregate' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -1150,6 +1159,12 @@ class Graphics(BaseGraphics):
         fig.supxlabel('Time (days)', y=0)
         fig.supylabel('Age (hrs)', x=0)
         plt.gcf().set_size_inches(4, 4)
+
+        # for ax_ls in axes:
+        #     for ax in ax_ls:
+        #         ax.axhline(y=130, color='k', linestyle='solid')
+        #         ax.axhline(y=140, color='k', linestyle='dotted')
+        #         ax.axhline(y=150, color='k', linestyle='dashdot')
 
         plt.savefig(self.pub_loc + 'mean_age_sector.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -1255,7 +1270,7 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cow_boxplot_no_outliers',
-            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
             box=True,
             means=False,
             outliers=""
@@ -1582,7 +1597,7 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cost_boxplot',
-            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
             ylabel='Cost ($)',
             box=True,
             means=False,
@@ -1708,7 +1723,7 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cow_boxplot',
-            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
             # ['Base', 'Base+BW', 'SD+BW'],
             box=True,
         )
@@ -1716,7 +1731,7 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             data,
             'cow_boxplot_no_outliers',
-            ['Base', 'Base+BW', 'PM', 'PM+BW'],
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
             # ['Base', 'Base+BW', 'SD+BW'],
             box=True,
             means=False,
@@ -2002,15 +2017,34 @@ class Graphics(BaseGraphics):
         # households = len(self.pm['twa']['drink'].index)
         # print(twa_pm)
 
+        # linestyle_ls = ['solid', 'dashed', 'dashdot']
+        # data_ls = [twa_basebw[0] * 100, twa_pm[0] * 100]
+        # sd_ls = [ut.calc_error(twa_basebw[1], 'se') * 100,
+        #          ut.calc_error(twa_pm[1], 'se') * 100]
+
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True)
         axes[0] = self.make_avg_plot(
             axes[0], twa_basebw[0] * 100,
-            ut.calc_error(twa_basebw[1], 'ci95') * 100,
+            ut.calc_error(twa_basebw[1], 'se') * 100,
             twa_keys, twa_basebw[0].index / 24
         )
+        # for i, ax in enumerate(axes):
+        #     for j, col in enumerate(twa_keys):
+        #         ax.plot(data_ls[i].index / 24,
+        #                 data_ls[i][col],
+        #                 color='k',
+        #                 linestyle=linestyle_ls[j])
+
+        #     #  need to separate so that the legend fills correctly
+        #     for j, col in enumerate(twa_keys):
+        #         ax.fill_between(data_ls[i].index / 24,
+        #                         data_ls[i][col] - sd_ls[i][col],
+        #                         data_ls[i][col] + sd_ls[i][col],
+        #                         color='k', alpha=0.5)
+
         axes[1] = self.make_avg_plot(
             axes[1], twa_pm[0] * 100,
-            ut.calc_error(twa_pm[1], 'ci95') * 100,
+            ut.calc_error(twa_pm[1], 'se') * 100,
             twa_keys, twa_pm[0].index / 24
         )
         # axes[0] = self.make_avg_plot(

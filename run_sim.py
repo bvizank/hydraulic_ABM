@@ -108,11 +108,11 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
             )
         model.sim.close()
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
-        demand = results.node['demand'] * 1000000
+        demand = results.node['demand'] * 1000
         demand.to_pickle(output_loc + "/demand.pkl")
         results.node['pressure'].to_pickle(output_loc + "/pressure.pkl")
         results.node['quality'].to_pickle(output_loc + "/age.pkl")
-        flow = results.link['flowrate'] * 1000000
+        flow = results.link['flowrate'] * 1000
         flow.to_pickle(output_loc + "/flow.pkl")
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
