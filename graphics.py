@@ -8,10 +8,10 @@ plots = Graphics(publication=True, error='se', days=days)
 # plots.demand_plots()
 
 ''' Flow plots '''
-plots.flow_plots()
+# plots.flow_plots()
 
 ''' Age plots '''
-# plots.age_plots()
+plots.age_plots()
 
 ''' Industrial distance plots '''
 # plots.ind_dist_plots()

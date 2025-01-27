@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from copy import deepcopy as dcp
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.ticker as mtick
 from scipy.stats import binned_statistic
 import utils as ut
@@ -898,8 +899,43 @@ class Graphics(BaseGraphics):
 
     def flow_plots(self):
         ''' Calculate the difference in flow between the first and last 30 days '''
-        print(self.basebw['avg_flow'])
-        # self.pm['avg_flow']
+        main_pipes = self.pm['avg_flow'].filter(regex='^MA').abs()
+        main_dict = dict()
+        for col in main_pipes.columns:
+            pipe = self.wn.get_link(col)
+            first30 = (
+                main_pipes.head(720).loc[:, col].mean() /
+                1000000 /
+                pipe.diameter ** 2
+            )
+            last30 = (
+                main_pipes.tail(720).loc[:, col].mean() /
+                1000000 /
+                pipe.diameter ** 2
+            )
+            if first30 > 0.0001:
+                main_dict[col] = (first30 - last30)/first30
+            else:
+                main_dict[col] = 0
+            
+        wntr.graphics.plot_network(
+            self.wn, link_attribute=main_dict,
+            link_colorbar_label='Velocity Changes', link_range=[-2, 2],
+            node_size=0, link_width=2, link_cmap=mpl.colormaps['PRGn']
+        )
+        plt.gcf().set_size_inches(7, 5.5)
+        plt.savefig(self.pub_loc + 'velocity_changes_main_pipes.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+        wntr.graphics.plot_network(
+            self.wn, link_attribute='diameter', node_size=0, link_width=2
+        )
+        plt.gcf().set_size_inches(7, 5.5)
+        plt.savefig(self.pub_loc + 'pipe_diameters.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+        # print(main_pipes[720:].mean(axis=None))
+        # print(main_pipes[-720:].mean(axis=None))
 
         ''' Make the flow direction changes plot '''
         # pm_flow_change, pm_flow_sum = self.calc_flow_diff(
@@ -1110,6 +1146,16 @@ class Graphics(BaseGraphics):
         plt.close()
 
     def age_plots(self):
+        ''' Calculate the number of nodes above 150 h '''
+        first30_age = self.pm['avg_age'][self.res_nodes].head(720).mean() / 3600
+        last30_age = self.pm['avg_age'][self.res_nodes].tail(720).mean() / 3600
+        
+        print((first30_age > 150).sum())
+        print((last30_age > 150).sum())
+        
+        print(self.pm['avg_age'].loc[:, self.res_nodes].max(axis=None) / 3600)
+        print(self.pm['avg_age'].loc[:, self.res_nodes].min(axis=None) / 3600)
+
         ''' Make age plot by sector for both base and PM '''
         cols = ['Residential', 'Commercial', 'Industrial']
 
