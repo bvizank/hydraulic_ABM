@@ -899,7 +899,18 @@ class Graphics(BaseGraphics):
 
     def flow_plots(self):
         ''' Calculate the difference in flow between the first and last 30 days '''
-        main_pipes = self.pm['avg_flow'].filter(regex='^MA').abs()
+        main_pipe_comm = (
+            'MA516', 'MA515', 'MA514', 'MA513', 'MA512', 'MA511', 'MA510', 'MA509',
+            'MA957', 'MA470', 'MA469', 'MA468', 'MA467', 'MA956', 'MA508', 'MA507',
+            'MA506', 'MA505', 'MA1066', 'MA958', 'MA466', 'MA465', 'MA1048',
+            'MA463', 'MA462', 'MA461', 'MA460', 'MA955', 'MA533', 'MA532', 'MA531',
+            'MA530', 'MA529', 'MA528', 'MA552', 'MA551', 'MA526', 'MA549', 'MA548',
+            'MA547', 'MA540', 'MA539', 'MA538', 'MA537', 'MA536', 'MA1043', 'MA535',
+            'MA534', 'MA1042', 'MA960', 'MA474', 'MA473', 'MA472', 'MA1063',
+            'MA553', 'MA517', 'MA596', 'MA475', 'MA1092', 'MA959', 'MA1064', 'MA546',
+            'MA541'
+        )
+        main_pipes = self.pm['avg_flow'].filter(regex='^MA')
         main_dict = dict()
         for col in main_pipes.columns:
             pipe = self.wn.get_link(col)
@@ -913,29 +924,39 @@ class Graphics(BaseGraphics):
                 1000000 /
                 pipe.diameter ** 2
             )
-            if first30 > 0.0001:
-                main_dict[col] = (first30 - last30)/first30
+            if first30 != 0.0:
+                main_dict[col] = (last30 - first30)/abs(first30)
             else:
                 main_dict[col] = 0
-            
+
+            if col == 'MA919':
+                print(f"Pipe MA919: \n first {first30}, last: {last30}, diff: {main_dict['MA919']}")
+
         wntr.graphics.plot_network(
             self.wn, link_attribute=main_dict,
-            link_colorbar_label='Velocity Changes', link_range=[-2, 2],
+            link_colorbar_label='Velocity Changes', link_range=[-10, 10],
             node_size=0, link_width=2, link_cmap=mpl.colormaps['PRGn']
         )
         plt.gcf().set_size_inches(7, 5.5)
         plt.savefig(self.pub_loc + 'velocity_changes_main_pipes.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        wntr.graphics.plot_network(
-            self.wn, link_attribute='diameter', node_size=0, link_width=2
-        )
-        plt.gcf().set_size_inches(7, 5.5)
-        plt.savefig(self.pub_loc + 'pipe_diameters.' + self.format,
+
+        ''' Print the average change in pipe flow for network and commercial
+        subset '''
+        print(sum(main_dict.values()) / len(main_dict))
+
+        comm_dict = {i: main_dict[i] for i in main_pipe_comm}
+        print(sum(comm_dict.values()) / len(comm_dict))
+
+        ''' Plot a single pipe flow '''
+        (self.pm['avg_flow'].loc[:, 'MA1066'] / 1000 / 3.875 * 60).plot()
+        plt.gcf().set_size_inches(7, 3.5)
+        plt.xlabel('Time (sec)')
+        plt.ylabel('Flow (gpm)')
+        plt.savefig(self.pub_loc + 'MA1066_flow.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        # print(main_pipes[720:].mean(axis=None))
-        # print(main_pipes[-720:].mean(axis=None))
 
         ''' Make the flow direction changes plot '''
         # pm_flow_change, pm_flow_sum = self.calc_flow_diff(
@@ -1148,13 +1169,72 @@ class Graphics(BaseGraphics):
     def age_plots(self):
         ''' Calculate the number of nodes above 150 h '''
         first30_age = self.pm['avg_age'][self.res_nodes].head(720).mean() / 3600
-        last30_age = self.pm['avg_age'][self.res_nodes].tail(720).mean() / 3600
-        
-        print((first30_age > 150).sum())
-        print((last30_age > 150).sum())
-        
+        last30_age = pd.concat(
+            [self.base['avg_age'][self.res_nodes].tail(720).mean() / 3600,
+             self.basebw['avg_age'][self.res_nodes].tail(720).mean() / 3600,
+             self.pm_nobw['avg_age'][self.res_nodes].tail(720).mean() / 3600,
+             self.pm['avg_age'][self.res_nodes].tail(720).mean() / 3600],
+            axis=1,
+            keys=['Base', 'TWA', 'PM', 'TWA+PM'],
+        )
+
+        print(first30_age)
+        print(last30_age)
+
+        axes = plt.subplot()
+
+        axes.boxplot(last30_age, showmeans=True)
+
+        # add a line at 150 hours
+        axes.axhline(y=150, color='r', linestyle='dashed', lw=1)
+
+        # set the x ticks for each subplot
+        axes.set_xticklabels(['Base', 'TWA', 'PM', 'TWA+PM'], rotation=45)
+
+        # set the ylabel
+        axes.set_ylabel('Water Age (hours)')
+
+        plt.gcf().set_size_inches(3.5, 3.5)
+        plt.savefig(self.pub_loc + 'water_age_boxplot.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
         print(self.pm['avg_age'].loc[:, self.res_nodes].max(axis=None) / 3600)
         print(self.pm['avg_age'].loc[:, self.res_nodes].min(axis=None) / 3600)
+
+        ''' Make age plot for central tank '''
+        tank_age = pd.concat(
+            [
+                self.base['avg_age']['Tank'],
+                self.basebw['avg_age']['Tank'],
+                self.pm_nobw['avg_age']['Tank'],
+                self.pm['avg_age']['Tank']
+            ],
+            axis=1,
+            keys=['Base', 'TWA', 'PM', 'TWA+PM'],
+        )
+        tank_age_var = pd.concat(
+            [
+                self.base['var_age']['Tank'],
+                self.basebw['var_age']['Tank'],
+                self.pm_nobw['var_age']['Tank'],
+                self.pm['var_age']['Tank']
+            ],
+            axis=1,
+            keys=['Base', 'TWA', 'PM', 'TWA+PM'],
+        )
+        tank_age_err = ut.calc_error(tank_age_var, self.error)
+
+        ax = plt.subplot()
+        ax = self.make_avg_plot(
+            ax, tank_age / 3600, tank_age_err / 3600,
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
+            self.x_values_hour, xlabel='Time (days)', ylabel='Water Age (hours)',
+            show_labels=True
+        )
+        plt.savefig(self.pub_loc + 'tank_age.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
         ''' Make age plot by sector for both base and PM '''
         cols = ['Residential', 'Commercial', 'Industrial']
@@ -1203,7 +1283,7 @@ class Graphics(BaseGraphics):
         axes[1, 1].text(0.5, -0.23, "(d)", size=12, ha="center",
                      transform=axes[1, 1].transAxes)
         fig.supxlabel('Time (days)', y=0)
-        fig.supylabel('Age (hrs)', x=0)
+        fig.supylabel('Water Age (hours)', x=0)
         plt.gcf().set_size_inches(4, 4)
 
         # for ax_ls in axes:
@@ -1707,13 +1787,16 @@ class Graphics(BaseGraphics):
         )
 
     def cowpi_boxplot(self, di=False, perc=False, exclusion=False, sa=False):
+        print(self.base['cowpi'][self.base['cowpi']['level'] == 0].median())
+        print(self.base['cowpi'][self.base['cowpi']['level'] == 1].median())
+
         ''' Make cowpi boxplots '''
-        print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
-        print(self.pm_nodi['cowpi']['level'])
-        print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<15000].count() /
-              len(self.pm_nodi['cowpi']['income']))
-        print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<130000].count() /
-              len(self.pm_nodi['cowpi']['income']))
+        # print(self.pm_nodi['cowpi'].groupby('i').quantile(0.2))
+        # print(self.pm_nodi['cowpi']['level'])
+        # print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<15000].count() /
+        #       len(self.pm_nodi['cowpi']['income']))
+        # print(self.pm_nodi['cowpi']['income'][self.pm_nodi['cowpi']['income']<130000].count() /
+        #       len(self.pm_nodi['cowpi']['income']))
         # cowpi_elow = [
         #     self.base['cowpi'][self.base['cowpi']['level'] == 0]['cowpi']*100,
         #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 0]['cowpi']*100,
@@ -1921,7 +2004,7 @@ class Graphics(BaseGraphics):
             self.make_income_comp_plot(
                 data,
                 'cow_boxplot_exclusion',
-                ['No Drink', 'No Cook', 'No Hygience', 'No Exclusions'],
+                ['Drink', 'Cook', 'Hygience', 'None'],
                 box=True,
                 means=False,
                 outliers="",
@@ -1953,7 +2036,7 @@ class Graphics(BaseGraphics):
             self.make_income_comp_plot(
                 data,
                 'cow_boxplot_sa',
-                ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75', 'PM+BW-100'],
+                ['TWA+PM', 'TWA+PM-75', 'TWA+PM-50', 'TWA+PM-25', 'TWA+PM-0'],
                 # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
                 box=True,
                 means=False,

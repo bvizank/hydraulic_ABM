@@ -112,6 +112,7 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
         demand.to_pickle(output_loc + "/demand.pkl")
         results.node['pressure'].to_pickle(output_loc + "/pressure.pkl")
         results.node['quality'].to_pickle(output_loc + "/age.pkl")
+        results.link['quality'].to_pickle(output_loc + "/age_link.pkl")
         flow = results.link['flowrate'] * 1000
         flow.to_pickle(output_loc + "/flow.pkl")
     agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
