@@ -925,7 +925,7 @@ class Graphics(BaseGraphics):
                 pipe.diameter ** 2
             )
             if first30 != 0.0:
-                main_dict[col] = (last30 - first30)/abs(first30)
+                main_dict[col] = (last30 - first30)/abs(first30) * 100
             else:
                 main_dict[col] = 0
 
@@ -934,7 +934,7 @@ class Graphics(BaseGraphics):
 
         wntr.graphics.plot_network(
             self.wn, link_attribute=main_dict,
-            link_colorbar_label='Velocity Changes', link_range=[-10, 10],
+            link_colorbar_label='% Change Vel.', link_range=[-200, 200],
             node_size=0, link_width=2, link_cmap=mpl.colormaps['PRGn']
         )
         plt.gcf().set_size_inches(7, 5.5)
