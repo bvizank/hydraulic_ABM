@@ -29,6 +29,7 @@ class Parameters(Model):
         self.id = id
         self.num_agents = N
         self.seed = seed
+        np.random.seed(seed)
         self.network = city
         self.t = 0
         self.schedule = RandomActivation(self)
@@ -213,7 +214,7 @@ class Parameters(Model):
         )
         return house
 
-    def setup_real(self, name, wn_name=None):
+    def setup_real(self, city, wn_name=None):
         '''
         Import the required data for a real city with a synthetic WDN
 
@@ -226,7 +227,7 @@ class Parameters(Model):
 
         Parameters:
         -----------
-            name :: str
+            city :: str
                 The name of the city. There is logic to weed out names
                 without data.
         '''
@@ -234,7 +235,7 @@ class Parameters(Model):
         # could add argument to setup_real to make this adjustable
         self.skeleton = True
 
-        city_dir = os.path.join('Input Files/cities', name)
+        city_dir = os.path.join('Input Files/cities', city)
 
         ''' Import the water network model using WNTR '''
         if wn_name:
@@ -242,7 +243,7 @@ class Parameters(Model):
             if not os.path.exists(inp_file):
                 raise ValueError(f"File {wn_name + '.inp'} does not exist.")
         else:
-            inp_file = os.path.join(city_dir, name + '.inp')
+            inp_file = os.path.join(city_dir, city + '.inp')
         self.wn = wntr.network.WaterNetworkModel(inp_file)
         self.nodes_w_demand = [j for j, _ in self.wn.junctions()]
 
@@ -259,17 +260,7 @@ class Parameters(Model):
         )
 
         ''' Assign each building a node in the WDN '''
-        self.node_buildings = ci.make_building_list(self.wn, name, city_dir)
-
-        # assign each building a demand
-        # self.node_buildings['demand'] = (
-        #     self.node_buildings['type'].apply(self.demand_helper)
-        # )
-
-        # # assign each building a pattern based on the type
-        # self.node_buildings['pattern'] = (
-        #     self.node_buildings['type'].apply(self.pattern_helper)
-        # )
+        self.node_buildings = ci.make_building_list(self.wn, city, city_dir)
 
         # assign each building a capacity based on type
         self.node_buildings['capacity'] = (
@@ -300,8 +291,6 @@ class Parameters(Model):
         print(f"Capacity of all industrial nodes: {self.work_agents}")
         self.ind_agent_n = int(dcp(self.work_agents) / 2)
 
-        # print(self.node_buildings[self.node_buildings['type'] == 'ind']['capacity'])
-        # print(self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
         self.work_loc_list = self.node_list(
             self.node_buildings[self.node_buildings['type'] == 'ind']['capacity'],
             (self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list() +
@@ -349,16 +338,23 @@ class Parameters(Model):
         # init dictionary of agents
         self.agents_list = dict()
 
-        # self.setup_grid()
-
         # make dictionary of building objects
         self.buildings = (
             self.node_buildings[~self.node_buildings['type'].isin(['res'])].apply(self.building_helper, axis=1)
         ).to_dict()
 
+        # initialize income values for all of the households in the sim
+        self.income_list = ut.income_list(
+            data=dt.clinton_income,
+            n_house=len(self.node_buildings[self.node_buildings['type'].isin(['res'])]) * 1.1,
+            model=self
+        )
+
         # make dictionary of household objects
         self.households = (
-            self.node_buildings[self.node_buildings['type'].isin(['res'])].apply(self.household_helper, axis=1)
+            self.node_buildings[
+                self.node_buildings['type'].isin(['res'])
+            ].apply(self.household_helper, axis=1)
         ).to_dict()
 
         # now it includes all of the households.
@@ -396,7 +392,9 @@ class Parameters(Model):
         self.set_attributes()
         self.dag_nodes()
         self.create_comm_network()
-        self.init_hydraulic()
+
+        self.save_wn(city)
+        self.init_hydraulic(virtual=False)
 
         self.init_income()
 
@@ -803,7 +801,36 @@ class Parameters(Model):
         for agent in self.schedule.agents:
             agent.friends = [x for x in self.swn.neighbors(agent.unique_id)]
 
-    def init_hydraulic(self):
+    def save_wn(self, city):
+        '''
+        Save the current wn as input file with the peak demand for each node
+        '''
+        for name in self.nodes_w_demand:
+            if name not in self.wdn_nodes:
+                continue
+            if name == '1555':
+                print("Found a reservoir")
+            demand = 0
+            pattern = np.zeros(24)
+            for building_id in self.wdn_nodes[name]:
+                building = self.buildings[building_id]
+                demand += building.base_demand
+                pattern += building.demand_pattern
+
+            pattern /= len(self.wdn_nodes[name])
+            node = self.wn.get_node(name)
+
+            ''' NEED TO CONVERT THE LPS FROM THE BUILDINGS TO CMS WHICH IS
+            THE INPUT FOR WNTR '''
+            node.demand_timeseries_list[0].base_value = demand * np.max(pattern) / 1000
+
+        wntr.network.write_inpfile(
+            self.wn,
+            city + '.inp',
+            units=self.wn.options.hydraulic.inpfile_units
+        )
+
+    def init_hydraulic(self, virtual=True):
         ''' Initialize the hydraulic information collectors '''
         # add wfh patterns
         for i in range(dt.wfh_patterns.shape[1]):
@@ -854,15 +881,44 @@ class Parameters(Model):
         # initialization methods
         self.base_demand_list()
         # self.set_age()
-        if self.hyd_sim == 'hourly' or self.hyd_sim == 'monthly':
+        if self.hyd_sim in ['hourly', 'monthly']:
+            print("Set the pattern and hydraulic timestep values and quality parameter")
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
             # self.wn.options.time.quality_timestep = 900
             self.wn.options.quality.parameter = 'AGE'
+
+            print(self.wn.options.quality.parameter)
+
+            print("Initialize the EPANET simulator")
             self.sim = EpanetSimulator_Stepwise(self.wn,
                                                 file_prefix='temp' + str(self.id))
             self.sim.initialize(file_prefix='temp' + str(self.id))
             # self.current_demand = self.sim._results.node['demand']
+
+        # set the base demand based on the buildings at each node
+        if not virtual:
+            print("Setting the base demand values based on each building.....")
+            for name in self.nodes_w_demand:
+                if name not in self.wdn_nodes:
+                    continue
+                demand = 0
+                for building_id in self.wdn_nodes[name]:
+                    building = self.buildings[building_id]
+                    demand += building.base_demand
+
+                node = self.wn.get_node(name)
+                ''' NEED TO CONVERT THE LPS FROM THE BUILDINGS TO CMS WHICH IS
+                THE INPUT FOR WNTR '''
+                node.demand_timeseries_list[0].base_value = demand / 1000
+
+            wntr.network.write_inpfile(
+                self.wn,
+                'init_wn.inp',
+                units=self.wn.options.hydraulic.inpfile_units
+            )
+
+            print(self.wn.options.hydraulic.__dict__)
 
         # water age slope to determine the warmup period end
         self.water_age_slope = 1

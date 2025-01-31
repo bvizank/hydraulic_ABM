@@ -332,7 +332,7 @@ def delete_contents(loc):
             print('Failed to delete %s. Reason: %s' % (file_path, e))
 
 
-def income_list(data, n_house, s):
+def income_list(data, n_house, model, s=None):
     '''
     Create a list of incomes that is representative of the data
     provided and containing >= n_house values.
@@ -342,9 +342,13 @@ def income_list(data, n_house, s):
         data   (dict): income data formatted as key: income bracket,
                        value: percentage of population in income bracket
         n_house (int): size of synthetic dataset (number of households)
+        s       (int): seed for RNG
     '''
 
-    random.seed(s)
+    # if the seed exists, set the seed
+    if s:
+        random.seed(s)
+
     income = list()
     index = 0
     for i, key in enumerate(data):
@@ -356,21 +360,21 @@ def income_list(data, n_house, s):
         '''
         if i != (len(data) - 1):
             for j in range(math.ceil(data[key]/1000*n_house)):
-                income.append(random.uniform(
+                income.append(model.random.uniform(
                     list(data.keys())[i], list(data.keys())[i+1]
                 ))
         else:
             # at the end we need to arbitrarily set an upper bound
             for j in range(math.ceil(data[key]/1000*n_house)):
-                income.append(random.uniform(
+                income.append(model.random.uniform(
                     list(data.keys())[i], list(data.keys())[i]*3
                 ))
         index += data[key]
 
     # shuffle the income list
-    random.shuffle(income)
+    model.random.shuffle(income)
 
     # convert the income list to a numpy array
-    income = np.array(income)
+    # income = np.array(income)
 
     return income

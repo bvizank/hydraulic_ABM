@@ -2064,6 +2064,10 @@ class Graphics(BaseGraphics):
         #             format=self.format, bbox_inches='tight')
         # plt.close()
 
+        data['demand'].loc[:, '58'].plot()
+        plt.savefig(loc + 'demand_58.png', bbox_inches='tight')
+        plt.close()
+
         demand = data['demand'][nodes_w_demand].sum(axis=1)
         x_values = np.array([
             x for x in np.arange(0, days, days / x_len)
@@ -2095,7 +2099,11 @@ class Graphics(BaseGraphics):
 
         ''' Make age plots '''
         age = data['age'][nodes_w_demand].mean(axis=1)
-        print(age)
+        age_all = data['age'][nodes_w_demand] / 3600
+        print(age_all)
+        age_all.loc[:, '58'].plot()
+        plt.savefig(loc + 'age_58.png', bbox_inches='tight')
+        plt.close()
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
         plt.plot(x_values, age.iloc[-x_len:] / 3600)
@@ -2210,7 +2218,7 @@ class Graphics(BaseGraphics):
         ax = wntr.graphics.plot_network(
             self.wn,
             node_attribute=data['age'].iloc[-1, :] / 3600,
-            node_size=5
+            node_size=5, node_colorbar_label='Water Age (hr)'
         )
         plt.savefig(loc + 'age_map.' + self.format,
                     format=self.format, bbox_inches='tight')
@@ -2219,13 +2227,13 @@ class Graphics(BaseGraphics):
         ''' Plot the number of residences '''
         node_buildings = pd.read_pickle('buildings.pkl')
         counts = node_buildings.value_counts(['wdn_node', 'type']).unstack()
-        perc_counts = counts.divide(counts.sum(axis=1), axis=0)
+        perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
         print(perc_counts)
 
         ax = wntr.graphics.plot_network(
             self.wn,
             node_attribute=perc_counts['res'],
-            node_size=5
+            node_size=5, node_colorbar_label='% Residential'
         )
         plt.savefig(loc + 'perc_res_map.' + self.format,
                     format=self.format, bbox_inches='tight')

@@ -17,17 +17,18 @@ logger.addHandler(fh)
 # run the simulation
 run_sim(
     id=0,
-    days=150,
+    days=180,
     seed=0,
+    write_inp=True,
     wfh_lag=0,
     no_wfh_perc=0,
-    bbn_models=['all'],
+    bbn_models=[],
     daily_contacts=30,
     city='clinton',
     verbose=0.5,
     hyd_sim='monthly',
     dist_income=False,
-    warmup=False,
+    warmup=True,
     bw=True,
     ind_min_demand=0,
     twa_process='absolute'

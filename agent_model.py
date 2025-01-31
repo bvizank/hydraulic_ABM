@@ -361,9 +361,9 @@ class Building:
             demand = self.res_demand()
             return demand
         if x == 'com':
-            return self.model.random.gauss(1000, 100) / 24 / 60
+            return self.model.random.gauss(1000, 100) / 24 / 60 / 60
         if x == 'ind':
-            return self.model.random.gammavariate(3, 4000) / 24 / 60
+            return self.model.random.gammavariate(3, 4000) / 24 / 60 / 60
 
     def pattern_helper(self, x):
         if x == 'res':
@@ -373,15 +373,17 @@ class Building:
         if x == 'ind':
             return self.model.demand_patterns['ind'].to_numpy()
 
-    def individual_demand(self):
-        return self.model.random.gauss(300, 20)
-
     def res_demand(self):
         if self.model.skeleton:
-            ind_demand = [self.individual_demand() for i in range(len(self.agent_obs))]
-            # print(ind_demand)
-            # need base demand to be in liters per hour from liters per day
-            demand = sum(ind_demand) / 24 / 60
+            # values for distribution come from Crouch 2021
+            # mu=175, sd=75 represents households that do not have irrigation
+            if self.model.random.random() > 0.5:
+                ind_demand = self.model.random.gauss(175, 75)
+            else:
+                ind_demand = self.model.random.gauss(227, 94)
+            # need base demand to be in liters per second from liters per day
+            # equation from Jacobs 2004 which was cited in Crouch 2021
+            demand = ind_demand * len(self.agent_obs)**(-0.439) / 24 / 60 / 60
 
             return demand
         else:
@@ -416,8 +418,9 @@ class Household(Building):
         model object where agents are added
     '''
 
-    def __init__(self, id, start_id, end_id, node, node_dist, twa_mods, model,
-                 capacity=0):
+    def __init__(self, id, start_id, end_id,
+                 node, node_dist, twa_mods, model,
+                 income, capacity=0):
         super().__init__(id, capacity, node, 'res', model)
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
@@ -482,24 +485,29 @@ class Household(Building):
         self.base_demand = self.demand_helper('res')
         self.demand_pattern = self.pattern_helper('res')
 
+        ''' assign an income value from the model's list of income '''
+        self.income = model.random.choice(model.income_list)
+        model.income_list.remove(self.income)
+        print(self.income)
+
         # pick an income for the household based on the relative distance
         # to the nearest industrial node
 
         # the scaling factor represents the median income at the distance this
         # node is away from industrial
-        if self.model.dist_income:
-            scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
-        else:
-            scaling_factor = 1
-        # pick an income from the gamma distribution trained with clinton
-        # income ranges
-        mean = 61628.09180717512
-        var = 5671494492.817419
+        # if self.model.dist_income:
+        #     scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
+        # else:
+        #     scaling_factor = 1
+        # # pick an income from the gamma distribution trained with clinton
+        # # income ranges
+        # mean = 61628.09180717512
+        # var = 5671494492.817419
 
-        a = mean**2/var
-        b = var/mean
-        # variance in income/dist data 14569.890867054484
-        self.income = model.random.gammavariate(a, b) * scaling_factor
+        # a = mean**2/var
+        # b = var/mean
+        # # variance in income/dist data 14569.890867054484
+        # self.income = model.random.gammavariate(a, b) * scaling_factor
         # self.income = model.random.gammavariate(
         #     dt.size_income[int(len(self.agent_ids))][0],
         #     dt.size_income[int(len(self.agent_ids))][1]
