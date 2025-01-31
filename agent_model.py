@@ -418,8 +418,9 @@ class Household(Building):
         model object where agents are added
     '''
 
-    def __init__(self, id, start_id, end_id, node, node_dist, twa_mods, model,
-                 capacity=0):
+    def __init__(self, id, start_id, end_id,
+                 node, node_dist, twa_mods, model,
+                 income, capacity=0):
         super().__init__(id, capacity, node, 'res', model)
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
@@ -484,24 +485,29 @@ class Household(Building):
         self.base_demand = self.demand_helper('res')
         self.demand_pattern = self.pattern_helper('res')
 
+        ''' assign an income value from the model's list of income '''
+        self.income = model.random.choice(model.income_list)
+        model.income_list.remove(self.income)
+        print(self.income)
+
         # pick an income for the household based on the relative distance
         # to the nearest industrial node
 
         # the scaling factor represents the median income at the distance this
         # node is away from industrial
-        if self.model.dist_income:
-            scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
-        else:
-            scaling_factor = 1
-        # pick an income from the gamma distribution trained with clinton
-        # income ranges
-        mean = 61628.09180717512
-        var = 5671494492.817419
+        # if self.model.dist_income:
+        #     scaling_factor = (28250.19550039 + 28711.81795579 * node_dist) / 38880
+        # else:
+        #     scaling_factor = 1
+        # # pick an income from the gamma distribution trained with clinton
+        # # income ranges
+        # mean = 61628.09180717512
+        # var = 5671494492.817419
 
-        a = mean**2/var
-        b = var/mean
-        # variance in income/dist data 14569.890867054484
-        self.income = model.random.gammavariate(a, b) * scaling_factor
+        # a = mean**2/var
+        # b = var/mean
+        # # variance in income/dist data 14569.890867054484
+        # self.income = model.random.gammavariate(a, b) * scaling_factor
         # self.income = model.random.gammavariate(
         #     dt.size_income[int(len(self.agent_ids))][0],
         #     dt.size_income[int(len(self.agent_ids))][1]

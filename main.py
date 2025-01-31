@@ -17,7 +17,7 @@ logger.addHandler(fh)
 # run the simulation
 run_sim(
     id=0,
-    days=60,
+    days=180,
     seed=0,
     write_inp=True,
     wfh_lag=0,
@@ -28,7 +28,7 @@ run_sim(
     verbose=0.5,
     hyd_sim='monthly',
     dist_income=False,
-    warmup=False,
+    warmup=True,
     bw=True,
     ind_min_demand=0,
     twa_process='absolute'

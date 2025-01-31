@@ -343,9 +343,18 @@ class Parameters(Model):
             self.node_buildings[~self.node_buildings['type'].isin(['res'])].apply(self.building_helper, axis=1)
         ).to_dict()
 
+        # initialize income values for all of the households in the sim
+        self.income_list = ut.income_list(
+            data=dt.clinton_income,
+            n_house=len(self.node_buildings[self.node_buildings['type'].isin(['res'])]) * 1.1,
+            model=self
+        )
+
         # make dictionary of household objects
         self.households = (
-            self.node_buildings[self.node_buildings['type'].isin(['res'])].apply(self.household_helper, axis=1)
+            self.node_buildings[
+                self.node_buildings['type'].isin(['res'])
+            ].apply(self.household_helper, axis=1)
         ).to_dict()
 
         # now it includes all of the households.
