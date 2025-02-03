@@ -440,6 +440,7 @@ class ConsumerModel(Parameters):
             nodes_ind.remove(work_node)
             # pick an agent that is at that work node
             agent_ids = np.where(res_agent_ind == work_node)[0]
+            print(len(agent_ids))
             agent_id = np.random.choice(agent_ids)
             res_agent_ind[agent_id] = 0
             agent_to_move = self.agents_list[agent_id]
