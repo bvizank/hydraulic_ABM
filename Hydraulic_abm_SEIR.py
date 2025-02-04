@@ -401,7 +401,6 @@ class ConsumerModel(Parameters):
         # list of agents that are at their home node and have
         # a work node. The list are indices of agents
 
-
         '''
         How agent's should move to industrial nodes
 
@@ -414,6 +413,7 @@ class ConsumerModel(Parameters):
            and if it is, get another agent to move.
         '''
         res_agent_ind = dcp(self.res_agents * self.ind_work_nodes)
+        # print(res_agent_ind)
         # print(res_agent_ind)
         # agents_to_work = np.random.choice(res_agent_ind, agents_to_work_n, False)
         # res_agent_list = np.where(res_agent_ind > 0)[0]
@@ -429,6 +429,16 @@ class ConsumerModel(Parameters):
                 self.buildings[node].capacity - len(self.buildings[node].agent_ids)
             )
             if avail_spots > 0:
+                # get all agents with a work node that is the current node
+                node_agents = np.where(res_agent_ind == node)[0]
+
+                # if the number of agents that can move is less than the avail spots
+                # then truncate the avail spots to how many agents can move
+                if len(node_agents) < avail_spots:
+                    avail_spots = len(node_agents)
+                elif len(node_agents) == 0:
+                    continue
+
                 for i in range(int(avail_spots)):
                     nodes_ind.append(node)
 
@@ -440,7 +450,7 @@ class ConsumerModel(Parameters):
             nodes_ind.remove(work_node)
             # pick an agent that is at that work node
             agent_ids = np.where(res_agent_ind == work_node)[0]
-            print(len(agent_ids))
+            # print(len(agent_ids))
             agent_id = np.random.choice(agent_ids)
             res_agent_ind[agent_id] = 0
             agent_to_move = self.agents_list[agent_id]

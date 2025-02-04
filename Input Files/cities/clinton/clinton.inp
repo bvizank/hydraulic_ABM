@@ -566,7 +566,7 @@
 
 [TANKS]
 ;ID                              Elevation           Init Level            Min Level            Max Level             Diameter           Min Volume Volume Curve         Overflow            
- 749                               47              38              28              38               9               0                                             ;
+ 749                               47              38              28              42               15               0                                             ;
  750                               40              45              35              45               9               0                                             ;
  751                               49              36              26              36               9               0                                             ;
  752                               54              31              21              31               9               0                                             ;
@@ -1477,11 +1477,11 @@ GLOBAL PRICE           0.0000
  HEADLOSS             H-W                 
  SPECIFIC GRAVITY     1
  VISCOSITY            1
- TRIALS               40
+ TRIALS               100
  ACCURACY             0.001
  CHECKFREQ            2
  MAXCHECK             10
- UNBALANCED           Continue 10                
+ UNBALANCED           STOP                
  PATTERN              1                   
  DEMAND MULTIPLIER    1
  EMITTER EXPONENT     0.5

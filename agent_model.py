@@ -488,7 +488,7 @@ class Household(Building):
         ''' assign an income value from the model's list of income '''
         self.income = model.random.choice(model.income_list)
         model.income_list.remove(self.income)
-        print(self.income)
+        # print(self.income)
 
         # pick an income for the household based on the relative distance
         # to the nearest industrial node

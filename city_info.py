@@ -211,6 +211,7 @@ def buildings_by_type(buildings):
     Characterize each building as commercial, residential, or industrial
 
     Parameters:
+    -----------
         buildings : GeoDataFrame
             list of buildings to be sorted
     """
