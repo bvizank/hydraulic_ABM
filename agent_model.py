@@ -419,8 +419,7 @@ class Household(Building):
     '''
 
     def __init__(self, id, start_id, end_id,
-                 node, node_dist, twa_mods, model,
-                 income, capacity=0):
+                 node, node_dist, twa_mods, model, capacity=0):
         super().__init__(id, capacity, node, 'res', model)
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
