@@ -65,10 +65,10 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
         ['t', 'S', 'E', 'I', 'R', 'D', 'Symp', 'Asymp', 'Mild',
          'Sev', 'Crit', 'sum_I', 'wfh']
     )
-    agent_matrix = pd.DataFrame(
-        model.agent_matrix,
-        index=[n for n in model.buildings]
-    )
+    # agent_matrix = pd.DataFrame(
+    #     model.agent_matrix,
+    #     index=[n for n in model.buildings]
+    # )
 
     status_tot.to_pickle(output_loc + "/seir_data.pkl")
     # model.param_out.to_pickle(output_loc + "/params.pkl")
@@ -86,13 +86,15 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
             )
         model.sim.close()
         results = wntr.epanet.io.BinFile().read('temp' + str(id) + '.bin')
-        demand = results.node['demand'] * 1000000
+        # convert from m^3/s to lps
+        demand = results.node['demand'] * 1000
         demand.to_pickle(output_loc + "/demand.pkl")
         results.node['pressure'].to_pickle(output_loc + "/pressure.pkl")
         results.node['quality'].to_pickle(output_loc + "/age.pkl")
-        flow = results.link['flowrate'] * 1000000
+        # convert from m^3/s to lps
+        flow = results.link['flowrate'] * 1000
         flow.to_pickle(output_loc + "/flow.pkl")
-    agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
+    # agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
     households = [h for h in model.households]
