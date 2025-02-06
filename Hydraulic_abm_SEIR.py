@@ -473,8 +473,9 @@ class ConsumerModel(Parameters):
         Collect the location of each agent.
         '''
         for building_id, building in self.buildings.items():
-            agents_at_node = len(building.agent_ids)
-            self.agent_matrix[building_id, self.timestep] = agents_at_node
+            building.agent_history.append(dcp(len(building.agent_ids)))
+            # agents_at_node = len(building.agent_ids)
+            # self.agent_matrix[building_id, self.timestep] = agents_at_node
 
     # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
@@ -489,18 +490,14 @@ class ConsumerModel(Parameters):
                 continue
             for building_id in self.wdn_nodes[node]:
                 building = self.buildings[building_id]
-                # print(self.agent_matrix[building.id, :])
-                # print(self.timestep)
-                print(f"building capacity: {building.capacity}")
-                new_mult = (
-                    self.agent_matrix[building.id, self.timestep-23:self.timestep+1] /
-                    building.capacity
+                building_agents = np.array(
+                    dcp(building.agent_history[self.timestep-23:self.timestep+1])
                 )
-                print(f"New multiplier: \n {new_mult}")
-                # print(building.type)
-                # print(self.agent_matrix[building.id, self.timestep-23:self.timestep+1])
-                # print(building.capacity)
-                # print([self.buildings[a.building].type for a in building.agent_obs])
+                new_mult = building_agents / building.capacity
+                # new_mult = (
+                #     self.agent_matrix[building.id, self.timestep-23:self.timestep+1] /
+                #     building.capacity
+                # )
 
                 # if the building is a commercial or industrial building,
                 # multiply the demand pattern by the agent multiplier
@@ -523,8 +520,7 @@ class ConsumerModel(Parameters):
                     ''' demand for the next 24 hours, not including reduction or
                     agent multiplier '''
                     curr_pat = base_pat * new_mult
-                    
-                    print(f"curr_pat for res buildings: \n {curr_pat}")
+                    # print(f"curr_pat for res buildings: \n {curr_pat}")
 
                     ''' Calculate the demand reduction given the total demand '''
                     # total demand in L/day

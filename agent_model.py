@@ -351,6 +351,8 @@ class Building:
         self.agent_ids = list()  # list of agent that are in the household
         self.agent_obs = list()  # list of agent objects that are in the household
 
+        self.agent_history = list()
+
         if self.type in ['com', 'ind']:
             self.base_demand = self.demand_helper(type)
             self.demand_pattern = self.pattern_helper(type)

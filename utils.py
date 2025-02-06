@@ -248,12 +248,13 @@ def gini(x, w=None):
         return (n + 1 - 2 * np.sum(cumx) / cumx[-1]) / n
 
 
-def output_age_data(file):
+def output_age_data(file, out):
     loc = 'Output Files/' + file + '/'
     data = read_data(loc, ['age'])
-    data = data['age'].mean(axis=0)
+    data = data['age'].tail((60*24)).mean(axis=0)
+    print(data)
     print(data.mean() / 3600)
-    data.to_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')
+    data.to_pickle(out + '.pkl')
 
 
 def calc_clinton_ind_dists():

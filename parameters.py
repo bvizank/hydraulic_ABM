@@ -127,7 +127,7 @@ class Parameters(Model):
         self.skeleton = False
 
         ''' Data collectors '''
-        self.agent_matrix = dict()
+        # self.agent_matrix = dict()
 
         ''' Initialize the COVID state variable collectors '''
         self.cov_pers = dict()
@@ -553,10 +553,12 @@ class Parameters(Model):
 
     def set_age(self):
         ''' Set initial water age '''
-        init_age = pd.read_pickle('hot_start_age_data_2024-03-08_12-10_200days_results.pkl')
-        for node in self.grid.G.nodes:
-            curr_node = self.wn.get_node(node)
-            curr_node.initial_quality = float(init_age.loc[[node]].values[0])
+        init_age = pd.read_pickle('hot_start_clinton.pkl')
+        for name in self.nodes_w_demand:
+            if name not in self.wdn_nodes:
+                continue
+            curr_node = self.wn.get_node(name)
+            curr_node.initial_quality = float(init_age.loc[[name]].values[0])
 
     def node_list(self, list, nodes):
         list_out = []
@@ -843,9 +845,9 @@ class Parameters(Model):
         #     if hasattr(self.wn.get_node(node), 'demand_timeseries_list')
         # ]
 
-        self.agent_matrix = np.zeros(
-            (len(self.buildings), self.days * 24), dtype=np.int64
-        )
+        # self.agent_matrix = np.zeros(
+        #     (len(self.buildings), self.days * 24), dtype=np.int64
+        # )
 
         if self.hyd_sim == 'eos':
             self.daily_demand = np.empty((24, len(self.nodes_w_demand)))
@@ -880,7 +882,11 @@ class Parameters(Model):
 
         # initialization methods
         self.base_demand_list()
-        # self.set_age()
+
+        # set age with previous steady state values
+        self.set_age()
+
+        # set epanet options
         if self.hyd_sim in ['hourly', 'monthly']:
             print("Set the pattern and hydraulic timestep values and quality parameter")
             self.wn.options.time.pattern_timestep = 3600

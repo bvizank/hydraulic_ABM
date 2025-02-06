@@ -2000,7 +2000,7 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-    def make_single_plots(self, file, days):
+    def make_single_plots(self, file, days, twa_plot=True):
         ''' Set the warmup period '''
         x_len = days * 24
 
@@ -2027,8 +2027,6 @@ class Graphics(BaseGraphics):
         # for i in data['demand'].loc[:, 'TN49']:
         #     print(i)
         households = len(data['income'])
-        warmup = data['bw_cost'].index[-1] - x_len
-        data['tot_cost'] = data['bw_cost'] + data['tw_cost']
         leg_text = ['S', 'E', 'I', 'R', 'wfh']
         ax = plt.subplot()
         x_values = np.array([
@@ -2062,6 +2060,13 @@ class Graphics(BaseGraphics):
         # )
         # plt.savefig(self.pub_loc + file + 'demand' + '.' + self.format,
         #             format=self.format, bbox_inches='tight')
+        # plt.close()
+        tanks = ['749', '750', '751', '752']
+        data['demand'] = data['demand']
+
+        ''' make demand plots for the tanks '''
+        # data['demand'].loc[:, tanks].plot()
+        # plt.savefig(loc + 'demand_tanks.png', bbox_inches='tight')
         # plt.close()
 
         data['demand'].loc[:, '58'].plot()
@@ -2137,48 +2142,6 @@ class Graphics(BaseGraphics):
 
         # plt.show()
 
-        ''' Heatmap and map of costs '''
-        # convert the annual income to an income that is specific to timeframe
-        data['income'] = data['income']
-        self.make_heatmap(
-            data['tot_cost'].T,
-            'Time (weeks)',
-            'Household',
-            loc + 'tot_cost_heatmap',
-            0.01
-        )
-
-        cols = ['Tap Water', 'Bottled Water', 'Total']
-        cost = pd.concat([data['tw_cost'].mean(axis=1),
-                          data['bw_cost'].mean(axis=1),
-                          data['tot_cost'].mean(axis=1)],
-                         axis=1, keys=cols)
-        cost_max = pd.concat([data['tw_cost'].max(axis=1),
-                              data['bw_cost'].max(axis=1),
-                              data['tot_cost'].max(axis=1)],
-                             axis=1, keys=cols)
-
-        # average cost plot
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax, cost, None, cols, (cost.index - warmup) / 24,
-            'Time (Days)', 'Mean Water Cost ($)', show_labels=True, sd_plot=False
-        )
-
-        plt.savefig(loc + 'mean_water_cost.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
-
-        # max cost plot
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax, cost_max, None, cols, (cost_max.index - warmup) / 24,
-            'Time (Days)', 'Maximum Water Cost ($)', show_labels=True, sd_plot=False
-        )
-
-        plt.savefig(loc + 'max_water_cost.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
 
         ''' Plot the income by node '''
         # fig, axes = plt.subplots(1, 2)
@@ -2240,20 +2203,66 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Plot of TWA parameters '''
-        twa = pd.concat([data['drink'].sum(axis=1),
-                         data['cook'].sum(axis=1),
-                         data['hygiene'].sum(axis=1)],
-                        axis=1, keys=['Drink', 'Cook', 'Hygiene'])
+        if twa_plot:
+            warmup = data['bw_cost'].index[-1] - x_len
+            data['tot_cost'] = data['bw_cost'] + data['tw_cost']
+            twa = pd.concat([data['drink'].sum(axis=1),
+                             data['cook'].sum(axis=1),
+                             data['hygiene'].sum(axis=1)],
+                            axis=1, keys=['Drink', 'Cook', 'Hygiene'])
 
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax, twa / households * 100, None, ['Drink', 'Cook', 'Hygiene'], (twa.index / 24) - 30,
-            'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
-        )
+            ax = plt.subplot()
+            self.make_avg_plot(
+                ax, twa / households * 100, None, ['Drink', 'Cook', 'Hygiene'], (twa.index / 24) - 30,
+                'Time (days)', 'Percent of Households', show_labels=True, sd_plot=False
+            )
 
-        plt.savefig(loc + 'twa.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+            plt.savefig(loc + 'twa.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
+
+            ''' Heatmap and map of costs '''
+            # convert the annual income to an income that is specific to timeframe
+            data['income'] = data['income']
+            self.make_heatmap(
+                data['tot_cost'].T,
+                'Time (weeks)',
+                'Household',
+                loc + 'tot_cost_heatmap',
+                0.01
+            )
+
+            cols = ['Tap Water', 'Bottled Water', 'Total']
+            cost = pd.concat([data['tw_cost'].mean(axis=1),
+                              data['bw_cost'].mean(axis=1),
+                              data['tot_cost'].mean(axis=1)],
+                             axis=1, keys=cols)
+            cost_max = pd.concat([data['tw_cost'].max(axis=1),
+                                  data['bw_cost'].max(axis=1),
+                                  data['tot_cost'].max(axis=1)],
+                                 axis=1, keys=cols)
+
+            # average cost plot
+            ax = plt.subplot()
+            self.make_avg_plot(
+                ax, cost, None, cols, (cost.index - warmup) / 24,
+                'Time (Days)', 'Mean Water Cost ($)', show_labels=True, sd_plot=False
+            )
+
+            plt.savefig(loc + 'mean_water_cost.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
+
+            # max cost plot
+            ax = plt.subplot()
+            self.make_avg_plot(
+                ax, cost_max, None, cols, (cost_max.index - warmup) / 24,
+                'Time (Days)', 'Maximum Water Cost ($)', show_labels=True, sd_plot=False
+            )
+
+            plt.savefig(loc + 'max_water_cost.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
 
         ''' Equity metric costs '''
         # metrics = pd.concat([data['traditional'],
