@@ -103,6 +103,15 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
     #     for house in houses:
     #         income.append(house.income)
 
+    demo = dict()
+    demo['white'] = list()
+    demo['hispanic'] = list()
+    demo['renter'] = list()
+    for name, house in model.households.items():
+        demo['white'].append(house.white)
+        demo['hispanic'].append(house.hispanic)
+        demo['renter'].append(house.renter)
+
     cov_pers = convert_to_pd(model.cov_pers, agents)
     cov_ff = convert_to_pd(model.cov_ff, agents)
     media = convert_to_pd(model.media_exp, agents)
@@ -116,10 +125,9 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
     hygiene = convert_to_pd(model.hygiene, households)
     drink = convert_to_pd(model.drink, households)
     cook = convert_to_pd(model.cook, households)
+    demo = convert_to_pd(demo, households)
     # income = convert_to_pd({0: model.income}, households)
     # income_level = convert_to_pd({0: model.income_level}, households)
-    # traditional = convert_to_pd(model.traditional, [0])
-    # burden = convert_to_pd(model.burden, [0])
 
     cov_pers.to_pickle(output_loc + "/cov_pers.pkl")
     cov_ff.to_pickle(output_loc + "/cov_ff.pkl")
@@ -137,8 +145,7 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
     # income.to_pickle(output_loc + "/income.pkl")
     # income_level.to_pickle(output_loc + "/income_level.pkl")
     model.income_comb.to_pickle(output_loc + "/income.pkl")
-    # traditional.to_pickle(output_loc + "/traditional.pkl")
-    # burden.to_pickle(output_loc + "/burden.pkl")
+    demo.to_pickle(output_loc + '/demo.pkl')
 
 
 def convert_to_pd(in_list, columns):

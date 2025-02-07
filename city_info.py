@@ -87,23 +87,19 @@ def get_osm_buildings_within_area(service_area_geom):
     plt.show()
 
     return buildings
-    
+
 
 def assign_bg(data):
     '''
     Assign block group id to each parcel.
     '''
     dir = 'Input Files/cities/clinton/'
-    
+
     # import the block group geometry
     gdf = gpd.read_file(dir + 'sampson_bg_clinton/tl_2023_37_bg.shp')
     gdf['bg'] = gdf['TRACTCE'] + gdf['BLKGRPCE']
     gdf.set_index('bg', inplace=True)
     gdf.index = gdf.index.astype('int64')
-
-    # import demographic data using pandas
-    demo = pd.read_csv(dir + 'demographics_bg.csv')
-    demo.set_index('bg', inplace=True)
 
     # filter the bgs for clinton
     bg = [
@@ -115,16 +111,18 @@ def assign_bg(data):
     ]
     gdf = gdf[gdf['TRACTCE'].isin(bg)]
 
-    gdf = gdf.join(demo)
-    
     # convert gdf crs to data
     gdf.to_crs(data.crs, inplace=True)
-    
+
+    # delete index_right from data
+    print(data)
     data.drop('index_right', axis=1, inplace=True)
-    
+    print(gdf)
+
     # spatial join the parcels with the block groups
     data = data.sjoin(gdf, how='inner')
-    
+    print(data)
+
     return data
 
 

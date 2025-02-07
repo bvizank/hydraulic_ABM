@@ -19,7 +19,7 @@ run_sim(
     id=0,
     days=180,
     seed=0,
-    write_inp=True,
+    write_inp=False,
     wfh_lag=0,
     no_wfh_perc=0,
     bbn_models=[],

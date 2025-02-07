@@ -490,6 +490,26 @@ class Household(Building):
         ''' assign an income value from the model's list of income '''
         self.income = model.random.choice(model.income_list[bg])
         model.income_list[bg].remove(self.income)
+
+        ''' assign demographic data '''
+        # define race
+        if model.random.random() < model.demo.loc[bg, 'perc_w']:
+            self.white = True
+        else:
+            self.white = False
+
+        # assign ethnicity
+        if model.random.random() < model.demo.loc[bg, 'perc_nh']:
+            self.hispanic = False
+        else:
+            self.hispanic = True
+
+        # assign renter
+        if model.random.random() < model.demo.loc[bg, 'perc_renter']:
+            self.renter = True
+        else:
+            self.renter = False
+
         # print(self.income)
 
         # pick an income for the household based on the relative distance

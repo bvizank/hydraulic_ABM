@@ -211,7 +211,7 @@ class Parameters(Model):
         house = Household(
             x.name, x['total_res'] - x['capacity'], x['total_res'],
             x['wdn_node'], None, self.twa_mods, self, x['capacity'],
-            x['index_right']
+            x['bg']
         )
         return house
 
@@ -259,7 +259,7 @@ class Parameters(Model):
             os.path.join(city_dir, 'hourly_population.csv'),
             delimiter=','
         )
-        
+
         ''' Import the income distributions for each block group '''
         self.income_dist = pd.read_csv(
             os.path.join(city_dir, 'income_bg.csv'),
@@ -267,6 +267,15 @@ class Parameters(Model):
             index_col=0,
             dtype='int64'
         )
+
+        ''' import demographic data using pandas '''
+        self.demo = pd.read_csv(
+            os.path.join(city_dir, 'demographics_bg.csv'),
+            delimiter=',',
+            index_col=0,
+            dtype='float64'
+        )
+
         self.income_dist.columns = [int(i) for i in self.income_dist.columns]
 
         ''' Assign each building a node in the WDN '''
@@ -354,13 +363,12 @@ class Parameters(Model):
         ).to_dict()
 
         # initialize income values for all of the households in the sim
-        print(self.node_buildings)
         self.income_list = dict()
         for i, row in self.income_dist.iterrows():
             grp_size = len(
-                self.node_buildings.query('type == "res" and index_right == @i')
+                self.node_buildings.query('type == "res" and bg == @i')
             )
-            
+
             print(f"Group size for bg {i}: {grp_size}")
             if grp_size > 0:
                 self.income_list[i] = ut.income_list(
@@ -368,7 +376,7 @@ class Parameters(Model):
                     n_house=grp_size * 1.1,
                     model=self
                 )
-            
+
         print([len(v) for i, v in self.income_list.items()])
 
         # make dictionary of household objects
