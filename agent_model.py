@@ -421,7 +421,8 @@ class Household(Building):
     '''
 
     def __init__(self, id, start_id, end_id,
-                 node, node_dist, twa_mods, model, capacity=0):
+                 node, node_dist, twa_mods, model, capacity=0,
+                 bg=0):
         super().__init__(id, capacity, node, 'res', model)
         self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
         self.bottle = []  # actions using bottled water
@@ -487,8 +488,8 @@ class Household(Building):
         self.demand_pattern = self.pattern_helper('res')
 
         ''' assign an income value from the model's list of income '''
-        self.income = model.random.choice(model.income_list)
-        model.income_list.remove(self.income)
+        self.income = model.random.choice(model.income_list[bg])
+        model.income_list[bg].remove(self.income)
         # print(self.income)
 
         # pick an income for the household based on the relative distance

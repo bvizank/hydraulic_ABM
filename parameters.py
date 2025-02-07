@@ -210,7 +210,8 @@ class Parameters(Model):
     def household_helper(self, x):
         house = Household(
             x.name, x['total_res'] - x['capacity'], x['total_res'],
-            x['wdn_node'], None, self.twa_mods, self, x['capacity']
+            x['wdn_node'], None, self.twa_mods, self, x['capacity'],
+            x['index_right']
         )
         return house
 
@@ -258,6 +259,15 @@ class Parameters(Model):
             os.path.join(city_dir, 'hourly_population.csv'),
             delimiter=','
         )
+        
+        ''' Import the income distributions for each block group '''
+        self.income_dist = pd.read_csv(
+            os.path.join(city_dir, 'income_bg.csv'),
+            delimiter=',',
+            index_col=0,
+            dtype='int64'
+        )
+        self.income_dist.columns = [int(i) for i in self.income_dist.columns]
 
         ''' Assign each building a node in the WDN '''
         self.node_buildings = ci.make_building_list(self.wn, city, city_dir)
@@ -344,11 +354,22 @@ class Parameters(Model):
         ).to_dict()
 
         # initialize income values for all of the households in the sim
-        self.income_list = ut.income_list(
-            data=dt.clinton_income,
-            n_house=len(self.node_buildings[self.node_buildings['type'].isin(['res'])]) * 1.1,
-            model=self
-        )
+        print(self.node_buildings)
+        self.income_list = dict()
+        for i, row in self.income_dist.iterrows():
+            grp_size = len(
+                self.node_buildings.query('type == "res" and index_right == @i')
+            )
+            
+            print(f"Group size for bg {i}: {grp_size}")
+            if grp_size > 0:
+                self.income_list[i] = ut.income_list(
+                    data=row,
+                    n_house=grp_size * 1.1,
+                    model=self
+                )
+            
+        print([len(v) for i, v in self.income_list.items()])
 
         # make dictionary of household objects
         self.households = (

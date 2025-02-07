@@ -340,16 +340,23 @@ def income_list(data, n_house, model, s=None):
 
     parameters:
     ----------
-        data   (dict): income data formatted as key: income bracket,
-                       value: percentage of population in income bracket
-        n_house (int): size of synthetic dataset (number of households)
-        s       (int): seed for RNG
+        data   (dict, pd.Series)
+            income data formatted as key: income bracket,
+            value: percentage of population in income bracket
+        n_house (int):
+            size of synthetic dataset (number of households)
+        s       (int):
+            seed for RNG
     '''
 
     # if the seed exists, set the seed
     if s:
         random.seed(s)
 
+    # convert pd.Series to dict
+    if type(data) != dict:
+        data = data.to_dict()
+        
     income = list()
     index = 0
     for i, key in enumerate(data):

@@ -3,6 +3,7 @@ import wntr
 import os
 import numpy as np
 import pandas as pd
+import geopandas
 from copy import deepcopy as dcp
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
@@ -737,6 +738,86 @@ class BaseGraphics:
         ax.set_xlabel('Normalized Industrial Distance')
         ax.set_ylabel('Household Income')
 
+        return ax
+        
+    def bg_map(self, ax, display_demo, node_data):
+        '''
+        Create a map showing wn nodes and pipes layered on top of the block
+        groups. Block groups are colored based on the display_demo param
+        and nodes are colored based on the node_data.
+        
+        Parameters:
+        -----------
+            ax  :   matplotlib.axes
+                axes object to plot the data to
+
+            display_demo  :  str
+                demographic to be displayed on the block groups
+                options: ['median_income', 'perc_w', 'perc_nh']
+            
+            node_data  :  pd.DataFrame
+                node data to be displayed
+        '''
+        
+        # directory with clinton data
+        dir = 'Input Files/cities/clinton/'
+
+        # convert the wn to an object with various gdfs
+        wn_gis = wntr.network.to_gis(self.wn)
+        wn_gis.junctions = wn_gis.junctions.set_crs('epsg:4326')
+        wn_gis.pipes = wn_gis.pipes.set_crs('epsg:4326')
+
+        # import the block groups for sampson county
+        gdf = geopandas.read_file(dir + 'sampson_bg_clinton/tl_2023_37_bg.shp')
+        gdf['bg'] = gdf['TRACTCE'] + gdf['BLKGRPCE']
+        gdf.set_index('bg', inplace=True)
+        gdf.index = gdf.index.astype('int64')
+
+        # import demographic data using pandas
+        demo = pd.read_csv(dir + 'demographics_bg.csv')
+        demo.set_index('bg', inplace=True)
+
+        # filter the bgs for clinton
+        bg = [
+            '970802',
+            '970600',
+            '970801',
+            '970702',
+            '970701'
+        ]
+        gdf = gdf[gdf['TRACTCE'].isin(bg)]
+
+        gdf = gdf.join(demo)
+        print(gdf)
+
+        # apply the bg crs to the wn data
+        wn_gis.junctions.to_crs(gdf.crs, inplace=True)
+        wn_gis.pipes.to_crs(gdf.crs, inplace=True)
+        
+        # add node_data to wn_gis.junctions
+        node_data.index = node_data.index.astype('int64')
+        wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
+        wn_gis.junctions.insert(0, 'data', node_data)
+        print(wn_gis.junctions)
+
+        # clip the bg layer to the extent of the wn layer
+        gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
+
+        # plot the bg layer
+        ax = gdf.plot(ax=ax, column=display_demo, legend=True, zorder=1)
+
+        # add the junctions and pipes
+        ax = wn_gis.pipes.plot(ax=ax, linewidth=0.3, zorder=2)
+        ax = wn_gis.junctions.plot(
+            ax=ax, marker='o', markersize=1, zorder=3,
+            column='data', legend=True, cmap='YlGn');
+
+        ax.set_axis_off()
+
+        # calculate how the average node data for each bg
+        node_join = wn_gis.junctions.sjoin(gdf, how='inner')
+        print(node_join.loc[:, ['data', 'index_right']].groupby(['index_right']).mean())
+        
         return ax
 
 
@@ -2115,7 +2196,7 @@ class Graphics(BaseGraphics):
         plt.savefig(loc + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-
+        
         # res_age_pm = data['age'][self.res_nodes].mean(axis=1)
         # com_age_pm = data['age'][self.com_nodes].mean(axis=1)
         # ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
@@ -2184,6 +2265,14 @@ class Graphics(BaseGraphics):
             node_size=5, node_colorbar_label='Water Age (hr)'
         )
         plt.savefig(loc + 'age_map.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Make maps with water age and bg demographics '''
+        ax = plt.subplot()
+        self.bg_map(ax, 'median_income', data['age'].iloc[-1, :] / 3600)
+        plt.gcf().set_size_inches(7, 3.5)
+        plt.savefig(loc + 'income-x-age.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
