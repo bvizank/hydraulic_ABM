@@ -8,7 +8,7 @@ plots = Graphics(publication=True, error='se', days=days)
 # plots.demand_plots()
 
 ''' Flow plots '''
-plots.flow_plots()
+# plots.flow_plots()
 
 ''' Age plots '''
 # plots.age_plots()
@@ -30,7 +30,7 @@ plots.flow_plots()
 
 ''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
-# plots.cowpi_boxplot(di=False, perc=False, exclusion=False, sa=True)
+plots.cowpi_boxplot(di=False, perc=False, exclusion=True, sa=False)
 
 ''' Income plots '''
 # plots.income_plots()

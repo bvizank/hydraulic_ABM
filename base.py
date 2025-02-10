@@ -581,7 +581,8 @@ class BaseGraphics:
 
     def make_income_comp_plot(self, data, name, xlabel=None, ylabel='%HI',
                               box=True, outliers=None, means=True,
-                              income_line=4.6, text_y=-0.24):
+                              income_line=4.6, text_y=-0.24,
+                              comb_xlabel=None):
         if box:
             fig, axes = plt.subplots(1, 2, sharey=True)
 
@@ -605,8 +606,11 @@ class BaseGraphics:
             # set the ylabel
             axes[0].set_ylabel(ylabel)
 
+            if comb_xlabel:
+                fig.supxlabel(comb_xlabel, y=-0.14)
+
             # add the subplot labels
-            axes[0].text(0.5, text_y, "(a)", size=12, ha="center",
+            axes[0].text(0.5,  text_y, "(a)", size=12, ha="center",
                          transform=axes[0].transAxes)
             axes[1].text(0.5, text_y, "(b)", size=12, ha="center",
                          transform=axes[1].transAxes)
@@ -1863,7 +1867,7 @@ class Graphics(BaseGraphics):
             ['Base', 'TWA', 'PM', 'TWA+PM'],
             # ['Base', 'Base+BW', 'SD+BW'],
             box=True,
-            means=False,
+            means=True,
             outliers=""
         )
 
@@ -2004,11 +2008,12 @@ class Graphics(BaseGraphics):
             self.make_income_comp_plot(
                 data,
                 'cow_boxplot_exclusion',
-                ['Drink', 'Cook', 'Hygience', 'None'],
+                ['Drink', 'Cook', 'Hygiene', 'None'],
                 box=True,
                 means=False,
                 outliers="",
-                text_y=-0.3
+                text_y=-0.23,
+                comb_xlabel='Tap Water Used Instead of Bottled Water'
             )
 
         if sa:
