@@ -834,29 +834,9 @@ class Graphics(BaseGraphics):
             options include: se, ci95, and sd
     '''
 
-    def __init__(self, publication, error, days, inp_file=None):
+    def __init__(self, publication, error, days, inp_file=None, single=False):
         self.days = days
         self.x_len = days * 24
-        ''' Define data directories '''
-        # self.base_comp_dir = 'Output Files/30_no_pm/'
-        # self.pm_comp_dir = 'Output Files/30_all_pm/'
-        self.base_comp_dir = 'Output Files/1_Distance Based Income/30_base_di/'
-        self.base_bw_comp_dir = 'Output Files/1_Distance Based Income/30_basebw_di/'
-        self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_25ind_equity/'
-        self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_50ind_equity/'
-        self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_75ind_equity/'
-        self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
-        self.pm_comp_dir = 'Output Files/1_Distance Based Income/30_pmbw_di/'
-        self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
-        self.pm_comp_noD_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
-        self.pm_comp_noC_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noC/'
-        self.pm_comp_noH_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noH/'
-        self.pm_nodi_comp_dir = 'Output Files/2_Non-distance Based Income/30_pmbw/'
-        self.pm_nobw_comp_dir = 'Output Files/1_Distance Based Income/30_pm_di/'
-        # self.wfh_loc = 'Output Files/30_wfh_equity/'
-        # self.dine_loc = 'Output Files/30_dine_equity/'
-        # self.groc_loc = 'Output Files/30_groc_equity/'
-        # self.ppe_loc = 'Output Files/30_ppe_equity/'
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers', 'agent_loc',
                           'wfh', 'dine', 'groc', 'ppe']
@@ -865,69 +845,9 @@ class Graphics(BaseGraphics):
         self.truncate_list = [
             'seir_data', 'demand', 'age', 'flow'
         ]
-
-        ''' Read in data from data directories '''
-        self.pm = ut.read_comp_data(
-            self.pm_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        # self.pm_perc = ut.read_comp_data(
-        #     self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
-        # )
-        self.pm_noD = ut.read_comp_data(
-            self.pm_comp_noD_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm_noC = ut.read_comp_data(
-            self.pm_comp_noC_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm_noH = ut.read_comp_data(
-            self.pm_comp_noH_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm_nobw = ut.read_comp_data(
-            self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm_nodi = ut.read_comp_data(
-            self.pm_nodi_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.base = ut.read_comp_data(
-            self.base_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.basebw = ut.read_comp_data(
-            self.base_bw_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm25ind = ut.read_comp_data(
-            self.pm_25ind_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm50ind = ut.read_comp_data(
-            self.pm_50ind_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm75ind = ut.read_comp_data(
-            self.pm_75ind_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        self.pm100ind = ut.read_comp_data(
-            self.pm_100ind_comp_dir, self.comp_list, days, self.truncate_list
-        )
-        # self.wfh = ut.read_comp_data(
-        #     self.wfh_loc, ['seir_data', 'age'], days, self.truncate_list
-        # )
-        # self.dine = ut.read_comp_data(
-        #     self.dine_loc, ['seir_data', 'age'], days, self.truncate_list
-        # )
-        # self.grocery = ut.read_comp_data(
-        #     self.groc_loc, ['seir_data', 'age'], days, self.truncate_list
-        # )
-        # self.ppe = ut.read_comp_data(
-        #     self.ppe_loc, ['seir_data', 'age'], days, self.truncate_list
-        # )
-
-        # print(self.pm['avg_wfh'])
-
-        ''' Read and distill household level data '''
-        self.post_household()
-
-        # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
-        # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
-        # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
-        # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
+        
+        if not single:
+            self.init_data()
 
         ''' Set figure parameters '''
         plt.rcParams['figure.figsize'] = [3.5, 3.5]
@@ -967,17 +887,104 @@ class Graphics(BaseGraphics):
             self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
 
         self.wn = wntr.network.WaterNetworkModel(inp_file)
+
+        # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
+
+    def init_data(self):
+        ''' Define data directories '''
+        # self.base_comp_dir = 'Output Files/30_no_pm/'
+        # self.pm_comp_dir = 'Output Files/30_all_pm/'
+        self.base_comp_dir = 'Output Files/1_Distance Based Income/30_base_di/'
+        self.base_bw_comp_dir = 'Output Files/1_Distance Based Income/30_basebw_di/'
+        self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_25ind_equity/'
+        self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_50ind_equity/'
+        self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_75ind_equity/'
+        self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
+        self.pm_comp_dir = 'Output Files/1_Distance Based Income/30_pmbw_di/'
+        self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
+        self.pm_comp_noD_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
+        self.pm_comp_noC_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noC/'
+        self.pm_comp_noH_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noH/'
+        self.pm_nodi_comp_dir = 'Output Files/2_Non-distance Based Income/30_pmbw/'
+        self.pm_nobw_comp_dir = 'Output Files/1_Distance Based Income/30_pm_di/'
+        # self.wfh_loc = 'Output Files/30_wfh_equity/'
+        # self.dine_loc = 'Output Files/30_dine_equity/'
+        # self.groc_loc = 'Output Files/30_groc_equity/'
+        # self.ppe_loc = 'Output Files/30_ppe_equity/'
+
+        ''' Read in data from data directories '''
+        self.pm = ut.read_comp_data(
+            self.pm_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        # self.pm_perc = ut.read_comp_data(
+        #     self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
+        # )
+        self.pm_noD = ut.read_comp_data(
+            self.pm_comp_noD_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm_noC = ut.read_comp_data(
+            self.pm_comp_noC_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm_noH = ut.read_comp_data(
+            self.pm_comp_noH_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm_nobw = ut.read_comp_data(
+            self.pm_nobw_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm_nodi = ut.read_comp_data(
+            self.pm_nodi_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.base = ut.read_comp_data(
+            self.base_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.basebw = ut.read_comp_data(
+            self.base_bw_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm25ind = ut.read_comp_data(
+            self.pm_25ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm50ind = ut.read_comp_data(
+            self.pm_50ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm75ind = ut.read_comp_data(
+            self.pm_75ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        self.pm100ind = ut.read_comp_data(
+            self.pm_100ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        )
+        # self.wfh = ut.read_comp_data(
+        #     self.wfh_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # )
+        # self.dine = ut.read_comp_data(
+        #     self.dine_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # )
+        # self.grocery = ut.read_comp_data(
+        #     self.groc_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # )
+        # self.ppe = ut.read_comp_data(
+        #     self.ppe_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # )
+
+        # print(self.pm['avg_wfh'])
+
+        ''' Read and distill household level data '''
+        self.post_household()
+
+        # day200_loc = 'Output Files/2022-12-12_14-33_ppe_200Days_results/'
+        # day400_loc = 'Output Files/2022-12-14_10-08_no_PM_400Days_results/'
+        # days_200 = read_data(day200_loc, ['seir', 'demand', 'age'])
+        # days_400 = read_data(day400_loc, ['seir', 'demand', 'age'])
+
+        ''' set x values '''
         self.x_values_hour = np.array([
-            x for x in np.arange(0, days, days / len(self.pm['avg_demand']))
+            x for x in np.arange(0, self.days, self.days / len(self.pm['avg_demand']))
         ])
         self.x_values_day = np.array([
-            x for x in range(days)
+            x for x in range(self.days)
         ])
 
         ''' Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh '''
         self.get_times(self.pm)
-
-        # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
 
     def flow_plots(self):
         ''' Make the flow direction changes plot '''

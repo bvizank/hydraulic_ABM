@@ -3,7 +3,8 @@ from base import Graphics
 
 days = 180
 plots = Graphics(publication=False, error='se', days=days,
-                 inp_file='Input Files/cities/clinton/clinton.inp')
+                 inp_file='Input Files/cities/clinton/clinton.inp',
+                 single=True)
 
 ''' Demand plots '''
 # plots.demand_plots()
@@ -43,7 +44,7 @@ plots = Graphics(publication=False, error='se', days=days,
 # plots.make_seir_plot(days)
 
 ''' Make single plots '''
-plots.make_single_plots('2025-02-05_12-45_0_results', 180, False)
+plots.make_single_plots('2025-02-07_12-18_0_results', 180, True)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
