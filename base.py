@@ -597,6 +597,9 @@ class BaseGraphics:
             # set the x ticks for each subplot
             for ax in axes:
                 ax.set_xticklabels(xlabel, rotation=45)
+                if comb_xlabel:
+                    ax.set_xlabel(comb_xlabel)
+
 
             # add a red dashed line at 4.6%
             if income_line:
@@ -605,9 +608,6 @@ class BaseGraphics:
 
             # set the ylabel
             axes[0].set_ylabel(ylabel)
-
-            if comb_xlabel:
-                fig.supxlabel(comb_xlabel, y=-0.14)
 
             # add the subplot labels
             axes[0].text(0.5,  text_y, "(a)", size=12, ha="center",
@@ -2034,8 +2034,8 @@ class Graphics(BaseGraphics):
                 box=True,
                 means=False,
                 outliers="",
-                text_y=-0.23,
-                comb_xlabel='Tap Water Used Instead of Bottled Water'
+                text_y=-0.33,
+                comb_xlabel='Tap Water for End Use'
             )
 
         if sa:
