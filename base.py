@@ -1186,6 +1186,8 @@ class Graphics(BaseGraphics):
         print(last30_age)
 
         axes = plt.subplot()
+        
+        print((last30_age > 150).mean())
 
         axes.boxplot(last30_age, showmeans=True)
 
@@ -1870,6 +1872,26 @@ class Graphics(BaseGraphics):
             means=True,
             outliers=""
         )
+        
+        cowpi_all = pd.concat([
+            self.base['cowpi']['cowpi']*100,
+            self.basebw['cowpi']['cowpi']*100,
+            self.pm_nobw['cowpi']['cowpi']*100,
+            self.pm['cowpi']['cowpi']*100],
+            axis=1, keys=['base', 'twa', 'pm', 'twa_pm']
+        )
+        
+        print((cowpi_all > 4.6).mean())
+        print((cowpi_all > 4.5).mean())
+
+        ax = plt.subplot()
+        
+        ax.boxplot(cowpi_all, sym='')
+        ax.set_xticklabels(['Base', 'TWA', 'PM', 'TWA+PM'], rotation=45)
+        
+        plt.savefig(self.pub_loc + 'cowpi_all.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
 
         # cowpi_lower20 = [
         #     self.base['cowpi'].quantile(0.2)['income'],

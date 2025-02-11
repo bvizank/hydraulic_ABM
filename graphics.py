@@ -11,7 +11,7 @@ plots = Graphics(publication=True, error='se', days=days)
 # plots.flow_plots()
 
 ''' Age plots '''
-# plots.age_plots()
+plots.age_plots()
 
 ''' Industrial distance plots '''
 # plots.ind_dist_plots()
@@ -30,7 +30,7 @@ plots = Graphics(publication=True, error='se', days=days)
 
 ''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(di=False, perc=False, exclusion=True, sa=False)
+# plots.cowpi_boxplot(di=False, perc=False, exclusion=True, sa=False)
 
 ''' Income plots '''
 # plots.income_plots()
