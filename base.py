@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 from scipy.stats import binned_statistic
 import utils as ut
-import data as dt
+import city_info as ci
 import statsmodels.api as sm
 from sklearn.linear_model import LinearRegression
 
@@ -739,13 +739,13 @@ class BaseGraphics:
         ax.set_ylabel('Household Income')
 
         return ax
-        
-    def bg_map(self, ax, display_demo, node_data):
+
+    def bg_map(self, ax, display_demo=None, node_data=None):
         '''
         Create a map showing wn nodes and pipes layered on top of the block
         groups. Block groups are colored based on the display_demo param
         and nodes are colored based on the node_data.
-        
+
         Parameters:
         -----------
             ax  :   matplotlib.axes
@@ -754,18 +754,19 @@ class BaseGraphics:
             display_demo  :  str
                 demographic to be displayed on the block groups
                 options: ['median_income', 'perc_w', 'perc_nh']
-            
+
             node_data  :  pd.DataFrame
                 node data to be displayed
         '''
-        
         # directory with clinton data
         dir = 'Input Files/cities/clinton/'
 
         # convert the wn to an object with various gdfs
-        wn_gis = wntr.network.to_gis(self.wn)
-        wn_gis.junctions = wn_gis.junctions.set_crs('epsg:4326')
-        wn_gis.pipes = wn_gis.pipes.set_crs('epsg:4326')
+        # wn_gis = wntr.network.to_gis(self.wn)
+        # wn_gis.junctions = wn_gis.junctions.set_crs('epsg:4326')
+        # wn_gis.pipes = wn_gis.pipes.set_crs('epsg:4326')
+        node_buildings = ci.make_building_list(self.wn, 'clinton', dir)
+        node_buildings = node_buildings.query('type == "res"')
 
         # import the block groups for sampson county
         gdf = geopandas.read_file(dir + 'sampson_bg_clinton/tl_2023_37_bg.shp')
@@ -788,36 +789,56 @@ class BaseGraphics:
         gdf = gdf[gdf['TRACTCE'].isin(bg)]
 
         gdf = gdf.join(demo)
-        print(gdf)
 
-        # apply the bg crs to the wn data
-        wn_gis.junctions.to_crs(gdf.crs, inplace=True)
-        wn_gis.pipes.to_crs(gdf.crs, inplace=True)
-        
-        # add node_data to wn_gis.junctions
-        node_data.index = node_data.index.astype('int64')
-        wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
-        wn_gis.junctions.insert(0, 'data', node_data)
-        print(wn_gis.junctions)
+        if node_data is not None:
+            # apply the bg crs to the wn data
+            # wn_gis.junctions.to_crs(gdf.crs, inplace=True)
+            # wn_gis.pipes.to_crs(gdf.crs, inplace=True)
+            node_buildings.to_crs(gdf.crs, inplace=True)
 
-        # clip the bg layer to the extent of the wn layer
-        gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
+            # add node_data to wn_gis.junctions
+            node_data.index = node_data.index.astype('int64')
+            # wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
+            # wn_gis.junctions.insert(0, 'data', node_data)
+            # print(wn_gis.junctions)
+            node_buildings.insert(0, 'data', node_data)
+
+            # clip the bg layer to the extent of the wn layer
+            # gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
+            gdf = geopandas.clip(gdf, mask=node_buildings.total_bounds)
+        else:
+            wn_gis = wntr.network.to_gis(self.wn)
+            wn_gis.junctions = wn_gis.junctions.set_crs('epsg:4326')
+            wn_gis.junctions.to_crs(gdf.crs, inplace=True)
+            gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
 
         # plot the bg layer
-        ax = gdf.plot(ax=ax, column=display_demo, legend=True, zorder=1)
+        if display_demo is not None:
+            ax = gdf.plot(ax=ax, column=display_demo, legend=True, zorder=1)
+        else:
+            print(gdf)
+            ax = gdf.plot(ax=ax, color='white', edgecolor='black')
 
         # add the junctions and pipes
-        ax = wn_gis.pipes.plot(ax=ax, linewidth=0.3, zorder=2)
-        ax = wn_gis.junctions.plot(
-            ax=ax, marker='o', markersize=1, zorder=3,
-            column='data', legend=True, cmap='YlGn');
+        # ax = wn_gis.pipes.plot(ax=ax, linewidth=0.3, zorder=2)
+        # ax = wn_gis.junctions.plot(
+        #     ax=ax, marker='o', markersize=1, zorder=3,
+        #     column='data', legend=True, cmap='YlGn');
+        if node_data is not None:
+            ax = node_buildings.plot(
+                ax=ax, marker='.', markersize=0.1, zorder=3,
+                column='data', legend=True, cmap='Reds')
+        else:
+            ax = wn_gis.junctions.plot(
+                ax=ax, marker='o', markersize=1)
 
         ax.set_axis_off()
 
         # calculate how the average node data for each bg
-        node_join = wn_gis.junctions.sjoin(gdf, how='inner')
-        print(node_join.loc[:, ['data', 'index_right']].groupby(['index_right']).mean())
-        
+        # node_join = node_buildings.sjoin(gdf, how='inner')
+        if node_data is not None:
+            print(node_buildings.loc[:, ['data', 'index_right']].groupby(['index_right']).mean())
+
         return ax
 
 
@@ -839,13 +860,13 @@ class Graphics(BaseGraphics):
         self.x_len = days * 24
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers', 'agent_loc',
-                          'wfh', 'dine', 'groc', 'ppe']
+                          'wfh', 'dine', 'groc', 'ppe', 'demo']
         ''' List that will be truncated based on the number of days the
         simulation was run. Does not include the warmup period '''
         self.truncate_list = [
             'seir_data', 'demand', 'age', 'flow'
         ]
-        
+
         if not single:
             self.init_data()
 
@@ -2106,6 +2127,7 @@ class Graphics(BaseGraphics):
                                       'hygiene']
         comp_list.remove('agent_loc')
         data = ut.read_data(loc, comp_list)
+        data['tot_cost'] = data['tw_cost'] + data['bw_cost']
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
         #     if 'TN' in i:
@@ -2203,7 +2225,7 @@ class Graphics(BaseGraphics):
         plt.savefig(loc + 'age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
-        
+
         # res_age_pm = data['age'][self.res_nodes].mean(axis=1)
         # com_age_pm = data['age'][self.com_nodes].mean(axis=1)
         # ind_age_pm = data['age'][self.ind_nodes].mean(axis=1)
@@ -2276,10 +2298,91 @@ class Graphics(BaseGraphics):
         plt.close()
 
         ''' Make maps with water age and bg demographics '''
+        data['income'].set_index(keys='id', inplace=True)
+        # cowpi = pd.concat(
+        #     [data['income'],
+        #      data['tot_cost'].iloc[-1, :] / (data['income'] * self.days / 365)],
+        #     axis=1, keys=['Income', 'COWPI']
+        # )
+        cowpi = pd.concat(
+            [data['tot_cost'].iloc[-1, :] / data['income'].loc[:, 'income'] * self.days / 365 * 100,
+             data['income'].loc[:, 'income']],
+            axis=1, keys=['cowpi', 'income']
+        )
         ax = plt.subplot()
-        self.bg_map(ax, 'median_income', data['age'].iloc[-1, :] / 3600)
+        # self.bg_map(ax, 'median_income', data['age'].iloc[-1, :] / 3600)
+        self.bg_map(ax, 'median_income', cowpi.loc[:, 'cowpi'] > 4.6)
         plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(loc + 'income-x-age.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ax = plt.subplot()
+        self.bg_map(ax)
+        plt.savefig(loc + 'clinton-bg.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        cowpi_low20 = cowpi.loc[:, 'income'].quantile(0.20)
+
+        def f(x):
+            if x['income'] > cowpi_low20:
+                return 1
+            elif x['income'] < cowpi_low20:
+                return 0
+
+        cowpi['level'] = cowpi.apply(f, axis=1)
+        print(cowpi)
+        income_level = pd.concat(
+            [cowpi[cowpi.loc[:, 'level'] == 0]['cowpi'].reset_index(drop=True),
+             cowpi[cowpi.loc[:, 'level'] == 1]['cowpi'].reset_index(drop=True)],
+            axis=1, keys=['Lower 20%', 'Upper 80%']
+        )
+
+        ax = plt.subplot()
+        income_level.plot(kind='box', sym='')
+        plt.savefig(loc + 'income_cowpi.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        # plot race boxplot
+        print(data['demo'])
+        race = pd.concat(
+            [cowpi[data['demo'].loc['white', :]]['cowpi'].reset_index(drop=True),
+             cowpi[~data['demo'].loc['white', :]]['cowpi'].reset_index(drop=True)],
+            axis=1, keys=['White', 'POC']
+        )
+        print(race)
+
+        ax = plt.subplot()
+        race.plot(kind='box', sym='')
+        plt.savefig(loc + 'race_cowpi.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        # plot hispanic boxplot
+        hispanic = pd.concat(
+            [cowpi[~data['demo'].loc['hispanic', :]]['cowpi'].reset_index(drop=True),
+             cowpi[data['demo'].loc['hispanic', :]]['cowpi'].reset_index(drop=True)],
+            axis=1, keys=['Non-hispanic', 'Hispanic']
+        )
+
+        ax = plt.subplot()
+        race.plot(kind='box', sym='')
+        plt.savefig(loc + 'race_cowpi.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        # plot renters boxplot
+        hispanic = pd.concat(
+            [cowpi[data['demo'].loc['renter', :]]['cowpi'].reset_index(drop=True),
+             cowpi[~data['demo'].loc['renter', :]]['cowpi'].reset_index(drop=True)],
+            axis=1, keys=['Renter', 'Non-renter']
+        )
+
+        ax = plt.subplot()
+        hispanic.plot(kind='box', sym='')
+        plt.savefig(loc + 'renter_cowpi.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 

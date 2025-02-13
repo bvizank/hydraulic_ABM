@@ -85,12 +85,12 @@ susDict = {
 read_list = [
     'age',
     'agent_loc',
-    'burden',
     'bw_cost',
     'bw_demand',
     'cook',
     'cov_ff',
     'cov_pers',
+    'demo',
     'demand',
     'dine',
     'drink',
@@ -102,7 +102,6 @@ read_list = [
     'ppe',
     'pressure',
     'seir_data',
-    'traditional',
     'tw_cost',
     'wfh'
 ]
@@ -115,8 +114,7 @@ avg_list = [
     'cook',
     'hygiene',
     'drink',
-    'burden',
-    'traditional'
+    'demo'
 ]
 
 

@@ -193,13 +193,13 @@ class Parameters(Model):
             for key, value in self.__dict__.items():
                 params.writerow([key, value])
 
-    def capacity_helper(self, x):
+    def capacity_helper(self, x, ind):
         if x == 'res':
             return self.random.choices(range(1, 7), weights=self.weights, k=1)[0]
         if x == 'com':
             return self.random.randint(10, 40)
         if x == 'ind':
-            return self.random.randint(50, 600)
+            return self.random.randint(50, ind)
 
     def building_helper(self, x):
         building = Building(
@@ -211,9 +211,40 @@ class Parameters(Model):
         house = Household(
             x.name, x['total_res'] - x['capacity'], x['total_res'],
             x['wdn_node'], None, self.twa_mods, self, x['capacity'],
-            x['bg']
+            x['index_right']
         )
         return house
+
+    def ind_capacity_helper(self, limit):
+        # assign each building a capacity based on type
+        self.node_buildings['capacity'] = (
+            self.node_buildings['type'].apply(self.capacity_helper, ind=limit)
+        )
+
+        # make capacity an integer
+        self.node_buildings['capacity'] = self.node_buildings['capacity'].fillna(0).astype(int)
+
+        ''' Set the number of work agents and the locations that need workers '''
+        self.work_agents = self.node_buildings.groupby('type')['capacity'].sum()['ind']
+        print(f"Capacity of all industrial nodes: {self.work_agents}")
+        com_agents = self.node_buildings.groupby('type')['capacity'].sum()['com']
+        print(f"Capacity of all commercial nodes: {com_agents}")
+        self.ind_agent_n = int(dcp(self.work_agents) / 2)
+        # print(f"Distribution based industrial spots: {self.ind_agent_n}")
+
+    def assign_ind_capacity(self):
+        limit = 600
+        self.ind_capacity_helper(limit)
+
+        # ind_cap_difference = self.work_agents - self.ind_agent_n
+
+        # while abs(ind_cap_difference) > 100:
+        #     if ind_cap_difference > 0:
+        #         limit -= 10
+        #         self.ind_capacity_helper(limit)
+        #     else:
+        #         limit += 10
+        #         self.ind_capacity_helper(limit)
 
     def setup_real(self, city, wn_name=None):
         '''
@@ -281,13 +312,8 @@ class Parameters(Model):
         ''' Assign each building a node in the WDN '''
         self.node_buildings = ci.make_building_list(self.wn, city, city_dir)
 
-        # assign each building a capacity based on type
-        self.node_buildings['capacity'] = (
-            self.node_buildings['type'].apply(self.capacity_helper)
-        )
-
-        # make capacity an integer
-        self.node_buildings['capacity'] = self.node_buildings['capacity'].fillna(0).astype(int)
+        ''' Assign the industrial nodes with capacity values '''
+        self.assign_ind_capacity()
 
         ''' Get a running tally of residential agents '''
         self.node_buildings['total_res'] = (
@@ -305,18 +331,12 @@ class Parameters(Model):
         # convert floats from cumsum to ints
         self.node_buildings['total_res'] = self.node_buildings['total_res'].fillna(0).astype(int)
 
-        ''' Set the number of work agents and the locations that need workers '''
-        self.work_agents = self.node_buildings.groupby('type')['capacity'].sum()['ind']
-        print(f"Capacity of all industrial nodes: {self.work_agents}")
-        self.ind_agent_n = int(dcp(self.work_agents) / 2)
-
         self.work_loc_list = self.node_list(
             self.node_buildings[self.node_buildings['type'] == 'ind']['capacity'],
             (self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list() +
              self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
         )
 
-        print(f"Distribution based industrial spots: {self.ind_agent_n}")
         print(f"Total number of agents with a work node: {len(self.work_loc_list)}")
 
         # define lists with each node type
@@ -362,11 +382,13 @@ class Parameters(Model):
             self.node_buildings[~self.node_buildings['type'].isin(['res'])].apply(self.building_helper, axis=1)
         ).to_dict()
 
+        print(self.node_buildings.index)
+
         # initialize income values for all of the households in the sim
         self.income_list = dict()
         for i, row in self.income_dist.iterrows():
             grp_size = len(
-                self.node_buildings.query('type == "res" and bg == @i')
+                self.node_buildings.query('type == "res" and index_right == @i')
             )
 
             print(f"Group size for bg {i}: {grp_size}")
@@ -748,41 +770,12 @@ class Parameters(Model):
             data={
                 'income': self.income,
                 'level': self.income_level,
-                'hh_size': self.hh_size
+                'hh_size': self.hh_size,
+                'id': list(self.households.keys())
             },
             index=[h.node for n, h in self.households.items()]
         )
-
-    def create_demand_houses(self):
-        ''' Create houses using pysimdeum for stochastic demand simulation '''
-        self.res_houses = list()
-        for node in self.res_nodes:
-            agents_at_node = len(self.grid.G.nodes[node]['agent'])
-            if agents_at_node > 5 or agents_at_node < 2:
-                pass
-            elif agents_at_node == 1:
-                house = pysimdeum.built_house(house_type='one_person')
-                house.id = node
-                for user in house.users:
-                    user.age = 'work_ad'
-                    user.job = True
-                self.res_houses.append(house)
-            else:
-                house = pysimdeum.built_house(house_type='family', user_num=agents_at_node)
-                house.id = node
-                for user in house.users:
-                    user.age = 'work_ad'
-                    user.job = True
-                self.res_houses.append(house)
-
-    def check_houses(self):
-        for house in self.res_houses:
-            node = house.id
-            agents_at_node = self.grid.G.nodes[node]['agent']
-            for agent in agents_at_node:
-                if agent.wfh == 1 or agent.work_node == None:
-                    user.age = 'home_ad'
-                    user.job = True
+        print(self.income_comb)
 
     def set_attributes(self):
         '''

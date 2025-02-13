@@ -115,13 +115,11 @@ def assign_bg(data):
     gdf.to_crs(data.crs, inplace=True)
 
     # delete index_right from data
-    print(data)
     data.drop('index_right', axis=1, inplace=True)
-    print(gdf)
 
     # spatial join the parcels with the block groups
     data = data.sjoin(gdf, how='inner')
-    print(data)
+    print(data.columns)
 
     return data
 

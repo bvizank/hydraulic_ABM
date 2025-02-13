@@ -6,24 +6,28 @@ from utils import read_data, delete_contents
 import shutil
 import data as dt
 import logging
+import random
 
 
-bw = True
-bbn_models = ['all']
-dist_income = True
+# parameters
+bw = False,
+bbn_models = []
+dist_income = False,
 twa_process = 'absolute'
-twa_mods = [1000000, 140, 150]
-output_loc = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
+twa_mods = [130, 140, 150]
+output_loc = 'Output Files/30_base/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
 for hdlr in logger.handlers[:]:
     logger.removeHandler(hdlr)
 
+# set up MPI
 comm = MPI.COMM_WORLD
 nprocs = comm.Get_size()
 rank = comm.Get_rank()
 
+# check to see if the file directory exists, if not make it
 if rank == 0:
     if os.path.isdir(output_loc):
         delete_contents(output_loc)
@@ -43,16 +47,17 @@ fh.setFormatter(formmater)
 logger.addHandler(fh)
 
 for i in range(0+rank, 30, nprocs):
+    seed = random.random()
     # run the simulation
     run_sim(
         id=i,
         days=180,
-        seed=i,
+        seed=seed,
         wfh_lag=0,
         no_wfh_perc=0,
         bbn_models=bbn_models,
         daily_contacts=30,
-        city='micropolis',
+        city='clinton',
         verbose=0,
         hyd_sim='monthly',
         warmup=True,
