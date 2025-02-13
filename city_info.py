@@ -119,7 +119,7 @@ def assign_bg(data):
 
     # spatial join the parcels with the block groups
     data = data.sjoin(gdf, how='inner')
-    print(data.columns)
+    # print(data.columns)
 
     return data
 
@@ -271,7 +271,7 @@ def buildings_by_type(buildings):
 
     buildings = buildings[buildings['type'] != '']
 
-    building_stats(buildings)
+    # building_stats(buildings)
     buildings = assign_bg(buildings)
 
     return buildings

@@ -370,7 +370,7 @@ class ConsumerModel(Parameters):
         agents_to_home_n = int(min(self.ind_agent_n/2, len(ind_agent_list)))
         agents_to_work = int(self.ind_agent_n/2) if self.timestep != 0 else self.ind_agent_n
 
-        agents_to_home = np.random.choice(ind_agent_list, agents_to_home_n, False)
+        agents_to_home = self.rng.choice(ind_agent_list, agents_to_home_n, False)
         # print(agents_to_home)
         # print(len(ind_agent_list))
 
@@ -415,7 +415,7 @@ class ConsumerModel(Parameters):
         res_agent_ind = dcp(self.res_agents * self.ind_work_nodes)
         # print(res_agent_ind)
         # print(res_agent_ind)
-        # agents_to_work = np.random.choice(res_agent_ind, agents_to_work_n, False)
+        # agents_to_work = self.rng.choice(res_agent_ind, agents_to_work_n, False)
         # res_agent_list = np.where(res_agent_ind > 0)[0]
 
         # for a in self.schedule.agents:
@@ -451,7 +451,7 @@ class ConsumerModel(Parameters):
             # pick an agent that is at that work node
             agent_ids = np.where(res_agent_ind == work_node)[0]
             # print(len(agent_ids))
-            agent_id = np.random.choice(agent_ids)
+            agent_id = self.rng.choice(agent_ids)
             res_agent_ind[agent_id] = 0
             agent_to_move = self.agents_list[agent_id]
             if (agent_to_move.wfh == 1 and
@@ -856,7 +856,8 @@ class ConsumerModel(Parameters):
         #     error = last_age[node] - pen_age[node]
         #     total_error += error
         self.water_age_slope = (last_age - first_age) / len(mean_age)
-        print(self.water_age_slope)
+        if self.verbose > 0:
+            print(self.water_age_slope)
 
     def collect_agent_data(self):
         ''' BBN input containers '''

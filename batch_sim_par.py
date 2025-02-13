@@ -52,7 +52,6 @@ for i in range(0+rank, 30, nprocs):
     run_sim(
         id=i,
         days=180,
-        seed=seed,
         wfh_lag=0,
         no_wfh_perc=0,
         bbn_models=bbn_models,

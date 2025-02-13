@@ -29,7 +29,7 @@ class Parameters(Model):
         self.id = id
         self.num_agents = N
         self.seed = seed
-        np.random.seed(seed)
+        self.rng = np.random.default_rng(seed)
         self.network = city
         self.t = 0
         self.schedule = RandomActivation(self)
@@ -226,9 +226,11 @@ class Parameters(Model):
 
         ''' Set the number of work agents and the locations that need workers '''
         self.work_agents = self.node_buildings.groupby('type')['capacity'].sum()['ind']
-        print(f"Capacity of all industrial nodes: {self.work_agents}")
+        if self.verbose > 0:
+            print(f"Capacity of all industrial nodes: {self.work_agents}")
         com_agents = self.node_buildings.groupby('type')['capacity'].sum()['com']
-        print(f"Capacity of all commercial nodes: {com_agents}")
+        if self.verbose > 0:
+            print(f"Capacity of all commercial nodes: {com_agents}")
         self.ind_agent_n = int(dcp(self.work_agents) / 2)
         # print(f"Distribution based industrial spots: {self.ind_agent_n}")
 
@@ -337,7 +339,8 @@ class Parameters(Model):
              self.node_buildings[self.node_buildings['type'] == 'ind'].index.to_list())
         )
 
-        print(f"Total number of agents with a work node: {len(self.work_loc_list)}")
+        if self.verbose > 0:
+            print(f"Total number of agents with a work node: {len(self.work_loc_list)}")
 
         # define lists with each node type
         self.nav_nodes = []
@@ -368,7 +371,8 @@ class Parameters(Model):
         # print(self.work_loc_list)
 
         # init tracking arrays for each node type
-        print(self.num_agents)
+        if self.verbose > 0:
+            print(self.num_agents)
         self.ind_agents = np.zeros(self.num_agents, dtype=np.int64)
         self.res_agents = np.zeros(self.num_agents, dtype=np.int64)
         self.com_agents = np.zeros(self.num_agents, dtype=np.int64)
@@ -382,7 +386,7 @@ class Parameters(Model):
             self.node_buildings[~self.node_buildings['type'].isin(['res'])].apply(self.building_helper, axis=1)
         ).to_dict()
 
-        print(self.node_buildings.index)
+        # print(self.node_buildings.index)
 
         # initialize income values for all of the households in the sim
         self.income_list = dict()
@@ -391,7 +395,8 @@ class Parameters(Model):
                 self.node_buildings.query('type == "res" and index_right == @i')
             )
 
-            print(f"Group size for bg {i}: {grp_size}")
+            if self.verbose > 0:
+                print(f"Group size for bg {i}: {grp_size}")
             if grp_size > 0:
                 self.income_list[i] = ut.income_list(
                     data=row,
@@ -399,7 +404,7 @@ class Parameters(Model):
                     model=self
                 )
 
-        print([len(v) for i, v in self.income_list.items()])
+        # print([len(v) for i, v in self.income_list.items()])
 
         # make dictionary of household objects
         self.households = (
@@ -775,7 +780,6 @@ class Parameters(Model):
             },
             index=[h.node for n, h in self.households.items()]
         )
-        print(self.income_comb)
 
     def set_attributes(self):
         '''
@@ -910,15 +914,17 @@ class Parameters(Model):
 
         # set epanet options
         if self.hyd_sim in ['hourly', 'monthly']:
-            print("Set the pattern and hydraulic timestep values and quality parameter")
+            if self.verbose > 0:
+                print("Set the pattern and hydraulic timestep values and quality parameter")
             self.wn.options.time.pattern_timestep = 3600
             self.wn.options.time.hydraulic_timestep = 3600
             # self.wn.options.time.quality_timestep = 900
             self.wn.options.quality.parameter = 'AGE'
 
-            print(self.wn.options.quality.parameter)
+            if self.verbose > 0:
+                print(self.wn.options.quality.parameter)
 
-            print("Initialize the EPANET simulator")
+                print("Initialize the EPANET simulator")
             self.sim = EpanetSimulator_Stepwise(self.wn,
                                                 file_prefix='temp' + str(self.id))
             self.sim.initialize(file_prefix='temp' + str(self.id))
@@ -926,7 +932,8 @@ class Parameters(Model):
 
         # set the base demand based on the buildings at each node
         if not virtual:
-            print("Setting the base demand values based on each building.....")
+            if self.verbose > 0:
+                print("Setting the base demand values based on each building.....")
             for name in self.nodes_w_demand:
                 if name not in self.wdn_nodes:
                     continue
@@ -946,7 +953,8 @@ class Parameters(Model):
                 units=self.wn.options.hydraulic.inpfile_units
             )
 
-            print(self.wn.options.hydraulic.__dict__)
+            if self.verbose > 0:
+                print(self.wn.options.hydraulic.__dict__)
 
         # water age slope to determine the warmup period end
         self.water_age_slope = 1

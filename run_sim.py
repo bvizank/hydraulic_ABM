@@ -16,7 +16,7 @@ from tqdm import tqdm
 warnings.simplefilter("ignore", UserWarning)
 
 
-def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
+def run_sim(city, id=0, days=90, seed=None, write_inp=False, **kwargs):
     curr_dt = strftime("%Y-%m-%d_%H-%M_" + str(id), localtime())
     if 'output_loc' in kwargs:
         output_loc = kwargs['output_loc'] + str(id)
@@ -39,7 +39,8 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
     ''' Save the parameters of the model '''
     model.save_pars(output_loc)
 
-    print('Starting simulation ............................')
+    if kwargs['verbose'] > 0:
+        print('Starting simulation ............................')
     # run a warmup period if warmup appears in kwargs
     while model.warmup:
         model.step()
@@ -56,7 +57,7 @@ def run_sim(city, id=0, days=90, seed=218, write_inp=False, **kwargs):
 
     stop = perf_counter()
 
-    if kwargs['verbose'] != 0:
+    if kwargs['verbose'] > 0:
         print('Time to complete: ', stop - start)
 
     ''' Save the model outputs '''
