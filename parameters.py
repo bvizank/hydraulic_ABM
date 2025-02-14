@@ -25,6 +25,7 @@ class Parameters(Model):
     def __init__(self, N, city, days, id, seed, **kwargs):
         super().__init__()
         ''' Set the default parameters '''
+        self.output_loc = None
         self.days = days
         self.id = id
         self.num_agents = N
@@ -197,7 +198,7 @@ class Parameters(Model):
         if x == 'res':
             return self.random.choices(range(1, 7), weights=self.weights, k=1)[0]
         if x == 'com':
-            return self.random.randint(10, 40)
+            return self.random.randint(4, 20)
         if x == 'ind':
             return self.random.randint(50, ind)
 

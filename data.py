@@ -84,7 +84,6 @@ susDict = {
 ''' Data for data synthesis '''
 read_list = [
     'age',
-    'agent_loc',
     'bw_cost',
     'bw_demand',
     'cook',
