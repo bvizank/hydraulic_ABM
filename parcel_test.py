@@ -6,3 +6,5 @@ city = 'clinton'
 dir = 'Input Files/cities/clinton/'
 
 node_buildings = ci.make_building_list(wn, city, dir)
+print(node_buildings)
+print(node_buildings.columns)
