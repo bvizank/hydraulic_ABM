@@ -198,7 +198,8 @@ class Parameters(Model):
         if x == 'res':
             return self.random.choices(range(1, 7), weights=self.weights, k=1)[0]
         if x == 'com':
-            return self.random.gammavariate(1.4, 8)
+            return self.random.randint(4, 20)
+            # return self.random.gammavariate(1.4, 8)
         if x == 'ind':
             return self.random.randint(50, ind)
 

@@ -11,11 +11,11 @@ import random
 
 # parameters
 bw = True,
-bbn_models = []
+bbn_models = ['all']
 dist_income = False,
 twa_process = 'absolute'
 twa_mods = [130, 140, 150]
-output_loc = 'Output Files/30_basebw/'
+output_loc = 'Output Files/30_pm/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
