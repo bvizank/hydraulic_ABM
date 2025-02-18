@@ -312,31 +312,35 @@ class BaseGraphics:
         Manipulate household data to be ready to plot
         '''
         # get base data ready
-        self.package_household(self.base, self.base_comp_dir, bw=False)
+        if 'base' in self.scenarios:
+            self.package_household(self.base, self.base_comp_dir, bw=False)
 
         # get base+bw data ready
-        self.package_household(self.basebw, self.base_bw_comp_dir)
+        if 'basebw' in self.scenarios:
+            self.package_household(self.basebw, self.base_bw_comp_dir)
 
         # get pm data ready
-        self.package_household(self.pm_nobw, self.pm_nobw_comp_dir, bw=False)
+        if 'pm_nobw' in self.scenarios:
+            self.package_household(self.pm_nobw, self.pm_nobw_comp_dir, bw=False)
 
         # get pm+bw data ready
-        self.package_household(self.pm, self.pm_comp_dir)
+        if 'pm' in self.scnenarios:
+            self.package_household(self.pm, self.pm_comp_dir)
 
         # get pm_nodi data ready
-        self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
+        # self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
 
         # get pm_perc data ready
         # self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
         # get pm_noD data ready
-        self.package_household(self.pm_noD, self.pm_comp_noD_dir)
+        # self.package_household(self.pm_noD, self.pm_comp_noD_dir)
 
         # get pm_noC data ready
-        self.package_household(self.pm_noC, self.pm_comp_noC_dir)
+        # self.package_household(self.pm_noC, self.pm_comp_noC_dir)
 
         # get pm_noH data ready
-        self.package_household(self.pm_noH, self.pm_comp_noH_dir)
+        # self.package_household(self.pm_noH, self.pm_comp_noH_dir)
 
         # get pm 25ind data ready
         # self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
@@ -855,18 +859,20 @@ class Graphics(BaseGraphics):
             options include: se, ci95, and sd
     '''
 
-    def __init__(self, publication, error, days, inp_file=None, single=False):
+    def __init__(self, publication, error, days, scenario_ls=None, inp_file=None, single=False):
         self.days = days
         self.x_len = days * 24
         self.comp_list = ['seir_data', 'demand', 'age', 'flow',
                           'cov_ff', 'cov_pers', 'agent_loc',
                           'wfh', 'dine', 'groc', 'ppe', 'demo']
+
         ''' List that will be truncated based on the number of days the
         simulation was run. Does not include the warmup period '''
         self.truncate_list = [
             'seir_data', 'demand', 'age', 'flow'
         ]
 
+        self.scenarios = scenario_ls
         if not single:
             self.init_data()
 
@@ -915,78 +921,61 @@ class Graphics(BaseGraphics):
         ''' Define data directories '''
         # self.base_comp_dir = 'Output Files/30_no_pm/'
         # self.pm_comp_dir = 'Output Files/30_all_pm/'
-        self.base_comp_dir = 'Output Files/1_Distance Based Income/30_base_di/'
-        self.base_bw_comp_dir = 'Output Files/1_Distance Based Income/30_basebw_di/'
-        self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_25ind_equity/'
-        self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_50ind_equity/'
-        self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_75ind_equity/'
-        self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
-        self.pm_comp_dir = 'Output Files/1_Distance Based Income/30_pmbw_di/'
-        self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
-        self.pm_comp_noD_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
-        self.pm_comp_noC_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noC/'
-        self.pm_comp_noH_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noH/'
-        self.pm_nodi_comp_dir = 'Output Files/2_Non-distance Based Income/30_pmbw/'
-        self.pm_nobw_comp_dir = 'Output Files/1_Distance Based Income/30_pm_di/'
-        # self.wfh_loc = 'Output Files/30_wfh_equity/'
-        # self.dine_loc = 'Output Files/30_dine_equity/'
-        # self.groc_loc = 'Output Files/30_groc_equity/'
-        # self.ppe_loc = 'Output Files/30_ppe_equity/'
+        self.base_comp_dir = 'Output Files/30_base/'
+        self.base_bw_comp_dir = 'Output Files/30_basebw/'
+        self.pm_comp_dir = 'Output Files/30_pm/'
+        self.pm_nobw_comp_dir = 'Output Files/30_pm_nobw/'
+        # self.pm_comp_perc_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_perc/'
+        # self.pm_25ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_25ind_equity/'
+        # self.pm_50ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_50ind_equity/'
+        # self.pm_75ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_75ind_equity/'
+        # self.pm_100ind_comp_dir = 'Output Files/3_Sensitivity Analysis/30_all_pm_100ind_equity/'
+        # self.pm_comp_noD_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noD/'
+        # self.pm_comp_noC_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noC/'
+        # self.pm_comp_noH_dir = 'Output Files/1_Distance Based Income/30_pmbw_di_noH/'
+        # self.pm_nodi_comp_dir = 'Output Files/2_Non-distance Based Income/30_pmbw/'
 
         ''' Read in data from data directories '''
-        self.pm = ut.read_comp_data(
-            self.pm_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        # self.pm_perc = ut.read_comp_data(
-        #     self.pm_comp_perc_dir, self.comp_list, days, self.truncate_list
+        if 'base' in self.scenarios:
+            self.base = ut.read_comp_data(
+                self.base_comp_dir, self.comp_list, self.days, self.truncate_list
+            )
+        if 'basebw' in self.scenarios:
+            self.basebw = ut.read_comp_data(
+                self.base_bw_comp_dir, self.comp_list, self.days, self.truncate_list
+            )
+        if 'pm' in self.scenarios:
+            self.pm = ut.read_comp_data(
+                self.pm_comp_dir, self.comp_list, self.days, self.truncate_list
+            )
+        if 'pm_nobw' in self.scenarios:
+            self.pm_nobw = ut.read_comp_data(
+                self.pm_nobw_comp_dir, self.comp_list, self.days, self.truncate_list
+            )
+        # self.pm_noD = ut.read_comp_data(
+        #     self.pm_comp_noD_dir, self.comp_list, self.days, self.truncate_list
         # )
-        self.pm_noD = ut.read_comp_data(
-            self.pm_comp_noD_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm_noC = ut.read_comp_data(
-            self.pm_comp_noC_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm_noH = ut.read_comp_data(
-            self.pm_comp_noH_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm_nobw = ut.read_comp_data(
-            self.pm_nobw_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm_nodi = ut.read_comp_data(
-            self.pm_nodi_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.base = ut.read_comp_data(
-            self.base_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.basebw = ut.read_comp_data(
-            self.base_bw_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm25ind = ut.read_comp_data(
-            self.pm_25ind_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm50ind = ut.read_comp_data(
-            self.pm_50ind_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm75ind = ut.read_comp_data(
-            self.pm_75ind_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        self.pm100ind = ut.read_comp_data(
-            self.pm_100ind_comp_dir, self.comp_list, self.days, self.truncate_list
-        )
-        # self.wfh = ut.read_comp_data(
-        #     self.wfh_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # self.pm_noC = ut.read_comp_data(
+        #     self.pm_comp_noC_dir, self.comp_list, self.days, self.truncate_list
         # )
-        # self.dine = ut.read_comp_data(
-        #     self.dine_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # self.pm_noH = ut.read_comp_data(
+        #     self.pm_comp_noH_dir, self.comp_list, self.days, self.truncate_list
         # )
-        # self.grocery = ut.read_comp_data(
-        #     self.groc_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # self.pm_nodi = ut.read_comp_data(
+        #     self.pm_nodi_comp_dir, self.comp_list, self.days, self.truncate_list
         # )
-        # self.ppe = ut.read_comp_data(
-        #     self.ppe_loc, ['seir_data', 'age'], self.days, self.truncate_list
+        # self.pm25ind = ut.read_comp_data(
+        #     self.pm_25ind_comp_dir, self.comp_list, self.days, self.truncate_list
         # )
-
-        # print(self.pm['avg_wfh'])
+        # self.pm50ind = ut.read_comp_data(
+        #     self.pm_50ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        # )
+        # self.pm75ind = ut.read_comp_data(
+        #     self.pm_75ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        # )
+        # self.pm100ind = ut.read_comp_data(
+        #     self.pm_100ind_comp_dir, self.comp_list, self.days, self.truncate_list
+        # )
 
         ''' Read and distill household level data '''
         self.post_household()
@@ -998,14 +987,14 @@ class Graphics(BaseGraphics):
 
         ''' set x values '''
         self.x_values_hour = np.array([
-            x for x in np.arange(0, self.days, self.days / len(self.pm['avg_demand']))
+            x for x in np.arange(0, self.days, self.days / len(self.base['avg_demand']))
         ])
         self.x_values_day = np.array([
             x for x in range(self.days)
         ])
 
         ''' Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh '''
-        self.get_times(self.pm)
+        # self.get_times(self.pm)
 
     def flow_plots(self):
         ''' Make the flow direction changes plot '''
@@ -1035,61 +1024,64 @@ class Graphics(BaseGraphics):
                     format=self.format, bbox_inches='tight')
         plt.close()
 
-    def demand_plots(self):
+    def demand_plots(self, sa=False):
         ''' Make demand plots by sector with PM data '''
         # define the columns of the input data and the x_values
         cols = ['Residential', 'Commercial', 'Industrial']
 
-        # sort data
-        sector_dem = self.calc_sec_averages(self.pm['avg_demand'], op='sum')
-        sector_dem_var = self.calc_sec_averages(self.pm['var_demand'], op='sum')
-        sector_dem_err = ut.calc_error(sector_dem_var, self.error)
+        if sa:
+            # sort data for 25ind case
+            sector_dem50 = self.calc_sec_averages(self.pm25ind['avg_demand'], op='sum')
+            sector_dem_var50 = self.calc_sec_averages(self.pm25ind['var_demand'], op='sum')
+            sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
 
-        # sort data for 25ind case
-        sector_dem50 = self.calc_sec_averages(self.pm25ind['avg_demand'], op='sum')
-        sector_dem_var50 = self.calc_sec_averages(self.pm25ind['var_demand'], op='sum')
-        sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
+            # sort data for 50ind case
+            sector_dem50 = self.calc_sec_averages(self.pm50ind['avg_demand'], op='sum')
+            sector_dem_var50 = self.calc_sec_averages(self.pm50ind['var_demand'], op='sum')
+            sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
 
-        # sort data for 50ind case
-        sector_dem50 = self.calc_sec_averages(self.pm50ind['avg_demand'], op='sum')
-        sector_dem_var50 = self.calc_sec_averages(self.pm50ind['var_demand'], op='sum')
-        sector_dem_err50 = ut.calc_error(sector_dem_var50, self.error)
+            # sort data for 75ind case
+            sector_dem75 = self.calc_sec_averages(self.pm75ind['avg_demand'], op='sum')
+            sector_dem_var75 = self.calc_sec_averages(self.pm75ind['var_demand'], op='sum')
+            sector_dem_err75 = ut.calc_error(sector_dem_var75, self.error)
 
-        # sort data for 75ind case
-        sector_dem75 = self.calc_sec_averages(self.pm75ind['avg_demand'], op='sum')
-        sector_dem_var75 = self.calc_sec_averages(self.pm75ind['var_demand'], op='sum')
-        sector_dem_err75 = ut.calc_error(sector_dem_var75, self.error)
+            # sort data for 100ind case
+            sector_dem100 = self.calc_sec_averages(self.pm100ind['avg_demand'], op='sum')
+            sector_dem_var100 = self.calc_sec_averages(self.pm100ind['var_demand'], op='sum')
+            sector_dem_err100 = ut.calc_error(sector_dem_var100, self.error)
 
-        # sort data for 100ind case
-        sector_dem100 = self.calc_sec_averages(self.pm100ind['avg_demand'], op='sum')
-        sector_dem_var100 = self.calc_sec_averages(self.pm100ind['var_demand'], op='sum')
-        sector_dem_err100 = ut.calc_error(sector_dem_var100, self.error)
+            # plot demand by sector for 50ind
+            ax = plt.subplot()
+            self.make_avg_plot(ax, sector_dem50, sector_dem_err50, cols, self.x_values_hour) 
+            # ax1 = ax.twinx()
+            # ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
+            ax.legend(['Residential', 'Commercial', 'Industrial'])
+            ax.set_xlabel('Time (days)')
+            ax.set_ylabel('Demand (L)')
+            # ax1.set_ylabel('Percent of Population WFH')
+            plt.savefig(self.pub_loc + 'sector_demand_50ind' + '.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
 
-        # plot demand by sector
-        ax = plt.subplot()
-        self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour) 
-        # ax1 = ax.twinx()
-        # ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
-        ax.legend(['Residential', 'Commercial', 'Industrial'])
-        ax.set_xlabel('Time (days)')
-        ax.set_ylabel('Demand (L)')
-        # ax1.set_ylabel('Percent of Population WFH')
-        plt.savefig(self.pub_loc + 'sector_demand' + '.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+        if 'pm' in self.scenarios:
+            # sort data
+            sector_dem = self.calc_sec_averages(self.pm['avg_demand'], op='sum')
+            sector_dem_var = self.calc_sec_averages(self.pm['var_demand'], op='sum')
+            sector_dem_err = ut.calc_error(sector_dem_var, self.error)
 
-        # plot demand by sector for 50ind
-        ax = plt.subplot()
-        self.make_avg_plot(ax, sector_dem50, sector_dem_err50, cols, self.x_values_hour) 
-        # ax1 = ax.twinx()
-        # ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
-        ax.legend(['Residential', 'Commercial', 'Industrial'])
-        ax.set_xlabel('Time (days)')
-        ax.set_ylabel('Demand (L)')
-        # ax1.set_ylabel('Percent of Population WFH')
-        plt.savefig(self.pub_loc + 'sector_demand_50ind' + '.' + self.format,
-                    format=self.format, bbox_inches='tight')
-        plt.close()
+            # plot demand by sector
+            ax = plt.subplot()
+            self.make_avg_plot(ax, sector_dem, sector_dem_err, cols, self.x_values_hour) 
+            # ax1 = ax.twinx()
+            # ax1.plot(self.x_values_day, self.pm['avg_wfh'].mean(axis=1) * 100, color='k')
+            ax.legend(['Residential', 'Commercial', 'Industrial'])
+            ax.set_xlabel('Time (days)')
+            ax.set_ylabel('Demand (L)')
+            # ax1.set_ylabel('Percent of Population WFH')
+            plt.savefig(self.pub_loc + 'sector_demand' + '.' + self.format,
+                        format=self.format, bbox_inches='tight')
+            plt.close()
+
 
         ''' Make plots of aggregate demand data '''
         demand_base = self.base['avg_demand'][
@@ -1110,7 +1102,7 @@ class Graphics(BaseGraphics):
              demand_pm_nobw.sum(axis=1).rolling(24).mean(),
              demand_pm.sum(axis=1).rolling(24).mean()],
             axis=1,
-            keys=['Base', 'Base+BW', 'PM', 'PM+BW']
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
         )
 
         var_base = self.base['var_demand'][

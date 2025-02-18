@@ -6,21 +6,23 @@ import geopandas as gpd
 import osmnx as ox
 from scipy.spatial import cKDTree
 from shapely.geometry import shape, Point, mapping
+from shapely.geometry.polygon import Polygon
 import wntr
 import matplotlib.pyplot as plt
 
 
-def query_nconemap(map_name, id, params, call):
+def query_nconemap(map_name, id, params, call, url=None):
     """
     Fetch data from NCOneMap from the given map_name
     """
-    url = (
-        "https://services.nconemap.gov/secure/rest/services/NC1" +
-        map_name +
-        "/MapServer/" +
-        str(id) +
-        "/query?where=1%3D1"
-    )
+    if url is None:
+        url = (
+            "https://services.nconemap.gov/secure/rest/services/NC1" +
+            map_name +
+            "/MapServer/" +
+            str(id) +
+            "/query?where=1%3D1"
+        )
 
     method = getattr(requests, call)
     response = method(url, params=params)
@@ -64,7 +66,7 @@ def get_water_utility_service_areas(city_name):
     geometry = list()
     out_features = list()
     for feature in features:
-        if city_name in feature['properties']['wasyname']:
+        if city_name.capitalize() in feature['properties']['wasyname']:
             geometry.append(shape(feature["geometry"]))
             out_features.append(feature)
     df = gpd.GeoDataFrame(out_features, geometry=geometry, crs="EPSG:4326")
@@ -76,15 +78,15 @@ def get_osm_buildings_within_area(service_area_geom):
     """
     Fetches building footprints from OSM within a given geometry (service area).
     """
-    buildings = ox.features_from_polygon(service_area_geom.geometry, tags={"building": True})
+    buildings = ox.features_from_polygon(service_area_geom.geometry[0], tags={"building": True})
     buildings = ox.project_gdf(buildings, to_crs="EPSG:4326")
     buildings_proj = ox.project_gdf(buildings)
 
     # calculate area of building footprint in meters and convert to feet
     buildings['area'] = buildings_proj.area * 10.764
 
-    plt.hist(buildings['area'], bins=100)
-    plt.show()
+    # plt.hist(buildings['area'], bins=100)
+    # plt.show()
 
     return buildings
 
@@ -160,12 +162,12 @@ def get_parcel_data_within_area(service_area_geom):
             "f": "geojson",
             "objectIds": batch_ids,
         }
-        ob_data = query_nconemap(map_name, 0, ob_params, 'get')
+        ob_data = query_nconemap(map_name, 1, ob_params, 'get')
         features = ob_data['features']
         geometry = list()
         out_features = list()
         for feature in features:
-            geometry.append(Point(feature['geometry']['coordinates']))
+            geometry.append(shape(feature['geometry']))
             out_features.append(feature['properties'])
         new_df = gpd.GeoDataFrame(out_features, geometry=geometry, crs="EPSG:4326")
         df = pd.concat([df, new_df])
@@ -177,17 +179,18 @@ def get_parcel_data_within_area(service_area_geom):
         "f": "geojson",
         "objectIds": data['objectIds'][last_i:len(data['objectIds'])]
     }
-    ob_data = query_nconemap(map_name, 0, ob_params, 'get')
+    ob_data = query_nconemap(map_name, 1, ob_params, 'get')
     features = ob_data['features']
     geometry = list()
     out_features = list()
     for feature in features:
-        geometry.append(Point(feature['geometry']['coordinates']))
+        geometry.append(shape(feature['geometry']))
         out_features.append(feature['properties'])
     new_df = gpd.GeoDataFrame(out_features, geometry=geometry, crs="EPSG:4326")
     df = pd.concat([df, new_df])
+    print(df)
 
-    df = df.sjoin(service_area_geom)
+    df = df.sjoin(service_area_geom, how='inner')
 
     return df
 
