@@ -8,9 +8,9 @@ for hdlr in logger.handlers[:]:
 
 # set a new file logger in place of the stream handler
 # this will eliminate errors being sent to sys.stderr
-fh = logging.FileHandler('log', 'w')
+fh = logging.FileHandler("log", "w")
 fh.setLevel(logging.DEBUG)
-formmater = logging.Formatter('%(name)-12s %(levelname)-8s %(message)s')
+formmater = logging.Formatter("%(name)-12s %(levelname)-8s %(message)s")
 fh.setFormatter(formmater)
 logger.addHandler(fh)
 
@@ -22,14 +22,14 @@ run_sim(
     write_inp=False,
     wfh_lag=0,
     no_wfh_perc=0,
-    bbn_models=[],
+    bbn_models=["all"],
     daily_contacts=30,
-    city='clinton',
+    city="clinton",
     verbose=0.5,
-    hyd_sim='monthly',
+    hyd_sim="monthly",
     dist_income=False,
     warmup=True,
     bw=True,
     ind_min_demand=0,
-    twa_process='absolute'
+    twa_process="absolute",
 )

@@ -32,13 +32,13 @@ class ConsumerAgent(Agent):
         self.sev_time = 0
         self.crit_time = 0
         self.symptomatic = None  # 0 is asymptomatic, 1 symptomatic
-        self.inf_severity = 0    # 0: asymptomatic, 1: mild, 2: severe, 3: critical
-        self.adj_covid_change = 0     # 0: no change in housemates having covid, 1: recently a housemate became infectious
+        self.inf_severity = 0  # 0: asymptomatic, 1: mild, 2: severe, 3: critical
+        self.adj_covid_change = 0  # 0: no change in housemates having covid, 1: recently a housemate became infectious
         self.wfh = 0  # working from home decision status
         self.no_dine = 0  # not dining out
         self.less_groceries = 0  # shopping for groceries less
         self.ppe = 0  # wearing ppe
-        self.can_wfh = True   # bool based on workplace decision to allow work from home
+        self.can_wfh = True  # bool based on workplace decision to allow work from home
         self.agent_params = {}  # BBN parameters for predicting work from home
         # thresholds for covid stage. Represent the time an agent should spend
         # in each stage.
@@ -56,28 +56,21 @@ class ConsumerAgent(Agent):
 
         # recovery times for each covid stage
         self.asymp_time = 24 * self.sample_ln(
-            self.model.recTimeAsym[0],
-            self.model.recTimeAsym[1]
+            self.model.recTimeAsym[0], self.model.recTimeAsym[1]
         )
         self.mild_time = 24 * self.sample_ln(
-            self.model.recTimeMild[0],
-            self.model.recTimeMild[1]
+            self.model.recTimeMild[0], self.model.recTimeMild[1]
         )
         self.sevRec_time = 24 * self.sample_ln(
-            self.model.recTimeSev[0],
-            self.model.recTimeSev[1]
+            self.model.recTimeSev[0], self.model.recTimeSev[1]
         )
         self.critRec_time = 24 * self.sample_ln(
-            self.model.recTimeC[0],
-            self.model.recTimeC[1]
+            self.model.recTimeC[0], self.model.recTimeC[1]
         )
-        self.death_time = 24 * self.sample_ln(
-           self.model.c2d[0],
-           self.model.c2d[1]
-        )
+        self.death_time = 24 * self.sample_ln(self.model.c2d[0], self.model.c2d[1])
 
     def move(self, new_building):
-        ''' Move agent to new building '''
+        """Move agent to new building"""
         # remove agent from old building list
         self.model.buildings[self.building].agent_ids.remove(self.unique_id)
 
@@ -88,54 +81,64 @@ class ConsumerAgent(Agent):
         self.building = dcp(new_building)
 
     def sample_ln(self, mux, sigmax):
-        '''
+        """
         Return a log-normal sample with the given mu and sigma.
-        '''
+        """
 
         mu = math.log(mux**2 / math.sqrt(sigmax**2 + mux**2))
-        sigma = math.sqrt(math.log(sigmax**2/mux**2 + 1))
+        sigma = math.sqrt(math.log(sigmax**2 / mux**2 + 1))
 
         return self.random.lognormvariate(mu, sigma)
 
     def complying(self):
-        if self.information == 1 and self.informed_count_u < 2 and self.informed_count_p_f < 3:
-            if self.informed_by == 'utility' and self.random.random() < 0.5:
+        if (
+            self.information == 1
+            and self.informed_count_u < 2
+            and self.informed_count_p_f < 3
+        ):
+            if self.informed_by == "utility" and self.random.random() < 0.5:
                 self.compliance = 1
-            elif self.informed_by == 'household' and self.random.random() < 0.3:
+            elif self.informed_by == "household" and self.random.random() < 0.3:
                 self.compliance = 1
-            elif self.informed_by == 'peer_swn' and self.random.random() < 0.3:
+            elif self.informed_by == "peer_swn" and self.random.random() < 0.3:
                 self.compliance = 1
         else:
             pass
 
     def communcation(self):
-        household_members = [a for i, a in enumerate(self.model.schedule.agents)
-                             if a.home_node == self.home_node]
+        household_members = [
+            a
+            for i, a in enumerate(self.model.schedule.agents)
+            if a.home_node == self.home_node
+        ]
         if self.compliance == 1:
             f = 0
-            for a in household_members: #probability or timeframe until every agent informs their family?
+            # probability or timeframe until every agent informs their family?
+            for a in household_members:
                 if f < 1:
                     a.information = 1
                     f += 1
-                    a.informed_count_p_f +=1
+                    a.informed_count_p_f += 1
 
-                    if a.informed_by == 'utility':
+                    if a.informed_by == "utility":
                         continue
                     else:
-                        a.informed_by = 'household'
+                        a.informed_by = "household"
                 else:
                     break
             try:
                 f = 0
-                for key, value in self.model.snw.adj[self.model.snw_agents_node[self]].items(): # Warning people adjacent in SNW
+                for key, value in self.model.snw.adj[
+                    self.model.snw_agents_node[self]
+                ].items():  # Warning people adjacent in SNW
                     if f < 1:
                         self.model.snw_node_agents[key].information = 1
                         f += 1
                         a.informed_count_p_f += 1
-                        if self.model.snw_node_agents[key].informed_by == 'utility':
+                        if self.model.snw_node_agents[key].informed_by == "utility":
                             continue
                         else:
-                            self.model.snw_node_agents[key].informed_by = 'peer_snw'
+                            self.model.snw_node_agents[key].informed_by = "peer_snw"
                     else:
                         break
             except KeyError:
@@ -151,7 +154,7 @@ class ConsumerAgent(Agent):
         Function is typically run from loop over all agents at each DAY step.
         """
         if self.exposed_time >= self.exp_time:
-            self.covid = 'infectious'
+            self.covid = "infectious"
             self.model.cumm_infectious += 1
             self.exposed_time = 0
             self.agent_params["COVIDexp"] = 1
@@ -185,13 +188,17 @@ class ConsumerAgent(Agent):
         """
         sev_prob = dt.susDict[self.age][1]
         crit_prob = dt.susDict[self.age][2]
-        if (self.inf_severity == 1 and
-                self.symp_time >= self.sev_time and
-                self.random.random() < sev_prob):
+        if (
+            self.inf_severity == 1
+            and self.symp_time >= self.sev_time
+            and self.random.random() < sev_prob
+        ):
             self.inf_severity = 2
-        elif (self.inf_severity == 2 and
-                self.sev_time >= self.crit_time and
-                self.random.random() < crit_prob):
+        elif (
+            self.inf_severity == 2
+            and self.sev_time >= self.crit_time
+            and self.random.random() < crit_prob
+        ):
             self.inf_severity = 3
         else:
             pass
@@ -204,22 +211,22 @@ class ConsumerAgent(Agent):
         Function is typically run from loop over all agents at each DAY step.
         """
         if self.symptomatic == 0 and self.infectious_time >= self.asymp_time:
-            self.covid = 'recovered'
+            self.covid = "recovered"
             self.infectious_time = 0
             self.symptomatic = None
         else:
             pass
 
         if self.inf_severity == 1 and self.symp_time >= self.mild_time:
-            self.covid = 'recovered'
+            self.covid = "recovered"
             self.infectious_time = 0
             self.symptomatic = None
         elif self.inf_severity == 2 and self.sev_time >= self.sevRec_time:
-            self.covid = 'recovered'
+            self.covid = "recovered"
             self.infectious_time = 0
             self.symptomatic = None
         elif self.inf_severity == 3 and self.crit_time >= self.critRec_time:
-            self.covid = 'recovered'
+            self.covid = "recovered"
             self.infectious_time = 0
             self.symptomatic = None
         else:
@@ -234,10 +241,12 @@ class ConsumerAgent(Agent):
         Function is typically run from loop over all agents at each DAY step.
         """
         death_prob = dt.susDict[self.age][3]
-        if (self.inf_severity == 3 and
-                self.crit_time >= self.death_time and
-                self.random.random() < death_prob):
-            self.covid = 'dead'
+        if (
+            self.inf_severity == 3
+            and self.crit_time >= self.death_time
+            and self.random.random() < death_prob
+        ):
+            self.covid = "dead"
             self.symptomatic = None
             # self.model.grid.remove_agent(self)
             self.model.schedule.remove(self)
@@ -248,7 +257,7 @@ class ConsumerAgent(Agent):
 
         # create the evidence dictionary from the list of nodes
         evidence_agent = dcp(self.agent_params)
-        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
         for i, item in enumerate(dt.bbn_param_list):
             if item in self.model.wfh_nodes:
@@ -271,55 +280,58 @@ class ConsumerAgent(Agent):
     def predict_dine_less(self):
         self.adj_covid_change = 0
         evidence_agent = dcp(self.agent_params)
-        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
         for i, item in enumerate(self.model.dine_nodes):
-            if item != 'dine_out_less':
+            if item != "dine_out_less":
                 evidence[item] = evidence_agent[item]
 
-        query = bn.inference.fit(self.model.dine_less_dag,
-                                 variables=['dine_out_less'],
-                                 evidence=evidence,
-                                 verbose=0)
-        if self.random.random() < query.df['p'][1]:
+        query = bn.inference.fit(
+            self.model.dine_less_dag,
+            variables=["dine_out_less"],
+            evidence=evidence,
+            verbose=0,
+        )
+        if self.random.random() < query.df["p"][1]:
             self.no_dine = 1
 
     def predict_grocery(self):
         self.adj_covid_change = 0
         evidence_agent = dcp(self.agent_params)
-        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
         for i, item in enumerate(self.model.grocery_nodes):
-            if item != 'shop_groceries_less':
+            if item != "shop_groceries_less":
                 evidence[item] = evidence_agent[item]
 
-        query = bn.inference.fit(self.model.grocery_dag,
-                                 variables=['shop_groceries_less'],
-                                 evidence=evidence,
-                                 verbose=0)
-        if self.random.random() < query.df['p'][1]:
+        query = bn.inference.fit(
+            self.model.grocery_dag,
+            variables=["shop_groceries_less"],
+            evidence=evidence,
+            verbose=0,
+        )
+        if self.random.random() < query.df["p"][1]:
             self.less_groceries = 1
 
     def predict_ppe(self):
         self.adj_covid_change = 0
         evidence_agent = dcp(self.agent_params)
-        evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
+        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
         for i, item in enumerate(self.model.ppe_nodes):
-            if item != 'mask':
+            if item != "mask":
                 if evidence_agent[item] < 10 and evidence_agent[item] >= 0:
                     evidence[item] = evidence_agent[item]
 
-        query = bn.inference.fit(self.model.ppe_dag,
-                                 variables=['mask'],
-                                 evidence=evidence,
-                                 verbose=0)
-        if self.random.random() < query.df['p'][1]:
+        query = bn.inference.fit(
+            self.model.ppe_dag, variables=["mask"], evidence=evidence, verbose=0
+        )
+        if self.random.random() < query.df["p"][1]:
             self.ppe = 1
 
     def change_house_adj(self):
-        ''' Function to check whether agents in a given agents node have become
-        infected with COVID '''
+        """Function to check whether agents in a given agents node have become
+        infected with COVID"""
         agents_in_house = [a.unique_id for a in self.household.agent_obs]
         # agents_friends = [n for n in self.model.swn.neighbors(self.unique_id)]
         # print(self.unique_id)
@@ -345,46 +357,54 @@ class ConsumerAgent(Agent):
 
 
 class Building:
-    '''
+    """
     Container for building information
-    '''
+    """
 
-    def __init__(self, id, capacity, node, type, model):
+    def __init__(self, id, capacity, node, type, area, com_type, model):
         self.id = id
         self.model = model
         self.capacity = capacity
         self.node = node
 
         self.type = type
+        self.area = area  # sq ft
 
-        ''' AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES '''
-        ''' AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS '''
-        self.agent_ids = list()  # list of agent that are in the household
-        self.agent_obs = list()  # list of agent objects that are in the household
+        """ AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES """
+        """ AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS """
+        self.agent_ids = list()  # list of agent that are in the building
+        self.agent_obs = list()  # list of agent objects that are in the building
 
         self.agent_history = list()
 
-        if self.type in ['com', 'ind']:
-            self.base_demand = self.demand_helper(type)
+        if self.type in ["com", "ind"]:
+            # print(com_type)
+            self.com_type = com_type.split("|")[0]
+            # print(self.com_type)
+            self.base_demand = self.demand_helper()
             self.demand_pattern = self.pattern_helper(type)
 
-    def demand_helper(self, x):
-        ''' ASSUMES UNITS ON WN ARE LITERS PER SECOND '''
-        if x == 'res':
+    def demand_helper(self):
+        """ASSUMES UNITS ON WN ARE LITERS PER SECOND"""
+        if self.type == "res":
             demand = self.res_demand()
             return demand
-        if x == 'com':
-            return self.model.random.gauss(1000, 100) / 24 / 60 / 60
-        if x == 'ind':
-            return self.model.random.gammavariate(3, 4000) / 24 / 60 / 60
+        if self.type == "com":
+            mult = dt.com_types[self.com_type]
+            return self.area * mult * 3.875 / 24 / 60 / 60
+            # return self.model.random.gauss(1000, 100) / 24 / 60 / 60
+        if self.type == "ind":
+            mult = dt.com_types[self.com_type]
+            return self.area * mult * 3.875 / 24 / 60 / 60
+            # return self.model.random.gammavariate(3, 4000) / 24 / 60 / 60
 
     def pattern_helper(self, x):
-        if x == 'res':
-            return self.model.demand_patterns['res'].to_numpy()
-        if x == 'com':
-            return self.model.demand_patterns['com'].to_numpy()
-        if x == 'ind':
-            return self.model.demand_patterns['ind'].to_numpy()
+        if x == "res":
+            return self.model.demand_patterns["res"].to_numpy()
+        if x == "com":
+            return self.model.demand_patterns["com"].to_numpy()
+        if x == "ind":
+            return self.model.demand_patterns["ind"].to_numpy()
 
     def res_demand(self):
         if self.model.skeleton:
@@ -396,7 +416,7 @@ class Building:
                 ind_demand = self.model.random.gauss(227, 94)
             # need base demand to be in liters per second from liters per day
             # equation from Jacobs 2004 which was cited in Crouch 2021
-            demand = ind_demand * len(self.agent_obs)**(-0.439) / 24 / 60 / 60
+            demand = ind_demand * len(self.agent_obs) ** (-0.439) / 24 / 60 / 60
 
             return demand
         else:
@@ -406,7 +426,7 @@ class Building:
 
 
 class Household(Building):
-    '''
+    """
     Container for households. Contains a collection of agent objects
 
     Parameters
@@ -429,20 +449,32 @@ class Household(Building):
 
     model : ConsumerModel
         model object where agents are added
-    '''
+    """
 
-    def __init__(self, id, start_id, end_id,
-                 node, node_dist, twa_mods, model, capacity=0,
-                 bg=0):
-        super().__init__(id, capacity, node, 'res', model)
-        self.tap = ['drink', 'cook', 'hygiene']  # the actions using tap water
+    def __init__(
+        self,
+        id,
+        start_id,
+        end_id,
+        node,
+        node_dist,
+        twa_mods,
+        model,
+        capacity=0,
+        bg=0,
+        area=0,
+    ):
+        super().__init__(id, capacity, node, "res", area, None, model)
+        self.tap = ["drink", "cook", "hygiene"]  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
         self.building = 0  # the agent's current building
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
-        self.base_rate_water = 15.55  # dollars per month; this is from the city of clinton, nc
+        self.base_rate_water = (
+            15.55  # dollars per month; this is from the city of clinton, nc
+        )
         self.cons_rate_water = 0.000844022  # dollars per L; clinton, nc
         self.base_rate_sewer = 16.21  # dollars per month; clinton, nc
         self.cons_rate_sewer = 0.00081577  # dollars per L; clinton, nc
@@ -460,7 +492,7 @@ class Household(Building):
         for i in range(start_id, end_id):
             a = ConsumerAgent(i, self, model)
             model.schedule.add(a)
-            if model.work_agents != 0:
+            if model.num_ind_agents != 0:
                 a.work_node = model.random.choice(model.work_loc_list)
                 # if the model is skeletonized, we need the home_node
                 # to be the building id not the wdn node
@@ -468,10 +500,10 @@ class Household(Building):
 
                 model.work_loc_list.remove(a.work_node)
                 if a.work_node in model.nav_nodes:
-                    a.work_type = 'navy'
+                    a.work_type = "navy"
                 elif a.work_node in model.ind_nodes:
-                    a.work_type = 'industrial'
-                model.work_agents -= 1
+                    a.work_type = "industrial"
+                model.num_ind_agents -= 1
             else:
                 a.home_node = id if model.skeleton else node
 
@@ -494,29 +526,29 @@ class Household(Building):
         # add the newly made agents to the dictionary of agents
         self.model.agents_list.update(zip(self.agent_ids, self.agent_obs))
 
-        ''' Set the demand and pattern '''
-        self.base_demand = self.demand_helper('res')
-        self.demand_pattern = self.pattern_helper('res')
+        """ Set the demand and pattern """
+        self.base_demand = self.demand_helper()
+        self.demand_pattern = self.pattern_helper("res")
 
-        ''' assign an income value from the model's list of income '''
+        """ assign an income value from the model's list of income """
         self.income = model.random.choice(model.income_list[bg])
         model.income_list[bg].remove(self.income)
 
-        ''' assign demographic data '''
+        """ assign demographic data """
         # define race
-        if model.random.random() < model.demo.loc[bg, 'perc_w']:
+        if model.random.random() < model.demo.loc[bg, "perc_w"]:
             self.white = True
         else:
             self.white = False
 
         # assign ethnicity
-        if model.random.random() < model.demo.loc[bg, 'perc_nh']:
+        if model.random.random() < model.demo.loc[bg, "perc_nh"]:
             self.hispanic = False
         else:
             self.hispanic = True
 
         # assign renter
-        if model.random.random() < model.demo.loc[bg, 'perc_renter']:
+        if model.random.random() < model.demo.loc[bg, "perc_renter"]:
             self.renter = True
         else:
             self.renter = False
@@ -557,42 +589,42 @@ class Household(Building):
         high_income = 150000
         if self.income < dt.ex_low_income[int(len(self.agent_ids))]:
             self.income_level = 0
-        if (self.income < dt.low_income[int(len(self.agent_ids))]
-           and self.income > dt.ex_low_income[int(len(self.agent_ids))]):
+        if (
+            self.income < dt.low_income[int(len(self.agent_ids))]
+            and self.income > dt.ex_low_income[int(len(self.agent_ids))]
+        ):
             self.income_level = 1
-        if (self.income >= dt.low_income[int(len(self.agent_ids))]
-           and self.income < high_income):
+        if (
+            self.income >= dt.low_income[int(len(self.agent_ids))]
+            and self.income < high_income
+        ):
             self.income_level = 2
         if self.income >= high_income:
             self.income_level = 3
 
         # pick water age thresholds for TWA behaviors
         self.twa_thresholds = {
-            'drink':   model.random.betavariate(3, 1) * twa_mods[0] + 24,
-            'cook':    model.random.betavariate(3, 1) * twa_mods[1] + 24,
-            'hygiene': model.random.betavariate(3, 1) * twa_mods[2] + 24
+            "drink": model.random.betavariate(3, 1) * twa_mods[0] + 24,
+            "cook": model.random.betavariate(3, 1) * twa_mods[1] + 24,
+            "hygiene": model.random.betavariate(3, 1) * twa_mods[2] + 24,
         }
 
         # demand reduction for percentage demand simulation
-        self.demand_reduction = {
-            'drink':   5.3,
-            'cook':    10.6,
-            'hygiene': 10.6
-        }
+        self.demand_reduction = {"drink": 5.3, "cook": 10.6, "hygiene": 10.6}
 
     def count_agents(self):
-        '''
+        """
         Count the number of agents that are currently at this household
-        '''
+        """
         for agent in self.agent_obs:
             if agent.pos == self.node:
                 self.agent_hours += 1
 
     def update_household(self, age):
-        '''
+        """
         Perform updating methods. Update behaviors, calculate demand
         and calculate bottled water use.
-        '''
+        """
         # print(age)
 
         # update the behaviors that this household is adopting based on the
@@ -612,7 +644,7 @@ class Household(Building):
         self.calc_demand_reduction()
 
     def update_behaviors(self, age):
-        '''
+        """
         Update the behavior lists tap and bottle based on the water age
 
         ** NOTE **
@@ -621,24 +653,24 @@ class Household(Building):
         exceeds the threshold that household will always adopt that
         behavior. I think that makes sense as once we perceive something
         as unsafe we are unlikely to go back.
-        '''
-        if age > self.twa_thresholds['hygiene'] and 'hygiene' in self.tap:
-            self.tap.remove('hygiene')
-            self.bottle.append('hygiene')
-        if age > self.twa_thresholds['drink'] and 'drink' in self.tap:
-            self.tap.remove('drink')
-            self.bottle.append('drink')
-        if age > self.twa_thresholds['cook'] and 'cook' in self.tap:
-            self.tap.remove('cook')
-            self.bottle.append('cook')
+        """
+        if age > self.twa_thresholds["hygiene"] and "hygiene" in self.tap:
+            self.tap.remove("hygiene")
+            self.bottle.append("hygiene")
+        if age > self.twa_thresholds["drink"] and "drink" in self.tap:
+            self.tap.remove("drink")
+            self.bottle.append("drink")
+        if age > self.twa_thresholds["cook"] and "cook" in self.tap:
+            self.tap.remove("cook")
+            self.bottle.append("cook")
 
     def calc_demand(self):
-        '''
+        """
         Calculate the actual demand for the hydraulic interval
-        '''
+        """
         # collect the last 30 days of hydraulic data
         timestep = self.model.timestep
-        hyd_step = (30 * 24)
+        hyd_step = 30 * 24
 
         # get the demand pattern from the model and subset for the last
         # hydraulic interval
@@ -652,23 +684,24 @@ class Household(Building):
         # Calculate the actual demand for that period
         # total_demand = demand_pattern.sum() * self.base_demand * multiplier
 
-        ''' get the demand from the last 30 days, this is the tap water demand '''
-        ''' TODO: Need to figure out multi-family housing '''
-        print(self.model.sim._results.node['demand'].loc[:, self.node])
-        total_demand = self.model.sim._results.node['demand'].loc[
-            timestep-hyd_step:timestep,
-            self.node
-        ].sum()
+        """ get the demand from the last 30 days, this is the tap water demand """
+        """ TODO: Need to figure out multi-family housing """
+        print(self.model.sim._results.node["demand"].loc[:, self.node])
+        total_demand = (
+            self.model.sim._results.node["demand"]
+            .loc[timestep - hyd_step : timestep, self.node]
+            .sum()
+        )
 
         # set the households tap demand and bottled water demand
         # need to convert from gallons to liters
         # self.sum_demand = total_demand * 1000000  # liters
         # self.demand = self.sum_demand - self.reduction  # liters
 
-        ''' this assumes that the current value for self.reduction is the value
+        """ this assumes that the current value for self.reduction is the value
         from the last 30 days. This is true because we have not run
         self.calc_demand_change() and is only true if we actually reduce the
-        demand by the reduction amount '''
+        demand by the reduction amount """
         self.tap_demand = total_demand * 1000000
         self.bottle_demand = self.reduction
         # self.bottled = self.reduction  # liters
@@ -685,38 +718,39 @@ class Household(Building):
         #     print(f"Monthly demand: {self.sum_demand}")
         #     print(f"Monthly reduction: {self.reduction}")
 
-    def calc_tap_cost(self, structure='simple'):
-        '''
+    def calc_tap_cost(self, structure="simple"):
+        """
         Helper to calculate cost of tap water
-        '''
-        if structure == 'simple':
-            '''
+        """
+        if structure == "simple":
+            """
             Calculate the cost of the tap water use. Any use above
             300 cu. ft. household pays consumption rate (which is per
             100 cu. ft.)
-            '''
+            """
             cons_threshold = 300 * 28.3168  # 300 cu. ft. to L
             water = (
-                self.base_rate_water +
-                (self.tap_demand - cons_threshold if self.tap_demand > cons_threshold else 0) *
-                self.cons_rate_water
+                self.base_rate_water
+                + (
+                    self.tap_demand - cons_threshold
+                    if self.tap_demand > cons_threshold
+                    else 0
+                )
+                * self.cons_rate_water
             )
 
-            '''
+            """
             Calculate sewer cost. All use is charged a base rate and a per
             100 cu. ft. consumption rate
-            '''
-            sewer = (
-                self.base_rate_sewer +
-                self.tap_demand * self.cons_rate_sewer
-            )
+            """
+            sewer = self.base_rate_sewer + self.tap_demand * self.cons_rate_sewer
             self.tap_cost += water + sewer
 
     def calc_cost(self):
-        '''
+        """
         Calculate the cost of water for the household. Total cost is the cost
         of tap water plus the cost of bottled water.
-        '''
+        """
         # calculate cost of tap water
         self.calc_tap_cost()
 
@@ -741,23 +775,23 @@ class Household(Building):
         #     print(self.cow)
 
     def calc_demand_reduction(self):
-        '''
+        """
         Calculates the demand change for the hour based on the behaviors
-        '''
+        """
         # avg_agents = self.agent_hours / 30 / 24
-        if self.model.twa_process == 'absolute':
+        if self.model.twa_process == "absolute":
             self.reduction = 0
-            if 'cook' not in self.tap:
-                ''''
+            if "cook" not in self.tap:
+                """'
                 add the amount of water used for cooking to the reduction
 
                 this value is 11.5 L/c/d multiplied by the average number of agents
                 that were at this node for the past month. Then multiply by 30 to
                 get the monthly use in L.
-                '''
+                """
                 self.reduction += 11.5 * len(self.agent_ids)  # L/day
 
-            if 'drink' not in self.tap:
+            if "drink" not in self.tap:
                 # change -= self.demand_reduction['drink'] / 100
                 # one_month_demand = 0
                 # for _ in range(30):
@@ -771,23 +805,23 @@ class Household(Building):
 
                 self.reduction += one_day_demand * len(self.agent_ids)  # L/day
 
-            if 'hygiene' not in self.tap:
-                ''' update the reduction value with the amount we expect agents
+            if "hygiene" not in self.tap:
+                """update the reduction value with the amount we expect agents
                 to reduce their demand when buying bottled water for hygiene
-                purposes '''
+                purposes"""
                 events_per_day = 2
                 one_day_demand = self.model.random.triangular(0.25, 1.5, 0.5)
 
                 self.reduction += events_per_day * one_day_demand * len(self.agent_ids)
 
-        elif self.model.twa_process == 'percentage':
+        elif self.model.twa_process == "percentage":
             self.change = 1
-            if 'hygiene' not in self.tap:
-                self.change -= self.demand_reduction['hygiene'] / 100
-            if 'cook' not in self.tap:
-                self.change -= self.demand_reduction['cook'] / 100
-            if 'drink' not in self.tap:
-                self.change -= self.demand_reduction['drink'] / 100
+            if "hygiene" not in self.tap:
+                self.change -= self.demand_reduction["hygiene"] / 100
+            if "cook" not in self.tap:
+                self.change -= self.demand_reduction["cook"] / 100
+            if "drink" not in self.tap:
+                self.change -= self.demand_reduction["drink"] / 100
 
         # need to reset the agent_hours each month
         # self.agent_hours = 0
