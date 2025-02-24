@@ -1,7 +1,8 @@
 from mesa import Agent
 import math
 from copy import deepcopy as dcp
-import bnlearn as bn
+# import bnlearn as bn
+import pyAgrum as gum
 import data as dt
 
 
@@ -242,19 +243,29 @@ class ConsumerAgent(Agent):
             self.model.schedule.remove(self)
 
     def predict_wfh(self):
+        # reset the covid chang parameter
         self.adj_covid_change = 0
+
+        # create the evidence dictionary from the list of nodes
         evidence_agent = dcp(self.agent_params)
         evidence_agent['COVIDeffect_4'] = math.floor(evidence_agent['COVIDeffect_4'])
         evidence = dict()
-        for i, item in enumerate(self.model.wfh_nodes):
-            if item != 'work_from_home':
-                evidence[item] = evidence_agent[item]
+        for i, item in enumerate(dt.bbn_param_list):
+            if item in self.model.wfh_nodes:
+                evidence[item] = int(evidence_agent[item])
 
-        query = bn.inference.fit(self.model.wfh_dag,
-                                 variables=['work_from_home'],
-                                 evidence=evidence,
-                                 verbose=0)
-        if self.random.random() < query.df['p'][1]:
+        # query = bn.inference.fit(self.model.wfh_dag,
+        #                          variables=['work_from_home'],
+        #                          evidence=evidence,
+        #                          verbose=0)
+        # if self.random.random() < query.df['p'][1]:
+        ie = gum.LazyPropagation(self.model.wfh_dag)
+        ie.setEvidence(evidence)
+        ie.addTarget("work_from_home")
+        ie.makeInference()
+        query = ie.posterior(self.model.wfh_dag.idFromName("work_from_home"))[1]
+
+        if self.random.random() < query:
             self.wfh = 1
 
     def predict_dine_less(self):
