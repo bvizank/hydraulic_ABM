@@ -1,6 +1,7 @@
 from mesa import Agent
 import math
 from copy import deepcopy as dcp
+
 # import bnlearn as bn
 import pyAgrum as gum
 import data as dt
@@ -282,17 +283,28 @@ class ConsumerAgent(Agent):
         evidence_agent = dcp(self.agent_params)
         evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
-        for i, item in enumerate(self.model.dine_nodes):
-            if item != "dine_out_less":
-                evidence[item] = evidence_agent[item]
+        for i, item in enumerate(dt.bbn_param_list):
+            if item in self.model.dine_nodes:
+                evidence[item] = int(evidence_agent[item])
+        # for i, item in enumerate(self.model.dine_nodes):
+        #     if item != "dine_out_less":
+        #         evidence[item] = evidence_agent[item]
 
-        query = bn.inference.fit(
-            self.model.dine_less_dag,
-            variables=["dine_out_less"],
-            evidence=evidence,
-            verbose=0,
-        )
-        if self.random.random() < query.df["p"][1]:
+        # query = bn.inference.fit(
+        #     self.model.dine_less_dag,
+        #     variables=["dine_out_less"],
+        #     evidence=evidence,
+        #     verbose=0,
+        # )
+        # if self.random.random() < query.df["p"][1]:
+
+        ie = gum.LazyPropagation(self.model.dine_less_dag)
+        ie.setEvidence(evidence)
+        ie.addTarget("dine_out_less")
+        ie.makeInference()
+        query = ie.posterior(self.model.dine_less_dag.idFromName("dine_out_less"))[1]
+
+        if self.random.random() < query:
             self.no_dine = 1
 
     def predict_grocery(self):
@@ -300,17 +312,30 @@ class ConsumerAgent(Agent):
         evidence_agent = dcp(self.agent_params)
         evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
-        for i, item in enumerate(self.model.grocery_nodes):
-            if item != "shop_groceries_less":
-                evidence[item] = evidence_agent[item]
+        for i, item in enumerate(dt.bbn_param_list):
+            if item in self.model.grocery_nodes:
+                evidence[item] = int(evidence_agent[item])
+        # for i, item in enumerate(self.model.grocery_nodes):
+        #     if item != "shop_groceries_less":
+        #         evidence[item] = evidence_agent[item]
 
-        query = bn.inference.fit(
-            self.model.grocery_dag,
-            variables=["shop_groceries_less"],
-            evidence=evidence,
-            verbose=0,
-        )
-        if self.random.random() < query.df["p"][1]:
+        # query = bn.inference.fit(
+        #     self.model.grocery_dag,
+        #     variables=["shop_groceries_less"],
+        #     evidence=evidence,
+        #     verbose=0,
+        # )
+        # if self.random.random() < query.df["p"][1]:
+
+        ie = gum.LazyPropagation(self.model.grocery_dag)
+        ie.setEvidence(evidence)
+        ie.addTarget("shop_groceries_less")
+        ie.makeInference()
+        query = ie.posterior(self.model.grocery_dag.idFromName("shop_groceries_less"))[
+            1
+        ]
+
+        if self.random.random() < query:
             self.less_groceries = 1
 
     def predict_ppe(self):
@@ -318,15 +343,25 @@ class ConsumerAgent(Agent):
         evidence_agent = dcp(self.agent_params)
         evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
         evidence = dict()
-        for i, item in enumerate(self.model.ppe_nodes):
-            if item != "mask":
-                if evidence_agent[item] < 10 and evidence_agent[item] >= 0:
-                    evidence[item] = evidence_agent[item]
+        for i, item in enumerate(dt.bbn_param_list):
+            if item in self.model.ppe_nodes:
+                evidence[item] = int(evidence_agent[item])
+        # for i, item in enumerate(self.model.ppe_nodes):
+        #     if item != "mask":
+        #         if evidence_agent[item] < 10 and evidence_agent[item] >= 0:
+        #             evidence[item] = evidence_agent[item]
 
-        query = bn.inference.fit(
-            self.model.ppe_dag, variables=["mask"], evidence=evidence, verbose=0
-        )
-        if self.random.random() < query.df["p"][1]:
+        # query = bn.inference.fit(
+        #     self.model.ppe_dag, variables=["mask"], evidence=evidence, verbose=0
+        # )
+        # if self.random.random() < query.df["p"][1]:
+        ie = gum.LazyPropagation(self.model.ppe_dag)
+        ie.setEvidence(evidence)
+        ie.addTarget("mask")
+        ie.makeInference()
+        query = ie.posterior(self.model.ppe_dag.idFromName("mask"))[1]
+
+        if self.random.random() < query:
             self.ppe = 1
 
     def change_house_adj(self):

@@ -7,7 +7,9 @@ from agent_model import Household, Building
 from hydraulic import EpanetSimulator_Stepwise
 import data as dt
 import networkx as nx
-import bnlearn as bn
+
+# import bnlearn as bn
+import pyAgrum as gum
 import wntr
 import os
 import csv
@@ -81,18 +83,26 @@ class Parameters(Model):
         self.bbn_models = ["wfh", "dine", "grocery", "ppe"]
 
         """ Import the four DAGs for the BBNs """
-        self.wfh_dag = bn.import_DAG(
-            "Input Files/data_driven_models/work_from_home.bif", verbose=0
+        self.wfh_dag = gum.loadBN("Input Files/data_driven_models/work_from_home.bif")
+        self.dine_less_dag = gum.loadBN(
+            "Input Files/pmt_models/dine_out_less_pmt-6.bif"
         )
-        self.dine_less_dag = bn.import_DAG(
-            "Input Files/pmt_models/dine_out_less_pmt-6.bif", verbose=0
+        self.grocery_dag = gum.loadBN(
+            "Input Files/pmt_models/shop_groceries_less_pmt-6.bif"
         )
-        self.grocery_dag = bn.import_DAG(
-            "Input Files/pmt_models/shop_groceries_less_pmt-6.bif", verbose=0
-        )
-        self.ppe_dag = bn.import_DAG(
-            "Input Files/data_driven_models/mask.bif", verbose=0
-        )
+        self.ppe_dag = gum.loadBN("Input Files/data_driven_models/net_files/mask.net")
+        # self.wfh_dag = bn.import_DAG(
+        #     "Input Files/data_driven_models/work_from_home.bif", verbose=0
+        # )
+        # self.dine_less_dag = bn.import_DAG(
+        #     "Input Files/pmt_models/dine_out_less_pmt-6.bif", verbose=0
+        # )
+        # self.grocery_dag = bn.import_DAG(
+        #     "Input Files/pmt_models/shop_groceries_less_pmt-6.bif", verbose=0
+        # )
+        # self.ppe_dag = bn.import_DAG(
+        #     "Input Files/data_driven_models/mask.bif", verbose=0
+        # )
 
         """
         This value comes from this paper:
@@ -724,10 +734,16 @@ class Parameters(Model):
         self.ind_loc = np.zeros((len(self.ind_buildings), self.num_agents))
 
     def dag_nodes(self):
-        self.wfh_nodes = dcp(self.wfh_dag["adjmat"].columns)
-        self.dine_nodes = dcp(self.dine_less_dag["adjmat"].columns)
-        self.grocery_nodes = dcp(self.grocery_dag["adjmat"].columns)
-        self.ppe_nodes = dcp(self.ppe_dag["adjmat"].columns)
+        self.wfh_nodes = [n for n in dt.bbn_param_list if self.wfh_dag.exists(n)]
+        self.dine_nodes = [n for n in dt.bbn_param_list if self.dine_less_dag.exists(n)]
+        self.grocery_nodes = [
+            n for n in dt.bbn_param_list if self.grocery_dag.exists(n)
+        ]
+        self.ppe_nodes = [n for n in dt.bbn_param_list if self.ppe_dag.exists(n)]
+        # self.wfh_nodes = dcp(self.wfh_dag["adjmat"].columns)
+        # self.dine_nodes = dcp(self.dine_less_dag["adjmat"].columns)
+        # self.grocery_nodes = dcp(self.grocery_dag["adjmat"].columns)
+        # self.ppe_nodes = dcp(self.ppe_dag["adjmat"].columns)
 
     def base_demand_list(self):
         self.base_demands = dict()
