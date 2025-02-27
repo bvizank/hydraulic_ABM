@@ -137,23 +137,33 @@ com_water_coef = {
     "other_inst": 0.1053,
 }
 
+res_types = {
+    "RANCH": com_water_coef["other_com"],
+    "DOUBLE WIDE MOHO": com_water_coef["other_com"],
+    "CONTEMPORARY": com_water_coef["gen_com"],
+    "CONVENTIONAL": com_water_coef["gen_com"],
+}
+
+mfh_types = {
+    "WALK-UP APARTMENT": com_water_coef["gen_inst"],
+    "GARDEN APARTMENT": com_water_coef["gen_inst"],
+    "MULTI-FAMILY": com_water_coef["gen_inst"],
+    "APARTMENT ELEVATOR": com_water_coef["gen_inst"],
+}
+
 com_types = {
     "GENERAL": com_water_coef["gen_com"],
-    "CONVENTIONAL": com_water_coef["gen_com"],
     "TYPICAL OFFICE": com_water_coef["offices"],
-    "STORAGE": com_water_coef["storage"],
+    # "STORAGE": com_water_coef["storage"],
     "MEDICAL": com_water_coef["medical"],
-    "RANCH": com_water_coef["other_com"],
     "LAUNDROMAT": com_water_coef["gen_com"],
     "WAREHOUSE MINI STOR": com_water_coef["warehouse"],
     "FIRE STATION": com_water_coef["other_inst"],
-    "CONVENIENCE MARKET": com_water_coef["stores"],
     "BANK": com_water_coef["finance"],
     "SPECIAL RETAIL": com_water_coef["stores"],
     "RETAIL STORE": com_water_coef["stores"],
     "SERVICE SHOP": com_water_coef["auto"],
     "IMPLEMENT SHED": com_water_coef["gen_com"],
-    "MARKET": com_water_coef["shopping"],
     "HOSPITAL": com_water_coef["medical"],
     "BEAUTY SHOP": com_water_coef["shopping"],
     "WAREHOUSE STORAGE": com_water_coef["warehouse"],
@@ -162,43 +172,62 @@ com_types = {
     "FRATERNAL BUILDING": com_water_coef["gen_inst"],
     "SERVICE GARAGE": com_water_coef["auto"],
     "AUDITORIUM": com_water_coef["gen_com"],
-    "GARDEN APARTMENT": com_water_coef["gen_inst"],
-    "RESTAURANT LOUNGE": com_water_coef["restaurant"],
     "SERVICE STATION": com_water_coef["auto"],
-    "DOUBLE WIDE MOHO": com_water_coef["other_com"],
     "SCHOOL": com_water_coef["school"],
     "LIBRARY": com_water_coef["school"],
-    "WALK-UP APARTMENT": com_water_coef["gen_inst"],
     "VETERINARY HOSPITAL": com_water_coef["medical"],
     "FEED MILL BUILDING": com_water_coef["other_ind"],
     "RURAL RETAIL": com_water_coef["stores"],
     "AUTOMOTIVE CENTER": com_water_coef["auto"],
-    "MULTI-FAMILY": com_water_coef["gen_inst"],
-    "FAST FOOD RESTAURAN": com_water_coef["fast_food"],
     "CAR WASH": com_water_coef["gen_com"],
-    "SHED": com_water_coef["storage"],
-    "CONTEMPORARY": com_water_coef["gen_com"],
-    "COMMUNITY SHOPPING ": com_water_coef["shopping"],
+    # "SHED": com_water_coef["storage"],
     "MOTEL": com_water_coef["hotel"],
     "AUTOMOTIVE BUILDING": com_water_coef["auto"],
     "JAIL SCHEDULE": com_water_coef["gen_inst"],
     "STORAGE GARAGE": com_water_coef["storage"],
-    "PACK HOUSE": com_water_coef["other_ind"],
-    "PAVING ASPHALT": com_water_coef["gen_com"],
-    "LEAN TO OR ATTACHED SHED": com_water_coef["other_com"],
+    # "PAVING ASPHALT": com_water_coef["gen_com"],
+    # "LEAN TO OR ATTACHED SHED": com_water_coef["other_com"],
     "POLICE STATION": com_water_coef["gen_inst"],
     "WAREHOUSE DISTRIBUT": com_water_coef["warehouse"],
     "MORTUARY": com_water_coef["gen_com"],
-    "METAL BUILDING": com_water_coef["other_com"],
-    "UNFINISHED CARPORT": com_water_coef["other_com"],
+    # "METAL BUILDING": com_water_coef["other_com"],
+    # "UNFINISHED CARPORT": com_water_coef["other_com"],
     "LUMBER": com_water_coef["manufacturing"],
     "MISCELLANEOUS BUILDN": com_water_coef["other_com"],
     "BATH HOUSE": com_water_coef["other_com"],
     "POST OFFICE": com_water_coef["gen_inst"],
-    "PAVING CONCRETE": com_water_coef["other_com"],
+    # "PAVING CONCRETE": com_water_coef["other_com"],
     "CLUB HOUSE": com_water_coef["gen_inst"],
-    "APARTMENT ELEVATOR": com_water_coef["other_com"],
+    "COMMERCIAL BLDG (SV)": com_water_coef["other_com"],
+    "NURSING HOME": com_water_coef["medical"],
+    "OFFICE": com_water_coef["offices"],
+    "SHOP": com_water_coef["gen_com"],
+    "THEATRE": com_water_coef["gen_com"],
+    "CONVENIENCE MARKET": com_water_coef["stores"],
+}
+
+caf_types = {
+    "RESTAURANT LOUNGE": com_water_coef["restaurant"],
+    "FAST FOOD RESTAURAN": com_water_coef["fast_food"],
+}
+
+gro_types = {
+    "MARKET": com_water_coef["shopping"],
+    "COMMUNITY SHOPPING ": com_water_coef["shopping"],
+}
+
+ind_types = {
     "LIGHT INDUSTRIAL": com_water_coef["manufacturing"],
     "MEDIUM INDUSTRIAL": com_water_coef["manufacturing"],
-    "TYPICAL OFFICE": com_water_coef["offices"],
+    # "PACK HOUSE": com_water_coef["other_ind"],
+    "BOTTLING PLANT": com_water_coef["manufacturing"],
+}
+
+par_types = {
+    "res": res_types,
+    "mfh": mfh_types,
+    "com": com_types,
+    "caf": caf_types,
+    "gro": gro_types,
+    "ind": ind_types,
 }

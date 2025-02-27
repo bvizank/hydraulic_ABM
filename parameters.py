@@ -7,8 +7,6 @@ from agent_model import Household, Building
 from hydraulic import EpanetSimulator_Stepwise
 import data as dt
 import networkx as nx
-
-# import bnlearn as bn
 import pyAgrum as gum
 import wntr
 import os
@@ -17,7 +15,11 @@ import math
 from copy import deepcopy as dcp
 from mesa.time import RandomActivation
 from mesa.space import NetworkGrid
-import matplotlib.pyplot as plt
+import warnings
+# import matplotlib.pyplot as plt
+
+
+warnings.filterwarnings("ignore")
 
 
 class Parameters(Model):
@@ -225,13 +227,18 @@ class Parameters(Model):
             for key, value in self.__dict__.items():
                 params.writerow([key, value])
 
-    def capacity_helper(self, x, ind, com, res):
+    def capacity_helper(self, x, ind, com, res, mfh):
         if x["type"] == "res":
             if res:
                 return self.random.choices(range(1, 7), weights=self.weights, k=1)[0]
             else:
                 return x["capacity"]
-        if x["type"] == "com":
+        if x["type"] == "mfh":
+            if res:
+                return int(max(math.ceil(x["area"] / mfh), 2))
+            else:
+                return x["capacity"]
+        if x["type"] in ["com", "caf", "gro"]:
             # we want each commercial building to have a capacity of at least
             # 2
             return int(max(math.ceil(x["area"] / com), 2))
@@ -242,10 +249,13 @@ class Parameters(Model):
     def building_helper(self, x):
         building = Building(
             x.name,
+            x["total_res"] - x["capacity"],
+            x["total_res"],
             x["capacity"],
             x["wdn_node"],
             x["type"],
             x["area"],
+            x["bg"],
             x["parusedsc2"],
             self,
         )
@@ -260,20 +270,21 @@ class Parameters(Model):
             None,
             self.twa_mods,
             self,
+            x["parusedsc2"],
             x["capacity"],
             x["bg"],
             x["area"],
         )
         return house
 
-    def assign_capacity(self, ind_denom, com_denom, res=False):
+    def assign_capacity(self, ind_denom, com_denom, mfh, res=False):
         # assign each building a capacity based on type
         # self.node_buildings["capacity"] = self.node_buildings.apply(
         #     self.capacity_helper, axis=1
         # )
 
         self.node_buildings["capacity"] = self.node_buildings.apply(
-            self.capacity_helper, args=(ind_denom, com_denom, res), axis=1
+            self.capacity_helper, args=(ind_denom, com_denom, res, mfh), axis=1
         )
 
         # make capacity an integer
@@ -282,26 +293,23 @@ class Parameters(Model):
         )
 
         # initialize the number of agents based on the capacity at res buildings
-        self.num_agents = self.node_buildings.groupby("type")["capacity"].sum()["res"]
-        if self.verbose > 0:
-            print(f"Total number of agents: {self.num_agents}")
+        num_agents_all = self.node_buildings.groupby("type")["capacity"].sum()
+        self.num_agents = num_agents_all["res"] + num_agents_all["mfh"]
 
         """ Set the number of work agents and the locations that need workers """
-        self.num_ind_agents = self.node_buildings.groupby("type")["capacity"].sum()[
-            "ind"
-        ]
+        self.num_ind_agents = num_agents_all["ind"]
+        self.num_com_agents = num_agents_all["com"] + num_agents_all["gro"]
+        self.num_caf_agents = num_agents_all["caf"]
+        self.num_gro_agents = num_agents_all["gro"]
         if self.verbose > 0:
+            print(f"Total number of agents: {self.num_agents}")
             print(f"Capacity of all industrial nodes: {self.num_ind_agents}")
-
-        # calculate the number of commercial spots
-        self.num_com_agents = self.node_buildings.groupby("type")["capacity"].sum()[
-            "com"
-        ]
-        if self.verbose > 0:
-            print(f"Capacity of all commercial nodes: {self.num_com_agents}")
+            print(f"Capacity of all commercial (com and grocery) nodes: {self.num_com_agents}")
+            print(f"Capacity of all cafe nodes: {self.num_caf_agents}")
+            print(f"Capacity of all grocery nodes: {self.num_gro_agents}")
 
         # initialize the number of agents to be moved each industrial move step
-        self.ind_agent_n = int(dcp(self.num_ind_agents) / 2)
+        self.ind_agent_n = int(dcp(self.num_ind_agents))
 
         # print(f"Distribution based industrial spots: {self.ind_agent_n}")
 
@@ -309,17 +317,18 @@ class Parameters(Model):
         # factor to convert building area to capacity
         ind_denom = 1000
         com_denom = 1000
-        self.assign_capacity(ind_denom, com_denom, res=True)
+        mfh_denom = 500
+        self.assign_capacity(ind_denom, com_denom, mfh=mfh_denom, res=True)
 
         ind_cap_difference = self.num_ind_agents - self.num_agents * 0.25
 
         while abs(ind_cap_difference) > 100:
             if ind_cap_difference > 0:
                 ind_denom += 10
-                self.assign_capacity(ind_denom, com_denom)
+                self.assign_capacity(ind_denom, com_denom, mfh_denom)
             else:
                 ind_denom -= 10
-                self.assign_capacity(ind_denom, com_denom)
+                self.assign_capacity(ind_denom, com_denom, mfh_denom)
             ind_cap_difference = self.num_ind_agents - self.num_agents * 0.25
 
         # the self.num_agents * 0.3 term is the number of agents that don't
@@ -332,10 +341,10 @@ class Parameters(Model):
         while abs(com_cap_difference) > 100:
             if com_cap_difference > 0:
                 com_denom += 10
-                self.assign_capacity(ind_denom, com_denom)
+                self.assign_capacity(ind_denom, com_denom, mfh_denom)
             else:
                 com_denom -= 10
-                self.assign_capacity(ind_denom, com_denom)
+                self.assign_capacity(ind_denom, com_denom, mfh_denom)
             com_cap_difference = self.num_com_agents - (
                 self.num_agents - self.num_ind_agents - self.num_agents * 0.2
             )
@@ -411,7 +420,7 @@ class Parameters(Model):
 
         """ Get a running tally of residential agents """
         self.node_buildings["total_res"] = self.node_buildings["capacity"][
-            self.node_buildings["type"] == "res"
+            self.node_buildings["type"].isin(["res", "mfh"])
         ].cumsum()
 
         self.covid_exposed = int(0.001 * self.num_agents)
@@ -448,56 +457,58 @@ class Parameters(Model):
         ].index.to_numpy()
 
         self.res_nodes = self.node_buildings[
-            self.node_buildings["type"] == "res"
+            self.node_buildings["type"].isin(["res", "mfh"])
         ].index.to_numpy()
 
         self.com_nodes = self.node_buildings[
-            self.node_buildings["type"] == "com"
+            self.node_buildings["type"].isin(["com", "gro"])
         ].index.to_numpy()
 
-        restaurants = ["RESTAURANT LOUNGE", "FAST FOOD RESTAURAN"]
-        grocers = ["MARKET"]
-
-        print(
-            self.node_buildings["parusedsc2"]
-            .str.split("|")
-            .str.get(0)
-            .isin(restaurants)
-        )
-
         self.caf_nodes = self.node_buildings[
-            (
-                self.node_buildings["parusedsc2"]
-                .str.split("|")
-                .str.get(0)
-                .isin(restaurants)
-            )
-            & (self.node_buildings["type"] == "com")
+            self.node_buildings["type"] == "caf"
         ].index.to_numpy()
 
         self.gro_nodes = self.node_buildings[
-            (self.node_buildings["parusedsc2"].str.split("|").str.get(0).isin(grocers))
-            & (self.node_buildings["type"] == "com")
+            self.node_buildings["type"] == "gro"
         ].index.to_numpy()
 
-        self.num_caf_agents = self.node_buildings["capacity"][
-            self.node_buildings.index.isin(self.caf_nodes)
-        ].sum()
+        # print(
+        #     self.node_buildings["parusedsc2"]
+        #     .str.split("|")
+        #     .str.get(0)
+        #     .isin(restaurants)
+        # )
+
+        # self.caf_nodes = self.node_buildings[
+        #     (
+        #         self.node_buildings["parusedsc2"]
+        #         .str.split("|")
+        #         .str.get(0)
+        #         .isin(restaurants)
+        #     )
+        #     & (self.node_buildings["type"] == "com")
+        # ].index.to_numpy()
+
+        # self.gro_nodes = self.node_buildings[
+        #     (self.node_buildings["parusedsc2"].str.split("|").str.get(0).isin(grocers))
+        #     & (self.node_buildings["type"] == "com")
+        # ].index.to_numpy()
+
 
         # the number of com agents does not include the caf agents
-        self.num_com_agents -= self.num_caf_agents
+        # self.num_com_agents -= self.num_caf_agents
 
-        print("Cafe node capacity:")
-        print(self.num_caf_agents)
+        # print("Cafe node capacity:")
+        # print(self.num_caf_agents)
 
-        print("Grocery node capacity:")
-        print(
-            self.node_buildings["capacity"][
-                self.node_buildings.index.isin(self.gro_nodes)
-            ].sum()
-        )
+        # print("Grocery node capacity:")
+        # print(
+        #     self.node_buildings["capacity"][
+        #         self.node_buildings.index.isin(self.gro_nodes)
+        #     ].sum()
+        # )
 
-        self.com_nodes = np.setdiff1d(self.com_nodes, self.caf_nodes)
+        # self.com_nodes = np.setdiff1d(self.com_nodes, self.caf_nodes)
         # self.com_nodes = np.setdiff1d(self.com_nodes, self.gro_nodes)
         # select the number of cafe nodes
         # inds = self.random.sample(
@@ -531,19 +542,20 @@ class Parameters(Model):
         # init dictionary of agents
         self.agents_list = dict()
 
-        # make dictionary of building objects
-        self.buildings = (
-            self.node_buildings[~self.node_buildings["type"].isin(["res"])].apply(
-                self.building_helper, axis=1
-            )
-        ).to_dict()
-
-        # print(self.node_buildings.index)
-
         # initialize income values for all of the households in the sim
         self.income_list = dict()
         for i, row in self.income_dist.iterrows():
-            grp_size = len(self.node_buildings.query('type == "res" and bg == @i'))
+            res_grp = self.node_buildings[
+                (self.node_buildings["type"] == "res")
+                & (self.node_buildings["bg"] == i)
+            ]
+            mfh_grp = self.node_buildings[
+                (self.node_buildings["type"] == "mfh")
+                & (self.node_buildings["bg"] == i)
+            ]
+
+            grp_size = len(res_grp) + mfh_grp["capacity"].sum() / 2
+            # grp_size = len(self.node_buildings.query('type == "res" and bg == @i'))
 
             if self.verbose > 0:
                 print(f"Group size for bg {i}: {grp_size}")
@@ -552,17 +564,27 @@ class Parameters(Model):
                     data=row, n_house=grp_size * 1.1, model=self
                 )
 
-        # print([len(v) for i, v in self.income_list.items()])
+        print(sum([len(i) for i in self.income_list.values()]))
+        print(self.node_buildings)
+        # make dictionary of building objects
+        self.buildings = (
+            self.node_buildings.apply(self.building_helper, axis=1)
+        ).to_dict()
+        # self.buildings = (
+        #     self.node_buildings[~self.node_buildings["type"].isin(["res"])].apply(
+        #         self.building_helper, axis=1
+        #     )
+        # ).to_dict()
 
         # make dictionary of household objects
-        self.households = (
-            self.node_buildings[self.node_buildings["type"].isin(["res"])].apply(
-                self.household_helper, axis=1
-            )
-        ).to_dict()
+        # self.households = (
+        #     self.node_buildings[self.node_buildings["type"].isin(["res"])].apply(
+        #         self.household_helper, axis=1
+        #     )
+        # ).to_dict()
 
         # now it includes all of the households.
-        self.buildings.update(self.households)
+        # self.buildings.update(self.households)
 
         building_group = self.node_buildings.groupby("wdn_node")
         self.wdn_nodes = building_group.indices
@@ -744,6 +766,13 @@ class Parameters(Model):
         # self.dine_nodes = dcp(self.dine_less_dag["adjmat"].columns)
         # self.grocery_nodes = dcp(self.grocery_dag["adjmat"].columns)
         # self.ppe_nodes = dcp(self.ppe_dag["adjmat"].columns)
+
+        self.dag_list = {
+            "work_from_home": (self.wfh_dag, self.wfh_nodes),
+            "dine_out_less": (self.dine_less_dag, self.dine_nodes),
+            "shop_groceries_less": (self.grocery_dag, self.grocery_nodes),
+            "mask": (self.ppe_dag, self.ppe_nodes)
+        }
 
     def base_demand_list(self):
         self.base_demands = dict()
@@ -931,17 +960,27 @@ class Parameters(Model):
 
     def init_income(self):
         # collect income and income level from each household that was just created
-        self.income = [h.income for n, h in self.households.items()]
-        self.income_level = [h.income_level for n, h in self.households.items()]
-        self.hh_size = [len(h.agent_ids) for n, h in self.households.items()]
+        self.income = list()
+        self.income_level = list()
+        self.hh_size = list()
+        self.h_id = list()
+        self.h_index = list()
+        for _, building in self.buildings.items():
+            if building.households is not None:
+                for house in building.households:
+                    self.income.append(house.income)
+                    self.income_level.append(house.income_level)
+                    self.hh_size.append(len(house.agent_ids))
+                    self.h_id.append(house.id)
+                    self.h_index.append(house.node)
         self.income_comb = pd.DataFrame(
             data={
                 "income": self.income,
                 "level": self.income_level,
                 "hh_size": self.hh_size,
-                "id": list(self.households.keys()),
+                "id": self.h_id,
             },
-            index=[h.node for n, h in self.households.items()],
+            index=self.h_index,
         )
 
     def set_attributes(self):
@@ -978,7 +1017,10 @@ class Parameters(Model):
             # agent_set_params = dt.bbn_params.sample()
             # agent.agent_params['risk_perception_r'] = int(agent_set_params['risk_perception_r']) - 1
             for i, param in enumerate(dt.bbn_param_list):
-                agent.agent_params[param] = agent_set_params[i] - 1
+                if param != 'DemAge':
+                    agent.agent_params[param] = int(agent_set_params[i] - 1)
+                else:
+                    agent.agent_params[param] = str(agent_set_params[i])
 
     def create_comm_network(
         self,

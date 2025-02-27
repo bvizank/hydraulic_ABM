@@ -5,10 +5,15 @@ import pandas as pd
 import geopandas as gpd
 import osmnx as ox
 from scipy.spatial import cKDTree
-from shapely.geometry import shape, Point, mapping
-from shapely.geometry.polygon import Polygon
+from shapely.geometry import shape, mapping
+# from shapely.geometry.polygon import Polygon
 import wntr
 import matplotlib.pyplot as plt
+import data as dt
+import warnings
+
+
+warnings.filterwarnings("ignore")
 
 
 def query_nconemap(map_name, id, params, call, url=None):
@@ -258,6 +263,23 @@ def building_stats(buildings):
     print(f"Number of industrial buildings found: {ind_buildings}")
 
 
+def type_helper(x):
+    if x["ind"]:
+        return "ind"
+    if x["gro"]:
+        return "gro"
+    if x["caf"]:
+        return "caf"
+    if x["mfh"]:
+        return "mfh"
+    if x["com"]:
+        return "com"
+    if x["res"]:
+        return "res"
+
+    return ""
+
+
 def buildings_by_type(buildings):
     """
     Characterize each building as commercial, residential, or industrial
@@ -267,25 +289,68 @@ def buildings_by_type(buildings):
         buildings : GeoDataFrame
             list of buildings to be sorted
     """
+    buildings["parusedsc2"] = buildings.loc[:, "parusedsc2"].str.split("|")
+
+    # filter out parcels without a secondary parcel description (parusedsc2)
+    buildings = buildings[~buildings.loc[:, "parusedsc2"].isna()]
+    print(buildings)
+
+    com_target = set(list(dt.com_types.keys()))
+    buildings["com"] = [
+        not com_target.isdisjoint(x) for x in buildings["parusedsc2"]
+    ]
+
+    res_target = set(list(dt.res_types.keys()))
+    buildings["res"] = [
+        not res_target.isdisjoint(x) for x in buildings["parusedsc2"]
+    ]
+
+    ind_target = set(list(dt.ind_types.keys()))
+    buildings["ind"] = [
+        not ind_target.isdisjoint(x) for x in buildings["parusedsc2"]
+    ]
+
+    mfh_target = set(list(dt.mfh_types.keys()))
+    buildings["mfh"] = [
+        not mfh_target.isdisjoint(x) for x in buildings["parusedsc2"]
+    ]
+
+    caf_target = set(list(dt.caf_types.keys()))
+    buildings["caf"] = [
+        not caf_target.isdisjoint(x) for x in buildings["parusedsc2"]
+    ]
+
+    gro_target = set(list(dt.gro_types.keys()))
+    buildings["gro"] = [
+        not gro_target.isdisjoint(x) for x in buildings["parusedsc2"]
+    ]
+
+    buildings["type"] = buildings.apply(type_helper, axis=1)
+
     # buildings['type'] = np.where(
     #     buildings['building'].isin(dt.building_res), 'res',
     #     np.where(buildings['building'] == 'industrial', 'ind', 'com')
     # )
-    com_mask = (
-        (
-            (buildings["parusedesc"] == "COMMERCIAL")
-            | (buildings["parusedesc"] == "EXEMPT")
-            | (buildings["parusedesc"] == "AGRICULTURE")
-        )
-        & (buildings["parusedsc2"] != "")
-        & ~(buildings["parusedsc2"].str.contains("CHURCH", regex=False, na=False))
-    )
+    # com_mask = (
+    #     (
+    #         (buildings["parusedesc"] == "COMMERCIAL")
+    #         | (buildings["parusedesc"] == "EXEMPT")
+    #         | (buildings["parusedesc"] == "AGRICULTURE")
+    #     )
+    #     & (buildings["parusedsc2"] != "")
+    #     & ~(buildings["parusedsc2"].str.contains("CHURCH", regex=False, na=False))
+    # )
     # print(sum(com_mask))
-    res_mask = buildings["parusedesc"] == "RESIDENTIAL"
-    ind_mask = buildings["parusedsc2"].str.contains("INDUSTRIAL", regex=False)
+    # res_mask = (
+    #     (buildings["parusedesc"] == "RESIDENTIAL")
+    #     & ~(buildings["parusedsc2"].str.contains(list(dt.com_types.keys()), regex=False, na=False))
+    # )
+    # ind_mask = buildings["parusedsc2"].str.contains("INDUSTRIAL", regex=False)
 
-    buildings["type"] = np.where(com_mask, "com", np.where(res_mask, "res", ""))
-    buildings["type"] = np.where(ind_mask, "ind", buildings["type"])
+    # buildings["type"] = np.where(com_mask, "com", np.where(res_mask, "res", ""))
+    # buildings["type"] = np.where(ind_mask, "ind", buildings["type"])
+
+    # buildings["type"] = buildings.apply(type_helper, axis=1)
 
     buildings = buildings[buildings["type"] != ""]
 

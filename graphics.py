@@ -1,5 +1,8 @@
 from base import Graphics
+import warnings
 
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 days = 180
 plots = Graphics(
@@ -49,7 +52,7 @@ plots = Graphics(
 # plots.make_seir_plot(days)
 
 """ Make single plots """
-plots.make_single_plots("2025-02-20_20-45_0_results", 180, True)
+plots.make_single_plots("2025-02-25_15-21_0_results", 180, True)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))

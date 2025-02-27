@@ -1,5 +1,9 @@
 from run_sim import run_sim
 import logging
+import warnings
+
+
+warnings.filterwarnings("ignore")
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()

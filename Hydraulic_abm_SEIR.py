@@ -231,22 +231,22 @@ class ConsumerModel(Parameters):
         tv_reach = dt.tv[self.timestepN] / 100
 
         # Communication through radio
-        for i, a in enumerate(self.schedule.agents):
+        for i, agent in enumerate(self.schedule.agents):
             if self.random.random() < radio_reach:
-                a.agent_params["MediaExp_3"] = 0
-                a.information = 1
-                a.informed_by = "utility"
-                a.informed_count_u += 1
+                agent.agent_params["MediaExp_3"] = 0
+                agent.information = 1
+                agent.informed_by = "utility"
+                agent.informed_count_u += 1
             else:
                 pass
 
         # Communication through TV
-        for i, a in enumerate(self.schedule.agents):
+        for i, agent in enumerate(self.schedule.agents):
             if self.random.random() < tv_reach:
-                a.agent_params["MediaExp_3"] = 0
-                a.information = 1
-                a.informed_by = "utility"
-                a.informed_count_u += 1
+                agent.agent_params["MediaExp_3"] = 0
+                agent.information = 1
+                agent.informed_by = "utility"
+                agent.informed_count_u += 1
             else:
                 pass
 
@@ -265,7 +265,7 @@ class ConsumerModel(Parameters):
 
             # find all the commercial nodes with open spots and make a list
             nodes_comm = list()
-            for node in self.com_nodes:
+            for node in self.com_nodes + self.gro_nodes:
                 avail_spots = self.buildings[node].capacity - len(
                     self.buildings[node].agent_ids
                 )
@@ -541,6 +541,71 @@ class ConsumerModel(Parameters):
             # agents_at_node = len(building.agent_ids)
             # self.agent_matrix[building_id, self.timestep] = agents_at_node
 
+    def calc_res_demands(self, building, new_mult):
+        out_pat = np.zeros(24)
+        for house in building.households:
+            """First get the demand pattern. If a majority of household
+            is working from home, get the wfh pattern"""
+            agents_at_node = house.agent_obs
+            agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
+            if self.res_pat_select == "lakewood" and len(agents_at_node) != 0:
+                perc_wfh = agents_wfh / len(agents_at_node)
+                if perc_wfh > 0.5:
+                    base_pat = self.wn.get_pattern("wk1").multipliers
+                else:
+                    base_pat = house.demand_pattern
+
+            """ demand for the next 24 hours, not including reduction or
+            agent multiplier """
+            curr_pat = base_pat * new_mult
+            # print(f"curr_pat for res buildings: \n {curr_pat}")
+
+            """ Calculate the demand reduction given the total demand """
+            # total demand in L/day
+            daily_demand = curr_pat.sum() * house.base_demand * 60 * 60
+
+            reduction_val = 0
+
+            # average agent multiplier
+            avg_agent_multiplier = sum(new_mult) / len(new_mult)
+
+            # add the demand from this household to the tap_demand
+            if self.twa_process == "absolute":
+                # reduction value needs to be offset by the agent reduction
+                # which is the average agent multiplier
+                house.tap_demand += (
+                    daily_demand - house.reduction * avg_agent_multiplier
+                )
+                # iterate the bottle_demand as well
+                building.bottle_demand += (
+                    house.reduction * avg_agent_multiplier
+                )
+                # increase the total reduction value for this node
+                reduction_val += house.reduction * avg_agent_multiplier
+            elif self.twa_process == "percentage":
+                # daily demand already has information about the number
+                # of agents at this house from new_mult
+                house.tap_demand += daily_demand * house.change
+                # iterate the bottle_demand as well
+                house.bottle_demand += daily_demand * (1 - house.change)
+                # increase the total reduction value for this node
+                reduction_val += house.bottle_demand
+
+            # this is the demand we want for this node. It includes the
+            # reduction for agents at the node and for bw use.
+            desired_demand = daily_demand - reduction_val
+
+            if daily_demand == 0:
+                new_demand_multiplier = 0
+            else:
+                new_demand_multiplier = desired_demand / daily_demand
+
+            new_mult = new_mult * new_demand_multiplier
+
+            out_pat += base_pat * new_mult
+
+        return out_pat / len(building.households)
+
     # this how set demand at each node, given what was collected in function above:
     def change_demands(self):
         """
@@ -558,97 +623,31 @@ class ConsumerModel(Parameters):
                     dcp(building.agent_history[self.timestep - 23 : self.timestep + 1])
                 )
                 new_mult = building_agents / building.capacity
-                # new_mult = (
-                #     self.agent_matrix[building.id, self.timestep-23:self.timestep+1] /
-                #     building.capacity
-                # )
 
                 # if the building is a commercial or industrial building,
                 # multiply the demand pattern by the agent multiplier
-                if building.type == "com" or building.type == "ind":
+                if building.type in ["com", "ind", "caf", "gro"]:
                     curr_pat = building.demand_pattern * new_mult
                 else:
-                    """First get the demand pattern. If a majority of household
-                    is working from home, get the wfh pattern"""
-                    agents_at_node = building.agent_obs
-                    agents_wfh = len([a for a in agents_at_node if a.wfh == 1])
-                    if self.res_pat_select == "lakewood" and len(agents_at_node) != 0:
-                        perc_wfh = agents_wfh / len(agents_at_node)
-                        if perc_wfh > 0.5:
-                            base_pat = self.wn.get_pattern("wk1")
-                        else:
-                            base_pat = building.demand_pattern
+                    '''
+                    Ideally we would have the new_mult, i.e., the percentage
+                    full the building is, for each household. We don't currently
+                    have that available, so we are using new_mult for the
+                    building. What this means is for mfh building types, the
+                    new_mult will be a little off from what it should actually
+                    be.
+                    '''
+                    curr_pat = self.calc_res_demands(building, new_mult)
 
-                    """ demand for the next 24 hours, not including reduction or
-                    agent multiplier """
-                    curr_pat = base_pat * new_mult
-                    # print(f"curr_pat for res buildings: \n {curr_pat}")
-
-                    """ Calculate the demand reduction given the total demand """
-                    # total demand in L/day
-                    daily_demand = curr_pat.sum() * building.base_demand * 60 * 60
-
-                    reduction_val = 0
-                    # number of agents assigned to this node over all households
-                    # house_agents = sum([len(h.agent_ids) for h in self.households[node]])
-                    # for house in self.households[node]:
-
-                    # calculate the percent of this nodes demand is caused by
-                    # this household
-                    # agent_percent = len(house.agent_ids) / house_agents
-                    # average agent multiplier
-                    avg_agent_multiplier = sum(new_mult) / len(new_mult)
-
-                    # add the demand from this household to the tap_demand
-                    if self.twa_process == "absolute":
-                        # reduction value needs to be offset by the agent reduction
-                        # which is the average agent multiplier
-                        building.tap_demand += (
-                            daily_demand - building.reduction * avg_agent_multiplier
-                        )
-                        # iterate the bottle_demand as well
-                        building.bottle_demand += (
-                            building.reduction * avg_agent_multiplier
-                        )
-                        # increase the total reduction value for this node
-                        reduction_val += building.reduction * avg_agent_multiplier
-                    elif self.twa_process == "percentage":
-                        # daily demand already has information about the number
-                        # of agents at this house from new_mult
-                        building.tap_demand += daily_demand * building.change
-                        # iterate the bottle_demand as well
-                        building.bottle_demand += daily_demand * (1 - building.change)
-                        # increase the total reduction value for this node
-                        reduction_val += building.bottle_demand
-
-                    # should check if the demand for the node is the same as the
-                    # total from all the households
-                    # house_sum = sum([h.tap_demand for h in self.households[node]])
-                    # if (daily_demand - reduction_val) - house_sum > 0.001:
-                    #     msg = f"Total demand {daily_demand - reduction_val} does not equal the sum of houses {house_sum} for household of {len(self.households[node])}"
-                    #     raise RuntimeError(msg)
-
-                    # this is the demand we want for this node. It includes the
-                    # reduction for agents at the node and for bw use.
-                    desired_demand = daily_demand - reduction_val
-
-                    if daily_demand == 0:
-                        new_demand_multiplier = 0
-                    else:
-                        new_demand_multiplier = desired_demand / daily_demand
-
-                    new_mult = new_mult * new_demand_multiplier
-
-                    curr_pat = base_pat * new_mult
-
-                # Add the current buildings pattern to the past building's
-                # for this node
-                node_pat += curr_pat
+            # Add the current buildings pattern to the past building's
+            # for this node
+            node_pat += curr_pat
 
             # average the node pat based on the number of bulidings
             node_pat /= len(self.wdn_nodes[node])
 
             wn_node_pat = self.wn.get_pattern("node_" + node)
+
             # add the last 24 hours of multipliers to the exisiting pattern
             if self.timestep_day == 1:
                 wn_node_pat.multipliers = node_pat
@@ -722,7 +721,11 @@ class ConsumerModel(Parameters):
         self.collect_demands()
         # if the timestep is a day then we need to update the demand patterns
         if (self.timestep + 1) % 24 == 0 and self.timestep != 0:
+            if self.verbose == 1:
+                print("Starting demand changes")
             self.change_demands()
+            if self.verbose == 1:
+                print("Done with demand changes")
         # if the timestep is the beginning of a week then we want to run the sim
         # also run the sim at the end of the simulation
         if (
@@ -761,40 +764,26 @@ class ConsumerModel(Parameters):
             # update household avoidance behaviors and demand values
             # we don't want to update behaviors during the warmup period
             if not self.warmup and self.bw:
-                for node, house in self.households.items():
-                    # demand_list = list()
-                    # for house in houses:
-                    # print(self.sim._results.node['quality'].columns)
-                    node_age = self.sim._results.node["quality"].loc[:, house.node]
-                    # print(node_age.iloc[-1])
-                    house.update_household(node_age.iloc[-1] / 3600)
-                    # demand_list.append(house.change)
-
-                    """ set the demand multiplier based on the average
-                    household demand at the node """
-                    # self.demand_multiplier[node] = (
-                    #     sum(demand_list) / len(demand_list)
-                    # )
-                # print(self.demand_multiplier)
+                for node, building in self.buildings.items():
+                    if building.households is not None:
+                        for house in building.households:
+                            node_age = self.sim._results.node["quality"].loc[:, house.node]
+                            house.update_household(node_age.iloc[-1] / 3600)
 
                 """ collect household level data """
                 self.collect_household_data()
-                # self.traditional[self.timestep], self.burden[self.timestep] = self.calc_equity_metrics(
-                #     np.array(self.income),
-                #     np.array(self.bw_cost[self.timestep] + self.tw_cost[self.timestep])
-                # )
 
             # if we aren't allowing bottled water buying then we still need to
             # calculate the cost of tap water
             if not self.warmup and not self.bw:
                 step_tw_cost = list()
                 # for each house, calculate the demand and cost of tap water
-                for node, house in self.households.items():
-                    # for house in houses:
-                    # house.calc_demand()
-                    house.calc_tap_cost()
-                    house.tap_demand = 0
-                    step_tw_cost.append(dcp(house.tap_cost))
+                for node, building in self.buildings.items():
+                    if building.households is not None:
+                        for house in building.households:
+                            house.calc_tap_cost()
+                            house.tap_demand = 0
+                            step_tw_cost.append(dcp(house.tap_cost))
                 self.tw_cost[self.timestep] = step_tw_cost
 
     def run_hydraulic(self):
@@ -961,17 +950,18 @@ class ConsumerModel(Parameters):
         step_drink = list()
         step_cook = list()
 
-        for node, house in self.households.items():
-            # for house in houses:
-            step_bw_cost.append(dcp(house.bottle_cost))
-            step_tw_cost.append(dcp(house.tap_cost))
-            step_bw_demand.append(dcp(house.bottle_demand))
-            hygiene = 1 if "hygiene" in house.bottle else 0
-            drink = 1 if "drink" in house.bottle else 0
-            cook = 1 if "cook" in house.bottle else 0
-            step_hygiene.append(hygiene)
-            step_drink.append(drink)
-            step_cook.append(cook)
+        for node, building in self.buildings.items():
+            if building.households is not None:
+                for house in building.households:
+                    step_bw_cost.append(dcp(house.bottle_cost))
+                    step_tw_cost.append(dcp(house.tap_cost))
+                    step_bw_demand.append(dcp(house.bottle_demand))
+                    hygiene = 1 if "hygiene" in house.bottle else 0
+                    drink = 1 if "drink" in house.bottle else 0
+                    cook = 1 if "cook" in house.bottle else 0
+                    step_hygiene.append(hygiene)
+                    step_drink.append(drink)
+                    step_cook.append(cook)
 
         self.bw_cost[self.timestep] = step_bw_cost
         self.tw_cost[self.timestep] = step_tw_cost
@@ -1031,9 +1021,8 @@ class ConsumerModel(Parameters):
                     agent.check_recovered()
                     agent.check_death()
 
-                if (
-                    agent.adj_covid_change == 1
-                ):  # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
+                # this means that agents only check wfh/no_dine/grocery, a max of 5 times throughout the 90 days
+                if agent.adj_covid_change == 1:
                     if agent.wfh == 0 and "wfh" in self.bbn_models:
                         agent.predict_wfh()
 
@@ -1124,8 +1113,16 @@ class ConsumerModel(Parameters):
     def step(self):
         self.schedule.step()
         if self.timestep != 0:
+            if self.verbose == 1:
+                print("Starting com move")
             self.move_com()
+            if self.verbose == 1:
+                print("Done with com move")
+                print("Starting cafe move")
             self.move_caf()
+            if self.verbose == 1:
+                print("Done with cafe move")
+                print("Starting ind move")
         # self.check_agent_loc()
         # self.check_covid_change()
         # BV: changed times to 6, 14, and 22 because I think this is more representative
@@ -1155,7 +1152,11 @@ class ConsumerModel(Parameters):
         elif self.hyd_sim == "hourly":
             self.run_hyd_hour()
         elif self.hyd_sim == "monthly":
+            if self.verbose == 1:
+                print("Starting hydraulic step")
             self.run_hyd_monthly()
+            if self.verbose == 1:
+                print("Done with hydraulic step")
         else:
             NotImplementedError(f"Hydraulic simulation {self.hyd_sim} not set up.")
 

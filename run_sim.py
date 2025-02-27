@@ -13,7 +13,8 @@ import wntr
 from wntr.network.io import write_inpfile
 from tqdm import tqdm
 
-warnings.simplefilter("ignore", UserWarning)
+# warnings.simplefilter("ignore", UserWarning)
+warnings.filterwarnings("ignore")
 
 
 def run_sim(city, id=0, days=90, seed=None, write_inp=False, **kwargs):
@@ -98,20 +99,17 @@ def run_sim(city, id=0, days=90, seed=None, write_inp=False, **kwargs):
     # agent_matrix.to_pickle(output_loc + "/agent_loc.pkl")
 
     agents = [str(i) for i in range(model.num_agents)]
-    households = [h for h in model.households]
-    # income = list()
-    # for node, houses in model.households.items():
-    #     for house in houses:
-    #         income.append(house.income)
 
     demo = dict()
     demo['white'] = list()
     demo['hispanic'] = list()
     demo['renter'] = list()
-    for name, house in model.households.items():
-        demo['white'].append(house.white)
-        demo['hispanic'].append(house.hispanic)
-        demo['renter'].append(house.renter)
+    for name, building in model.buildings.items():
+        if building.households is not None:
+            for house in building.households:
+                demo['white'].append(house.white)
+                demo['hispanic'].append(house.hispanic)
+                demo['renter'].append(house.renter)
 
     cov_pers = convert_to_pd(model.cov_pers, agents)
     cov_ff = convert_to_pd(model.cov_ff, agents)
@@ -120,13 +118,13 @@ def run_sim(city, id=0, days=90, seed=None, write_inp=False, **kwargs):
     dine_dec = convert_to_pd(model.dine_dec, agents)
     groc_dec = convert_to_pd(model.groc_dec, agents)
     ppe_dec = convert_to_pd(model.ppe_dec, agents)
-    bw_cost = convert_to_pd(model.bw_cost, households)
-    tw_cost = convert_to_pd(model.tw_cost, households)
-    bw_demand = convert_to_pd(model.bw_demand, households)
-    hygiene = convert_to_pd(model.hygiene, households)
-    drink = convert_to_pd(model.drink, households)
-    cook = convert_to_pd(model.cook, households)
-    demo = convert_to_pd(demo, households)
+    bw_cost = convert_to_pd(model.bw_cost, model.h_id)
+    tw_cost = convert_to_pd(model.tw_cost, model.h_id)
+    bw_demand = convert_to_pd(model.bw_demand, model.h_id)
+    hygiene = convert_to_pd(model.hygiene, model.h_id)
+    drink = convert_to_pd(model.drink, model.h_id)
+    cook = convert_to_pd(model.cook, model.h_id)
+    demo = convert_to_pd(demo, model.h_id)
     # income = convert_to_pd({0: model.income}, households)
     # income_level = convert_to_pd({0: model.income_level}, households)
 

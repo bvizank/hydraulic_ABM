@@ -1,8 +1,6 @@
 from mesa import Agent
 import math
 from copy import deepcopy as dcp
-
-# import bnlearn as bn
 import pyAgrum as gum
 import data as dt
 
@@ -252,115 +250,51 @@ class ConsumerAgent(Agent):
             # self.model.grid.remove_agent(self)
             self.model.schedule.remove(self)
 
-    def predict_wfh(self):
-        # reset the covid chang parameter
-        self.adj_covid_change = 0
-
-        # create the evidence dictionary from the list of nodes
-        evidence_agent = dcp(self.agent_params)
-        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
+    def predict_pyagrum(self, target):
         evidence = dict()
         for i, item in enumerate(dt.bbn_param_list):
-            if item in self.model.wfh_nodes:
-                evidence[item] = int(evidence_agent[item])
+            if item in self.model.dag_list[target][1]:
+                if item != 'DemAge':
+                    evidence[item] = int(self.agent_params[item])
+                else:
+                    evidence[item] = str(self.agent_params[item])
 
-        # query = bn.inference.fit(self.model.wfh_dag,
-        #                          variables=['work_from_home'],
-        #                          evidence=evidence,
-        #                          verbose=0)
-        # if self.random.random() < query.df['p'][1]:
-        ie = gum.LazyPropagation(self.model.wfh_dag)
+        print(evidence)
+        ie = gum.LazyPropagation(self.model.dag_list[target][0])
         ie.setEvidence(evidence)
-        ie.addTarget("work_from_home")
+        ie.addTarget(target)
         ie.makeInference()
-        query = ie.posterior(self.model.wfh_dag.idFromName("work_from_home"))[1]
+        query = dcp(
+            ie.posterior(self.model.dag_list[target][0].idFromName(target))[1]
+        )
 
+        # need to delete object to save memory
+        del ie
+
+        return query
+
+    def predict_wfh(self):
+        # reset the covid change parameter
+        self.adj_covid_change = 0
+        query = self.predict_pyagrum("work_from_home")
         if self.random.random() < query:
             self.wfh = 1
 
     def predict_dine_less(self):
         self.adj_covid_change = 0
-        evidence_agent = dcp(self.agent_params)
-        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
-        evidence = dict()
-        for i, item in enumerate(dt.bbn_param_list):
-            if item in self.model.dine_nodes:
-                evidence[item] = int(evidence_agent[item])
-        # for i, item in enumerate(self.model.dine_nodes):
-        #     if item != "dine_out_less":
-        #         evidence[item] = evidence_agent[item]
-
-        # query = bn.inference.fit(
-        #     self.model.dine_less_dag,
-        #     variables=["dine_out_less"],
-        #     evidence=evidence,
-        #     verbose=0,
-        # )
-        # if self.random.random() < query.df["p"][1]:
-
-        ie = gum.LazyPropagation(self.model.dine_less_dag)
-        ie.setEvidence(evidence)
-        ie.addTarget("dine_out_less")
-        ie.makeInference()
-        query = ie.posterior(self.model.dine_less_dag.idFromName("dine_out_less"))[1]
-
+        query = self.predict_pyagrum("dine_out_less")
         if self.random.random() < query:
             self.no_dine = 1
 
     def predict_grocery(self):
         self.adj_covid_change = 0
-        evidence_agent = dcp(self.agent_params)
-        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
-        evidence = dict()
-        for i, item in enumerate(dt.bbn_param_list):
-            if item in self.model.grocery_nodes:
-                evidence[item] = int(evidence_agent[item])
-        # for i, item in enumerate(self.model.grocery_nodes):
-        #     if item != "shop_groceries_less":
-        #         evidence[item] = evidence_agent[item]
-
-        # query = bn.inference.fit(
-        #     self.model.grocery_dag,
-        #     variables=["shop_groceries_less"],
-        #     evidence=evidence,
-        #     verbose=0,
-        # )
-        # if self.random.random() < query.df["p"][1]:
-
-        ie = gum.LazyPropagation(self.model.grocery_dag)
-        ie.setEvidence(evidence)
-        ie.addTarget("shop_groceries_less")
-        ie.makeInference()
-        query = ie.posterior(self.model.grocery_dag.idFromName("shop_groceries_less"))[
-            1
-        ]
-
+        query = self.predict_pyagrum("shop_groceries_less")
         if self.random.random() < query:
             self.less_groceries = 1
 
     def predict_ppe(self):
         self.adj_covid_change = 0
-        evidence_agent = dcp(self.agent_params)
-        evidence_agent["COVIDeffect_4"] = math.floor(evidence_agent["COVIDeffect_4"])
-        evidence = dict()
-        for i, item in enumerate(dt.bbn_param_list):
-            if item in self.model.ppe_nodes:
-                evidence[item] = int(evidence_agent[item])
-        # for i, item in enumerate(self.model.ppe_nodes):
-        #     if item != "mask":
-        #         if evidence_agent[item] < 10 and evidence_agent[item] >= 0:
-        #             evidence[item] = evidence_agent[item]
-
-        # query = bn.inference.fit(
-        #     self.model.ppe_dag, variables=["mask"], evidence=evidence, verbose=0
-        # )
-        # if self.random.random() < query.df["p"][1]:
-        ie = gum.LazyPropagation(self.model.ppe_dag)
-        ie.setEvidence(evidence)
-        ie.addTarget("mask")
-        ie.makeInference()
-        query = ie.posterior(self.model.ppe_dag.idFromName("mask"))[1]
-
+        query = self.predict_pyagrum("mask")
         if self.random.random() < query:
             self.ppe = 1
 
@@ -396,13 +330,26 @@ class Building:
     Container for building information
     """
 
-    def __init__(self, id, capacity, node, type, area, com_type, model):
+    def __init__(
+        self,
+        id,
+        node_start,
+        node_end,
+        capacity,
+        node,
+        type,
+        area,
+        bg,
+        parcel_desc,
+        model
+    ):
         self.id = id
         self.model = model
         self.capacity = capacity
         self.node = node
 
         self.type = type
+        self.parcel_desc = parcel_desc
         self.area = area  # sq ft
 
         """ AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES """
@@ -412,55 +359,105 @@ class Building:
 
         self.agent_history = list()
 
-        if self.type in ["com", "ind"]:
+        # if self.type in ["com", "ind"]:
             # print(com_type)
-            self.com_type = com_type.split("|")[0]
             # print(self.com_type)
-            self.base_demand = self.demand_helper()
-            self.demand_pattern = self.pattern_helper(type)
 
-    def demand_helper(self):
-        """ASSUMES UNITS ON WN ARE LITERS PER SECOND"""
-        if self.type == "res":
-            demand = self.res_demand()
-            return demand
-        if self.type == "com":
-            mult = dt.com_types[self.com_type]
-            return self.area * mult * 3.875 / 24 / 60 / 60
-            # return self.model.random.gauss(1000, 100) / 24 / 60 / 60
-        if self.type == "ind":
-            mult = dt.com_types[self.com_type]
-            return self.area * mult * 3.875 / 24 / 60 / 60
-            # return self.model.random.gammavariate(3, 4000) / 24 / 60 / 60
-
-    def pattern_helper(self, x):
-        if x == "res":
-            return self.model.demand_patterns["res"].to_numpy()
-        if x == "com":
-            return self.model.demand_patterns["com"].to_numpy()
-        if x == "ind":
-            return self.model.demand_patterns["ind"].to_numpy()
-
-    def res_demand(self):
-        if self.model.skeleton:
-            # values for distribution come from Crouch 2021
-            # mu=175, sd=75 represents households that do not have irrigation
-            if self.model.random.random() > 0.5:
-                ind_demand = self.model.random.gauss(175, 75)
-            else:
-                ind_demand = self.model.random.gauss(227, 94)
-            # need base demand to be in liters per second from liters per day
-            # equation from Jacobs 2004 which was cited in Crouch 2021
-            demand = ind_demand * len(self.agent_obs) ** (-0.439) / 24 / 60 / 60
-
-            return demand
+        if type in ["res", "mfh"]:
+            # make household(s) for this building
+            self.households = self.make_households(node_start, node_end, bg)
+            # assign base demand based on building type
+            self.base_demand = sum([h.base_demand for h in self.households])
         else:
-            # get the base demand for this node
-            wn_node = self.model.wn.get_node(self.node)
-            self.base_demand = wn_node.demand_timeseries_list[0].base_value
+            self.households = None
+            self.base_demand = self.assign_demand()
+
+        # assign demand pattern based on micropolis profiles
+        self.demand_pattern = self.model.demand_patterns[self.type].to_numpy()
+
+    def assign_demand(self):
+        """ASSUMES UNITS ON WN ARE LITERS PER SECOND"""
+        for desc in self.parcel_desc:
+            if desc in dt.par_types[self.type].keys():
+                mult = dt.par_types[self.type][desc]
+                return self.area * mult * 3.875 / 24 / 60 / 60
+
+        # if self.type == "com":
+        #     mult = dt.com_types[self.desc]
+        #     return self.area * mult * 3.875 / 24 / 60 / 60
+        #     # return self.model.random.gauss(1000, 100) / 24 / 60 / 60
+        # if self.type == "ind":
+        #     mult = dt.ind_types[self.desc]
+        #     return self.area * mult * 3.875 / 24 / 60 / 60
+        #     # return self.model.random.gammavariate(3, 4000) / 24 / 60 / 60
+        # if self.type == "caf":
+        #     mult = dt.caf_types[self.desc]
+        #     return self.area * mult * 3.875 / 24 / 60 / 60
+
+    def make_households(self, node_start, node_end, bg):
+        if self.type == "res":
+            return [Household(
+                self.id,
+                node_start,
+                node_end,
+                self.node,
+                None,
+                self.model,
+                self.parcel_desc,
+                self.capacity,
+                bg,
+                self.area,
+            )]
+        if self.type == "mfh":
+            curr_spots = dcp(self.capacity)
+            curr_houses = list()
+            house_id = 0
+            curr_start = node_start
+            while curr_spots > 6:
+                curr_cap = (
+                    self.model.random.choices(range(1, 7), weights=self.model.weights, k=1)[0]
+                )
+                curr_houses.append(
+                    Household(
+                        int(str(self.id) + str(house_id)),
+                        curr_start,
+                        curr_start + curr_cap,
+                        self.node,
+                        None,
+                        self.model,
+                        self.parcel_desc,
+                        curr_cap,
+                        bg,
+                        self.area,
+                    )
+                )
+                curr_spots -= curr_cap
+                house_id += 1
+                curr_start += curr_cap
+
+            # make one final household that is the size leftover from curr_spots
+            if curr_spots != 0:
+                print(curr_start)
+                print(node_end)
+                curr_houses.append(
+                    Household(
+                        int(str(self.id) + str(house_id)),
+                        curr_start,
+                        node_end,
+                        self.node,
+                        None,
+                        self.model,
+                        self.parcel_desc,
+                        curr_spots,
+                        bg,
+                        self.area,
+                    )
+                )
+
+            return curr_houses
 
 
-class Household(Building):
+class Household:
     """
     Container for households. Contains a collection of agent objects
 
@@ -493,18 +490,27 @@ class Household(Building):
         end_id,
         node,
         node_dist,
-        twa_mods,
         model,
+        parcel_desc,
         capacity=0,
         bg=0,
         area=0,
     ):
-        super().__init__(id, capacity, node, "res", area, None, model)
+        # super().__init__(id, capacity, node, "res", area, parcel_desc, model)
+        self.id = id
+        self.node = node
         self.tap = ["drink", "cook", "hygiene"]  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
         self.building = 0  # the agent's current building
+
+        """ AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES """
+        """ AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS """
+        self.agent_ids = list()  # list of agent that are in the building
+        self.agent_obs = list()  # list of agent objects that are in the building
+        self.capacity = capacity
+        self.model = model
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
         self.base_rate_water = (
@@ -527,7 +533,7 @@ class Household(Building):
         for i in range(start_id, end_id):
             a = ConsumerAgent(i, self, model)
             model.schedule.add(a)
-            if model.num_ind_agents != 0:
+            if len(model.work_loc_list) != 0:
                 a.work_node = model.random.choice(model.work_loc_list)
                 # if the model is skeletonized, we need the home_node
                 # to be the building id not the wdn node
@@ -549,7 +555,7 @@ class Household(Building):
             # the node, otherwise, that is the home_node
             if model.skeleton:
                 a.building = a.home_node
-                self.model.res_agents[a.unique_id] = 1
+                model.res_agents[a.unique_id] = 1
                 # model.grid.place_agent(a, a.node)
             else:
                 model.grid.place_agent(a, a.home_node)
@@ -559,11 +565,11 @@ class Household(Building):
             self.agent_ids.append(a.unique_id)
 
         # add the newly made agents to the dictionary of agents
-        self.model.agents_list.update(zip(self.agent_ids, self.agent_obs))
+        model.agents_list.update(zip(self.agent_ids, self.agent_obs))
 
         """ Set the demand and pattern """
-        self.base_demand = self.demand_helper()
-        self.demand_pattern = self.pattern_helper("res")
+        self.base_demand = self.res_demand()
+        self.demand_pattern = self.model.demand_patterns["res"].to_numpy()
 
         """ assign an income value from the model's list of income """
         self.income = model.random.choice(model.income_list[bg])
@@ -639,13 +645,31 @@ class Household(Building):
 
         # pick water age thresholds for TWA behaviors
         self.twa_thresholds = {
-            "drink": model.random.betavariate(3, 1) * twa_mods[0] + 24,
-            "cook": model.random.betavariate(3, 1) * twa_mods[1] + 24,
-            "hygiene": model.random.betavariate(3, 1) * twa_mods[2] + 24,
+            "drink": model.random.betavariate(3, 1) * model.twa_mods[0] + 24,
+            "cook": model.random.betavariate(3, 1) * model.twa_mods[1] + 24,
+            "hygiene": model.random.betavariate(3, 1) * model.twa_mods[2] + 24,
         }
 
         # demand reduction for percentage demand simulation
         self.demand_reduction = {"drink": 5.3, "cook": 10.6, "hygiene": 10.6}
+
+    def res_demand(self):
+        if self.model.skeleton:
+            # values for distribution come from Crouch 2021
+            # mu=175, sd=75 represents households that do not have irrigation
+            if self.model.random.random() > 0.5:
+                ind_demand = self.model.random.gauss(175, 75)
+            else:
+                ind_demand = self.model.random.gauss(227, 94)
+            # need base demand to be in liters per second from liters per day
+            # equation from Jacobs 2004 which was cited in Crouch 2021
+            demand = ind_demand * len(self.agent_obs) ** (-0.439) / 24 / 60 / 60
+
+            return demand
+        else:
+            # get the base demand for this node
+            wn_node = self.model.wn.get_node(self.node)
+            self.base_demand = wn_node.demand_timeseries_list[0].base_value
 
     def count_agents(self):
         """
