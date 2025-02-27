@@ -368,6 +368,10 @@ class Building:
             self.households = self.make_households(node_start, node_end, bg)
             # assign base demand based on building type
             self.base_demand = sum([h.base_demand for h in self.households])
+            # collect the agent_obs and agent_ids
+            for house in self.households:
+                self.agent_ids.append(house.agent_ids)
+                self.agent_obs.append(house.agent_obs)
         else:
             self.households = None
             self.base_demand = self.assign_demand()
@@ -419,7 +423,8 @@ class Building:
                 )
                 curr_houses.append(
                     Household(
-                        int(str(self.id) + str(house_id)),
+                        self.id,
+                        # int(str(self.id) + str(house_id)),
                         curr_start,
                         curr_start + curr_cap,
                         self.node,
@@ -455,6 +460,11 @@ class Building:
                 )
 
             return curr_houses
+
+    def agents_from_household(self):
+        self.agent_ids = list()
+        for house in self.households:
+            self.agent_ids.append(house.agent_ids)
 
 
 class Household:
@@ -497,13 +507,13 @@ class Household:
         area=0,
     ):
         # super().__init__(id, capacity, node, "res", area, parcel_desc, model)
-        self.id = id
+        # self.id = id
         self.node = node
         self.tap = ["drink", "cook", "hygiene"]  # the actions using tap water
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
-        self.building = 0  # the agent's current building
+        # self.building = id  # the agent's current building
 
         """ AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES """
         """ AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS """
@@ -513,9 +523,7 @@ class Household:
         self.model = model
 
         # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
-        self.base_rate_water = (
-            15.55  # dollars per month; this is from the city of clinton, nc
-        )
+        self.base_rate_water = 15.55  # dollars per month; city of clinton, nc
         self.cons_rate_water = 0.000844022  # dollars per L; clinton, nc
         self.base_rate_sewer = 16.21  # dollars per month; clinton, nc
         self.cons_rate_sewer = 0.00081577  # dollars per L; clinton, nc
