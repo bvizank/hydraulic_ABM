@@ -132,10 +132,10 @@ class ConsumerModel(Parameters):
         in their node to covid. This is currently called everytime an agent moves
         to a new location and NOT every hour.
         """
-        agents_at_node = self.buildings[agent_to_move.building].agent_ids
+        agents_at_node = self.buildings[agent_to_move.building].agents_at_building()
         if node_type == "residential":
             agents_to_expose = [
-                a for a in agent_to_move.household.agent_ids if a in agents_at_node
+                a for a in agent_to_move.household.agents_at_house() if a in agents_at_node
             ]
         elif node_type == "workplace":
             if len(agents_at_node) > self.daily_contacts:
@@ -265,9 +265,9 @@ class ConsumerModel(Parameters):
 
             # find all the commercial nodes with open spots and make a list
             nodes_comm = list()
-            for node in self.com_nodes + self.gro_nodes:
-                avail_spots = self.buildings[node].capacity - len(
-                    self.buildings[node].agent_ids
+            for node in np.append(self.com_nodes, self.gro_nodes):
+                avail_spots = self.buildings[node].capacity - (
+                    self.buildings[node].count_agents()
                 )
                 if avail_spots > 0:
                     for i in range(int(avail_spots)):
@@ -360,8 +360,8 @@ class ConsumerModel(Parameters):
             for node in self.caf_nodes:
                 # print(f"Capacity: {self.buildings[node].capacity}")
                 # print(f"Current agents: {self.buildings[node].agent_ids}")
-                avail_spots = self.buildings[node].capacity - len(
-                    self.buildings[node].agent_ids
+                avail_spots = self.buildings[node].capacity - (
+                    self.buildings[node].count_agents()
                 )
                 # print(avail_spots)
                 if avail_spots > 0:
@@ -491,8 +491,8 @@ class ConsumerModel(Parameters):
         """ Make a list of all of the empty spots at industrial nodes """
         nodes_ind = list()
         for node in self.ind_nodes:
-            avail_spots = self.buildings[node].capacity - len(
-                self.buildings[node].agent_ids
+            avail_spots = self.buildings[node].capacity - (
+                self.buildings[node].count_agents()
             )
             if avail_spots > 0:
                 # get all agents with a work node that is the current node
@@ -537,7 +537,7 @@ class ConsumerModel(Parameters):
         Collect the location of each agent.
         """
         for building_id, building in self.buildings.items():
-            building.agent_history.append(dcp(len(building.agent_ids)))
+            building.agent_history.append(dcp(building.count_agents()))
             # agents_at_node = len(building.agent_ids)
             # self.agent_matrix[building_id, self.timestep] = agents_at_node
 
@@ -577,7 +577,7 @@ class ConsumerModel(Parameters):
                     daily_demand - house.reduction * avg_agent_multiplier
                 )
                 # iterate the bottle_demand as well
-                building.bottle_demand += (
+                house.bottle_demand += (
                     house.reduction * avg_agent_multiplier
                 )
                 # increase the total reduction value for this node
@@ -1135,6 +1135,12 @@ class ConsumerModel(Parameters):
             or self.timestepN == 21
         ):
             self.move_ind()
+
+        # make sure that all agents that were moved to buildings
+        # are transferred to their respective household objects
+        for node, building in self.buildings.items():
+            if building.households is not None:
+                building.agents_to_household()
 
         # COVID related methods are not run during warmup
         if not self.warmup:

@@ -970,8 +970,8 @@ class Parameters(Model):
                 for house in building.households:
                     self.income.append(house.income)
                     self.income_level.append(house.income_level)
-                    self.hh_size.append(len(house.agent_ids))
-                    self.h_id.append(house.id)
+                    self.hh_size.append(house.count_agents())
+                    self.h_id.append(house.building)
                     self.h_index.append(house.node)
         self.income_comb = pd.DataFrame(
             data={

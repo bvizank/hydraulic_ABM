@@ -356,7 +356,7 @@ def income_list(data, n_house, model, s=None):
     # convert pd.Series to dict
     if type(data) != dict:
         data = data.to_dict()
-        
+
     income = list()
     index = 0
     for i, key in enumerate(data):

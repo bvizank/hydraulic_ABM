@@ -98,8 +98,8 @@ def get_osm_buildings_within_area(service_area_geom):
     buildings = ox.features_from_polygon(
         service_area_geom.geometry.iloc[0], tags={"building": True}
     )
-    buildings = ox.project_gdf(buildings, to_crs="EPSG:4326")
-    buildings_proj = ox.project_gdf(buildings)
+    buildings = ox.projection.project_gdf(buildings, to_crs="EPSG:4326")
+    buildings_proj = ox.projection.project_gdf(buildings)
 
     # calculate area of building footprint in meters and convert to feet
     buildings["area"] = buildings_proj.area * 10.764
@@ -293,7 +293,7 @@ def buildings_by_type(buildings):
 
     # filter out parcels without a secondary parcel description (parusedsc2)
     buildings = buildings[~buildings.loc[:, "parusedsc2"].isna()]
-    print(buildings)
+    # print(buildings)
 
     com_target = set(list(dt.com_types.keys()))
     buildings["com"] = [

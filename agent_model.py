@@ -71,10 +71,11 @@ class ConsumerAgent(Agent):
     def move(self, new_building):
         """Move agent to new building"""
         # remove agent from old building list
-        self.model.buildings[self.building].agent_ids.remove(self.unique_id)
+        # print(self.building)
+        self.model.buildings[self.building].agent_ids[self.unique_id] = 0
 
         # add agent to new building list
-        self.model.buildings[new_building].agent_ids.append(self.unique_id)
+        self.model.buildings[new_building].agent_ids[self.unique_id] = 1
 
         # update agent's building
         self.building = dcp(new_building)
@@ -259,7 +260,7 @@ class ConsumerAgent(Agent):
                 else:
                     evidence[item] = str(self.agent_params[item])
 
-        print(evidence)
+        # print(evidence)
         ie = gum.LazyPropagation(self.model.dag_list[target][0])
         ie.setEvidence(evidence)
         ie.addTarget(target)
@@ -354,7 +355,7 @@ class Building:
 
         """ AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES """
         """ AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS """
-        self.agent_ids = list()  # list of agent that are in the building
+        self.agent_ids = dict()  # list of agent that are in the building
         self.agent_obs = list()  # list of agent objects that are in the building
 
         self.agent_history = list()
@@ -369,9 +370,14 @@ class Building:
             # assign base demand based on building type
             self.base_demand = sum([h.base_demand for h in self.households])
             # collect the agent_obs and agent_ids
+            # create a dictionary of agents and the household they belong to
+            self.agent_loc = dict()
             for house in self.households:
-                self.agent_ids.append(house.agent_ids)
+                self.agent_ids.update(house.agent_ids)
                 self.agent_obs.append(house.agent_obs)
+                for agent, v in house.agent_ids.items():
+                    self.agent_loc[agent] = house
+
         else:
             self.households = None
             self.base_demand = self.assign_demand()
@@ -442,11 +448,12 @@ class Building:
 
             # make one final household that is the size leftover from curr_spots
             if curr_spots != 0:
-                print(curr_start)
-                print(node_end)
+                # print(curr_start)
+                # print(node_end)
                 curr_houses.append(
                     Household(
-                        int(str(self.id) + str(house_id)),
+                        self.id,
+                        # int(str(self.id) + str(house_id)),
                         curr_start,
                         node_end,
                         self.node,
@@ -462,9 +469,22 @@ class Building:
             return curr_houses
 
     def agents_from_household(self):
-        self.agent_ids = list()
         for house in self.households:
-            self.agent_ids.append(house.agent_ids)
+            for agent, v in house.agent_ids.items():
+                self.agent_ids[agent] = v
+
+    def agents_to_household(self):
+        for agent, v in self.agent_ids.items():
+            self.agent_loc[agent].agent_ids[agent] = v
+
+    def count_agents(self):
+        """
+        Count the number of agents that are currently at this building
+        """
+        return sum(list(self.agent_ids.values()))
+
+    def agents_at_building(self):
+        return [k for k, v in self.agent_ids.items() if v == 1]
 
 
 class Household:
@@ -513,12 +533,14 @@ class Household:
         self.bottle = []  # actions using bottled water
         self.tap_demand = 0  # the tap water demand
         self.bottle_demand = 0  # the bottled water demand
-        # self.building = id  # the agent's current building
+        self.building = id  # the household's building
 
         """ AGENT_IDS CHANGES AS AGENTS MOVE BETWEEN NODES """
         """ AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS """
-        self.agent_ids = list()  # list of agent that are in the building
+        self.agent_ids = dict()  # list of agent that are in the building
         self.agent_obs = list()  # list of agent objects that are in the building
+        # self.agent_ids = list()  # list of agent that are in the building
+        # self.agent_obs = list()  # list of agent objects that are in the building
         self.capacity = capacity
         self.model = model
 
@@ -569,11 +591,14 @@ class Household:
                 model.grid.place_agent(a, a.home_node)
 
             # add agent to the household list of agent objects and ids
+            self.agent_ids[a.unique_id] = 1
             self.agent_obs.append(a)
-            self.agent_ids.append(a.unique_id)
+            # print(a.building)
+            # self.agent_obs.append(a)
+            # self.agent_ids.append(a.unique_id)
 
         # add the newly made agents to the dictionary of agents
-        model.agents_list.update(zip(self.agent_ids, self.agent_obs))
+        model.agents_list.update(zip(list(self.agent_ids.keys()), self.agent_obs))
 
         """ Set the demand and pattern """
         self.base_demand = self.res_demand()
@@ -636,15 +661,15 @@ class Household:
         # low income is set using HUD thresholds by household size
         # https://www.huduser.gov/portal/datasets/il.html
         high_income = 150000
-        if self.income < dt.ex_low_income[int(len(self.agent_ids))]:
+        if self.income < dt.ex_low_income[int(len(self.agent_obs))]:
             self.income_level = 0
         if (
-            self.income < dt.low_income[int(len(self.agent_ids))]
-            and self.income > dt.ex_low_income[int(len(self.agent_ids))]
+            self.income < dt.low_income[int(len(self.agent_obs))]
+            and self.income > dt.ex_low_income[int(len(self.agent_obs))]
         ):
             self.income_level = 1
         if (
-            self.income >= dt.low_income[int(len(self.agent_ids))]
+            self.income >= dt.low_income[int(len(self.agent_obs))]
             and self.income < high_income
         ):
             self.income_level = 2
@@ -683,9 +708,13 @@ class Household:
         """
         Count the number of agents that are currently at this household
         """
-        for agent in self.agent_obs:
-            if agent.pos == self.node:
-                self.agent_hours += 1
+        return sum(list(self.agent_ids.values()))
+        # for agent in self.agent_obs:
+        #     if agent.pos == self.node:
+        #         self.agent_hours += 1
+
+    def agents_at_house(self):
+        return [k for k, v in self.agent_ids.items() if v == 1]
 
     def update_household(self, age):
         """
@@ -848,15 +877,15 @@ class Household:
         # avg_agents = self.agent_hours / 30 / 24
         if self.model.twa_process == "absolute":
             self.reduction = 0
+            num_agents = self.count_agents()
             if "cook" not in self.tap:
                 """'
                 add the amount of water used for cooking to the reduction
 
                 this value is 11.5 L/c/d multiplied by the average number of agents
-                that were at this node for the past month. Then multiply by 30 to
-                get the monthly use in L.
+                that were at this node for the past month.
                 """
-                self.reduction += 11.5 * len(self.agent_ids)  # L/day
+                self.reduction += 11.5 * num_agents  # L/day
 
             if "drink" not in self.tap:
                 # change -= self.demand_reduction['drink'] / 100
@@ -870,7 +899,7 @@ class Household:
                 if one_day_demand < 0.25:
                     one_day_demand = 0.25
 
-                self.reduction += one_day_demand * len(self.agent_ids)  # L/day
+                self.reduction += one_day_demand * num_agents  # L/day
 
             if "hygiene" not in self.tap:
                 """update the reduction value with the amount we expect agents
@@ -879,7 +908,7 @@ class Household:
                 events_per_day = 2
                 one_day_demand = self.model.random.triangular(0.25, 1.5, 0.5)
 
-                self.reduction += events_per_day * one_day_demand * len(self.agent_ids)
+                self.reduction += events_per_day * one_day_demand * num_agents
 
         elif self.model.twa_process == "percentage":
             self.change = 1
