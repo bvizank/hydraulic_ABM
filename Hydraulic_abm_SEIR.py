@@ -135,7 +135,9 @@ class ConsumerModel(Parameters):
         agents_at_node = self.buildings[agent_to_move.building].agents_at_building()
         if node_type == "residential":
             agents_to_expose = [
-                a for a in agent_to_move.household.agents_at_house() if a in agents_at_node
+                a
+                for a in agent_to_move.household.agents_at_house()
+                if a in agents_at_node
             ]
         elif node_type == "workplace":
             if len(agents_at_node) > self.daily_contacts:
@@ -537,11 +539,15 @@ class ConsumerModel(Parameters):
         Collect the location of each agent.
         """
         for building_id, building in self.buildings.items():
-            building.agent_history.append(dcp(building.count_agents()))
+            if building.households is None:
+                building.agent_history.append(dcp(building.count_agents()))
+            else:
+                for house in building.households:
+                    house.agent_history.append(dcp(house.count_agents()))
             # agents_at_node = len(building.agent_ids)
             # self.agent_matrix[building_id, self.timestep] = agents_at_node
 
-    def calc_res_demands(self, building, new_mult):
+    def calc_res_demands(self, building):
         out_pat = np.zeros(24)
         for house in building.households:
             """First get the demand pattern. If a majority of household
@@ -554,6 +560,11 @@ class ConsumerModel(Parameters):
                     base_pat = self.wn.get_pattern("wk1").multipliers
                 else:
                     base_pat = house.demand_pattern
+
+            house_agents = np.array(
+                dcp(house.agent_history[self.timestep - 23 : self.timestep + 1])
+            )
+            new_mult = house_agents / house.capacity
 
             """ demand for the next 24 hours, not including reduction or
             agent multiplier """
@@ -577,11 +588,18 @@ class ConsumerModel(Parameters):
                     daily_demand - house.reduction * avg_agent_multiplier
                 )
                 # iterate the bottle_demand as well
-                house.bottle_demand += (
-                    house.reduction * avg_agent_multiplier
-                )
+                house.bottle_demand += house.reduction * avg_agent_multiplier
                 # increase the total reduction value for this node
                 reduction_val += house.reduction * avg_agent_multiplier
+
+                # set a minimum reduction_val as 50% of daily_demand
+                print(f"House base demand {house.base_demand * 60 * 60 * 24}")
+                if reduction_val > daily_demand:
+                    print(f"House demand patter {curr_pat}")
+                    print(
+                        f"Reduction value {reduction_val} exceeds daily demand {daily_demand}"
+                    )
+                    reduction_val = daily_demand * 0.5
             elif self.twa_process == "percentage":
                 # daily demand already has information about the number
                 # of agents at this house from new_mult
@@ -629,15 +647,16 @@ class ConsumerModel(Parameters):
                 if building.type in ["com", "ind", "caf", "gro"]:
                     curr_pat = building.demand_pattern * new_mult
                 else:
-                    '''
+                    """
                     Ideally we would have the new_mult, i.e., the percentage
                     full the building is, for each household. We don't currently
                     have that available, so we are using new_mult for the
                     building. What this means is for mfh building types, the
                     new_mult will be a little off from what it should actually
                     be.
-                    '''
-                    curr_pat = self.calc_res_demands(building, new_mult)
+                    """
+                    curr_pat = self.calc_res_demands(building)
+                    # curr_pat = self.calc_res_demands(building, new_mult)
 
             # Add the current buildings pattern to the past building's
             # for this node
@@ -767,7 +786,9 @@ class ConsumerModel(Parameters):
                 for node, building in self.buildings.items():
                     if building.households is not None:
                         for house in building.households:
-                            node_age = self.sim._results.node["quality"].loc[:, house.node]
+                            node_age = self.sim._results.node["quality"].loc[
+                                :, house.node
+                            ]
                             house.update_household(node_age.iloc[-1] / 3600)
 
                 """ collect household level data """

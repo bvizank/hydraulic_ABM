@@ -255,7 +255,7 @@ class ConsumerAgent(Agent):
         evidence = dict()
         for i, item in enumerate(dt.bbn_param_list):
             if item in self.model.dag_list[target][1]:
-                if item != 'DemAge':
+                if item != "DemAge":
                     evidence[item] = int(self.agent_params[item])
                 else:
                     evidence[item] = str(self.agent_params[item])
@@ -265,9 +265,7 @@ class ConsumerAgent(Agent):
         ie.setEvidence(evidence)
         ie.addTarget(target)
         ie.makeInference()
-        query = dcp(
-            ie.posterior(self.model.dag_list[target][0].idFromName(target))[1]
-        )
+        query = dcp(ie.posterior(self.model.dag_list[target][0].idFromName(target))[1])
 
         # need to delete object to save memory
         del ie
@@ -342,7 +340,7 @@ class Building:
         area,
         bg,
         parcel_desc,
-        model
+        model,
     ):
         self.id = id
         self.model = model
@@ -361,8 +359,8 @@ class Building:
         self.agent_history = list()
 
         # if self.type in ["com", "ind"]:
-            # print(com_type)
-            # print(self.com_type)
+        # print(com_type)
+        # print(self.com_type)
 
         if type in ["res", "mfh"]:
             # make household(s) for this building
@@ -406,27 +404,29 @@ class Building:
 
     def make_households(self, node_start, node_end, bg):
         if self.type == "res":
-            return [Household(
-                self.id,
-                node_start,
-                node_end,
-                self.node,
-                None,
-                self.model,
-                self.parcel_desc,
-                self.capacity,
-                bg,
-                self.area,
-            )]
+            return [
+                Household(
+                    self.id,
+                    node_start,
+                    node_end,
+                    self.node,
+                    None,
+                    self.model,
+                    self.parcel_desc,
+                    self.capacity,
+                    bg,
+                    self.area,
+                )
+            ]
         if self.type == "mfh":
             curr_spots = dcp(self.capacity)
             curr_houses = list()
             house_id = 0
             curr_start = node_start
             while curr_spots > 6:
-                curr_cap = (
-                    self.model.random.choices(range(1, 7), weights=self.model.weights, k=1)[0]
-                )
+                curr_cap = self.model.random.choices(
+                    range(1, 7), weights=self.model.weights, k=1
+                )[0]
                 curr_houses.append(
                     Household(
                         self.id,
@@ -539,6 +539,7 @@ class Household:
         """ AGENT_OBS DOES NOT CHANGE AND IS USED FOR HOUSEHOLDS """
         self.agent_ids = dict()  # list of agent that are in the building
         self.agent_obs = list()  # list of agent objects that are in the building
+        self.agent_history = list()
         # self.agent_ids = list()  # list of agent that are in the building
         # self.agent_obs = list()  # list of agent objects that are in the building
         self.capacity = capacity
@@ -694,15 +695,24 @@ class Household:
                 ind_demand = self.model.random.gauss(175, 75)
             else:
                 ind_demand = self.model.random.gauss(227, 94)
+
+            # set a minimum demand of 30 L/c/d
+            if ind_demand < 30:
+                ind_demand = 30
+
             # need base demand to be in liters per second from liters per day
             # equation from Jacobs 2004 which was cited in Crouch 2021
-            demand = ind_demand * len(self.agent_obs) ** (-0.439) / 24 / 60 / 60
+            #
+            # first calculate the new per capita water use
+            ind_demand = ind_demand * len(self.agent_obs) ** (-0.439)
+            # then calculate the total household demand
+            demand = ind_demand * len(self.agent_obs) / 24 / 60 / 60
 
             return demand
         else:
             # get the base demand for this node
             wn_node = self.model.wn.get_node(self.node)
-            self.base_demand = wn_node.demand_timeseries_list[0].base_value
+            return wn_node.demand_timeseries_list[0].base_value
 
     def count_agents(self):
         """
@@ -885,7 +895,7 @@ class Household:
                 this value is 11.5 L/c/d multiplied by the average number of agents
                 that were at this node for the past month.
                 """
-                self.reduction += 11.5 * num_agents  # L/day
+                self.reduction += 11.5  # L/day
 
             if "drink" not in self.tap:
                 # change -= self.demand_reduction['drink'] / 100
@@ -899,7 +909,7 @@ class Household:
                 if one_day_demand < 0.25:
                     one_day_demand = 0.25
 
-                self.reduction += one_day_demand * num_agents  # L/day
+                self.reduction += one_day_demand  # L/day
 
             if "hygiene" not in self.tap:
                 """update the reduction value with the amount we expect agents
@@ -908,7 +918,11 @@ class Household:
                 events_per_day = 2
                 one_day_demand = self.model.random.triangular(0.25, 1.5, 0.5)
 
-                self.reduction += events_per_day * one_day_demand * num_agents
+                self.reduction += events_per_day * one_day_demand
+
+            # modulate the reduction based on the number of household members
+            self.reduction = self.reduction ** len(self.agent_obs) ** (-0.439)
+            self.reduction = self.reduction * len(self.agent_obs)
 
         elif self.model.twa_process == "percentage":
             self.change = 1

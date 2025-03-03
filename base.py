@@ -902,6 +902,8 @@ class BaseGraphics:
             # wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
             # wn_gis.junctions.insert(0, 'data', node_data)
             # print(wn_gis.junctions)
+            print(node_buildings)
+            print(node_data)
             node_buildings.insert(0, "data", node_data)
 
             # clip the bg layer to the extent of the wn layer
@@ -2686,9 +2688,15 @@ class Graphics(BaseGraphics):
             axis=1,
             keys=["cowpi", "income"],
         )
+
+        for i, row in cowpi.iterrows():
+            if row["cowpi"] < 0:
+                print(row)
+
+        cowpi_grouped = cowpi.groupby(level=0).mean()
         ax = plt.subplot()
         # self.bg_map(ax, 'median_income', data['age'].iloc[-1, :] / 3600)
-        self.bg_map(ax, "median_income", cowpi.loc[:, "cowpi"] > 4.6)
+        self.bg_map(ax, "median_income", cowpi_grouped.loc[:, "cowpi"] > 4.6)
         plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(
             loc + "income-x-age." + self.format, format=self.format, bbox_inches="tight"
@@ -2711,7 +2719,7 @@ class Graphics(BaseGraphics):
                 return 0
 
         cowpi["level"] = cowpi.apply(f, axis=1)
-        print(cowpi)
+        # print(cowpi)
         income_level = pd.concat(
             [
                 cowpi[cowpi.loc[:, "level"] == 0]["cowpi"].reset_index(drop=True),
@@ -2732,13 +2740,19 @@ class Graphics(BaseGraphics):
         print(data["demo"])
         race = pd.concat(
             [
-                cowpi[data["demo"].loc["white", :]]["cowpi"].reset_index(drop=True),
-                cowpi[~data["demo"].loc["white", :]]["cowpi"].reset_index(drop=True),
+                cowpi[data["demo"].loc["white", :]]
+                .loc[:, "cowpi"]
+                .reset_index(drop=True),
+                cowpi[~data["demo"].loc["white", :]]
+                .loc[:, "cowpi"]
+                .reset_index(drop=True),
             ],
             axis=1,
             keys=["White", "POC"],
         )
-        print(race)
+        # print(race)
+        for i, row in race.iterrows():
+            print(row)
 
         ax = plt.subplot()
         race.plot(kind="box", sym="")

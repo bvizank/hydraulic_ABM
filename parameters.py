@@ -16,6 +16,7 @@ from copy import deepcopy as dcp
 from mesa.time import RandomActivation
 from mesa.space import NetworkGrid
 import warnings
+
 # import matplotlib.pyplot as plt
 
 
@@ -304,7 +305,9 @@ class Parameters(Model):
         if self.verbose > 0:
             print(f"Total number of agents: {self.num_agents}")
             print(f"Capacity of all industrial nodes: {self.num_ind_agents}")
-            print(f"Capacity of all commercial (com and grocery) nodes: {self.num_com_agents}")
+            print(
+                f"Capacity of all commercial (com and grocery) nodes: {self.num_com_agents}"
+            )
             print(f"Capacity of all cafe nodes: {self.num_caf_agents}")
             print(f"Capacity of all grocery nodes: {self.num_gro_agents}")
 
@@ -494,7 +497,6 @@ class Parameters(Model):
         #     & (self.node_buildings["type"] == "com")
         # ].index.to_numpy()
 
-
         # the number of com agents does not include the caf agents
         # self.num_com_agents -= self.num_caf_agents
 
@@ -588,6 +590,15 @@ class Parameters(Model):
 
         building_group = self.node_buildings.groupby("wdn_node")
         self.wdn_nodes = building_group.indices
+
+        # calculate average household base demand
+        base_demands = list()
+        for i, building in self.buildings.items():
+            if building.households is not None:
+                for house in building.households:
+                    base_demands.append(house.base_demand)
+
+        print(np.mean(np.array(base_demands)))
 
         # set the base demand for each node based on the buildings
         for name, node in self.wn.junctions():
@@ -771,7 +782,7 @@ class Parameters(Model):
             "work_from_home": (self.wfh_dag, self.wfh_nodes),
             "dine_out_less": (self.dine_less_dag, self.dine_nodes),
             "shop_groceries_less": (self.grocery_dag, self.grocery_nodes),
-            "mask": (self.ppe_dag, self.ppe_nodes)
+            "mask": (self.ppe_dag, self.ppe_nodes),
         }
 
     def base_demand_list(self):
@@ -1017,7 +1028,7 @@ class Parameters(Model):
             # agent_set_params = dt.bbn_params.sample()
             # agent.agent_params['risk_perception_r'] = int(agent_set_params['risk_perception_r']) - 1
             for i, param in enumerate(dt.bbn_param_list):
-                if param != 'DemAge':
+                if param != "DemAge":
                     agent.agent_params[param] = int(agent_set_params[i] - 1)
                 else:
                     agent.agent_params[param] = str(agent_set_params[i])
