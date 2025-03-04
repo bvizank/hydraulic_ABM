@@ -593,7 +593,7 @@ class ConsumerModel(Parameters):
                 reduction_val += house.reduction * avg_agent_multiplier
 
                 # set a minimum reduction_val as 50% of daily_demand
-                print(f"House base demand {house.base_demand * 60 * 60 * 24}")
+                # print(f"House base demand {house.base_demand * 60 * 60 * 24}")
                 if reduction_val > daily_demand:
                     print(f"House demand patter {curr_pat}")
                     print(

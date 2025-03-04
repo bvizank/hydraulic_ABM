@@ -382,6 +382,7 @@ class Parameters(Model):
                 raise ValueError(f"File {wn_name + '.inp'} does not exist.")
         else:
             inp_file = os.path.join(city_dir, city + ".inp")
+
         self.wn = wntr.network.WaterNetworkModel(inp_file)
         self.nodes_w_demand = [j for j, _ in self.wn.junctions()]
 

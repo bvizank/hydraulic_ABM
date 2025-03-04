@@ -2663,6 +2663,7 @@ class Graphics(BaseGraphics):
             node_attribute=data["age"].iloc[-1, :] / 3600,
             node_size=5,
             node_colorbar_label="Water Age (hr)",
+            node_range=[0, 336],
         )
         plt.savefig(
             loc + "age_map." + self.format, format=self.format, bbox_inches="tight"
