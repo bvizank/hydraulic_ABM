@@ -601,7 +601,8 @@ class Parameters(Model):
                 for house in building.households:
                     base_demands.append(house.base_demand)
 
-        print(np.mean(np.array(base_demands)))
+        if self.verbose > 0:
+            print(np.mean(np.array(base_demands)))
 
         # set the base demand for each node based on the buildings
         for name, node in self.wn.junctions():
