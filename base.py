@@ -979,7 +979,7 @@ class Graphics(BaseGraphics):
         self.comp_list = [
             "seir_data",
             "demand",
-            "demo",
+            # "demo",
             "age",
             "flow",
             "cov_ff",
@@ -1364,7 +1364,7 @@ class Graphics(BaseGraphics):
                 bbox_inches="tight",
             )
             plt.close()
-        else:
+        else:  # if skeletonized
             nodes_w_demand = [
                 name
                 for name, node in self.wn.junctions()
@@ -1416,7 +1416,7 @@ class Graphics(BaseGraphics):
                 ["Base", "TWA", "PM", "TWA+PM"],
                 self.x_values_hour,
                 xlabel="Time (days)",
-                ylabel="Demand (L)",
+                ylabel="Demand (L/s)",
                 show_labels=True,
             )
             plt.savefig(
@@ -1545,8 +1545,8 @@ class Graphics(BaseGraphics):
 
             ax = self.make_avg_plot(
                 ax,
-                age,
-                age_err,
+                age / 3600,
+                age_err / 3600,
                 ["Base", "TWA", "PM", "TWA+PM"],
                 self.x_values_hour,
                 xlabel="Time (days)",
