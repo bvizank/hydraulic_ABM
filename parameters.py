@@ -431,7 +431,7 @@ class Parameters(Model):
         # self.ind_agent_n = int(self.num_agents * max(self.node_distributions['ind']))
         self.com_dist = self.node_distributions["com"].tolist()
         self.cafe_dist = self.node_distributions["caf"].tolist()
-        print(self.com_dist)
+        # print(self.com_dist)
 
         # convert floats from cumsum to ints
         self.node_buildings["total_res"] = (
@@ -567,8 +567,10 @@ class Parameters(Model):
                     data=row, n_house=grp_size * 1.1, model=self
                 )
 
-        print(sum([len(i) for i in self.income_list.values()]))
-        print(self.node_buildings)
+        if self.verbose > 0:
+            print(sum([len(i) for i in self.income_list.values()]))
+            print(self.node_buildings)
+
         # make dictionary of building objects
         self.buildings = (
             self.node_buildings.apply(self.building_helper, axis=1)

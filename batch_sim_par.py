@@ -7,10 +7,14 @@ import shutil
 import data as dt
 import logging
 import random
+import warnings
+
+
+warnings.filterwarnings("ignore")
 
 
 # parameters
-bw = True,
+bw = False,
 bbn_models = ['all']
 dist_income = False,
 twa_process = 'absolute'
