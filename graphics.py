@@ -40,7 +40,7 @@ plots.make_cost_plots()
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(di=False, perc=False, sa=False)
+plots.cowpi_boxplot(demo=False, di=False, perc=False, sa=False)
 
 """ Income plots """
 # plots.income_plots()

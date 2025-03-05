@@ -1940,21 +1940,21 @@ class Graphics(BaseGraphics):
         plt.close()
 
     def make_cost_plots(self):
-        wntr.graphics.plot_network(
-            self.wn,
-            node_attribute=self.base["cost"]["total"]
-            .iloc[:, -1]
-            .groupby(level=0)
-            .mean(),
-            node_size=5,
-            node_colorbar_label="Water Cost ($)",
-        )
-        plt.savefig(
-            self.pub_loc + "tot_cost_base_map." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
+        # wntr.graphics.plot_network(
+        #     self.wn,
+        #     node_attribute=self.base["cost"]["total"]
+        #     .iloc[:, -1]
+        #     .groupby(level=0)
+        #     .mean(),
+        #     node_size=5,
+        #     node_colorbar_label="Water Cost ($)",
+        # )
+        # plt.savefig(
+        #     self.pub_loc + "tot_cost_base_map." + self.format,
+        #     format=self.format,
+        #     bbox_inches="tight",
+        # )
+        # plt.close()
 
         # pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
         # ax = wntr.graphics.plot_network(
@@ -2090,7 +2090,7 @@ class Graphics(BaseGraphics):
             outliers="",
         )
 
-    def cowpi_boxplot(self, di=False, perc=False, sa=False):
+    def cowpi_boxplot(self, demo=False, di=False, perc=False, sa=False):
         """Make cowpi boxplots"""
         cowpi_bot20 = [
             self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
@@ -2128,6 +2128,35 @@ class Graphics(BaseGraphics):
             means=False,
             outliers="",
         )
+
+        if demo:
+            cowpi_bot20 = [
+                self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
+                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0]["cowpi"] * 100,
+                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cowpi"] * 100,
+                self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cowpi"] * 100,
+            ]
+
+            cowpi_top80 = [
+                self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi"] * 100,
+                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 1]["cowpi"] * 100,
+                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cowpi"] * 100,
+                self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cowpi"] * 100,
+            ]
+
+            data = {
+                "low": cowpi_bot20,
+                "high": cowpi_top80,
+            }
+
+            self.make_income_comp_plot(
+                data,
+                "cow_boxplot",
+                ["Base", "Base+BW", "PM", "PM+BW"],
+                box=True,
+                means=False,
+                outliers="",
+            )
 
         """ Make plots comparing income distance scenarios """
         if di:
