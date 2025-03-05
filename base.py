@@ -336,6 +336,11 @@ class BaseGraphics:
                 ),
                 "cost": data["cost"]["total"].iloc[:, -2].reset_index(drop=True),
                 "income": data["income"].loc[:, "income"].reset_index(drop=True),
+                "race": data["demo"]["demo"].loc[:, "race"].reset_index(drop=True),
+                "hispanic": data["demo"]["demo"]
+                .loc[:, "hispanic"]
+                .reset_index(drop=True),
+                "renter": data["demo"]["demo"].loc[:, "renter"].reset_index(drop=True),
                 "i": data["income"].loc[:, "i"].reset_index(drop=True),
             },
             index=data["cost"]["total"].index,
@@ -679,9 +684,23 @@ class BaseGraphics:
         outliers=None,
         means=True,
         income_line=4.6,
+        mask=None,
     ):
         if box:
             fig, axes = plt.subplots(1, 2, sharey=True)
+
+            if mask:
+                # print(self.base["demo"]["demo"])
+                for i, d in enumerate(data["low"]):
+                    data["low"][i] = data["low"][data["low"].loc[:, "race"]]
+                data["low"][1] = data[self.basebw["demo"].loc[mask, :]]
+                data["low"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
+                data["low"][3] = data[self.pm["demo"].loc[mask, :]]
+
+                data["high"][0] = data[self.base["demo"].loc[mask, :]]
+                data["high"][1] = data[self.basebw["demo"].loc[mask, :]]
+                data["high"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
+                data["high"][3] = data[self.pm["demo"].loc[mask, :]]
 
             axes[0].boxplot(data["low"], sym=outliers, showmeans=means)
             axes[1].boxplot(data["high"], sym=outliers, showmeans=means)
@@ -1976,7 +1995,7 @@ class Graphics(BaseGraphics):
         # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
         # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
-        """ Make total cost plots showing tap, bottle, and total cost """
+        """Make total cost plots showing tap, bottle, and total cost"""
         # exclude = ['TN460', 'TN459', 'TN458']
         # print(
         #     self.basebw['cost']['bw_cost'].loc[
@@ -2090,7 +2109,7 @@ class Graphics(BaseGraphics):
             outliers="",
         )
 
-    def cowpi_boxplot(self, demo=False, di=False, perc=False, sa=False):
+    def cowpi_boxplot(self, demographics=False, di=False, perc=False, sa=False):
         """Make cowpi boxplots"""
         cowpi_bot20 = [
             self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
@@ -2129,33 +2148,47 @@ class Graphics(BaseGraphics):
             outliers="",
         )
 
-        if demo:
+        if demographics:
             cowpi_bot20 = [
-                self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
-                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0]["cowpi"] * 100,
-                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cowpi"] * 100,
-                self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cowpi"] * 100,
+                self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi", "race"]
+                * 100,
+                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0][
+                    "cowpi", "race"
+                ]
+                * 100,
+                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0][
+                    "cowpi", "race"
+                ]
+                * 100,
+                self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cowpi", "race"] * 100,
             ]
 
             cowpi_top80 = [
-                self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi"] * 100,
-                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 1]["cowpi"] * 100,
-                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cowpi"] * 100,
-                self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cowpi"] * 100,
+                self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi", "race"]
+                * 100,
+                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 1][
+                    "cowpi", "race"
+                ]
+                * 100,
+                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1][
+                    "cowpi", "race"
+                ]
+                * 100,
+                self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cowpi", "race"] * 100,
             ]
 
             data = {
                 "low": cowpi_bot20,
                 "high": cowpi_top80,
             }
-
             self.make_income_comp_plot(
                 data,
-                "cow_boxplot",
+                "cow_boxplot_race",
                 ["Base", "Base+BW", "PM", "PM+BW"],
                 box=True,
                 means=False,
                 outliers="",
+                mask="race",
             )
 
         """ Make plots comparing income distance scenarios """
