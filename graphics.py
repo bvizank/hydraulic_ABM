@@ -15,13 +15,13 @@ plots = Graphics(
 )
 
 """ Demand plots """
-# plots.demand_plots()
+plots.demand_plots()
 
 """ Flow plots """
 # plots.flow_plots()
 
 """ Age plots """
-# plots.age_plots(threshold=True)
+plots.age_plots(threshold=True)
 
 """ Industrial distance plots """
 # plots.ind_dist_plots()
@@ -36,7 +36,7 @@ plots = Graphics(
 # plots.make_equity_plots()
 
 """ Cost plots """
-# plots.make_cost_plots()
+plots.make_cost_plots()
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
@@ -46,7 +46,7 @@ plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
 # plots.income_plots()
 
 """ Tap water avoidance plots """
-# plots.make_twa_plots()
+plots.make_twa_plots()
 
 """ SEIR plot """
 # plots.make_seir_plot(days)

@@ -141,6 +141,233 @@ class BaseGraphics:
 
         return average, variance
 
+    def filter_demo(self, filter):
+        ''' Filter cow cowpi data by demographic variable '''
+        cowpi_filter = [
+            self.base["cowpi"][
+                (self.base["cowpi"]["level"] == 0)
+                & (self.base["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.basebw["cowpi"][
+                (self.basebw["cowpi"]["level"] == 0)
+                & (self.basebw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm_nobw["cowpi"][
+                (self.pm_nobw["cowpi"]["level"] == 0)
+                & (self.pm_nobw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm["cowpi"][
+                (self.pm["cowpi"]["level"] == 0)
+                & (self.pm["cowpi"][filter])
+            ]["cowpi"] * 100,
+        ]
+
+        cowpi_nonfilter = [
+            self.base["cowpi"][
+                (self.base["cowpi"]["level"] == 0)
+                & ~(self.base["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.basebw["cowpi"][
+                (self.basebw["cowpi"]["level"] == 0)
+                & ~(self.basebw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm_nobw["cowpi"][
+                (self.pm_nobw["cowpi"]["level"] == 0)
+                & ~(self.pm_nobw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm["cowpi"][
+                (self.pm["cowpi"]["level"] == 0)
+                & ~(self.pm["cowpi"][filter])
+            ]["cowpi"] * 100,
+        ]
+
+        data = {
+            "low": cowpi_filter,
+            "high": cowpi_nonfilter,
+        }
+
+        return data
+
+    def threshold_demo(self, filter, threshold=0.046):
+        ''' Filter cow cowpi data by demographic variable '''
+        cowpi_filter = [
+            self.base["cowpi"][
+                (self.base["cowpi"]["cowpi"] > threshold)
+                & (self.base["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.basebw["cowpi"][
+                (self.basebw["cowpi"]["cowpi"] > threshold)
+                & (self.basebw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm_nobw["cowpi"][
+                (self.pm_nobw["cowpi"]["cowpi"] > threshold)
+                & (self.pm_nobw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm["cowpi"][
+                (self.pm["cowpi"]["cowpi"] > threshold)
+                & (self.pm["cowpi"][filter])
+            ]["cowpi"] * 100,
+        ]
+
+        cowpi_nonfilter = [
+            self.base["cowpi"][
+                (self.base["cowpi"]["cowpi"] > threshold)
+                & ~(self.base["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.basebw["cowpi"][
+                (self.basebw["cowpi"]["cowpi"] > threshold)
+                & ~(self.basebw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm_nobw["cowpi"][
+                (self.pm_nobw["cowpi"]["cowpi"] > threshold)
+                & ~(self.pm_nobw["cowpi"][filter])
+            ]["cowpi"] * 100,
+            self.pm["cowpi"][
+                (self.pm["cowpi"]["cowpi"] > threshold)
+                & ~(self.pm["cowpi"][filter])
+            ]["cowpi"] * 100,
+        ]
+
+        data = {
+            "low": cowpi_filter,
+            "high": cowpi_nonfilter,
+        }
+
+        return data
+
+    def calc_risk(self, ie, it, ce, ct):
+        ''' First calculate risk ratio '''
+        rr = (ie * ct) / (ce * it)
+
+        arr = (ie / it) - (ce / ct)
+
+        return rr, arr
+
+    def plot_demand_by_node(self, ax, nodes):
+        ''' Plot the sum of all demand in the network of the given nodes '''
+        demand_base = self.base["avg_demand"].loc[:, nodes]
+        demand_basebw = self.basebw["avg_demand"].loc[:, nodes]
+        demand_pm = self.pm["avg_demand"].loc[:, nodes]
+        demand_pm_nobw = self.pm_nobw["avg_demand"].loc[:, nodes]
+        demand = pd.concat(
+            [
+                demand_base.sum(axis=1).rolling(24).mean(),
+                demand_basebw.sum(axis=1).rolling(24).mean(),
+                demand_pm_nobw.sum(axis=1).rolling(24).mean(),
+                demand_pm.sum(axis=1).rolling(24).mean(),
+            ],
+            axis=1,
+            keys=["Base", "TWA", "PM", "TWA+PM"],
+        )
+
+        var_base = self.base["var_demand"].loc[:, nodes]
+        var_basebw = self.basebw["var_demand"].loc[:, nodes]
+        var_pm = self.pm["var_demand"].loc[:, nodes]
+        var_pm_nobw = self.pm_nobw["var_demand"].loc[:, nodes]
+        demand_var = pd.concat(
+            [
+                var_base.sum(axis=1).rolling(24).mean(),
+                var_basebw.sum(axis=1).rolling(24).mean(),
+                var_pm_nobw.sum(axis=1).rolling(24).mean(),
+                var_pm.sum(axis=1).rolling(24).mean(),
+            ],
+            axis=1,
+            keys=["Base", "TWA", "PM", "TWA+PM"],
+        )
+
+        demand_err = ut.calc_error(demand_var, self.error)
+
+        # format the y axis ticks to have a dollar sign and thousands commas
+        # fmt = "{x:,.0f}"
+        # tick = mtick.StrMethodFormatter(fmt)
+        # ax.yaxis.set_major_formatter(tick)
+
+        ax = self.make_avg_plot(
+            ax,
+            demand,
+            demand_err,
+            ["Base", "TWA", "PM", "TWA+PM"],
+            self.x_values_hour,
+            # xlabel="Time (days)",
+            # ylabel="Demand (L/s)",
+            show_labels=False,
+        )
+
+        return ax
+
+    def plot_demand_by_case(self, ax, data, perc_counts, legend_bool=False):
+        demand_res = data.loc[:, perc_counts[
+            (perc_counts["type"] == "res")
+            | (perc_counts["type"] == "mfh")
+        ].index]
+        print(demand_res)
+        demand_mfh = data.loc[:, perc_counts[perc_counts["type"] == "mfh"].index]
+        print(demand_mfh)
+        demand_ind = data.loc[:, perc_counts[perc_counts["type"] == "ind"].index]
+        demand_com = data.loc[:, perc_counts[perc_counts["type"] == "com"].index]
+        demand_caf = data.loc[:, perc_counts[perc_counts["type"] == "caf"].index]
+        demand_gro = data.loc[:, perc_counts[perc_counts["type"] == "gro"].index]
+        demand = pd.concat(
+            [
+                demand_res.sum(axis=1).rolling(24).mean().reset_index(drop=True),
+                # demand_mfh.sum(axis=1).rolling(24).mean(),
+                demand_ind.sum(axis=1).rolling(24).mean().reset_index(drop=True),
+                demand_com.sum(axis=1).rolling(24).mean().reset_index(drop=True),
+                demand_caf.sum(axis=1).rolling(24).mean().reset_index(drop=True),
+                demand_gro.sum(axis=1).rolling(24).mean().reset_index(drop=True),
+                pd.Series(self.x_values_hour),
+            ],
+            axis=1,
+            keys=["Residential", "Industrial", "Commercial", "Restaurant", "Grocery", "time"],
+        )
+
+        demand = demand.set_index("time")
+        print(demand)
+
+        # var_res = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "res"]]
+        # var_mfh = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "mfh"]]
+        # var_ind = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "ind"]]
+        # var_com = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "com"]]
+        # var_caf = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "caf"]]
+        # var_gro = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "gro"]]
+        # demand_var = pd.concat(
+        #     [
+        #         var_res.sum(axis=1).rolling(24).mean(),
+        #         var_mfh.sum(axis=1).rolling(24).mean(),
+        #         var_ind.sum(axis=1).rolling(24).mean(),
+        #         var_com.sum(axis=1).rolling(24).mean(),
+        #         var_caf.sum(axis=1).rolling(24).mean(),
+        #         var_gro.sum(axis=1).rolling(24).mean(),
+        #     ],
+        #     axis=1,
+        #     keys=["Res", "MFH", "Ind", "Com", "Caf", "Gro"],
+        # )
+
+        # demand_err = ut.calc_error(demand_var, self.error)
+
+        ax = demand.plot.area(
+            ax=ax, legend=legend_bool
+        )
+        ax.set_xlabel("")
+
+        # format the y axis ticks to have a dollar sign and thousands commas
+        # fmt = "{x:,.0f}"
+        # tick = mtick.StrMethodFormatter(fmt)
+        # ax.yaxis.set_major_formatter(tick)
+
+        # ax = self.make_avg_plot(
+        #     ax,
+        #     demand,
+        #     demand_err,
+        #     ["Base", "TWA", "PM", "TWA+PM"],
+        #     self.x_values_hour,
+        #     # xlabel="Time (days)",
+        #     # ylabel="Demand (L/s)",
+        #     show_labels=False,
+        # )
+
+        return ax
+
     def calc_flow_diff(self, data, hours):
         flow_data = dict()
         flow_changes_sum = dict()
@@ -336,7 +563,7 @@ class BaseGraphics:
                 ),
                 "cost": data["cost"]["total"].iloc[:, -2].reset_index(drop=True),
                 "income": data["income"].loc[:, "income"].reset_index(drop=True),
-                "race": data["demo"]["demo"].loc[:, "race"].reset_index(drop=True),
+                "white": data["demo"]["demo"].loc[:, "white"].reset_index(drop=True),
                 "hispanic": data["demo"]["demo"]
                 .loc[:, "hispanic"]
                 .reset_index(drop=True),
@@ -689,18 +916,18 @@ class BaseGraphics:
         if box:
             fig, axes = plt.subplots(1, 2, sharey=True)
 
-            if mask:
+            # if mask:
                 # print(self.base["demo"]["demo"])
-                for i, d in enumerate(data["low"]):
-                    data["low"][i] = data["low"][data["low"].loc[:, "race"]]
-                data["low"][1] = data[self.basebw["demo"].loc[mask, :]]
-                data["low"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
-                data["low"][3] = data[self.pm["demo"].loc[mask, :]]
+                # for i, d in enumerate(data["low"]):
+                #     data["low"][i] = data["low"][data["low"].loc[:, "race"]]
+                # data["low"][1] = data[self.basebw["demo"].loc[mask, :]]
+                # data["low"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
+                # data["low"][3] = data[self.pm["demo"].loc[mask, :]]
 
-                data["high"][0] = data[self.base["demo"].loc[mask, :]]
-                data["high"][1] = data[self.basebw["demo"].loc[mask, :]]
-                data["high"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
-                data["high"][3] = data[self.pm["demo"].loc[mask, :]]
+                # data["high"][0] = data[self.base["demo"].loc[mask, :]]
+                # data["high"][1] = data[self.basebw["demo"].loc[mask, :]]
+                # data["high"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
+                # data["high"][3] = data[self.pm["demo"].loc[mask, :]]
 
             axes[0].boxplot(data["low"], sym=outliers, showmeans=means)
             axes[1].boxplot(data["high"], sym=outliers, showmeans=means)
@@ -1389,6 +1616,7 @@ class Graphics(BaseGraphics):
                 for name, node in self.wn.junctions()
                 if node.demand_timeseries_list[0].base_value > 0
             ]
+
             """ Make plots of aggregate demand data """
             demand_base = self.base["avg_demand"][nodes_w_demand]
             demand_basebw = self.basebw["avg_demand"][nodes_w_demand]
@@ -1424,9 +1652,9 @@ class Graphics(BaseGraphics):
 
             ax = plt.subplot()
             # format the y axis ticks to have a dollar sign and thousands commas
-            fmt = "{x:,.0f}"
-            tick = mtick.StrMethodFormatter(fmt)
-            ax.yaxis.set_major_formatter(tick)
+            # fmt = "{x:,.0f}"
+            # tick = mtick.StrMethodFormatter(fmt)
+            # ax.yaxis.set_major_formatter(tick)
 
             ax = self.make_avg_plot(
                 ax,
@@ -1444,6 +1672,107 @@ class Graphics(BaseGraphics):
                 bbox_inches="tight",
             )
             plt.close()
+
+            """ Make plots of aggregate demand data """
+            node_buildings = pd.read_pickle("buildings.pkl")
+            counts = node_buildings.value_counts(["wdn_node", "type"]).unstack()
+            perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
+            res_t = 50
+
+            perc_counts["type"] = perc_counts.apply(
+                lambda x: x.idxmax(), axis=1
+            )
+            # res_perc_nodes = perc_counts[(perc_counts["mfh"] + perc_counts["res"]) > res_t].index
+            # print(self.base["avg_demand"].loc[:, res_perc_nodes])
+            print(perc_counts)
+
+            fig, axes = plt.subplots(3, 2, sharex=True, sharey=True)
+            top_plots = ["res", "mfh"]
+            mid_plots = ["ind", "com"]
+            bot_plots = ["caf", "gro"]
+            for i, type in enumerate(top_plots):
+                axes[0, i] = self.plot_demand_by_node(
+                    axes[0, i], perc_counts[perc_counts["type"] == type].index
+                )
+            for i, type in enumerate(mid_plots):
+                axes[1, i] = self.plot_demand_by_node(
+                    axes[1, i], perc_counts[perc_counts["type"] == type].index
+                )
+            for i, type in enumerate(bot_plots):
+                axes[2, i] = self.plot_demand_by_node(
+                    axes[2, i], perc_counts[perc_counts["type"] == type].index
+                )
+
+            plt.gcf().set_size_inches(3.5, 7)
+            plt.savefig(
+                self.pub_loc + "sum_demand" + "." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+            )
+            plt.close()
+
+            fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
+            axes[0, 0] = self.plot_demand_by_case(
+                axes[0, 0], self.base["avg_demand"], perc_counts,
+                legend_bool=True
+            )
+            axes[0, 1] = self.plot_demand_by_case(
+                axes[0, 1], self.basebw["avg_demand"], perc_counts
+            )
+            axes[1, 0] = self.plot_demand_by_case(
+                axes[1, 0], self.pm_nobw["avg_demand"], perc_counts
+            )
+            axes[1, 1] = self.plot_demand_by_case(
+                axes[1, 1], self.pm["avg_demand"], perc_counts
+            )
+            axes[0, 0].text(
+                0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+            )
+            axes[0, 1].text(
+                0.5, -0.1, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+            )
+            axes[1, 0].text(
+                0.5, -0.2, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+            )
+            axes[1, 1].text(
+                0.5, -0.2, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+            )
+            fig.supxlabel("Time (days)", y=0)
+            fig.supylabel("Demand (L/s)", x=0.04)
+            plt.gcf().set_size_inches(6, 6)
+
+            plt.savefig(
+                self.pub_loc + "sum_demand_stacked" + "." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+            )
+            plt.close()
+            # ax = plt.subplot()
+            # ind_perc_nodes = perc_counts[perc_counts["ind"] > res_t].index
+            # ax = self.plot_demand_by_node(ax, ind_perc_nodes)
+
+            # plt.savefig(
+            #     self.pub_loc + "sum_demand_ind" + "." + self.format,
+            #     format=self.format,
+            #     bbox_inches="tight",
+            # )
+            # plt.close()
+
+            # ax = plt.subplot()
+            # com_perc_nodes = perc_counts[perc_counts["com"] > res_t].index
+            # ax = self.plot_demand_by_node(ax, com_perc_nodes)
+
+            # plt.savefig(
+            #     self.pub_loc + "sum_demand_com" + "." + self.format,
+            #     format=self.format,
+            #     bbox_inches="tight",
+            # )
+            # plt.close()
+
+            # print(len(res_perc_nodes))
+            # print(len(ind_perc_nodes))
+            # print(len(com_perc_nodes))
+            print(perc_counts.groupby("type").size())
 
     def age_plots(self, sa=False, map=False, threshold=False):
         if not self.skeletonized:
@@ -2096,7 +2425,7 @@ class Graphics(BaseGraphics):
         # }
         data = {"low": cost_low, "high": cost_high}
 
-        print(data)
+        # print(data)
 
         self.make_income_comp_plot(
             data,
@@ -2149,38 +2478,9 @@ class Graphics(BaseGraphics):
         )
 
         if demographics:
-            cowpi_bot20 = [
-                self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi", "race"]
-                * 100,
-                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0][
-                    "cowpi", "race"
-                ]
-                * 100,
-                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0][
-                    "cowpi", "race"
-                ]
-                * 100,
-                self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cowpi", "race"] * 100,
-            ]
+            ''' Make race cross low-income plot '''
+            data = self.filter_demo("white")
 
-            cowpi_top80 = [
-                self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi", "race"]
-                * 100,
-                self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 1][
-                    "cowpi", "race"
-                ]
-                * 100,
-                self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1][
-                    "cowpi", "race"
-                ]
-                * 100,
-                self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cowpi", "race"] * 100,
-            ]
-
-            data = {
-                "low": cowpi_bot20,
-                "high": cowpi_top80,
-            }
             self.make_income_comp_plot(
                 data,
                 "cow_boxplot_race",
@@ -2188,8 +2488,54 @@ class Graphics(BaseGraphics):
                 box=True,
                 means=False,
                 outliers="",
-                mask="race",
             )
+
+            ''' Make hispanic low-income plot '''
+            data = self.filter_demo("hispanic")
+
+            self.make_income_comp_plot(
+                data,
+                "cow_boxplot_hispanic",
+                ["Base", "Base+BW", "PM", "PM+BW"],
+                box=True,
+                means=False,
+                outliers="",
+            )
+
+            ''' Make hispanic low-income plot '''
+            data = self.filter_demo("renter")
+
+            self.make_income_comp_plot(
+                data,
+                "cow_boxplot_renter",
+                ["Base", "Base+BW", "PM", "PM+BW"],
+                box=True,
+                means=False,
+                outliers="",
+            )
+
+            ''' Plot or export data that shows how much more likely
+            a household is to have unaffordable water based on demographics '''
+            # first find the households that exceed threhold and are in
+            # demo groups
+            race_unaffordable = self.threshold_demo("white")
+            race_all = self.threshold_demo("white", threshold=0)
+
+            white_unaffordable = np.array([len(d) for d in race_unaffordable["low"]])
+            white_all = np.array([len(d) for d in race_all["low"]])
+            hoc_unaffordable = np.array([len(d) for d in race_unaffordable["high"]])
+            hoc_all = np.array([len(d) for d in race_all["high"]])
+            # hoc = [d.mean() for d in data["high"]]
+            print(white_unaffordable)
+            print(white_all)
+            print(hoc_unaffordable)
+            print(hoc_all)
+
+            rr = self.calc_risk(
+                hoc_unaffordable, hoc_all, white_unaffordable, white_all
+            )
+
+            print(rr)
 
         """ Make plots comparing income distance scenarios """
         if di:
