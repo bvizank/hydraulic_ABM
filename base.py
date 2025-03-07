@@ -300,9 +300,6 @@ class BaseGraphics:
             (perc_counts["type"] == "res")
             | (perc_counts["type"] == "mfh")
         ].index]
-        print(demand_res)
-        demand_mfh = data.loc[:, perc_counts[perc_counts["type"] == "mfh"].index]
-        print(demand_mfh)
         demand_ind = data.loc[:, perc_counts[perc_counts["type"] == "ind"].index]
         demand_com = data.loc[:, perc_counts[perc_counts["type"] == "com"].index]
         demand_caf = data.loc[:, perc_counts[perc_counts["type"] == "caf"].index]
@@ -310,7 +307,6 @@ class BaseGraphics:
         demand = pd.concat(
             [
                 demand_res.sum(axis=1).rolling(24).mean().reset_index(drop=True),
-                # demand_mfh.sum(axis=1).rolling(24).mean(),
                 demand_ind.sum(axis=1).rolling(24).mean().reset_index(drop=True),
                 demand_com.sum(axis=1).rolling(24).mean().reset_index(drop=True),
                 demand_caf.sum(axis=1).rolling(24).mean().reset_index(drop=True),
@@ -322,7 +318,16 @@ class BaseGraphics:
         )
 
         demand = demand.set_index("time")
-        print(demand)
+        print("Residential demand for the first day:")
+        print((demand_res.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print("Commercial demand for the first day:")
+        print((demand_com.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print("Industrial demand for the first day:")
+        print((demand_ind.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print("Cafe demand for the first day:")
+        print((demand_caf.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print("Grocery demand for the first day:")
+        print((demand_gro.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
 
         # var_res = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "res"]]
         # var_mfh = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "mfh"]]
@@ -1617,6 +1622,8 @@ class Graphics(BaseGraphics):
                 if node.demand_timeseries_list[0].base_value > 0
             ]
 
+            print((self.base["avg_demand"][nodes_w_demand].sum(axis=1) * 3600).iloc[0:23].sum() / 3.875)
+
             """ Make plots of aggregate demand data """
             demand_base = self.base["avg_demand"][nodes_w_demand]
             demand_basebw = self.basebw["avg_demand"][nodes_w_demand]
@@ -1675,9 +1682,10 @@ class Graphics(BaseGraphics):
 
             """ Make plots of aggregate demand data """
             node_buildings = pd.read_pickle("buildings.pkl")
+            print(node_buildings)
+            print(node_buildings.groupby("type").size())
             counts = node_buildings.value_counts(["wdn_node", "type"]).unstack()
             perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
-            res_t = 50
 
             perc_counts["type"] = perc_counts.apply(
                 lambda x: x.idxmax(), axis=1
