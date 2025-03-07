@@ -595,11 +595,12 @@ class ConsumerModel(Parameters):
                 # set a minimum reduction_val as 50% of daily_demand
                 # print(f"House base demand {house.base_demand * 60 * 60 * 24}")
                 if reduction_val > daily_demand:
+                    print(f"House base demand {house.base_demand * 60 * 60 * 24}")
                     print(f"House demand patter {curr_pat}")
                     print(
                         f"Reduction value {reduction_val} exceeds daily demand {daily_demand}"
                     )
-                    reduction_val = daily_demand * 0.5
+                    reduction_val = daily_demand
             elif self.twa_process == "percentage":
                 # daily demand already has information about the number
                 # of agents at this house from new_mult
