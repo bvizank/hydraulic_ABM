@@ -142,43 +142,43 @@ class BaseGraphics:
         return average, variance
 
     def filter_demo(self, filter):
-        ''' Filter cow cowpi data by demographic variable '''
+        """Filter cow cowpi data by demographic variable"""
         cowpi_filter = [
             self.base["cowpi"][
-                (self.base["cowpi"]["level"] == 0)
-                & (self.base["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.base["cowpi"]["level"] == 0) & (self.base["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.basebw["cowpi"][
-                (self.basebw["cowpi"]["level"] == 0)
-                & (self.basebw["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.basebw["cowpi"]["level"] == 0) & (self.basebw["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.pm_nobw["cowpi"][
-                (self.pm_nobw["cowpi"]["level"] == 0)
-                & (self.pm_nobw["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.pm_nobw["cowpi"]["level"] == 0) & (self.pm_nobw["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.pm["cowpi"][
-                (self.pm["cowpi"]["level"] == 0)
-                & (self.pm["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.pm["cowpi"]["level"] == 0) & (self.pm["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
         ]
 
         cowpi_nonfilter = [
             self.base["cowpi"][
-                (self.base["cowpi"]["level"] == 0)
-                & ~(self.base["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.base["cowpi"]["level"] == 0) & ~(self.base["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.basebw["cowpi"][
-                (self.basebw["cowpi"]["level"] == 0)
-                & ~(self.basebw["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.basebw["cowpi"]["level"] == 0) & ~(self.basebw["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.pm_nobw["cowpi"][
-                (self.pm_nobw["cowpi"]["level"] == 0)
-                & ~(self.pm_nobw["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.pm_nobw["cowpi"]["level"] == 0) & ~(self.pm_nobw["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.pm["cowpi"][
-                (self.pm["cowpi"]["level"] == 0)
-                & ~(self.pm["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.pm["cowpi"]["level"] == 0) & ~(self.pm["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
         ]
 
         data = {
@@ -189,43 +189,48 @@ class BaseGraphics:
         return data
 
     def threshold_demo(self, filter, threshold=0.046):
-        ''' Filter cow cowpi data by demographic variable '''
+        """Filter cow cowpi data by demographic variable"""
         cowpi_filter = [
             self.base["cowpi"][
-                (self.base["cowpi"]["cowpi"] > threshold)
-                & (self.base["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.base["cowpi"]["cowpi"] > threshold) & (self.base["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
             self.basebw["cowpi"][
                 (self.basebw["cowpi"]["cowpi"] > threshold)
                 & (self.basebw["cowpi"][filter])
-            ]["cowpi"] * 100,
+            ]["cowpi"]
+            * 100,
             self.pm_nobw["cowpi"][
                 (self.pm_nobw["cowpi"]["cowpi"] > threshold)
                 & (self.pm_nobw["cowpi"][filter])
-            ]["cowpi"] * 100,
+            ]["cowpi"]
+            * 100,
             self.pm["cowpi"][
-                (self.pm["cowpi"]["cowpi"] > threshold)
-                & (self.pm["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.pm["cowpi"]["cowpi"] > threshold) & (self.pm["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
         ]
 
         cowpi_nonfilter = [
             self.base["cowpi"][
                 (self.base["cowpi"]["cowpi"] > threshold)
                 & ~(self.base["cowpi"][filter])
-            ]["cowpi"] * 100,
+            ]["cowpi"]
+            * 100,
             self.basebw["cowpi"][
                 (self.basebw["cowpi"]["cowpi"] > threshold)
                 & ~(self.basebw["cowpi"][filter])
-            ]["cowpi"] * 100,
+            ]["cowpi"]
+            * 100,
             self.pm_nobw["cowpi"][
                 (self.pm_nobw["cowpi"]["cowpi"] > threshold)
                 & ~(self.pm_nobw["cowpi"][filter])
-            ]["cowpi"] * 100,
+            ]["cowpi"]
+            * 100,
             self.pm["cowpi"][
-                (self.pm["cowpi"]["cowpi"] > threshold)
-                & ~(self.pm["cowpi"][filter])
-            ]["cowpi"] * 100,
+                (self.pm["cowpi"]["cowpi"] > threshold) & ~(self.pm["cowpi"][filter])
+            ]["cowpi"]
+            * 100,
         ]
 
         data = {
@@ -236,7 +241,7 @@ class BaseGraphics:
         return data
 
     def calc_risk(self, ie, it, ce, ct):
-        ''' First calculate risk ratio '''
+        """First calculate risk ratio"""
         rr = (ie * ct) / (ce * it)
 
         arr = (ie / it) - (ce / ct)
@@ -244,7 +249,7 @@ class BaseGraphics:
         return rr, arr
 
     def plot_demand_by_node(self, ax, nodes):
-        ''' Plot the sum of all demand in the network of the given nodes '''
+        """Plot the sum of all demand in the network of the given nodes"""
         demand_base = self.base["avg_demand"].loc[:, nodes]
         demand_basebw = self.basebw["avg_demand"].loc[:, nodes]
         demand_pm = self.pm["avg_demand"].loc[:, nodes]
@@ -296,11 +301,14 @@ class BaseGraphics:
         return ax
 
     def plot_demand_by_case(self, ax, data, perc_counts, legend_bool=False):
-        demand_res = data.loc[:, perc_counts[
-            (perc_counts["type"] == "res")
-            | (perc_counts["type"] == "mfh")
-        ].index]
+        demand_res = data.loc[
+            :,
+            perc_counts[
+                (perc_counts["type"] == "res") | (perc_counts["type"] == "mfh")
+            ].index,
+        ]
         demand_ind = data.loc[:, perc_counts[perc_counts["type"] == "ind"].index]
+        demand_mfh = data.loc[:, perc_counts[perc_counts["type"] == "mfh"].index]
         demand_com = data.loc[:, perc_counts[perc_counts["type"] == "com"].index]
         demand_caf = data.loc[:, perc_counts[perc_counts["type"] == "caf"].index]
         demand_gro = data.loc[:, perc_counts[perc_counts["type"] == "gro"].index]
@@ -314,20 +322,29 @@ class BaseGraphics:
                 pd.Series(self.x_values_hour),
             ],
             axis=1,
-            keys=["Residential", "Industrial", "Commercial", "Restaurant", "Grocery", "time"],
+            keys=[
+                "Residential",
+                "Industrial",
+                "Commercial",
+                "Restaurant",
+                "Grocery",
+                "time",
+            ],
         )
 
         demand = demand.set_index("time")
         print("Residential demand for the first day:")
-        print((demand_res.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print((demand_res.sum(axis=1) * 3600).sum() / 3.875 / 1000000 / self.days)
+        print("MFH demand for the first day:")
+        print((demand_mfh.sum(axis=1) * 3600).sum() / 3.875 / 1000000 / self.days)
         print("Commercial demand for the first day:")
-        print((demand_com.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print((demand_com.sum(axis=1) * 3600).sum() / 3.875 / 1000000 / self.days)
         print("Industrial demand for the first day:")
-        print((demand_ind.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print((demand_ind.sum(axis=1) * 3600).sum() / 3.875 / 1000000 / self.days)
         print("Cafe demand for the first day:")
-        print((demand_caf.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print((demand_caf.sum(axis=1) * 3600).sum() / 3.875 / 1000000 / self.days)
         print("Grocery demand for the first day:")
-        print((demand_gro.sum(axis=1) * 3600).iloc[0:23].sum() / 3.875 / 1000000)
+        print((demand_gro.sum(axis=1) * 3600).sum() / 3.875 / 1000000 / self.days)
 
         # var_res = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "res"]]
         # var_mfh = data["var_demand"].loc[:, perc_counts[perc_counts["type"] == "mfh"]]
@@ -350,9 +367,7 @@ class BaseGraphics:
 
         # demand_err = ut.calc_error(demand_var, self.error)
 
-        ax = demand.plot.area(
-            ax=ax, legend=legend_bool
-        )
+        ax = demand.plot.area(ax=ax, legend=legend_bool)
         ax.set_xlabel("")
 
         # format the y axis ticks to have a dollar sign and thousands commas
@@ -922,17 +937,17 @@ class BaseGraphics:
             fig, axes = plt.subplots(1, 2, sharey=True)
 
             # if mask:
-                # print(self.base["demo"]["demo"])
-                # for i, d in enumerate(data["low"]):
-                #     data["low"][i] = data["low"][data["low"].loc[:, "race"]]
-                # data["low"][1] = data[self.basebw["demo"].loc[mask, :]]
-                # data["low"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
-                # data["low"][3] = data[self.pm["demo"].loc[mask, :]]
+            # print(self.base["demo"]["demo"])
+            # for i, d in enumerate(data["low"]):
+            #     data["low"][i] = data["low"][data["low"].loc[:, "race"]]
+            # data["low"][1] = data[self.basebw["demo"].loc[mask, :]]
+            # data["low"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
+            # data["low"][3] = data[self.pm["demo"].loc[mask, :]]
 
-                # data["high"][0] = data[self.base["demo"].loc[mask, :]]
-                # data["high"][1] = data[self.basebw["demo"].loc[mask, :]]
-                # data["high"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
-                # data["high"][3] = data[self.pm["demo"].loc[mask, :]]
+            # data["high"][0] = data[self.base["demo"].loc[mask, :]]
+            # data["high"][1] = data[self.basebw["demo"].loc[mask, :]]
+            # data["high"][2] = data[self.pm_nobw["demo"].loc[mask, :]]
+            # data["high"][3] = data[self.pm["demo"].loc[mask, :]]
 
             axes[0].boxplot(data["low"], sym=outliers, showmeans=means)
             axes[1].boxplot(data["high"], sym=outliers, showmeans=means)
@@ -1622,7 +1637,11 @@ class Graphics(BaseGraphics):
                 if node.demand_timeseries_list[0].base_value > 0
             ]
 
-            print((self.base["avg_demand"][nodes_w_demand].sum(axis=1) * 3600).iloc[0:23].sum() / 3.875)
+            print(
+                (self.base["avg_demand"][nodes_w_demand].sum(axis=1) * 3600).sum()
+                / 3.875
+                / self.days
+            )
 
             """ Make plots of aggregate demand data """
             demand_base = self.base["avg_demand"][nodes_w_demand]
@@ -1687,9 +1706,7 @@ class Graphics(BaseGraphics):
             counts = node_buildings.value_counts(["wdn_node", "type"]).unstack()
             perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
 
-            perc_counts["type"] = perc_counts.apply(
-                lambda x: x.idxmax(), axis=1
-            )
+            perc_counts["type"] = perc_counts.apply(lambda x: x.idxmax(), axis=1)
             # res_perc_nodes = perc_counts[(perc_counts["mfh"] + perc_counts["res"]) > res_t].index
             # print(self.base["avg_demand"].loc[:, res_perc_nodes])
             print(perc_counts)
@@ -1721,8 +1738,7 @@ class Graphics(BaseGraphics):
 
             fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
             axes[0, 0] = self.plot_demand_by_case(
-                axes[0, 0], self.base["avg_demand"], perc_counts,
-                legend_bool=True
+                axes[0, 0], self.base["avg_demand"], perc_counts, legend_bool=True
             )
             axes[0, 1] = self.plot_demand_by_case(
                 axes[0, 1], self.basebw["avg_demand"], perc_counts
@@ -2486,7 +2502,7 @@ class Graphics(BaseGraphics):
         )
 
         if demographics:
-            ''' Make race cross low-income plot '''
+            """Make race cross low-income plot"""
             data = self.filter_demo("white")
 
             self.make_income_comp_plot(
@@ -2498,7 +2514,7 @@ class Graphics(BaseGraphics):
                 outliers="",
             )
 
-            ''' Make hispanic low-income plot '''
+            """ Make hispanic low-income plot """
             data = self.filter_demo("hispanic")
 
             self.make_income_comp_plot(
@@ -2510,7 +2526,7 @@ class Graphics(BaseGraphics):
                 outliers="",
             )
 
-            ''' Make hispanic low-income plot '''
+            """ Make hispanic low-income plot """
             data = self.filter_demo("renter")
 
             self.make_income_comp_plot(
@@ -2522,8 +2538,8 @@ class Graphics(BaseGraphics):
                 outliers="",
             )
 
-            ''' Plot or export data that shows how much more likely
-            a household is to have unaffordable water based on demographics '''
+            """ Plot or export data that shows how much more likely
+            a household is to have unaffordable water based on demographics """
             # first find the households that exceed threhold and are in
             # demo groups
             race_unaffordable = self.threshold_demo("white")
