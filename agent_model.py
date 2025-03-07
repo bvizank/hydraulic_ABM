@@ -691,7 +691,7 @@ class Household:
         if self.model.skeleton:
             # values for distribution come from Crouch 2021
             # mu=175, sd=75 represents households that do not have irrigation
-            if self.model.random.random() > 0.5:
+            if self.model.random.random() > 0.2:
                 ind_demand = self.model.random.gauss(175, 75)
             else:
                 ind_demand = self.model.random.gauss(227, 94)
