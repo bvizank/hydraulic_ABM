@@ -179,6 +179,7 @@ class Parameters(Model):
         self.bw_cost = dict()
         self.tw_cost = dict()
         self.bw_demand = dict()
+        self.tw_demand = dict()
         self.traditional = dict()
         self.burden = dict()
 
