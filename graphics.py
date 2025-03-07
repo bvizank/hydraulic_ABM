@@ -11,11 +11,11 @@ plots = Graphics(
     days=days,
     inp_file="Input Files/cities/clinton/clinton.inp",
     skeletonized=True,
-    single=False,
+    single=True,
 )
 
 """ Demand plots """
-plots.demand_plots()
+# plots.demand_plots()
 
 """ Flow plots """
 # plots.flow_plots()
@@ -52,7 +52,7 @@ plots.demand_plots()
 # plots.make_seir_plot(days)
 
 """ Make single plots """
-# plots.make_single_plots("2025-03-03_13-08_0_results", 180, True)
+plots.make_single_plots("2025-03-07_15-50_0_results", 180, True)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))

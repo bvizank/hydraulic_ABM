@@ -744,6 +744,7 @@ class ConsumerModel(Parameters):
             if self.verbose == 1:
                 print("Starting demand changes")
             self.change_demands()
+            self.collect_house_demands()
             if self.verbose == 1:
                 print("Done with demand changes")
         # if the timestep is the beginning of a week then we want to run the sim
@@ -799,14 +800,17 @@ class ConsumerModel(Parameters):
             # calculate the cost of tap water
             if not self.warmup and not self.bw:
                 step_tw_cost = list()
+                step_tw_demand = list()
                 # for each house, calculate the demand and cost of tap water
                 for node, building in self.buildings.items():
                     if building.households is not None:
                         for house in building.households:
                             house.calc_tap_cost()
+                            step_tw_demand.append(dcp(house.tap_demand))
                             house.tap_demand = 0
                             step_tw_cost.append(dcp(house.tap_cost))
                 self.tw_cost[self.timestep] = step_tw_cost
+                self.tw_demand[self.timestep] = step_tw_demand
 
     def run_hydraulic(self):
         # Simulate hydraulics
@@ -963,12 +967,22 @@ class ConsumerModel(Parameters):
         self.groc_dec[self.timestep] = step_groc
         self.ppe_dec[self.timestep] = step_ppe
 
+    def collect_house_demands(self):
+        step_bw_demand = list()
+        step_tw_demand = list()
+        for node, building in self.buildings.items():
+            if building.households is not None:
+                for house in building.households:
+                    step_bw_demand.append(dcp(house.bottle_demand))
+                    step_tw_demand.append(dcp(house.tap_demand))
+
+        self.bw_demand[self.timestep] = step_bw_demand
+        self.tw_demand[self.timestep] = step_tw_demand
+
     def collect_household_data(self):
         """Income output containers"""
         step_bw_cost = list()
         step_tw_cost = list()
-        step_bw_demand = list()
-        step_tw_demand = list()
         step_hygiene = list()
         step_drink = list()
         step_cook = list()
@@ -978,8 +992,6 @@ class ConsumerModel(Parameters):
                 for house in building.households:
                     step_bw_cost.append(dcp(house.bottle_cost))
                     step_tw_cost.append(dcp(house.tap_cost))
-                    step_bw_demand.append(dcp(house.bottle_demand))
-                    step_tw_demand.append(dcp(house.tap_demand))
                     hygiene = 1 if "hygiene" in house.bottle else 0
                     drink = 1 if "drink" in house.bottle else 0
                     cook = 1 if "cook" in house.bottle else 0
@@ -989,8 +1001,6 @@ class ConsumerModel(Parameters):
 
         self.bw_cost[self.timestep] = step_bw_cost
         self.tw_cost[self.timestep] = step_tw_cost
-        self.bw_demand[self.timestep] = step_bw_demand
-        self.tw_demand[self.timestep] = step_tw_demand
 
         self.hygiene[self.timestep] = step_hygiene
         self.drink[self.timestep] = step_drink

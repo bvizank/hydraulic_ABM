@@ -2912,6 +2912,7 @@ class Graphics(BaseGraphics):
             "bw_cost",
             "tw_cost",
             "bw_demand",
+            "tw_demand",
             "income",
             "drink",
             "cook",
@@ -2922,6 +2923,9 @@ class Graphics(BaseGraphics):
         print(data["wfh"].sum(axis=1))
         print(data["cov_ff"].sum(axis=1))
         data["tot_cost"] = data["tw_cost"] + data["bw_cost"]
+        data["tot_demand"] = data["tw_demand"] + data["bw_demand"]
+        print(data["tw_demand"].sum(axis=1) / 3.875 / len(data["tw_demand"].columns))
+        print((data["demand"][nodes_w_demand].sum(axis=1) * 3600).sum() / 3.875 / 1000000 / days)
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
         #     if 'TN' in i:

@@ -841,8 +841,7 @@ class Household:
                     self.tap_demand - cons_threshold
                     if self.tap_demand > cons_threshold
                     else 0
-                )
-                * self.cons_rate_water
+                ) * self.cons_rate_water
             )
 
             """
