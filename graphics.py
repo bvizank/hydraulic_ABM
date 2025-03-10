@@ -11,7 +11,7 @@ plots = Graphics(
     days=days,
     inp_file="Input Files/cities/clinton/clinton.inp",
     skeletonized=True,
-    single=True,
+    single=False,
 )
 
 """ Demand plots """
@@ -21,7 +21,7 @@ plots = Graphics(
 # plots.flow_plots()
 
 """ Age plots """
-# plots.age_plots(threshold=True)
+plots.age_plots(threshold=True)
 
 """ Industrial distance plots """
 # plots.ind_dist_plots()
@@ -52,7 +52,7 @@ plots = Graphics(
 # plots.make_seir_plot(days)
 
 """ Make single plots """
-plots.make_single_plots("2025-03-07_15-50_0_results", 180, True)
+# plots.make_single_plots("2025-03-07_15-50_0_results", 180, True)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
