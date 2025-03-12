@@ -300,6 +300,64 @@ class BaseGraphics:
 
         return ax
 
+    def plot_demand_res_nonres(self, ax, data, nodes_w_demand, legend_bool=False):
+        res_data = data["demand"]["tw_demand"].groupby("i").sum()
+        res_data = res_data.iloc[:, -(self.days + 1) :]
+        for i in range(int((len(res_data.columns) - 1) / 30)):
+            if i != 0:
+                res_data.insert((31 * i), str(i), 0)
+        res_data = res_data.iloc[:, ::-1].apply(
+            lambda x: x - x.shift(-1, axis=0), axis=1
+        )
+        for i in range(int((len(res_data.columns) - 1) / 30)):
+            if i != 0:
+                res_data = res_data.drop(str(i), axis=1)
+
+        res_data = res_data.iloc[:, ::-1]
+        # res_data = res_data.iloc[:, -self.days :]
+        res_sd = res_data.std(axis=0).reset_index(drop=True)
+        res_data = res_data.mean(axis=0).reset_index(drop=True)
+        res_sd = res_sd.drop(0).reset_index(drop=True)
+        res_data = res_data.drop(0).reset_index(drop=True)
+
+        nonres_data = (
+            data["avg_demand"][nodes_w_demand].sum(axis=1) * 3600
+        ).reset_index(drop=True)
+        nonres_data = nonres_data.groupby(nonres_data.index // 24).sum()
+        nonres_data = nonres_data - res_data
+
+        print(nonres_data)
+        print(res_data)
+
+        nonres_var = (
+            data["var_demand"][nodes_w_demand].sum(axis=1) * 3600
+        ).reset_index(drop=True)
+        nonres_var = nonres_var.groupby(nonres_var.index // 24).sum()
+        nonres_var = nonres_var - res_data
+
+        nonres_sd = ut.calc_error(nonres_var, self.error)
+
+        all_data = pd.concat(
+            [res_data, nonres_data], axis=1, keys=["Residential", "Non-residential"]
+        )
+
+        all_sd = pd.concat(
+            [res_sd, nonres_sd], axis=1, keys=["Residential", "Non-residential"]
+        )
+
+        # ax = self.make_avg_plot(
+        #     ax=ax,
+        #     data=all_data,
+        #     sd=all_sd,
+        #     cols=["Residential", "Non-residential"],
+        #     x_values=self.x_values_day,
+        # )
+
+        ax = all_data.plot.area(ax=ax, legend=legend_bool)
+        ax.set_xlabel("")
+
+        return ax
+
     def plot_demand_by_case(self, ax, data, perc_counts, legend_bool=False):
         demand_res = data.loc[
             :,
@@ -533,6 +591,10 @@ class BaseGraphics:
         data["income"] = self.get_household(dir + "/hh_results/", ["income"])["income"]
 
         data["demo"] = self.get_household(dir + "/hh_results/", ["demo"])
+
+        data["demand"] = self.get_household(
+            dir + "hh_results/", ["tw_demand", "bw_demand"] if bw else ["tw_demand"]
+        )
 
         # for i in range(30):
         #     curr_income = ut.income_list(
@@ -1712,29 +1774,29 @@ class Graphics(BaseGraphics):
             print(perc_counts)
 
             fig, axes = plt.subplots(3, 2, sharex=True, sharey=True)
-            top_plots = ["res", "mfh"]
-            mid_plots = ["ind", "com"]
-            bot_plots = ["caf", "gro"]
-            for i, type in enumerate(top_plots):
-                axes[0, i] = self.plot_demand_by_node(
-                    axes[0, i], perc_counts[perc_counts["type"] == type].index
-                )
-            for i, type in enumerate(mid_plots):
-                axes[1, i] = self.plot_demand_by_node(
-                    axes[1, i], perc_counts[perc_counts["type"] == type].index
-                )
-            for i, type in enumerate(bot_plots):
-                axes[2, i] = self.plot_demand_by_node(
-                    axes[2, i], perc_counts[perc_counts["type"] == type].index
-                )
+            # top_plots = ["res", "mfh"]
+            # mid_plots = ["ind", "com"]
+            # bot_plots = ["caf", "gro"]
+            # for i, type in enumerate(top_plots):
+            #     axes[0, i] = self.plot_demand_by_node(
+            #         axes[0, i], perc_counts[perc_counts["type"] == type].index
+            #     )
+            # for i, type in enumerate(mid_plots):
+            #     axes[1, i] = self.plot_demand_by_node(
+            #         axes[1, i], perc_counts[perc_counts["type"] == type].index
+            #     )
+            # for i, type in enumerate(bot_plots):
+            #     axes[2, i] = self.plot_demand_by_node(
+            #         axes[2, i], perc_counts[perc_counts["type"] == type].index
+            #     )
 
-            plt.gcf().set_size_inches(3.5, 7)
-            plt.savefig(
-                self.pub_loc + "sum_demand" + "." + self.format,
-                format=self.format,
-                bbox_inches="tight",
-            )
-            plt.close()
+            # plt.gcf().set_size_inches(3.5, 7)
+            # plt.savefig(
+            #     self.pub_loc + "sum_demand" + "." + self.format,
+            #     format=self.format,
+            #     bbox_inches="tight",
+            # )
+            # plt.close()
 
             fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
             axes[0, 0] = self.plot_demand_by_case(
@@ -1771,6 +1833,56 @@ class Graphics(BaseGraphics):
                 bbox_inches="tight",
             )
             plt.close()
+
+            # res_data = self.base["demand"]["tw_demand"].groupby("i").sum()
+            # for i in range(int(len(data.columns) / 30)):
+            #     res_data.insert(30 * i, str(i), 0)
+            # print(res_data)
+            # data = res_data.iloc[:, ::-1].apply(
+            #     lambda x: x - x.shift(-1, axis=0), axis=1
+            # )
+            # for i in range(int(len(res_data.columns) / 30)):
+            #     res_data = res_data.drop(str(i), axis=1)
+            # print(res_data.iloc[:, ::-1].mean(axis=0))
+
+            # nonres_data = self.base["avg_demand"] - res_data
+
+            fig, axes = plt.subplots(2, 2, sharex=True, sharey=True)
+            axes[0, 0] = self.plot_demand_res_nonres(
+                axes[0, 0], self.base, nodes_w_demand, legend_bool=True
+            )
+            axes[0, 1] = self.plot_demand_res_nonres(
+                axes[0, 1], self.basebw, nodes_w_demand
+            )
+            axes[1, 0] = self.plot_demand_res_nonres(
+                axes[1, 0], self.pm_nobw, nodes_w_demand
+            )
+            axes[1, 1] = self.plot_demand_res_nonres(
+                axes[1, 1], self.pm, nodes_w_demand
+            )
+            axes[0, 0].text(
+                0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+            )
+            axes[0, 1].text(
+                0.5, -0.1, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+            )
+            axes[1, 0].text(
+                0.5, -0.2, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+            )
+            axes[1, 1].text(
+                0.5, -0.2, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+            )
+            fig.supxlabel("Time (days)", y=0)
+            fig.supylabel("Demand (L/day)", x=0.04)
+            plt.gcf().set_size_inches(6, 6)
+
+            plt.savefig(
+                self.pub_loc + "sum_demand_res_nonres" + "." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+            )
+            plt.close()
+
             # ax = plt.subplot()
             # ind_perc_nodes = perc_counts[perc_counts["ind"] > res_t].index
             # ax = self.plot_demand_by_node(ax, ind_perc_nodes)
@@ -1926,7 +2038,7 @@ class Graphics(BaseGraphics):
                 show_labels=True,
             )
             plt.savefig(
-                self.pub_loc + "mean_age_aggregate" + "." + self.format,
+                self.pub_loc + "mean_age_aggregate." + self.format,
                 format=self.format,
                 bbox_inches="tight",
             )
@@ -2925,7 +3037,12 @@ class Graphics(BaseGraphics):
         data["tot_cost"] = data["tw_cost"] + data["bw_cost"]
         data["tot_demand"] = data["tw_demand"] + data["bw_demand"]
         print(data["tw_demand"].sum(axis=1) / 3.875 / len(data["tw_demand"].columns))
-        print((data["demand"][nodes_w_demand].sum(axis=1) * 3600).sum() / 3.875 / 1000000 / days)
+        print(
+            (data["demand"][nodes_w_demand].sum(axis=1) * 3600).sum()
+            / 3.875
+            / 1000000
+            / days
+        )
         # print(data['age'].loc[15559200, self.res_nodes].notna().sum())
         # for i, val in data['age'].items():
         #     if 'TN' in i:
