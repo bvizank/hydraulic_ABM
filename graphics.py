@@ -6,7 +6,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 days = 180
 plots = Graphics(
-    publication=True,
+    publication=False,
     error="se",
     days=days,
     inp_file="Input Files/cities/clinton/clinton.inp",
@@ -15,13 +15,13 @@ plots = Graphics(
 )
 
 """ Demand plots """
-# plots.demand_plots()
+plots.demand_plots()
 
 """ Flow plots """
 # plots.flow_plots()
 
 """ Age plots """
-plots.age_plots(threshold=True)
+plots.age_plots(map=True, threshold=True)
 
 """ Industrial distance plots """
 # plots.ind_dist_plots()
@@ -36,11 +36,14 @@ plots.age_plots(threshold=True)
 # plots.make_equity_plots()
 
 """ Cost plots """
-# plots.make_cost_plots()
+plots.make_cost_plots()
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-# plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
+plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
+
+""" Block group map of city """
+plots.make_city_map()
 
 """ Income plots """
 # plots.income_plots()
