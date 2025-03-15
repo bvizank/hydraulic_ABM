@@ -10,18 +10,19 @@ plots = Graphics(
     error="se",
     days=days,
     inp_file="Input Files/cities/clinton/clinton.inp",
+    scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
     skeletonized=True,
     single=False,
 )
 
 """ Demand plots """
-plots.demand_plots()
+# plots.demand_plots()
 
 """ Flow plots """
 # plots.flow_plots()
 
 """ Age plots """
-plots.age_plots(map=True, threshold=True)
+# plots.age_plots(map=True, threshold=True)
 
 """ Industrial distance plots """
 # plots.ind_dist_plots()
@@ -36,20 +37,23 @@ plots.age_plots(map=True, threshold=True)
 # plots.make_equity_plots()
 
 """ Cost plots """
-plots.make_cost_plots()
+# plots.make_cost_plots()
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
+# plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
 
 """ Block group map of city """
-plots.make_city_map()
+# plots.make_city_map()
 
 """ Income plots """
 # plots.income_plots()
 
 """ Tap water avoidance plots """
 # plots.make_twa_plots()
+
+""" Make SA plots """
+plots.sa_plots()
 
 """ SEIR plot """
 # plots.make_seir_plot(days)
