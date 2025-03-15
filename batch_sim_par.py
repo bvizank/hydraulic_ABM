@@ -13,12 +13,12 @@ import warnings
 warnings.filterwarnings("ignore")
 
 # parameters
-bw = False,
-bbn_models = ["all"]
+bw = True,
+bbn_models = []
 dist_income = False,
 twa_process = 'absolute'
-twa_mods = [130, 140, 150]
-output_loc = 'Output Files/30_pm_nobw/'
+twa_mods = [150, 160, 170]
+output_loc = 'Output Files/30_base_20twa/'
 
 # delete all the handlers from the root logger
 logger = logging.getLogger()
