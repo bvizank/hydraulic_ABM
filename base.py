@@ -6,6 +6,7 @@ import pandas as pd
 import geopandas
 from copy import deepcopy as dcp
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 import matplotlib.ticker as mtick
 from matplotlib.colors import ListedColormap
 import matplotlib.lines as mlines
@@ -508,12 +509,12 @@ class BaseGraphics:
 
         return math.sqrt((p2x - p1x) ** 2 + (p2y - p1y) ** 2)
 
-    def calc_age_diff(self, data, nodes_w_demand):
+    def calc_age_diff(self, data, nodes_w_demand, threshold=130):
         out_dict = dict()
         for node, colData in data.items():
             out_data = colData.iloc[-1] / 3600
             if node in nodes_w_demand:
-                out_dict[node] = out_data > 130
+                out_dict[node] = out_data > threshold
 
         return out_dict
 
@@ -614,9 +615,12 @@ class BaseGraphics:
                         curr_data["unique_id"] = curr_data.index.astype(str) + str(j)
                     elif i in ["income"]:
                         curr_data["unique_id"] = curr_data["id"].astype(str) + str(j)
+                        curr_data.index.name = "wdn_node"
+                        curr_data = curr_data.reset_index()
+
+                    curr_data = curr_data.set_index("unique_id")
                     curr_param = pd.concat([curr_param, curr_data])
 
-            curr_param = curr_param.set_index("unique_id")
             output[i] = curr_param
 
         # print(output)
@@ -703,6 +707,7 @@ class BaseGraphics:
                 data["demo"]["demo"].loc[:, "hispanic"],
                 data["demo"]["demo"].loc[:, "renter"],
                 data["income"].loc[:, "i"],
+                data["income"].loc[:, "wdn_node"],
             ],
             axis=1,
             keys=[
@@ -714,31 +719,9 @@ class BaseGraphics:
                 "hispanic",
                 "renter",
                 "i",
+                "wdn_node",
             ],
         )
-        # data["cowpi"] = pd.DataFrame(
-        #     {
-        #         # "level": data["income"].loc[:, "level"].reset_index(drop=True),
-        #         "level": data["income"].loc[:, "level"].reset_index(drop=True),
-        #         "cowpi": (
-        #             data["cost"]["total"].iloc[:, -2].reset_index(drop=True)
-        #             / data["income"].loc[:, "income"].reset_index(drop=True)
-        #             * self.days
-        #             / 365
-        #         ),
-        #         "cost": data["cost"]["total"].iloc[:, -2].reset_index(drop=True),
-        #         "income": data["income"].loc[:, "income"].reset_index(drop=True),
-        #         "white": data["demo"]["demo"].loc[:, "white"].reset_index(drop=True),
-        #         "hispanic": data["demo"]["demo"]
-        #         .loc[:, "hispanic"]
-        #         .reset_index(drop=True),
-        #         "renter": data["demo"]["demo"].loc[:, "renter"].reset_index(drop=True),
-        #         "i": data["income"].loc[:, "i"].reset_index(drop=True),
-        #     },
-        #     index=data["cost"]["total"].index,
-        # )
-
-        # data['cowpi'].loc[data['cowpi']['income'] < extreme_income, 'level'] = 0
 
     def post_household(self):
         """
@@ -1313,6 +1296,11 @@ class BaseGraphics:
         label_bg=False,
         plot_wn=True,
         pipes=False,
+        node_cmap=None,
+        pipe_cmap=None,
+        vmin_inp=None,
+        vmax_inp=None,
+        legend_bool=False,
     ):
         """
         Create a map showing wn nodes and pipes layered on top of the block
@@ -1361,7 +1349,7 @@ class BaseGraphics:
         gdf = gdf[gdf["TRACTCE"].isin(bg)]
 
         gdf = gdf.join(demo)
-        print(gdf)
+        # print(gdf)
 
         if node_data is not None:
             # apply the bg crs to the wn data
@@ -1374,10 +1362,10 @@ class BaseGraphics:
             # wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
             # wn_gis.junctions.insert(0, 'data', node_data)
             # print(wn_gis.junctions)
-            print(node_buildings)
-            print(node_data)
+            # print(node_buildings)
+            # print(node_data)
             node_buildings["data"] = node_data
-            print(node_buildings)
+            # print(node_buildings)
 
             # clip the bg layer to the extent of the wn layer
             # gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
@@ -1406,6 +1394,8 @@ class BaseGraphics:
                     "pad": 0.04,
                     # "fmt": lg_fmt
                 },
+                vmin=vmin_inp,
+                vmax=vmax_inp,
             )
             # if lg_fmt is not None:
             #     cbar = ax.get_figure().get_axes()[-1]
@@ -1413,20 +1403,24 @@ class BaseGraphics:
             #         mticker.FuncFormatter(lg_fmt)
             #     )
         else:
-            print(gdf)
-            ax = gdf.plot(ax=ax, color="white", edgecolor="C2")
+            # print(gdf)
+            ax = gdf.plot(ax=ax, color="white", edgecolor="black", lw=0.4)
 
         # add the junctions and pipes or the buildings
         if node_data is not None:
-            print(node_buildings)
+            # print(node_buildings)
             ax = node_buildings.plot(
                 ax=ax,
                 marker=".",
-                markersize=node_buildings["data"] * 2,
+                markersize=node_buildings["data"] * 2 if node_cmap is None else 3,
                 zorder=3,
                 column="data",
-                # legend=True,
-                cmap=ListedColormap(["white", "darkorange"]),
+                legend=legend_bool,
+                cmap=(
+                    ListedColormap(["white", "red"]) if node_cmap is None else node_cmap
+                ),
+                vmin=0,
+                vmax=vmax_inp,
                 # legend_kwds={"labels": ["<130 hrs", ">130 hrs"]}
             )
         else:
@@ -1434,18 +1428,21 @@ class BaseGraphics:
                 ax = node_buildings.plot(
                     ax=ax,
                     marker=".",
-                    markersize=1.5,
-                    color="C0",
+                    markersize=3,
+                    color="darkorange",
                     zorder=3,
                 )
 
         # add pipes if the wdn nodes are being plotted
         if wn_nodes:
-            print(wn_gis.pipes)
+            # print(wn_gis.pipes)
             ax = wn_gis.pipes.plot(
                 ax=ax,
-                color="black",
+                color="black" if pipe_cmap is None else None,
                 linewidth=wn_gis.pipes["diameter"] * 10 if pipes else 0.3,
+                cmap=pipe_cmap,
+                column="diameter" if pipe_cmap is not None else None,
+                legend=True if pipes else False,
                 # linewidth=0.5,
                 zorder=2,
             )
@@ -2125,7 +2122,9 @@ class Graphics(BaseGraphics):
             # print(len(com_perc_nodes))
             print(perc_counts.groupby("type").size())
 
-    def age_plots(self, sa=False, map=False, threshold=False):
+    def age_plots(
+        self, data=None, name="", thres_n=130, sa=False, map=False, threshold=False
+    ):
         if not self.skeletonized:
             """Make age plot by sector for both base and PM"""
             cols = ["Residential", "Commercial", "Industrial"]
@@ -2204,10 +2203,25 @@ class Graphics(BaseGraphics):
             )
             plt.close()
         else:
-            age_base = self.base["avg_age"]
-            age_basebw = self.basebw["avg_age"]
-            age_pm = self.pm["avg_age"]
-            age_pm_nobw = self.pm_nobw["avg_age"]
+            if data is None:
+                age_base = self.base["avg_age"]
+                age_basebw = self.basebw["avg_age"]
+                age_pm = self.pm["avg_age"]
+                age_pm_nobw = self.pm_nobw["avg_age"]
+                var_base = self.base["var_age"]
+                var_basebw = self.basebw["var_age"]
+                var_pm = self.pm["var_age"]
+                var_pm_nobw = self.pm_nobw["var_age"]
+            else:
+                age_base = data[0]["avg_age"]
+                age_basebw = data[1]["avg_age"]
+                age_pm = data[2]["avg_age"]
+                age_pm_nobw = data[3]["avg_age"]
+                var_base = data[0]["var_age"]
+                var_basebw = data[1]["var_age"]
+                var_pm = data[2]["var_age"]
+                var_pm_nobw = data[3]["var_age"]
+
             age = pd.concat(
                 [
                     age_base.mean(axis=1).rolling(24).mean(),
@@ -2219,10 +2233,6 @@ class Graphics(BaseGraphics):
                 keys=["Base", "TWA", "PM", "TWA+PM"],
             )
 
-            var_base = self.base["var_age"]
-            var_basebw = self.basebw["var_age"]
-            var_pm = self.pm["var_age"]
-            var_pm_nobw = self.pm_nobw["var_age"]
             age_var = pd.concat(
                 [
                     var_base.mean(axis=1).rolling(24).mean(),
@@ -2253,7 +2263,7 @@ class Graphics(BaseGraphics):
                 show_labels=True,
             )
             plt.savefig(
-                self.pub_loc + "mean_age_aggregate." + self.format,
+                self.pub_loc + name + "mean_age_aggregate." + self.format,
                 format=self.format,
                 bbox_inches="tight",
             )
@@ -2305,49 +2315,18 @@ class Graphics(BaseGraphics):
             #                  sd=ut.calc_error(no_wfh['var_age'], error)/3600,
             #                  sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
 
-            pm_age = self.calc_age_diff(self.pm["avg_age"], nodes_w_demand)
-            base_age = self.calc_age_diff(self.base["avg_age"], nodes_w_demand)
+            if data is None:
+                pm_age = self.calc_age_diff(self.pm["avg_age"], nodes_w_demand, thres_n)
+                base_age = self.calc_age_diff(
+                    self.base["avg_age"], nodes_w_demand, thres_n
+                )
+            else:
+                pm_age = self.calc_age_diff(data[2]["avg_age"], nodes_w_demand, thres_n)
+                base_age = self.calc_age_diff(
+                    data[0]["avg_age"], nodes_w_demand, thres_n
+                )
             print(pm_age)
             # basebw_age = self.calc_age_diff(self.basebw["avg_age"])
-
-            fig, axes = plt.subplots(nrows=1, ncols=2)
-            wntr.graphics.plot_network(
-                self.wn,
-                node_attribute=pm_age,
-                node_colorbar_label="Age (hrs)",
-                add_colorbar=False,
-                # node_range=[0, 200],
-                node_size=4,
-                link_width=0.5,
-                ax=axes[1],
-            )
-
-            # wntr.graphics.plot_network(
-            #     self.wn,
-            #     node_attribute=basebw_age,
-            #     node_colorbar_label="Age (hrs)",
-            #     node_range=[0, 450],
-            #     node_size=4,
-            #     link_width=0.3,
-            #     ax=axes[1],
-            # )
-
-            wntr.graphics.plot_network(
-                self.wn,
-                node_attribute=base_age,
-                add_colorbar=True,
-                # node_range=[0, 200],
-                node_size=4,
-                link_width=0.5,
-                ax=axes[0],
-            )
-            plt.gcf().set_size_inches(7, 3.5)
-            plt.savefig(
-                self.pub_loc + "age_network_comp." + self.format,
-                format=self.format,
-                bbox_inches="tight",
-            )
-            plt.close()
 
             """ Plot intersectional map with water age and block group """
             diff_age = dict()
@@ -2356,16 +2335,13 @@ class Graphics(BaseGraphics):
 
             fig, axes = plt.subplots(2, 2)
 
-            def custom_format(x, p):
-                return f"${x:,.0f}"
-
             axes[0, 0] = self.bg_map(
                 axes[0, 0],
                 "median_income",
                 pd.Series(diff_age),
                 wn_nodes=True,
                 label="Median Income",
-                lg_fmt=custom_format,
+                # lg_fmt=custom_format,
             )
             axes[0, 1] = self.bg_map(
                 axes[0, 1],
@@ -2373,6 +2349,7 @@ class Graphics(BaseGraphics):
                 pd.Series(diff_age),
                 wn_nodes=True,
                 label="% Renter",
+                vmin_inp=0,
             )
             axes[1, 0] = self.bg_map(
                 axes[1, 0],
@@ -2380,6 +2357,7 @@ class Graphics(BaseGraphics):
                 pd.Series(diff_age),
                 wn_nodes=True,
                 label="% White",
+                vmin_inp=0,
             )
             axes[1, 1] = self.bg_map(
                 axes[1, 1],
@@ -2387,6 +2365,7 @@ class Graphics(BaseGraphics):
                 pd.Series(diff_age),
                 wn_nodes=True,
                 label="% non-Hispanic",
+                vmin_inp=0,
             )
 
             axes[0, 0].text(
@@ -2404,61 +2383,30 @@ class Graphics(BaseGraphics):
             # fig.supxlabel("Time (days)", y=0)
             # fig.supylabel("Age (hrs)", x=0.04)
             orange_dot = mlines.Line2D(
-                [0], [0], color="darkorange", linewidth=0, marker=".", markersize=10
+                [0], [0], color="red", linewidth=0, marker=".", markersize=10
             )
             plt.gcf().set_size_inches(7, 6)
             fig.legend(
-                handles=[orange_dot], labels=[">130 hours"], loc="outside lower center"
+                handles=[orange_dot],
+                labels=[">" + str(thres_n) + " hours"],
+                loc="outside lower center",
             )
 
             plt.savefig(
-                self.pub_loc + "intersection_age." + self.format,
+                self.pub_loc + name + "intersection_age." + self.format,
                 format=self.format,
                 bbox_inches="tight",
             )
             plt.close()
-            # plt.gcf().set_size_inches(7, 3.5)
-            # plt.savefig(
-            #     self.pub_loc + "income-x-age." + self.format,
-            #     format=self.format, bbox_inches="tight"
-            # )
-            # plt.close()
-
-            # ax = plt.subplot()
-            # self.bg_map(ax, "perc_nh", pd.Series(pm_age), wn_nodes=True)
-            # plt.gcf().set_size_inches(7, 3.5)
-            # plt.savefig(
-            #     self.pub_loc + "perc_nh-x-age." + self.format,
-            #     format=self.format, bbox_inches="tight"
-            # )
-            # plt.close()
-
-            # ax = plt.subplot()
-            # self.bg_map(ax, "perc_w", pd.Series(pm_age), wn_nodes=True)
-            # plt.gcf().set_size_inches(7, 3.5)
-            # plt.savefig(
-            #     self.pub_loc + "perc_w-x-age." + self.format,
-            #     format=self.format, bbox_inches="tight"
-            # )
-            # plt.close()
-
-            # ax = plt.subplot()
-            # self.bg_map(ax, "perc_renter", pd.Series(pm_age), wn_nodes=True)
-            # plt.gcf().set_size_inches(7, 3.5)
-            # plt.savefig(
-            #     self.pub_loc + "perc_renter-x-age." + self.format,
-            #     format=self.format, bbox_inches="tight"
-            # )
-            # plt.close()
 
         if threshold:
-            first30_age = self.pm["avg_age"].head(720).mean() / 3600
+            # first30_age = age_pm.head(720).mean() / 3600
             last30_age = pd.concat(
                 [
-                    self.base["avg_age"].tail(720).mean() / 3600,
-                    self.basebw["avg_age"].tail(720).mean() / 3600,
-                    self.pm_nobw["avg_age"].tail(720).mean() / 3600,
-                    self.pm["avg_age"].tail(720).mean() / 3600,
+                    age_base.tail(720).mean() / 3600,
+                    age_basebw.tail(720).mean() / 3600,
+                    age_pm_nobw.tail(720).mean() / 3600,
+                    age_pm.tail(720).mean() / 3600,
                 ],
                 axis=1,
                 keys=["Base", "TWA", "PM", "TWA+PM"],
@@ -2475,7 +2423,7 @@ class Graphics(BaseGraphics):
             ax.set_ylabel("Water Age (hours)")
 
             plt.savefig(
-                self.pub_loc + "water_age_boxplot." + self.format,
+                self.pub_loc + name + "water_age_boxplot." + self.format,
                 format=self.format,
                 bbox_inches="tight",
             )
@@ -2746,90 +2694,44 @@ class Graphics(BaseGraphics):
         )
         plt.close()
 
-    def make_cost_plots(self):
-        # wntr.graphics.plot_network(
-        #     self.wn,
-        #     node_attribute=self.base["cost"]["total"]
-        #     .iloc[:, -1]
-        #     .groupby(level=0)
-        #     .mean(),
-        #     node_size=5,
-        #     node_colorbar_label="Water Cost ($)",
-        # )
-        # plt.savefig(
-        #     self.pub_loc + "tot_cost_base_map." + self.format,
-        #     format=self.format,
-        #     bbox_inches="tight",
-        # )
-        # plt.close()
-
-        # pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
-        # ax = wntr.graphics.plot_network(
-        #     self.wn,
-        #     node_attribute=pm_tot_cost.iloc[-1, :],
-        #     node_size=5,
-        #     node_range=[0, 15000],
-        #     node_colorbar_label='Water Cost ($)'
-        # )
-        # plt.savefig(self.pub_loc + 'tot_cost_pm_map.' + self.format,
-        #             format=self.format, bbox_inches='tight')
-        # plt.close()
-
-        # base_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
-        # pm_lower_income = self.base['avg_income'].quantile(0.2, axis=1)[0] * self.days / 365
-        # base_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
-        # pm_mean_income = self.base['avg_income'].quantile(0.5, axis=1)[0] * self.days / 365
-
-        # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
-        # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
-
+    def make_cost_plots(self, in_data=None, name="", map=False):
         """Make total cost plots showing tap, bottle, and total cost"""
-        # exclude = ['TN460', 'TN459', 'TN458']
-        # print(
-        #     self.basebw['cost']['bw_cost'].loc[
-        #         [r for r in self.basebw['cost']['bw_cost'].index if r not in exclude],
-        #         :
-        #     ].std(axis=0)
-        # )
-        # print(self.pm['cost']['bw_cost'].mean(axis=0))
-        # print(self.basebw['cost']['tw_cost'].mean(axis=0))
-        # print(self.pm['cost']['tw_cost'].mean(axis=0))
-        # print(self.basebw['cost']['total'].mean(axis=0))
-        # print(self.pm['cost']['total'].mean(axis=0))
+        if in_data is None:
+            cost_base = self.base
+            cost_basebw = self.basebw
+            cost_pm = self.pm
+            cost_pm_nobw = self.pm_nobw
+        else:
+            cost_base = in_data[0]
+            cost_basebw = in_data[1]
+            cost_pm_nobw = in_data[2]
+            cost_pm = in_data[3]
 
-        # plt.boxplot(self.base["cost"]["total"].groupby(level=0).mean())
-        # plt.savefig(
-        #     self.pub_loc + "cost_box." + self.format,
-        #     format=self.format,
-        #     bbox_inches="tight",
-        # )
-        # plt.close()
-
-        print(self.basebw["cost"]["bw_cost"].iloc[:, :-2].mean(axis=0))
+        print(cost_basebw["cost"]["bw_cost"].iloc[:, :-2].mean(axis=0))
 
         cost_li = [
-            self.basebw["cost"]["bw_cost"][(self.basebw["cowpi"]["level"] == 0)].iloc[
+            cost_basebw["cost"]["bw_cost"][(cost_basebw["cowpi"]["level"] == 0)].iloc[
                 :, -2
             ],
-            self.pm["cost"]["bw_cost"][(self.pm["cowpi"]["level"] == 0)].iloc[:, -2],
+            cost_pm["cost"]["bw_cost"][(cost_pm["cowpi"]["level"] == 0)].iloc[:, -2],
         ]
         cost_hi = [
-            self.basebw["cost"]["bw_cost"][(self.basebw["cowpi"]["level"] == 1)].iloc[
+            cost_basebw["cost"]["bw_cost"][(cost_basebw["cowpi"]["level"] == 1)].iloc[
                 :, -2
             ],
-            self.pm["cost"]["bw_cost"][(self.pm["cowpi"]["level"] == 1)].iloc[:, -2],
+            cost_pm["cost"]["bw_cost"][(cost_pm["cowpi"]["level"] == 1)].iloc[:, -2],
         ]
 
         data_cost = pd.concat(
             [
-                self.basebw["cost"]["bw_cost"][
-                    (self.basebw["cowpi"]["level"] == 0)
+                cost_basebw["cost"]["bw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 0)
                 ].mean(),
-                self.pm["cost"]["bw_cost"][(self.pm["cowpi"]["level"] == 0)].mean(),
-                self.basebw["cost"]["bw_cost"][
-                    (self.basebw["cowpi"]["level"] == 1)
+                cost_pm["cost"]["bw_cost"][(cost_pm["cowpi"]["level"] == 0)].mean(),
+                cost_basebw["cost"]["bw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 1)
                 ].mean(),
-                self.pm["cost"]["bw_cost"][(self.pm["cowpi"]["level"] == 1)].mean(),
+                cost_pm["cost"]["bw_cost"][(cost_pm["cowpi"]["level"] == 1)].mean(),
             ],
             axis=1,
             keys=[
@@ -2841,14 +2743,88 @@ class Graphics(BaseGraphics):
         )
         var_cost = pd.concat(
             [
-                self.basebw["cost"]["bw_cost"][
-                    (self.basebw["cowpi"]["level"] == 0)
+                cost_basebw["cost"]["bw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 0)
                 ].var(),
-                self.pm["cost"]["bw_cost"][(self.pm["cowpi"]["level"] == 0)].var(),
-                self.basebw["cost"]["bw_cost"][
-                    (self.basebw["cowpi"]["level"] == 1)
+                cost_pm["cost"]["bw_cost"][(cost_pm["cowpi"]["level"] == 0)].var(),
+                cost_basebw["cost"]["bw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 1)
                 ].var(),
-                self.pm["cost"]["bw_cost"][(self.pm["cowpi"]["level"] == 1)].var(),
+                cost_pm["cost"]["bw_cost"][(cost_pm["cowpi"]["level"] == 1)].var(),
+            ],
+            axis=1,
+            keys=[
+                "Low-income TWA",
+                "Low-income TWA+PM",
+                "High-income TWA",
+                "High-income TWA+PM",
+            ],
+        )
+
+        print(data_cost)
+        data_cost = data_cost.drop("i", axis=0)
+        data_cost.index = data_cost.index.astype("int64")
+        var_cost = var_cost.drop("i", axis=0)
+
+        err_cost = ut.calc_error(var_cost, self.error)
+
+        print(data_cost)
+        print(data_cost.index / 24)
+        print(err_cost)
+
+        ax = plt.subplot()
+        self.make_avg_plot(
+            ax=ax,
+            data=data_cost,
+            sd=err_cost,
+            cols=[
+                "Low-income TWA",
+                "Low-income TWA+PM",
+                "High-income TWA",
+                "High-income TWA+PM",
+            ],
+            x_values=(data_cost.index / 24) - 30,
+            ylabel="Cost ($)",
+            xlabel="Time (days)",
+            show_labels=True,
+        )
+
+        plt.savefig(
+            self.pub_loc + name + "bw_cost_income." + self.format,
+            format=self.format,
+            bbox_inches="tight",
+        )
+        plt.close()
+
+        data_cost = pd.concat(
+            [
+                cost_basebw["cost"]["tw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 0)
+                ].mean(),
+                cost_pm["cost"]["tw_cost"][(cost_pm["cowpi"]["level"] == 0)].mean(),
+                cost_basebw["cost"]["tw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 1)
+                ].mean(),
+                cost_pm["cost"]["tw_cost"][(cost_pm["cowpi"]["level"] == 1)].mean(),
+            ],
+            axis=1,
+            keys=[
+                "Low-income TWA",
+                "Low-income TWA+PM",
+                "High-income TWA",
+                "High-income TWA+PM",
+            ],
+        )
+        var_cost = pd.concat(
+            [
+                cost_basebw["cost"]["tw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 0)
+                ].var(),
+                cost_pm["cost"]["tw_cost"][(cost_pm["cowpi"]["level"] == 0)].var(),
+                cost_basebw["cost"]["tw_cost"][
+                    (cost_basebw["cowpi"]["level"] == 1)
+                ].var(),
+                cost_pm["cost"]["tw_cost"][(cost_pm["cowpi"]["level"] == 1)].var(),
             ],
             axis=1,
             keys=[
@@ -2887,7 +2863,7 @@ class Graphics(BaseGraphics):
         )
 
         plt.savefig(
-            self.pub_loc + "bw_cost_income." + self.format,
+            self.pub_loc + name + "tw_cost_income." + self.format,
             format=self.format,
             bbox_inches="tight",
         )
@@ -2895,14 +2871,14 @@ class Graphics(BaseGraphics):
 
         data_cost = pd.concat(
             [
-                self.basebw["cost"]["tw_cost"][
-                    (self.basebw["cowpi"]["level"] == 0)
+                cost_basebw["cost"]["total"][
+                    (cost_basebw["cowpi"]["level"] == 0)
                 ].mean(),
-                self.pm["cost"]["tw_cost"][(self.pm["cowpi"]["level"] == 0)].mean(),
-                self.basebw["cost"]["tw_cost"][
-                    (self.basebw["cowpi"]["level"] == 1)
+                cost_pm["cost"]["total"][(cost_pm["cowpi"]["level"] == 0)].mean(),
+                cost_basebw["cost"]["total"][
+                    (cost_basebw["cowpi"]["level"] == 1)
                 ].mean(),
-                self.pm["cost"]["tw_cost"][(self.pm["cowpi"]["level"] == 1)].mean(),
+                cost_pm["cost"]["total"][(cost_pm["cowpi"]["level"] == 1)].mean(),
             ],
             axis=1,
             keys=[
@@ -2914,14 +2890,14 @@ class Graphics(BaseGraphics):
         )
         var_cost = pd.concat(
             [
-                self.basebw["cost"]["tw_cost"][
-                    (self.basebw["cowpi"]["level"] == 0)
+                cost_basebw["cost"]["total"][
+                    (cost_basebw["cowpi"]["level"] == 0)
                 ].var(),
-                self.pm["cost"]["tw_cost"][(self.pm["cowpi"]["level"] == 0)].var(),
-                self.basebw["cost"]["tw_cost"][
-                    (self.basebw["cowpi"]["level"] == 1)
+                cost_pm["cost"]["total"][(cost_pm["cowpi"]["level"] == 0)].var(),
+                cost_basebw["cost"]["total"][
+                    (cost_basebw["cowpi"]["level"] == 1)
                 ].var(),
-                self.pm["cost"]["tw_cost"][(self.pm["cowpi"]["level"] == 1)].var(),
+                cost_pm["cost"]["total"][(cost_pm["cowpi"]["level"] == 1)].var(),
             ],
             axis=1,
             keys=[
@@ -2938,9 +2914,10 @@ class Graphics(BaseGraphics):
 
         err_cost = ut.calc_error(var_cost, self.error)
 
-        print(data_cost)
-        print(data_cost.index / 24)
-        print(err_cost)
+        # print(data_cost)
+        # print(self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0]["cost"].mean())
+        # print(self.basebw["cowpi"]["level"])
+        # print(err_cost)
 
         ax = plt.subplot()
         self.make_avg_plot(
@@ -2960,81 +2937,7 @@ class Graphics(BaseGraphics):
         )
 
         plt.savefig(
-            self.pub_loc + "tw_cost_income." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
-
-        data_cost = pd.concat(
-            [
-                self.basebw["cost"]["total"][
-                    (self.basebw["cowpi"]["level"] == 0)
-                ].mean(),
-                self.pm["cost"]["total"][(self.pm["cowpi"]["level"] == 0)].mean(),
-                self.basebw["cost"]["total"][
-                    (self.basebw["cowpi"]["level"] == 1)
-                ].mean(),
-                self.pm["cost"]["total"][(self.pm["cowpi"]["level"] == 1)].mean(),
-            ],
-            axis=1,
-            keys=[
-                "Low-income TWA",
-                "Low-income TWA+PM",
-                "High-income TWA",
-                "High-income TWA+PM",
-            ],
-        )
-        var_cost = pd.concat(
-            [
-                self.basebw["cost"]["total"][
-                    (self.basebw["cowpi"]["level"] == 0)
-                ].var(),
-                self.pm["cost"]["total"][(self.pm["cowpi"]["level"] == 0)].var(),
-                self.basebw["cost"]["total"][
-                    (self.basebw["cowpi"]["level"] == 1)
-                ].var(),
-                self.pm["cost"]["total"][(self.pm["cowpi"]["level"] == 1)].var(),
-            ],
-            axis=1,
-            keys=[
-                "Low-income TWA",
-                "Low-income TWA+PM",
-                "High-income TWA",
-                "High-income TWA+PM",
-            ],
-        )
-
-        data_cost = data_cost.drop("i", axis=0)
-        data_cost.index = data_cost.index.astype("int64")
-        var_cost = var_cost.drop("i", axis=0)
-
-        err_cost = ut.calc_error(var_cost, self.error)
-
-        print(data_cost)
-        print(self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0]["cost"].mean())
-        print(self.basebw["cowpi"]["level"])
-        print(err_cost)
-
-        ax = plt.subplot()
-        self.make_avg_plot(
-            ax=ax,
-            data=data_cost,
-            sd=err_cost,
-            cols=[
-                "Low-income TWA",
-                "Low-income TWA+PM",
-                "High-income TWA",
-                "High-income TWA+PM",
-            ],
-            x_values=(data_cost.index / 24) - 30,
-            ylabel="Cost ($)",
-            xlabel="Time (days)",
-            show_labels=True,
-        )
-
-        plt.savefig(
-            self.pub_loc + "total_cost_income." + self.format,
+            self.pub_loc + name + "total_cost_income." + self.format,
             format=self.format,
             bbox_inches="tight",
         )
@@ -3085,45 +2988,22 @@ class Graphics(BaseGraphics):
 
         """ Make income based cost plots """
         cost_low = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cost"],
-            self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0]["cost"],
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cost"],
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cost"],
+            cost_base["cowpi"][cost_base["cowpi"]["level"] == 0]["cost"],
+            cost_basebw["cowpi"][cost_basebw["cowpi"]["level"] == 0]["cost"],
+            cost_pm_nobw["cowpi"][cost_pm_nobw["cowpi"]["level"] == 0]["cost"],
+            cost_pm["cowpi"][cost_pm["cowpi"]["level"] == 0]["cost"],
         ]
 
         cost_high = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cost"],
-            self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 1]["cost"],
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cost"],
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cost"],
+            cost_base["cowpi"][cost_base["cowpi"]["level"] == 1]["cost"],
+            cost_basebw["cowpi"][cost_basebw["cowpi"]["level"] == 1]["cost"],
+            cost_pm_nobw["cowpi"][cost_pm_nobw["cowpi"]["level"] == 1]["cost"],
+            cost_pm["cowpi"][cost_pm["cowpi"]["level"] == 1]["cost"],
         ]
 
-        # cost_med = [
-        #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cost'],
-        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cost'],
-        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cost'],
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cost']
-        # ]
-
-        # cost_high = [
-        #     self.base['cowpi'][self.base['cowpi']['level'] == 3]['cost'],
-        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cost'],
-        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cost'],
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cost']
-        # ]
-
-        # data = {
-        #     'low': cost_low,
-        #     'med': cost_med,
-        #     'high': cost_high
-        # }
-        data = {"low": cost_low, "high": cost_high}
-
-        # print(data)
-
         self.make_income_comp_plot(
-            [data["low"], data["high"]],
-            "cost_boxplot",
+            [cost_low, cost_high],
+            name + "cost_boxplot",
             ["Base", "TWA", "PM", "TWA+PM"],
             ylabel="Cost ($)",
             box=1,
@@ -3136,8 +3016,8 @@ class Graphics(BaseGraphics):
         """ Make demographic cost plots """
         fix, axes = plt.subplots(3, 1)
 
-        cost_low_race = self.filter_demo(0, "white", "cost")
-        cost_high_race = self.filter_demo(1, "white", "cost")
+        cost_low_race = self.filter_demo(0, "white", "cost", data=in_data)
+        cost_high_race = self.filter_demo(1, "white", "cost", data=in_data)
 
         axes[0] = self.make_income_comp_plot(
             [
@@ -3146,7 +3026,7 @@ class Graphics(BaseGraphics):
                 cost_high_race["white"],
                 cost_high_race["nonwhite"],
             ],
-            "cost_boxplot_race",
+            name + "cost_boxplot_race",
             ["Base", "TWA", "PM", "TWA+PM"],
             ylabel="Cost ($)",
             box=1,
@@ -3166,8 +3046,8 @@ class Graphics(BaseGraphics):
         )
 
         # hispanic cost boxplot
-        cost_low_hispanic = self.filter_demo(0, "hispanic", "cost")
-        cost_high_hispanic = self.filter_demo(1, "hispanic", "cost")
+        cost_low_hispanic = self.filter_demo(0, "hispanic", "cost", data=in_data)
+        cost_high_hispanic = self.filter_demo(1, "hispanic", "cost", data=in_data)
 
         axes[1] = self.make_income_comp_plot(
             [
@@ -3176,7 +3056,7 @@ class Graphics(BaseGraphics):
                 cost_high_hispanic["hispanic"],
                 cost_high_hispanic["nonhispanic"],
             ],
-            "cost_boxplot_hispanic",
+            name + "cost_boxplot_hispanic",
             ["Base", "TWA", "PM", "TWA+PM"],
             ylabel="Cost ($)",
             box=1,
@@ -3196,8 +3076,8 @@ class Graphics(BaseGraphics):
         )
 
         # renter cost boxplot
-        cost_low_renter = self.filter_demo(0, "renter", "cost")
-        cost_high_renter = self.filter_demo(1, "renter", "cost")
+        cost_low_renter = self.filter_demo(0, "renter", "cost", data=in_data)
+        cost_high_renter = self.filter_demo(1, "renter", "cost", data=in_data)
 
         axes[2] = self.make_income_comp_plot(
             [
@@ -3206,7 +3086,7 @@ class Graphics(BaseGraphics):
                 cost_high_renter["renter"],
                 cost_high_renter["nonrenter"],
             ],
-            "cost_boxplot_renter",
+            name + "cost_boxplot_renter",
             ["Base", "TWA", "PM", "TWA+PM"],
             ylabel="Cost ($)",
             box=1,
@@ -3238,36 +3118,87 @@ class Graphics(BaseGraphics):
         plt.gcf().set_size_inches(7, 8)
 
         plt.savefig(
-            self.pub_loc + "cost_demo_boxplots." + self.format,
+            self.pub_loc + name + "cost_demo_boxplots." + self.format,
             format=self.format,
             bbox_inches="tight",
         )
         plt.close()
 
-    def cowpi_boxplot(self, demographics=False, di=False, perc=False, sa=False):
+        if map:
+            fig, axes = plt.subplots(1, 2)
+            axes[0] = self.bg_map(
+                ax=axes[0],
+                node_data=cost_basebw["cowpi"][["cost", "wdn_node"]]
+                .groupby("wdn_node")
+                .mean(),
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=700,
+            )
+            axes[1] = self.bg_map(
+                ax=axes[1],
+                node_data=cost_pm["cowpi"][["cost", "wdn_node"]]
+                .groupby("wdn_node")
+                .mean(),
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=700,
+            )
+
+            plt.gcf().set_size_inches(7, 3.5)
+
+            fig.subplots_adjust(bottom=0.1)
+            cbar_ax = fig.add_axes(rect=(0.1, 0.1, 0.8, 0.05))
+
+            norm = mpl.colors.Normalize(vmin=0, vmax=700)
+            fig.colorbar(
+                mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
+                cax=cbar_ax,
+                orientation="horizontal",
+                label="Cost ($)",
+            )
+            plt.savefig(
+                self.pub_loc + name + "cost_network." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+            )
+
+    def cowpi_boxplot(
+        self, in_data=None, name="", demographics=False, di=False, perc=False, sa=False
+    ):
+        if in_data is None:
+            base_data = self.base
+            basebw_data = self.basebw
+            pm_nobw_data = self.pm_nobw
+            pm_data = self.pm
+        else:
+            base_data = in_data[0]
+            basebw_data = in_data[1]
+            pm_nobw_data = in_data[2]
+            pm_data = in_data[3]
+
         """Make cowpi boxplots"""
         cowpi_bot20 = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cowpi"] * 100,
+            base_data["cowpi"][base_data["cowpi"]["level"] == 0]["cowpi"] * 100,
+            basebw_data["cowpi"][basebw_data["cowpi"]["level"] == 0]["cowpi"] * 100,
+            pm_nobw_data["cowpi"][pm_nobw_data["cowpi"]["level"] == 0]["cowpi"] * 100,
+            pm_data["cowpi"][pm_data["cowpi"]["level"] == 0]["cowpi"] * 100,
         ]
 
         cowpi_top80 = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.basebw["cowpi"][self.basebw["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cowpi"] * 100,
+            base_data["cowpi"][base_data["cowpi"]["level"] == 1]["cowpi"] * 100,
+            basebw_data["cowpi"][basebw_data["cowpi"]["level"] == 1]["cowpi"] * 100,
+            pm_nobw_data["cowpi"][pm_nobw_data["cowpi"]["level"] == 1]["cowpi"] * 100,
+            pm_data["cowpi"][pm_data["cowpi"]["level"] == 1]["cowpi"] * 100,
         ]
 
-        data = {
-            "low": cowpi_bot20,
-            "high": cowpi_top80,
-        }
+        """ Print some stats about low-income households """
+        for i in cowpi_bot20:
+            print((i > 4.6).sum() / (i > 0).sum())
 
-        print("%HI median values:")
-        print([a.median() for a in data["low"]])
-        print([a.median() for a in data["high"]])
+        # print("%HI median values:")
+        # print([a.median() for a in data["low"]])
+        # print([a.median() for a in data["high"]])
 
         # self.make_income_comp_plot(
         #     data,
@@ -3278,8 +3209,8 @@ class Graphics(BaseGraphics):
         # )
 
         self.make_income_comp_plot(
-            [data["low"], data["high"]],
-            "cow_boxplot_income",
+            [cowpi_bot20, cowpi_top80],
+            name + "cow_boxplot_income",
             ["Base", "TWA", "PM", "TWA+PM"],
             # ['Base', 'Base+BW', 'SD+BW'],
             ylabel="%HI",
@@ -3294,8 +3225,8 @@ class Graphics(BaseGraphics):
             fix, axes = plt.subplots(3, 1)
 
             """Make race cross low-income plot"""
-            low_race = self.filter_demo(0, "white", "cowpi", 100)
-            high_race = self.filter_demo(1, "white", "cowpi", 100)
+            low_race = self.filter_demo(0, "white", "cowpi", 100, data=in_data)
+            high_race = self.filter_demo(1, "white", "cowpi", 100, data=in_data)
 
             print("Race %HI median values:")
             print([a.median() for a in low_race["white"]])
@@ -3329,8 +3260,8 @@ class Graphics(BaseGraphics):
             )
 
             """ Make hispanic low-income plot """
-            low_hispanic = self.filter_demo(0, "hispanic", "cowpi", 100)
-            high_hispanic = self.filter_demo(1, "hispanic", "cowpi", 100)
+            low_hispanic = self.filter_demo(0, "hispanic", "cowpi", 100, data=in_data)
+            high_hispanic = self.filter_demo(1, "hispanic", "cowpi", 100, data=in_data)
 
             print("Hispanic %HI median values:")
             print([a.median() for a in low_hispanic["hispanic"]])
@@ -3364,8 +3295,8 @@ class Graphics(BaseGraphics):
             )
 
             """ Make hispanic low-income plot """
-            low_renter = self.filter_demo(0, "renter", "cowpi", 100)
-            high_renter = self.filter_demo(1, "renter", "cowpi", 100)
+            low_renter = self.filter_demo(0, "renter", "cowpi", 100, data=in_data)
+            high_renter = self.filter_demo(1, "renter", "cowpi", 100, data=in_data)
 
             print("Renter %HI median values:")
             print([a.median() for a in low_renter["renter"]])
@@ -3410,7 +3341,7 @@ class Graphics(BaseGraphics):
             plt.gcf().set_size_inches(7, 8)
 
             plt.savefig(
-                self.pub_loc + "cow_demo_boxplots." + self.format,
+                self.pub_loc + name + "cow_demo_boxplots." + self.format,
                 format=self.format,
                 bbox_inches="tight",
             )
@@ -3420,24 +3351,24 @@ class Graphics(BaseGraphics):
             a household is to have unaffordable water based on demographics """
             # first find the households that exceed threhold and are in
             # demo groups
-            race_unaffordable = self.threshold_demo("white")
-            race_all = self.threshold_demo("white", threshold=0)
+            # race_unaffordable = self.threshold_demo("white")
+            # race_all = self.threshold_demo("white", threshold=0)
 
-            white_unaffordable = np.array([len(d) for d in race_unaffordable["low"]])
-            white_all = np.array([len(d) for d in race_all["low"]])
-            hoc_unaffordable = np.array([len(d) for d in race_unaffordable["high"]])
-            hoc_all = np.array([len(d) for d in race_all["high"]])
-            # hoc = [d.mean() for d in data["high"]]
-            print(white_unaffordable)
-            print(white_all)
-            print(hoc_unaffordable)
-            print(hoc_all)
+            # white_unaffordable = np.array([len(d) for d in race_unaffordable["low"]])
+            # white_all = np.array([len(d) for d in race_all["low"]])
+            # hoc_unaffordable = np.array([len(d) for d in race_unaffordable["high"]])
+            # hoc_all = np.array([len(d) for d in race_all["high"]])
+            # # hoc = [d.mean() for d in data["high"]]
+            # print(white_unaffordable)
+            # print(white_all)
+            # print(hoc_unaffordable)
+            # print(hoc_all)
 
-            rr = self.calc_risk(
-                hoc_unaffordable, hoc_all, white_unaffordable, white_all
-            )
+            # rr = self.calc_risk(
+            #     hoc_unaffordable, hoc_all, white_unaffordable, white_all
+            # )
 
-            print(rr)
+            # print(rr)
 
             # fig, axes = plt.subplots(2, 2)
 
@@ -3612,10 +3543,65 @@ class Graphics(BaseGraphics):
 
         """ Plot the block groups with the wdn """
         ax = plt.subplot()
-        ax = self.bg_map(ax, wn_nodes=True, pipes=True)
+        ax = self.bg_map(ax, wn_nodes=True, pipes=True, pipe_cmap="viridis")
         plt.gcf().set_size_inches(4, 4)
         plt.savefig(
             self.pub_loc + "clinton-wdn." + self.format,
+            format=self.format,
+            bbox_inches="tight",
+        )
+        plt.close()
+
+        """ Plot intersection with demographics """
+        fig, axes = plt.subplots(2, 2)
+
+        axes[0, 0] = self.bg_map(
+            ax=axes[0, 0],
+            display_demo="median_income",
+            wn_nodes=True,
+            label="Median Income",
+            # lg_fmt=custom_format,
+        )
+        axes[0, 1] = self.bg_map(
+            ax=axes[0, 1],
+            display_demo="perc_renter",
+            wn_nodes=True,
+            label="% Renter",
+            vmin_inp=0,
+        )
+        axes[1, 0] = self.bg_map(
+            ax=axes[1, 0],
+            display_demo="perc_w",
+            wn_nodes=True,
+            label="% White",
+            vmin_inp=0,
+        )
+        axes[1, 1] = self.bg_map(
+            ax=axes[1, 1],
+            display_demo="perc_nh",
+            wn_nodes=True,
+            label="% non-Hispanic",
+            vmin_inp=0,
+        )
+
+        axes[0, 0].text(
+            0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+        )
+        axes[0, 1].text(
+            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+        )
+        axes[1, 0].text(
+            0.5, -0.14, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+        )
+        axes[1, 1].text(
+            0.5, -0.14, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+        )
+        # fig.supxlabel("Time (days)", y=0)
+        # fig.supylabel("Age (hrs)", x=0.04)
+        plt.gcf().set_size_inches(7, 6)
+
+        plt.savefig(
+            self.pub_loc + "clinton-intersection." + self.format,
             format=self.format,
             bbox_inches="tight",
         )
@@ -3779,748 +3765,71 @@ class Graphics(BaseGraphics):
         )
         plt.close()
 
-    def sa_plots(self):
-        pm_20_age = self.calc_age_diff(self.pm_20["avg_age"], nodes_w_demand)
-        pm_neg20_age = self.calc_age_diff(self.pm_neg20["avg_age"], nodes_w_demand)
-        base_age = self.calc_age_diff(self.base["avg_age"], nodes_w_demand)
-
-        """ Plot intersectional map with water age and block group """
-        diff_20_age = dict()
-        diff_neg20_age = dict()
-        for k, v in base_age.items():
-            diff_20_age[k] = pm_20_age[k] > v
-            diff_neg20_age[k] = pm_neg20_age[k] > v
-
-        fig, axes = plt.subplots(2, 2)
-
-        def custom_format(x, p):
-            return f"${x:,.0f}"
-
-        axes[0, 0] = self.bg_map(
-            axes[0, 0],
-            "median_income",
-            pd.Series(diff_20_age),
-            wn_nodes=True,
-            label="Median Income",
-            # lg_fmt=custom_format,
-        )
-        axes[0, 1] = self.bg_map(
-            axes[0, 1],
-            "perc_renter",
-            pd.Series(diff_20_age),
-            wn_nodes=True,
-            label="% Renter",
-        )
-        axes[1, 0] = self.bg_map(
-            axes[1, 0], "perc_w", pd.Series(diff_20_age), wn_nodes=True, label="% White"
-        )
-        axes[1, 1] = self.bg_map(
-            axes[1, 1],
-            "perc_nh",
-            pd.Series(diff_20_age),
-            wn_nodes=True,
-            label="% non-Hispanic",
-        )
-
-        axes[0, 0].text(
-            0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
-        )
-        axes[0, 1].text(
-            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
-        )
-        axes[1, 0].text(
-            0.5, -0.14, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
-        )
-        axes[1, 1].text(
-            0.5, -0.14, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
-        )
-        # fig.supxlabel("Time (days)", y=0)
-        # fig.supylabel("Age (hrs)", x=0.04)
-        orange_dot = mlines.Line2D(
-            [0], [0], color="darkorange", linewidth=0, marker=".", markersize=10
-        )
-        plt.gcf().set_size_inches(7, 6)
-        fig.legend(
-            handles=[orange_dot], labels=[">130 hours"], loc="outside lower center"
-        )
-
-        plt.savefig(
-            self.pub_loc + "sa20_intersection_age." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
-        fig, axes = plt.subplots(2, 2)
-
-        def custom_format(x, p):
-            return f"${x:,.0f}"
-
-        axes[0, 0] = self.bg_map(
-            axes[0, 0],
-            "median_income",
-            pd.Series(diff_neg20_age),
-            wn_nodes=True,
-            label="Median Income",
-            # lg_fmt=custom_format,
-        )
-        axes[0, 1] = self.bg_map(
-            axes[0, 1],
-            "perc_renter",
-            pd.Series(diff_neg20_age),
-            wn_nodes=True,
-            label="% Renter",
-        )
-        axes[1, 0] = self.bg_map(
-            axes[1, 0],
-            "perc_w",
-            pd.Series(diff_neg20_age),
-            wn_nodes=True,
-            label="% White",
-        )
-        axes[1, 1] = self.bg_map(
-            axes[1, 1],
-            "perc_nh",
-            pd.Series(diff_neg20_age),
-            wn_nodes=True,
-            label="% non-Hispanic",
-        )
-
-        axes[0, 0].text(
-            0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
-        )
-        axes[0, 1].text(
-            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
-        )
-        axes[1, 0].text(
-            0.5, -0.14, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
-        )
-        axes[1, 1].text(
-            0.5, -0.14, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
-        )
-        # fig.supxlabel("Time (days)", y=0)
-        # fig.supylabel("Age (hrs)", x=0.04)
-        orange_dot = mlines.Line2D(
-            [0], [0], color="darkorange", linewidth=0, marker=".", markersize=10
-        )
-        plt.gcf().set_size_inches(7, 6)
-        fig.legend(
-            handles=[orange_dot], labels=[">130 hours"], loc="outside lower center"
-        )
-
-        plt.savefig(
-            self.pub_loc + "sa-20_intersection_age." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
-
-        """ Make income based cost plots """
-        cost_low = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cost"],
-            self.basebw_neg20["cowpi"][self.basebw_neg20["cowpi"]["level"] == 0][
-                "cost"
-            ],
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cost"],
-            self.pm_neg20["cowpi"][self.pm_neg20["cowpi"]["level"] == 0]["cost"],
+    def sa_plots(self, age=True, cost=True, cowpi=True, map=True):
+        nodes_w_demand = [
+            name
+            for name, node in self.wn.junctions()
+            if node.demand_timeseries_list[0].base_value > 0
         ]
 
-        cost_high = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cost"],
-            self.basebw_neg20["cowpi"][self.basebw_neg20["cowpi"]["level"] == 1][
-                "cost"
-            ],
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cost"],
-            self.pm_neg20["cowpi"][self.pm_neg20["cowpi"]["level"] == 1]["cost"],
-        ]
-        data = {"low": cost_low, "high": cost_high}
+        if age:
+            self.age_plots(
+                data=[self.base, self.basebw_neg20, self.pm_neg20, self.pm_nobw],
+                name="sa-20_",
+                thres_n=110,
+                map=True,
+                threshold=True,
+            )
+            self.age_plots(
+                [self.base, self.basebw_20, self.pm_20, self.pm_nobw],
+                name="sa20_",
+                thres_n=150,
+                map=True,
+                threshold=True,
+            )
 
-        self.make_income_comp_plot(
-            [data["low"], data["high"]],
-            "sa-20_cost_boxplot",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=True,
-            income_line=None,
-            outliers="",
-            legend_kwds={"labels": ["Low-income", "High-income"], "loc": "upper left"},
-        )
+        if cost:
+            self.make_cost_plots(
+                in_data=[self.base, self.basebw_neg20, self.pm_nobw, self.pm_neg20],
+                name="sa-20",
+            )
+            self.make_cost_plots(
+                in_data=[self.base, self.basebw_20, self.pm_nobw, self.pm_20],
+                name="sa20",
+            )
 
-        # plot increased TWA threshold data
-        cost_low = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cost"],
-            self.basebw_20["cowpi"][self.basebw_20["cowpi"]["level"] == 0]["cost"],
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cost"],
-            self.pm_20["cowpi"][self.pm_20["cowpi"]["level"] == 0]["cost"],
-        ]
+        if cowpi:
+            self.cowpi_boxplot(
+                in_data=[self.base, self.basebw_neg20, self.pm_nobw, self.pm_neg20],
+                name="sa-20",
+                demographics=True,
+            )
+            self.cowpi_boxplot(
+                in_data=[self.base, self.basebw_20, self.pm_nobw, self.pm_20],
+                name="sa20",
+                demographics=True,
+            )
 
-        cost_high = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cost"],
-            self.basebw_20["cowpi"][self.basebw_20["cowpi"]["level"] == 1]["cost"],
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cost"],
-            self.pm_20["cowpi"][self.pm_20["cowpi"]["level"] == 1]["cost"],
-        ]
-        data = {"low": cost_low, "high": cost_high}
+        if map:
+            fig, axes = plt.subplots(1, 2, sharey=True)
 
-        self.make_income_comp_plot(
-            [data["low"], data["high"]],
-            "sa20_cost_boxplot",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=True,
-            income_line=None,
-            outliers="",
-            legend_kwds={"labels": ["Low-income", "High-income"], "loc": "upper left"},
-        )
+            print(self.basebw_neg20["cowpi"])
 
-        """ Make demographic cost plots """
-        fix, axes = plt.subplots(3, 1)
-
-        data_ls = [self.base, self.basebw_neg20, self.pm_nobw, self.pm_neg20]
-        cost_low_race = self.filter_demo(0, "white", "cost", data=data_ls)
-        cost_high_race = self.filter_demo(1, "white", "cost", data=data_ls)
-
-        axes[0] = self.make_income_comp_plot(
-            [
-                cost_low_race["white"],
-                cost_low_race["nonwhite"],
-                cost_high_race["white"],
-                cost_high_race["nonwhite"],
-            ],
-            "cost_boxplot_race",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=False,
-            income_line=None,
-            outliers="",
-            legend_kwds={
-                "labels": [
-                    "Low-income White",
-                    "Low-income Non-white",
-                    "High-income White",
-                    "High-income Non-white",
-                ],
-                "loc": "upper left",
-            },
-            ax=axes[0],
-        )
-
-        # hispanic cost boxplot
-        cost_low_hispanic = self.filter_demo(0, "hispanic", "cost", data=data_ls)
-        cost_high_hispanic = self.filter_demo(1, "hispanic", "cost", data=data_ls)
-
-        axes[1] = self.make_income_comp_plot(
-            [
-                cost_low_hispanic["hispanic"],
-                cost_low_hispanic["nonhispanic"],
-                cost_high_hispanic["hispanic"],
-                cost_high_hispanic["nonhispanic"],
-            ],
-            "cost_boxplot_hispanic",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=False,
-            income_line=None,
-            outliers="",
-            legend_kwds={
-                "labels": [
-                    "Low-income Hispanic",
-                    "Low-income Non-Hispanic",
-                    "High-income Hispanic",
-                    "High-income Non-Hispanic",
-                ],
-                "loc": "upper left",
-            },
-            ax=axes[1],
-        )
-
-        # renter cost boxplot
-        cost_low_renter = self.filter_demo(0, "renter", "cost", data=data_ls)
-        cost_high_renter = self.filter_demo(1, "renter", "cost", data=data_ls)
-
-        axes[2] = self.make_income_comp_plot(
-            [
-                cost_low_renter["renter"],
-                cost_low_renter["nonrenter"],
-                cost_high_renter["renter"],
-                cost_high_renter["nonrenter"],
-            ],
-            "cost_boxplot_renter",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=False,
-            income_line=None,
-            outliers="",
-            legend_kwds={
-                "labels": [
-                    "Low-income Renter",
-                    "Low-income Non-renter",
-                    "High-income Renter",
-                    "High-income Non-renter",
-                ],
-                "loc": "upper left",
-            },
-            ax=axes[2],
-        )
-
-        axes[0].text(
-            0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
-        )
-        axes[1].text(
-            0.5, -0.1, "(b)", size=12, ha="center", transform=axes[1].transAxes
-        )
-        axes[2].text(
-            0.5, -0.1, "(c)", size=12, ha="center", transform=axes[2].transAxes
-        )
-
-        plt.gcf().set_size_inches(7, 8)
-
-        plt.savefig(
-            self.pub_loc + "sa-20_cost_demo_boxplots." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
-
-        """ Make demographic cost plots """
-        fix, axes = plt.subplots(3, 1)
-
-        data_ls = [self.base, self.basebw_20, self.pm_nobw, self.pm_20]
-        cost_low_race = self.filter_demo(0, "white", "cost", data=data_ls)
-        cost_high_race = self.filter_demo(1, "white", "cost", data=data_ls)
-
-        axes[0] = self.make_income_comp_plot(
-            [
-                cost_low_race["white"],
-                cost_low_race["nonwhite"],
-                cost_high_race["white"],
-                cost_high_race["nonwhite"],
-            ],
-            "cost_boxplot_race",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=False,
-            income_line=None,
-            outliers="",
-            legend_kwds={
-                "labels": [
-                    "Low-income White",
-                    "Low-income Non-white",
-                    "High-income White",
-                    "High-income Non-white",
-                ],
-                "loc": "upper left",
-            },
-            ax=axes[0],
-        )
-
-        # hispanic cost boxplot
-        cost_low_hispanic = self.filter_demo(0, "hispanic", "cost", data=data_ls)
-        cost_high_hispanic = self.filter_demo(1, "hispanic", "cost", data=data_ls)
-
-        axes[1] = self.make_income_comp_plot(
-            [
-                cost_low_hispanic["hispanic"],
-                cost_low_hispanic["nonhispanic"],
-                cost_high_hispanic["hispanic"],
-                cost_high_hispanic["nonhispanic"],
-            ],
-            "cost_boxplot_hispanic",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=False,
-            income_line=None,
-            outliers="",
-            legend_kwds={
-                "labels": [
-                    "Low-income Hispanic",
-                    "Low-income Non-Hispanic",
-                    "High-income Hispanic",
-                    "High-income Non-Hispanic",
-                ],
-                "loc": "upper left",
-            },
-            ax=axes[1],
-        )
-
-        # renter cost boxplot
-        cost_low_renter = self.filter_demo(0, "renter", "cost", data=data_ls)
-        cost_high_renter = self.filter_demo(1, "renter", "cost", data=data_ls)
-
-        axes[2] = self.make_income_comp_plot(
-            [
-                cost_low_renter["renter"],
-                cost_low_renter["nonrenter"],
-                cost_high_renter["renter"],
-                cost_high_renter["nonrenter"],
-            ],
-            "cost_boxplot_renter",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            ylabel="Cost ($)",
-            box=1,
-            means=False,
-            income_line=None,
-            outliers="",
-            legend_kwds={
-                "labels": [
-                    "Low-income Renter",
-                    "Low-income Non-renter",
-                    "High-income Renter",
-                    "High-income Non-renter",
-                ],
-                "loc": "upper left",
-            },
-            ax=axes[2],
-        )
-
-        axes[0].text(
-            0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
-        )
-        axes[1].text(
-            0.5, -0.1, "(b)", size=12, ha="center", transform=axes[1].transAxes
-        )
-        axes[2].text(
-            0.5, -0.1, "(c)", size=12, ha="center", transform=axes[2].transAxes
-        )
-
-        plt.gcf().set_size_inches(7, 8)
-
-        plt.savefig(
-            self.pub_loc + "sa20_cost_demo_boxplots." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
-
-        """Make cowpi boxplots"""
-        cowpi_bot20 = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.basebw_neg20["cowpi"][self.basebw_neg20["cowpi"]["level"] == 0][
-                "cowpi"
-            ]
-            * 100,
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.pm_neg20["cowpi"][self.pm_neg20["cowpi"]["level"] == 0]["cowpi"] * 100,
-        ]
-
-        cowpi_top80 = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.basebw_neg20["cowpi"][self.basebw_neg20["cowpi"]["level"] == 1][
-                "cowpi"
-            ]
-            * 100,
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.pm_neg20["cowpi"][self.pm_neg20["cowpi"]["level"] == 1]["cowpi"] * 100,
-        ]
-
-        data = {
-            "low": cowpi_bot20,
-            "high": cowpi_top80,
-        }
-
-        self.make_income_comp_plot(
-            [data["low"], data["high"]],
-            "sa-20_cow_boxplot_income",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            # ['Base', 'Base+BW', 'SD+BW'],
-            ylabel="%HI",
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={"labels": ["Low-income", "High-income"], "loc": "upper left"},
-        )
-
-        cowpi_bot20 = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.basebw_20["cowpi"][self.basebw_20["cowpi"]["level"] == 0]["cowpi"]
-            * 100,
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 0]["cowpi"] * 100,
-            self.pm_20["cowpi"][self.pm_20["cowpi"]["level"] == 0]["cowpi"] * 100,
-        ]
-
-        cowpi_top80 = [
-            self.base["cowpi"][self.base["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.basebw_20["cowpi"][self.basebw_20["cowpi"]["level"] == 1]["cowpi"]
-            * 100,
-            self.pm_nobw["cowpi"][self.pm_nobw["cowpi"]["level"] == 1]["cowpi"] * 100,
-            self.pm_20["cowpi"][self.pm_20["cowpi"]["level"] == 1]["cowpi"] * 100,
-        ]
-
-        data = {
-            "low": cowpi_bot20,
-            "high": cowpi_top80,
-        }
-
-        self.make_income_comp_plot(
-            [data["low"], data["high"]],
-            "sa20_cow_boxplot_income",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            # ['Base', 'Base+BW', 'SD+BW'],
-            ylabel="%HI",
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={"labels": ["Low-income", "High-income"], "loc": "upper left"},
-        )
-
-        fix, axes = plt.subplots(3, 1)
-
-        """Make race cross low-income plot"""
-        data_ls = [self.base, self.basebw_neg20, self.pm_nobw, self.pm_neg20]
-        low_race = self.filter_demo(0, "white", "cowpi", 100, data=data_ls)
-        high_race = self.filter_demo(1, "white", "cowpi", 100, data=data_ls)
-
-        print("Race %HI median values:")
-        print([a.median() for a in low_race["white"]])
-        print([a.median() for a in low_race["nonwhite"]])
-        print([a.median() for a in high_race["white"]])
-        print([a.median() for a in high_race["nonwhite"]])
-
-        axes[0] = self.make_income_comp_plot(
-            [
-                low_race["white"],
-                low_race["nonwhite"],
-                high_race["white"],
-                high_race["nonwhite"],
-            ],
-            "cow_boxplot_race",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={
-                "labels": [
-                    "Low-income White",
-                    "Low-income Non-white",
-                    "High-income White",
-                    "High-income Non-white",
-                ],
-                "loc": (0.4, 0.49),
-            },
-            ax=axes[0],
-        )
-
-        """ Make hispanic low-income plot """
-        low_hispanic = self.filter_demo(0, "hispanic", "cowpi", 100, data=data_ls)
-        high_hispanic = self.filter_demo(1, "hispanic", "cowpi", 100, data=data_ls)
-
-        print("Hispanic %HI median values:")
-        print([a.median() for a in low_hispanic["hispanic"]])
-        print([a.median() for a in low_hispanic["nonhispanic"]])
-        print([a.median() for a in high_hispanic["hispanic"]])
-        print([a.median() for a in high_hispanic["nonhispanic"]])
-
-        axes[1] = self.make_income_comp_plot(
-            [
-                low_hispanic["hispanic"],
-                low_hispanic["nonhispanic"],
-                high_hispanic["hispanic"],
-                high_hispanic["nonhispanic"],
-            ],
-            "cow_boxplot_hispanic",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={
-                "labels": [
-                    "Low-income Hispanic",
-                    "Low-income Non-Hispanic",
-                    "High-income Hispanic",
-                    "High-income Non-Hispanic",
-                ],
-                "loc": (0.4, 0.49),
-            },
-            ax=axes[1],
-        )
-
-        """ Make hispanic low-income plot """
-        low_renter = self.filter_demo(0, "renter", "cowpi", 100, data=data_ls)
-        high_renter = self.filter_demo(1, "renter", "cowpi", 100, data=data_ls)
-
-        print("Renter %HI median values:")
-        print([a.median() for a in low_renter["renter"]])
-        print([a.median() for a in low_renter["nonrenter"]])
-        print([a.median() for a in high_renter["renter"]])
-        print([a.median() for a in high_renter["nonrenter"]])
-
-        axes[2] = self.make_income_comp_plot(
-            [
-                low_renter["renter"],
-                low_renter["nonrenter"],
-                high_renter["renter"],
-                high_renter["nonrenter"],
-            ],
-            "cow_boxplot_renter",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={
-                "labels": [
-                    "Low-income Renter",
-                    "Low-income Non-renter",
-                    "High-income Renter",
-                    "High-income Non-renter",
-                ],
-                "loc": (0.4, 0.49),
-            },
-            ax=axes[2],
-        )
-        axes[0].text(
-            0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
-        )
-        axes[1].text(
-            0.5, -0.1, "(b)", size=12, ha="center", transform=axes[1].transAxes
-        )
-        axes[2].text(
-            0.5, -0.1, "(c)", size=12, ha="center", transform=axes[2].transAxes
-        )
-
-        plt.gcf().set_size_inches(7, 8)
-
-        plt.savefig(
-            self.pub_loc + "sa-20_cow_demo_boxplots." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
-        fix, axes = plt.subplots(3, 1)
-
-        """Make race cross low-income plot"""
-        data_ls = [self.base, self.basebw_20, self.pm_nobw, self.pm_20]
-        low_race = self.filter_demo(0, "white", "cowpi", 100, data=data_ls)
-        high_race = self.filter_demo(1, "white", "cowpi", 100, data=data_ls)
-
-        print("Race %HI median values:")
-        print([a.median() for a in low_race["white"]])
-        print([a.median() for a in low_race["nonwhite"]])
-        print([a.median() for a in high_race["white"]])
-        print([a.median() for a in high_race["nonwhite"]])
-
-        axes[0] = self.make_income_comp_plot(
-            [
-                low_race["white"],
-                low_race["nonwhite"],
-                high_race["white"],
-                high_race["nonwhite"],
-            ],
-            "cow_boxplot_race",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={
-                "labels": [
-                    "Low-income White",
-                    "Low-income Non-white",
-                    "High-income White",
-                    "High-income Non-white",
-                ],
-                "loc": (0.4, 0.49),
-            },
-            ax=axes[0],
-        )
-
-        """ Make hispanic low-income plot """
-        low_hispanic = self.filter_demo(0, "hispanic", "cowpi", 100, data=data_ls)
-        high_hispanic = self.filter_demo(1, "hispanic", "cowpi", 100, data=data_ls)
-
-        print("Hispanic %HI median values:")
-        print([a.median() for a in low_hispanic["hispanic"]])
-        print([a.median() for a in low_hispanic["nonhispanic"]])
-        print([a.median() for a in high_hispanic["hispanic"]])
-        print([a.median() for a in high_hispanic["nonhispanic"]])
-
-        axes[1] = self.make_income_comp_plot(
-            [
-                low_hispanic["hispanic"],
-                low_hispanic["nonhispanic"],
-                high_hispanic["hispanic"],
-                high_hispanic["nonhispanic"],
-            ],
-            "cow_boxplot_hispanic",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={
-                "labels": [
-                    "Low-income Hispanic",
-                    "Low-income Non-Hispanic",
-                    "High-income Hispanic",
-                    "High-income Non-Hispanic",
-                ],
-                "loc": (0.4, 0.49),
-            },
-            ax=axes[1],
-        )
-
-        """ Make renter low-income plot """
-        low_renter = self.filter_demo(0, "renter", "cowpi", 100, data=data_ls)
-        high_renter = self.filter_demo(1, "renter", "cowpi", 100, data=data_ls)
-
-        print("Renter %HI median values:")
-        print([a.median() for a in low_renter["renter"]])
-        print([a.median() for a in low_renter["nonrenter"]])
-        print([a.median() for a in high_renter["renter"]])
-        print([a.median() for a in high_renter["nonrenter"]])
-
-        axes[2] = self.make_income_comp_plot(
-            [
-                low_renter["renter"],
-                low_renter["nonrenter"],
-                high_renter["renter"],
-                high_renter["nonrenter"],
-            ],
-            "cow_boxplot_renter",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={
-                "labels": [
-                    "Low-income Renter",
-                    "Low-income Non-renter",
-                    "High-income Renter",
-                    "High-income Non-renter",
-                ],
-                "loc": (0.4, 0.49),
-            },
-            ax=axes[2],
-        )
-        axes[0].text(
-            0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
-        )
-        axes[1].text(
-            0.5, -0.1, "(b)", size=12, ha="center", transform=axes[1].transAxes
-        )
-        axes[2].text(
-            0.5, -0.1, "(c)", size=12, ha="center", transform=axes[2].transAxes
-        )
-
-        plt.gcf().set_size_inches(7, 8)
-
-        plt.savefig(
-            self.pub_loc + "sa20_cow_demo_boxplots." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
+            # axes[0] = self.bg_map(
+            #     axes[0],
+            #     display_demo=None,
+            #     node_data=pd.Series(diff_neg20_age),
+            #     wn_nodes=True,
+            #     label="Cost ($)",
+            #     # lg_fmt=custom_format,
+            # )
+            # axes[0, 1] = self.bg_map(
+            #     axes[0, 1],
+            #     "perc_renter",
+            #     pd.Series(diff_neg20_age),
+            #     wn_nodes=True,
+            #     label="% Renter",
+            # )
 
     def income_plots(self):
         """

@@ -10,7 +10,8 @@ plots = Graphics(
     error="se",
     days=days,
     inp_file="Input Files/cities/clinton/clinton.inp",
-    scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
+    # scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
+    scenario_ls=["base", "basebw", "pm", "pm_nobw"],
     skeletonized=True,
     single=False,
 )
@@ -37,14 +38,14 @@ plots = Graphics(
 # plots.make_equity_plots()
 
 """ Cost plots """
-# plots.make_cost_plots()
+# plots.make_cost_plots(map=True)
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-# plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
+plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
 
 """ Block group map of city """
-# plots.make_city_map()
+plots.make_city_map()
 
 """ Income plots """
 # plots.income_plots()
@@ -53,7 +54,7 @@ plots = Graphics(
 # plots.make_twa_plots()
 
 """ Make SA plots """
-plots.sa_plots()
+# plots.sa_plots(age=False, cost=False, cowpi=True, map=False)
 
 """ SEIR plot """
 # plots.make_seir_plot(days)
