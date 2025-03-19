@@ -891,6 +891,7 @@ class BaseGraphics:
                 self.pub_loc + title + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
         else:
@@ -943,6 +944,7 @@ class BaseGraphics:
             self.pub_loc + "/" + "seir_" + self.error + "." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -1011,6 +1013,7 @@ class BaseGraphics:
             self.pub_loc + name + "." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -1099,6 +1102,7 @@ class BaseGraphics:
                 self.pub_loc + name + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
         elif box == 1:
@@ -1153,6 +1157,7 @@ class BaseGraphics:
                     self.pub_loc + name + "." + self.format,
                     format=self.format,
                     bbox_inches="tight",
+                    transparent=self.transparent,
                 )
                 plt.close()
             else:
@@ -1172,6 +1177,7 @@ class BaseGraphics:
                 self.pub_loc + name + "_cow_comparison." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -1189,6 +1195,7 @@ class BaseGraphics:
                 self.pub_loc + name + "_cow_comparison_no_low_in." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -1409,6 +1416,16 @@ class BaseGraphics:
         # add the junctions and pipes or the buildings
         if node_data is not None:
             # print(node_buildings)
+            if legend_bool:
+                legend_k = {
+                    "label": label,
+                    "fraction": 0.04,
+                    "pad": 0.04,
+                    # "fmt": lg_fmt
+                }
+            else:
+                legend_k = None
+
             ax = node_buildings.plot(
                 ax=ax,
                 marker=".",
@@ -1421,6 +1438,7 @@ class BaseGraphics:
                 ),
                 vmin=0,
                 vmax=vmax_inp,
+                legend_kwds=legend_k,
                 # legend_kwds={"labels": ["<130 hrs", ">130 hrs"]}
             )
         else:
@@ -1488,10 +1506,12 @@ class Graphics(BaseGraphics):
         inp_file=None,
         skeletonized=False,
         single=False,
+        remove_bg=False,
     ):
         self.days = days
         self.x_len = days * 24
         self.skeletonized = skeletonized
+        self.transparent = remove_bg
         self.comp_list = [
             "seir_data",
             "demand",
@@ -1688,6 +1708,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "flow_network_pm." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -1702,6 +1723,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "flow_network_base." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -1756,6 +1778,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "sector_demand_50ind" + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -1778,6 +1801,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "sector_demand" + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -1902,6 +1926,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "sum_demand_aggregate" + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
         else:  # if skeletonized
@@ -1970,6 +1995,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "sum_demand_aggregate" + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -1985,7 +2011,7 @@ class Graphics(BaseGraphics):
             # print(self.base["avg_demand"].loc[:, res_perc_nodes])
             print(perc_counts)
 
-            fig, axes = plt.subplots(3, 2, sharex=True, sharey=True)
+            # fig, axes = plt.subplots(3, 2, sharex=True, sharey=True)
             # top_plots = ["res", "mfh"]
             # mid_plots = ["ind", "com"]
             # bot_plots = ["caf", "gro"]
@@ -2043,6 +2069,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "sum_demand_stacked" + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -2073,16 +2100,21 @@ class Graphics(BaseGraphics):
                 axes[1, 1], self.pm, nodes_w_demand
             )
             axes[0, 0].text(
-                0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+                0.5, -0.1, "Base", size=12, ha="center", transform=axes[0, 0].transAxes
             )
             axes[0, 1].text(
-                0.5, -0.1, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+                0.5, -0.1, "TWA", size=12, ha="center", transform=axes[0, 1].transAxes
             )
             axes[1, 0].text(
-                0.5, -0.2, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+                0.5, -0.2, "SD", size=12, ha="center", transform=axes[1, 0].transAxes
             )
             axes[1, 1].text(
-                0.5, -0.2, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+                0.5,
+                -0.2,
+                "TWA+SD",
+                size=12,
+                ha="center",
+                transform=axes[1, 1].transAxes,
             )
             fig.supxlabel("Time (days)", y=0)
             fig.supylabel("Demand (ML/day)", x=0.04)
@@ -2092,9 +2124,23 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "sum_demand_res_nonres" + "." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
+            ax = plt.subplot()
+
+            ax = self.plot_demand_res_nonres(ax, self.pm, nodes_w_demand)
+
+            ax.set_xlabel("Time (days)")
+            ax.set_ylabel("Demand (ML/day)")
+            plt.savefig(
+                self.pub_loc + "sum_demand_pm_" + "." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+                transparent=self.transparent,
+            )
+            plt.close()
             # ax = plt.subplot()
             # ind_perc_nodes = perc_counts[perc_counts["ind"] > res_t].index
             # ax = self.plot_demand_by_node(ax, ind_perc_nodes)
@@ -2200,6 +2246,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "mean_age_sector." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
         else:
@@ -2230,7 +2277,7 @@ class Graphics(BaseGraphics):
                     age_pm.mean(axis=1).rolling(24).mean(),
                 ],
                 axis=1,
-                keys=["Base", "TWA", "PM", "TWA+PM"],
+                keys=["Base", "TWA", "SD", "TWA+SD"],
             )
 
             age_var = pd.concat(
@@ -2241,7 +2288,7 @@ class Graphics(BaseGraphics):
                     var_pm.mean(axis=1).rolling(24).mean(),
                 ],
                 axis=1,
-                keys=["Base", "TWA", "PM", "TWA+PM"],
+                keys=["Base", "TWA", "SD", "TWA+SD"],
             )
 
             age_err = ut.calc_error(age_var, self.error)
@@ -2256,7 +2303,7 @@ class Graphics(BaseGraphics):
                 ax,
                 age / 3600,
                 age_err / 3600,
-                ["Base", "TWA", "PM", "TWA+PM"],
+                ["Base", "TWA", "SD", "TWA+SD"],
                 self.x_values_hour,
                 xlabel="Time (days)",
                 ylabel="Water Age (hours)",
@@ -2266,6 +2313,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + name + "mean_age_aggregate." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -2300,6 +2348,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + "mean_age_sector_indSA." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -2396,6 +2445,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + name + "intersection_age." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -2426,6 +2476,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + name + "water_age_boxplot." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -2504,6 +2555,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "state_variable_plot." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -2578,6 +2630,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "sv_comparison." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -2657,6 +2710,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "bbn_decision_all_pm." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -2691,6 +2745,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "equity_metrics." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -2793,6 +2848,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + name + "bw_cost_income." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -2866,6 +2922,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + name + "tw_cost_income." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -2940,6 +2997,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + name + "total_cost_income." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3121,6 +3179,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + name + "cost_demo_boxplots." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3161,10 +3220,19 @@ class Graphics(BaseGraphics):
                 self.pub_loc + name + "cost_network." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
+            plt.close()
 
     def cowpi_boxplot(
-        self, in_data=None, name="", demographics=False, di=False, perc=False, sa=False
+        self,
+        in_data=None,
+        name="",
+        demographics=False,
+        di=False,
+        perc=False,
+        sa=False,
+        map=False,
     ):
         if in_data is None:
             base_data = self.base
@@ -3195,6 +3263,8 @@ class Graphics(BaseGraphics):
         """ Print some stats about low-income households """
         for i in cowpi_bot20:
             print((i > 4.6).sum() / (i > 0).sum())
+        for i in cowpi_top80:
+            print((i > 4.6).sum() / (i > 0).sum())
 
         # print("%HI median values:")
         # print([a.median() for a in data["low"]])
@@ -3211,9 +3281,9 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             [cowpi_bot20, cowpi_top80],
             name + "cow_boxplot_income",
-            ["Base", "TWA", "PM", "TWA+PM"],
+            ["Base", "TWA", "SD", "TWA+SD"],
             # ['Base', 'Base+BW', 'SD+BW'],
-            ylabel="%HI",
+            ylabel="Cost of water / household income (%)",
             box=1,
             means=False,
             outliers="",
@@ -3344,6 +3414,7 @@ class Graphics(BaseGraphics):
                 self.pub_loc + name + "cow_demo_boxplots." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -3529,6 +3600,78 @@ class Graphics(BaseGraphics):
                 outliers="",
             )
 
+        if map:
+            fig, axes = plt.subplots(1, 1)
+            axes = self.bg_map(
+                ax=axes,
+                node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ]
+                .groupby("wdn_node")
+                .mean()
+                * 100,
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=10,
+                legend_bool=True,
+                label="Cost of water / household income (%)",
+            )
+            # axes[0] = self.bg_map(
+            #     ax=axes[0],
+            #     node_data=basebw_data["cowpi"][basebw_data["cowpi"]["level"] == 0][
+            #         ["cowpi", "wdn_node"]
+            #     ]
+            #     .groupby("wdn_node")
+            #     .mean()
+            #     * 100,
+            #     wn_nodes=True,
+            #     node_cmap="viridis",
+            #     vmax_inp=100,
+            # )
+
+            # plt.gcf().set_size_inches(7, 3.5)
+
+            # fig.subplots_adjust(bottom=0.1)
+            # cbar_ax = fig.add_axes(rect=(0.1, 0.1, 0.8, 0.05))
+
+            # norm = mpl.colors.Normalize(vmin=0, vmax=100)
+            # fig.colorbar(
+            #     mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
+            #     cax=cbar_ax,
+            #     orientation="horizontal",
+            #     label="Cost of water / household income (%)",
+            # )
+            plt.savefig(
+                self.pub_loc + name + "cowpi_network." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+                transparent=self.transparent,
+            )
+            plt.close()
+
+            fig, axes = plt.subplots(1, 1)
+            axes = self.bg_map(
+                ax=axes,
+                node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ]
+                .groupby("wdn_node")
+                .mean()
+                * 100,
+                wn_nodes=True,
+                node_cmap="Oranges",
+                vmax_inp=10,
+                # legend_bool=True,
+                # label="Cost of water / household income (%)",
+            )
+            plt.savefig(
+                self.pub_loc + name + "cowpi_network_3mt." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+                transparent=self.transparent,
+            )
+            plt.close()
+
     def make_city_map(self):
         """Plot the block groups of clinton"""
         ax = plt.subplot()
@@ -3538,6 +3681,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "clinton-bg." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3549,6 +3693,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "clinton-wdn." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3604,6 +3749,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "clinton-intersection." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3762,6 +3908,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "twa_comp." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3860,6 +4007,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "income_bg-micropolis." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3884,6 +4032,7 @@ class Graphics(BaseGraphics):
             self.pub_loc + "income_map." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3946,7 +4095,10 @@ class Graphics(BaseGraphics):
             sd_plot=False,
         )
         plt.savefig(
-            loc + "seir" + "." + self.format, format=self.format, bbox_inches="tight"
+            loc + "seir" + "." + self.format,
+            format=self.format,
+            bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -3991,6 +4143,7 @@ class Graphics(BaseGraphics):
             loc + "aggregate_demand" + "." + self.format,
             format=self.format,
             bbox_inches="tight",
+            transparent=self.transparent,
         )
         plt.close()
 
@@ -4326,6 +4479,7 @@ class Graphics(BaseGraphics):
                 loc + "mean_water_cost." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 
@@ -4347,6 +4501,7 @@ class Graphics(BaseGraphics):
                 loc + "max_water_cost." + self.format,
                 format=self.format,
                 bbox_inches="tight",
+                transparent=self.transparent,
             )
             plt.close()
 

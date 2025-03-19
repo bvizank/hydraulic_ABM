@@ -14,6 +14,7 @@ plots = Graphics(
     scenario_ls=["base", "basebw", "pm", "pm_nobw"],
     skeletonized=True,
     single=False,
+    remove_bg=True,
 )
 
 """ Demand plots """
@@ -42,10 +43,10 @@ plots = Graphics(
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False)
+plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
 
 """ Block group map of city """
-plots.make_city_map()
+# plots.make_city_map()
 
 """ Income plots """
 # plots.income_plots()
