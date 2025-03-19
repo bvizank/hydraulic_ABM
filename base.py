@@ -1454,6 +1454,15 @@ class BaseGraphics:
         # add pipes if the wdn nodes are being plotted
         if wn_nodes:
             # print(wn_gis.pipes)
+            if pipe_cmap is not None:
+                legend_k = {
+                    "label": label,
+                    "fraction": 0.04,
+                    "pad": 0.04,
+                }
+            else:
+                legend_k = None
+
             ax = wn_gis.pipes.plot(
                 ax=ax,
                 color="black" if pipe_cmap is None else None,
@@ -1461,6 +1470,7 @@ class BaseGraphics:
                 cmap=pipe_cmap,
                 column="diameter" if pipe_cmap is not None else None,
                 legend=True if pipes else False,
+                legend_kwds=legend_k,
                 # linewidth=0.5,
                 zorder=2,
             )
@@ -3687,13 +3697,26 @@ class Graphics(BaseGraphics):
 
         """ Plot the block groups with the wdn """
         ax = plt.subplot()
-        ax = self.bg_map(ax, wn_nodes=True, pipes=True, pipe_cmap="viridis")
+        ax = self.bg_map(
+            ax, label="Diameter (mm)", wn_nodes=True, pipes=True, pipe_cmap="viridis"
+        )
         plt.gcf().set_size_inches(4, 4)
         plt.savefig(
             self.pub_loc + "clinton-wdn." + self.format,
             format=self.format,
             bbox_inches="tight",
             transparent=self.transparent,
+        )
+        plt.close()
+
+        """ Plot the block groups with the wdn, but without pipe diameters """
+        ax = plt.subplot()
+        ax = self.bg_map(ax, wn_nodes=True)
+        plt.gcf().set_size_inches(4, 4)
+        plt.savefig(
+            self.pub_loc + "clinton-wdn_nopipeD." + self.format,
+            format=self.format,
+            bbox_inches="tight",
         )
         plt.close()
 
