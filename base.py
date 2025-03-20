@@ -2116,12 +2116,12 @@ class Graphics(BaseGraphics):
                 0.5, -0.1, "TWA", size=12, ha="center", transform=axes[0, 1].transAxes
             )
             axes[1, 0].text(
-                0.5, -0.2, "SD", size=12, ha="center", transform=axes[1, 0].transAxes
+                0.5, -0.2, "PM", size=12, ha="center", transform=axes[1, 0].transAxes
             )
             axes[1, 1].text(
                 0.5,
                 -0.2,
-                "TWA+SD",
+                "TWA+PM",
                 size=12,
                 ha="center",
                 transform=axes[1, 1].transAxes,
@@ -2287,7 +2287,7 @@ class Graphics(BaseGraphics):
                     age_pm.mean(axis=1).rolling(24).mean(),
                 ],
                 axis=1,
-                keys=["Base", "TWA", "SD", "TWA+SD"],
+                keys=["Base", "TWA", "PM", "TWA+PM"],
             )
 
             age_var = pd.concat(
@@ -2298,7 +2298,7 @@ class Graphics(BaseGraphics):
                     var_pm.mean(axis=1).rolling(24).mean(),
                 ],
                 axis=1,
-                keys=["Base", "TWA", "SD", "TWA+SD"],
+                keys=["Base", "TWA", "PM", "TWA+PM"],
             )
 
             age_err = ut.calc_error(age_var, self.error)
@@ -2313,7 +2313,7 @@ class Graphics(BaseGraphics):
                 ax,
                 age / 3600,
                 age_err / 3600,
-                ["Base", "TWA", "SD", "TWA+SD"],
+                ["Base", "TWA", "PM", "TWA+PM"],
                 self.x_values_hour,
                 xlabel="Time (days)",
                 ylabel="Water Age (hours)",
@@ -3272,13 +3272,23 @@ class Graphics(BaseGraphics):
 
         """ Print some stats about low-income households """
         for i in cowpi_bot20:
-            print((i > 4.6).sum() / (i > 0).sum())
+            print((i > 4.5).sum() / len(i))
+            # print((i > 4.5).sum() / (i > 0).sum())
         for i in cowpi_top80:
-            print((i > 4.6).sum() / (i > 0).sum())
+            print((i > 4.5).sum() / len(i))
+            # print((i > 4.5).sum() / (i > 0).sum())
 
-        # print("%HI median values:")
-        # print([a.median() for a in data["low"]])
-        # print([a.median() for a in data["high"]])
+        # print total population data
+        print("Total population data")
+        for i in range(len(cowpi_bot20)):
+            print(
+                ((cowpi_bot20[i] > 4.5).sum() + (cowpi_top80[i] > 4.5).sum())
+                / (len(cowpi_bot20[i]) + len(cowpi_top80[i]))
+            )
+
+        print("%HI median values:")
+        print([a.median() for a in cowpi_bot20])
+        print([a.median() for a in cowpi_top80])
 
         # self.make_income_comp_plot(
         #     data,
@@ -3291,9 +3301,9 @@ class Graphics(BaseGraphics):
         self.make_income_comp_plot(
             [cowpi_bot20, cowpi_top80],
             name + "cow_boxplot_income",
-            ["Base", "TWA", "SD", "TWA+SD"],
+            ["Base", "TWA", "PM", "TWA+PM"],
             # ['Base', 'Base+BW', 'SD+BW'],
-            ylabel="Cost of water / household income (%)",
+            ylabel="%HI",
             box=1,
             means=False,
             outliers="",
@@ -3307,6 +3317,15 @@ class Graphics(BaseGraphics):
             """Make race cross low-income plot"""
             low_race = self.filter_demo(0, "white", "cowpi", 100, data=in_data)
             high_race = self.filter_demo(1, "white", "cowpi", 100, data=in_data)
+
+            for i in low_race["white"]:
+                print((i > 4.5).sum() / len(i))
+            for i in low_race["nonwhite"]:
+                print((i > 4.5).sum() / len(i))
+            for i in high_race["white"]:
+                print((i > 4.5).sum() / len(i))
+            for i in high_race["nonwhite"]:
+                print((i > 4.5).sum() / len(i))
 
             print("Race %HI median values:")
             print([a.median() for a in low_race["white"]])
@@ -3624,7 +3643,7 @@ class Graphics(BaseGraphics):
                 node_cmap="viridis",
                 vmax_inp=10,
                 legend_bool=True,
-                label="Cost of water / household income (%)",
+                label="%HI",
             )
             # axes[0] = self.bg_map(
             #     ax=axes[0],
@@ -3684,25 +3703,31 @@ class Graphics(BaseGraphics):
 
     def make_city_map(self):
         """Plot the block groups of clinton"""
-        ax = plt.subplot()
-        ax = self.bg_map(ax, wn_nodes=False, label_bg=True, plot_wn=False)
-        plt.gcf().set_size_inches(4, 4)
-        plt.savefig(
-            self.pub_loc + "clinton-bg." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-            transparent=self.transparent,
-        )
-        plt.close()
+        fig, axes = plt.subplots(1, 2)
+        axes[0] = self.bg_map(axes[0], wn_nodes=False, label_bg=True, plot_wn=False)
+        # plt.gcf().set_size_inches(4, 4)
+        # plt.savefig(
+        #     self.pub_loc + "clinton-bg." + self.format,
+        #     format=self.format,
+        #     bbox_inches="tight",
+        #     transparent=self.transparent,
+        # )
+        # plt.close()
 
         """ Plot the block groups with the wdn """
-        ax = plt.subplot()
-        ax = self.bg_map(
-            ax, label="Diameter (mm)", wn_nodes=True, pipes=True, pipe_cmap="viridis"
+        # ax = plt.subplot()
+        axes[1] = self.bg_map(
+            axes[1], label="Diameter (mm)", wn_nodes=True, pipes=True, pipe_cmap="viridis"
         )
-        plt.gcf().set_size_inches(4, 4)
+        axes[0].text(
+            0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
+        )
+        axes[1].text(
+            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
+        )
+        plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(
-            self.pub_loc + "clinton-wdn." + self.format,
+            self.pub_loc + "clinton-wdn_and_bg." + self.format,
             format=self.format,
             bbox_inches="tight",
             transparent=self.transparent,
