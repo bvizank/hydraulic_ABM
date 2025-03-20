@@ -1298,7 +1298,8 @@ class BaseGraphics:
         display_demo=None,
         node_data=None,
         wn_nodes=False,
-        label="",
+        label_map="",
+        label_nodes="",
         lg_fmt="{:.0f}",
         label_bg=False,
         plot_wn=True,
@@ -1396,7 +1397,7 @@ class BaseGraphics:
                 legend=True,
                 zorder=1,
                 legend_kwds={
-                    "label": label,
+                    "label": label_map,
                     "fraction": 0.04,
                     "pad": 0.04,
                     # "fmt": lg_fmt
@@ -1418,7 +1419,7 @@ class BaseGraphics:
             # print(node_buildings)
             if legend_bool:
                 legend_k = {
-                    "label": label,
+                    "label": label_nodes,
                     "fraction": 0.04,
                     "pad": 0.04,
                     # "fmt": lg_fmt
@@ -1429,7 +1430,8 @@ class BaseGraphics:
             ax = node_buildings.plot(
                 ax=ax,
                 marker=".",
-                markersize=node_buildings["data"] * 2 if node_cmap is None else 3,
+                markersize=3,
+                # markersize=node_buildings["data"] * 2 if node_cmap is None else 3,
                 zorder=3,
                 column="data",
                 legend=legend_bool,
@@ -1438,8 +1440,8 @@ class BaseGraphics:
                 ),
                 vmin=0,
                 vmax=vmax_inp,
-                legend_kwds=legend_k,
-                # legend_kwds={"labels": ["<130 hrs", ">130 hrs"]}
+                # legend_kwds=legend_k,
+                legend_kwds={"labels": label_nodes}
             )
         else:
             if plot_wn:
@@ -1456,7 +1458,7 @@ class BaseGraphics:
             # print(wn_gis.pipes)
             if pipe_cmap is not None:
                 legend_k = {
-                    "label": label,
+                    "label": label_nodes,
                     "fraction": 0.04,
                     "pad": 0.04,
                 }
@@ -2375,56 +2377,66 @@ class Graphics(BaseGraphics):
             #                  sd2=ut.calc_error(wfh['var_age'], error)/3600, type='all')
 
             if data is None:
-                pm_age = self.calc_age_diff(self.pm["avg_age"], nodes_w_demand, thres_n)
                 base_age = self.calc_age_diff(
                     self.base["avg_age"], nodes_w_demand, thres_n
                 )
+                basebw_age = self.calc_age_diff(
+                    self.basebw["avg_age"], nodes_w_demand, thres_n
+                )
+                pm_nobw_age = self.calc_age_diff(
+                    self.pm_nobw["avg_age"], nodes_w_demand, thres_n
+                )
+                pm_age = self.calc_age_diff(self.pm["avg_age"], nodes_w_demand, thres_n)
             else:
-                pm_age = self.calc_age_diff(data[2]["avg_age"], nodes_w_demand, thres_n)
                 base_age = self.calc_age_diff(
                     data[0]["avg_age"], nodes_w_demand, thres_n
                 )
+                basebw_age = self.calc_age_diff(
+                    data[1]["avg_age"], nodes_w_demand, thres_n
+                )
+                pm_nobw_age = self.calc_age_diff(data[3]["avg_age"], nodes_w_demand, thres_n)
+                pm_age = self.calc_age_diff(data[2]["avg_age"], nodes_w_demand, thres_n)
             print(pm_age)
             # basebw_age = self.calc_age_diff(self.basebw["avg_age"])
 
             """ Plot intersectional map with water age and block group """
-            diff_age = dict()
-            for k, v in base_age.items():
-                diff_age[k] = pm_age[k] > v
+            # diff_age = dict()
+            # for k, v in base_age.items():
+            #     diff_age[k] = pm_age[k] > v
 
             fig, axes = plt.subplots(2, 2)
 
             axes[0, 0] = self.bg_map(
                 axes[0, 0],
-                "median_income",
-                pd.Series(diff_age),
+                # "median_income",
+                node_data=pd.Series(base_age),
                 wn_nodes=True,
-                label="Median Income",
+                # label="Median Income",
                 # lg_fmt=custom_format,
             )
             axes[0, 1] = self.bg_map(
                 axes[0, 1],
-                "perc_renter",
-                pd.Series(diff_age),
+                # "perc_renter",
+                node_data=pd.Series(basebw_age),
                 wn_nodes=True,
-                label="% Renter",
-                vmin_inp=0,
+                # label="% Renter",
+                # vmin_inp=0,
             )
             axes[1, 0] = self.bg_map(
                 axes[1, 0],
-                "perc_w",
-                pd.Series(diff_age),
+                # "perc_w",
+                node_data=pd.Series(pm_nobw_age),
                 wn_nodes=True,
-                label="% White",
-                vmin_inp=0,
+                # label="% White",
+                # vmin_inp=0,
             )
             axes[1, 1] = self.bg_map(
                 axes[1, 1],
-                "perc_nh",
-                pd.Series(diff_age),
+                # "perc_nh",
+                node_data=pd.Series(pm_age),
                 wn_nodes=True,
-                label="% non-Hispanic",
-                vmin_inp=0,
+                # label="% non-Hispanic",
+                # vmin_inp=0,
             )
 
             axes[0, 0].text(
@@ -3717,7 +3729,7 @@ class Graphics(BaseGraphics):
         """ Plot the block groups with the wdn """
         # ax = plt.subplot()
         axes[1] = self.bg_map(
-            axes[1], label="Diameter (mm)", wn_nodes=True, pipes=True, pipe_cmap="viridis"
+            axes[1], label_nodes="Diameter (mm)", wn_nodes=True, pipes=True, pipe_cmap="viridis"
         )
         axes[0].text(
             0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
@@ -3747,34 +3759,67 @@ class Graphics(BaseGraphics):
 
         """ Plot intersection with demographics """
         fig, axes = plt.subplots(2, 2)
+        print(self.base["cowpi"])
 
         axes[0, 0] = self.bg_map(
             ax=axes[0, 0],
             display_demo="median_income",
+            node_data=(
+                self.base["cowpi"].loc[
+                    self.base["cowpi"]["i"] == 0
+                ][["level", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+            ),
             wn_nodes=True,
-            label="Median Income",
+            label_map="Median Income",
+            # node_cmap="Oranges",
             # lg_fmt=custom_format,
-        )
-        axes[0, 1] = self.bg_map(
-            ax=axes[0, 1],
-            display_demo="perc_renter",
-            wn_nodes=True,
-            label="% Renter",
-            vmin_inp=0,
-        )
-        axes[1, 0] = self.bg_map(
-            ax=axes[1, 0],
-            display_demo="perc_w",
-            wn_nodes=True,
-            label="% White",
-            vmin_inp=0,
+            legend_bool=True,
+            label_nodes=["Low-income", "High-income"]
         )
         axes[1, 1] = self.bg_map(
             ax=axes[1, 1],
-            display_demo="perc_nh",
+            display_demo="perc_renter",
+            node_data=(
+                self.base["cowpi"].loc[
+                    self.base["cowpi"]["i"] == 0
+                ][["renter", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+            ),
             wn_nodes=True,
-            label="% non-Hispanic",
+            label_map="% Renter",
+            # node_cmap="Oranges",
             vmin_inp=0,
+            legend_bool=True,
+            label_nodes=["Non-renter", "Renter"]
+        )
+        axes[0, 1] = self.bg_map(
+            ax=axes[0, 1],
+            display_demo="perc_w",
+            node_data=(
+                self.base["cowpi"].loc[
+                    self.base["cowpi"]["i"] == 0
+                ][["white", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+            ),
+            wn_nodes=True,
+            label_map="% White",
+            # node_cmap="Oranges",
+            vmin_inp=0,
+            legend_bool=True,
+            label_nodes=["Non-white", "White"]
+        )
+        axes[1, 0] = self.bg_map(
+            ax=axes[1, 0],
+            display_demo="perc_nh",
+            node_data=(
+                self.base["cowpi"].loc[
+                    self.base["cowpi"]["i"] == 0
+                ][["hispanic", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+            ),
+            wn_nodes=True,
+            label_map="% non-Hispanic",
+            # node_cmap="Oranges",
+            vmin_inp=0,
+            legend_bool=True,
+            label_nodes=["Non-Hispanic", "Hispanic"]
         )
 
         axes[0, 0].text(
