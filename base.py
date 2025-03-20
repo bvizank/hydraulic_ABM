@@ -2413,6 +2413,7 @@ class Graphics(BaseGraphics):
                 wn_nodes=True,
                 # label="Median Income",
                 # lg_fmt=custom_format,
+                node_cmap=ListedColormap(["blue", "red"])
             )
             axes[0, 1] = self.bg_map(
                 axes[0, 1],
@@ -2421,6 +2422,7 @@ class Graphics(BaseGraphics):
                 wn_nodes=True,
                 # label="% Renter",
                 # vmin_inp=0,
+                node_cmap=ListedColormap(["blue", "red"])
             )
             axes[1, 0] = self.bg_map(
                 axes[1, 0],
@@ -2429,6 +2431,7 @@ class Graphics(BaseGraphics):
                 wn_nodes=True,
                 # label="% White",
                 # vmin_inp=0,
+                node_cmap=ListedColormap(["blue", "red"])
             )
             axes[1, 1] = self.bg_map(
                 axes[1, 1],
@@ -2437,6 +2440,7 @@ class Graphics(BaseGraphics):
                 wn_nodes=True,
                 # label="% non-Hispanic",
                 # vmin_inp=0,
+                node_cmap=ListedColormap(["blue", "red"])
             )
 
             axes[0, 0].text(
@@ -2456,10 +2460,13 @@ class Graphics(BaseGraphics):
             orange_dot = mlines.Line2D(
                 [0], [0], color="red", linewidth=0, marker=".", markersize=10
             )
+            blue_dot = mlines.Line2D(
+                [0], [0], color="blue", linewidth=0, marker=".", markersize=10
+            )
             plt.gcf().set_size_inches(7, 6)
             fig.legend(
-                handles=[orange_dot],
-                labels=[">" + str(thres_n) + " hours"],
+                handles=[blue_dot, orange_dot],
+                labels=["<" + str(thres_n) + " hours", ">" + str(thres_n) + " hours"],
                 loc="outside lower center",
             )
 
@@ -3206,9 +3213,18 @@ class Graphics(BaseGraphics):
         plt.close()
 
         if map:
-            fig, axes = plt.subplots(1, 2)
-            axes[0] = self.bg_map(
-                ax=axes[0],
+            fig, axes = plt.subplots(2, 2)
+            axes[0, 0] = self.bg_map(
+                ax=axes[0, 0],
+                node_data=cost_base["cowpi"][["cost", "wdn_node"]]
+                .groupby("wdn_node")
+                .mean(),
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=700,
+            )
+            axes[0, 1] = self.bg_map(
+                ax=axes[0, 1],
                 node_data=cost_basebw["cowpi"][["cost", "wdn_node"]]
                 .groupby("wdn_node")
                 .mean(),
@@ -3216,8 +3232,17 @@ class Graphics(BaseGraphics):
                 node_cmap="viridis",
                 vmax_inp=700,
             )
-            axes[1] = self.bg_map(
-                ax=axes[1],
+            axes[1, 0] = self.bg_map(
+                ax=axes[1, 0],
+                node_data=cost_pm_nobw["cowpi"][["cost", "wdn_node"]]
+                .groupby("wdn_node")
+                .mean(),
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=700,
+            )
+            axes[1, 1] = self.bg_map(
+                ax=axes[1, 1],
                 node_data=cost_pm["cowpi"][["cost", "wdn_node"]]
                 .groupby("wdn_node")
                 .mean(),
@@ -3226,10 +3251,23 @@ class Graphics(BaseGraphics):
                 vmax_inp=700,
             )
 
-            plt.gcf().set_size_inches(7, 3.5)
+            axes[0, 0].text(
+                0.5, -0.08, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+            )
+            axes[0, 1].text(
+                0.5, -0.08, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+            )
+            axes[1, 0].text(
+                0.5, -0.08, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+            )
+            axes[1, 1].text(
+                0.5, -0.08, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+            )
 
-            fig.subplots_adjust(bottom=0.1)
-            cbar_ax = fig.add_axes(rect=(0.1, 0.1, 0.8, 0.05))
+            plt.gcf().set_size_inches(7, 7)
+
+            fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
+            cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
 
             norm = mpl.colors.Normalize(vmin=0, vmax=700)
             fig.colorbar(
@@ -3642,9 +3680,62 @@ class Graphics(BaseGraphics):
             )
 
         if map:
-            fig, axes = plt.subplots(1, 1)
-            axes = self.bg_map(
-                ax=axes,
+            # fig, axes = plt.subplots(1, 1)
+            # axes = self.bg_map(
+            #     ax=axes,
+            #     node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
+            #         ["cowpi", "wdn_node"]
+            #     ]
+            #     .groupby("wdn_node")
+            #     .mean()
+            #     * 100,
+            #     wn_nodes=True,
+            #     node_cmap="viridis",
+            #     vmax_inp=10,
+            #     legend_bool=True,
+            #     label="%HI",
+            # )
+            fig, axes = plt.subplots(2, 2)
+            axes[0, 0] = self.bg_map(
+                ax=axes[0, 0],
+                node_data=base_data["cowpi"][base_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ]
+                .groupby("wdn_node")
+                .mean()
+                * 100,
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=10,
+                # legend_bool=True,
+                # label="%HI",
+            )
+            axes[0, 1] = self.bg_map(
+                ax=axes[0, 1],
+                node_data=basebw_data["cowpi"][basebw_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ]
+                .groupby("wdn_node")
+                .mean()
+                * 100,
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=10,
+            )
+            axes[1, 0] = self.bg_map(
+                ax=axes[1, 0],
+                node_data=pm_nobw_data["cowpi"][pm_nobw_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ]
+                .groupby("wdn_node")
+                .mean()
+                * 100,
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=10,
+            )
+            axes[1, 1] = self.bg_map(
+                ax=axes[1, 1],
                 node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
                     ["cowpi", "wdn_node"]
                 ]
@@ -3654,34 +3745,33 @@ class Graphics(BaseGraphics):
                 wn_nodes=True,
                 node_cmap="viridis",
                 vmax_inp=10,
-                legend_bool=True,
+            )
+
+            axes[0, 0].text(
+                0.5, -0.08, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+            )
+            axes[0, 1].text(
+                0.5, -0.08, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+            )
+            axes[1, 0].text(
+                0.5, -0.08, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+            )
+            axes[1, 1].text(
+                0.5, -0.08, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+            )
+
+            plt.gcf().set_size_inches(7, 7)
+
+            fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
+            cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
+
+            norm = mpl.colors.Normalize(vmin=0, vmax=700)
+            fig.colorbar(
+                mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
+                cax=cbar_ax,
+                orientation="horizontal",
                 label="%HI",
             )
-            # axes[0] = self.bg_map(
-            #     ax=axes[0],
-            #     node_data=basebw_data["cowpi"][basebw_data["cowpi"]["level"] == 0][
-            #         ["cowpi", "wdn_node"]
-            #     ]
-            #     .groupby("wdn_node")
-            #     .mean()
-            #     * 100,
-            #     wn_nodes=True,
-            #     node_cmap="viridis",
-            #     vmax_inp=100,
-            # )
-
-            # plt.gcf().set_size_inches(7, 3.5)
-
-            # fig.subplots_adjust(bottom=0.1)
-            # cbar_ax = fig.add_axes(rect=(0.1, 0.1, 0.8, 0.05))
-
-            # norm = mpl.colors.Normalize(vmin=0, vmax=100)
-            # fig.colorbar(
-            #     mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
-            #     cax=cbar_ax,
-            #     orientation="horizontal",
-            #     label="Cost of water / household income (%)",
-            # )
             plt.savefig(
                 self.pub_loc + name + "cowpi_network." + self.format,
                 format=self.format,
@@ -3690,28 +3780,28 @@ class Graphics(BaseGraphics):
             )
             plt.close()
 
-            fig, axes = plt.subplots(1, 1)
-            axes = self.bg_map(
-                ax=axes,
-                node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
-                    ["cowpi", "wdn_node"]
-                ]
-                .groupby("wdn_node")
-                .mean()
-                * 100,
-                wn_nodes=True,
-                node_cmap="Oranges",
-                vmax_inp=10,
-                # legend_bool=True,
-                # label="Cost of water / household income (%)",
-            )
-            plt.savefig(
-                self.pub_loc + name + "cowpi_network_3mt." + self.format,
-                format=self.format,
-                bbox_inches="tight",
-                transparent=self.transparent,
-            )
-            plt.close()
+            # fig, axes = plt.subplots(1, 1)
+            # axes = self.bg_map(
+            #     ax=axes,
+            #     node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
+            #         ["cowpi", "wdn_node"]
+            #     ]
+            #     .groupby("wdn_node")
+            #     .mean()
+            #     * 100,
+            #     wn_nodes=True,
+            #     node_cmap="Oranges",
+            #     vmax_inp=10,
+            #     # legend_bool=True,
+            #     # label="Cost of water / household income (%)",
+            # )
+            # plt.savefig(
+            #     self.pub_loc + name + "cowpi_network_3mt." + self.format,
+            #     format=self.format,
+            #     bbox_inches="tight",
+            #     transparent=self.transparent,
+            # )
+            # plt.close()
 
     def make_city_map(self):
         """Plot the block groups of clinton"""

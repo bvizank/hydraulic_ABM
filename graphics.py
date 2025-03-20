@@ -24,7 +24,7 @@ plots = Graphics(
 # plots.flow_plots()
 
 """ Age plots """
-plots.age_plots(map=True, threshold=True)
+# plots.age_plots(map=True, threshold=True)
 
 """ Industrial distance plots """
 # plots.ind_dist_plots()
@@ -43,7 +43,7 @@ plots.age_plots(map=True, threshold=True)
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-# plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
+plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
 
 """ Block group map of city """
 # plots.make_city_map()
