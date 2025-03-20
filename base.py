@@ -1373,7 +1373,6 @@ class BaseGraphics:
             # print(node_buildings)
             # print(node_data)
             node_buildings["data"] = node_data
-            # print(node_buildings)
 
             # clip the bg layer to the extent of the wn layer
             # gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
@@ -1416,7 +1415,7 @@ class BaseGraphics:
 
         # add the junctions and pipes or the buildings
         if node_data is not None:
-            # print(node_buildings)
+            print(node_buildings.dtypes)
             if legend_bool:
                 legend_k = {
                     "label": label_nodes,
@@ -1440,8 +1439,8 @@ class BaseGraphics:
                 ),
                 vmin=0,
                 vmax=vmax_inp,
-                # legend_kwds=legend_k,
-                legend_kwds={"labels": label_nodes}
+                legend_kwds={"labels": label_nodes} if node_data.dtype == bool else legend_k,
+                # legend_kwds={"labels": label_nodes}
             )
         else:
             if plot_wn:
@@ -3857,7 +3856,8 @@ class Graphics(BaseGraphics):
             node_data=(
                 self.base["cowpi"].loc[
                     self.base["cowpi"]["i"] == 0
-                ][["level", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+                ][["level", "wdn_node"]].groupby("wdn_node")
+                .median().astype(bool)["level"]
             ),
             wn_nodes=True,
             label_map="Median Income",
@@ -3872,7 +3872,8 @@ class Graphics(BaseGraphics):
             node_data=(
                 self.base["cowpi"].loc[
                     self.base["cowpi"]["i"] == 0
-                ][["renter", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+                ][["renter", "wdn_node"]].groupby("wdn_node")
+                .median().astype(bool)["renter"]
             ),
             wn_nodes=True,
             label_map="% Renter",
@@ -3887,7 +3888,8 @@ class Graphics(BaseGraphics):
             node_data=(
                 self.base["cowpi"].loc[
                     self.base["cowpi"]["i"] == 0
-                ][["white", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+                ][["white", "wdn_node"]].groupby("wdn_node")
+                .median().astype(bool)["white"]
             ),
             wn_nodes=True,
             label_map="% White",
@@ -3902,7 +3904,8 @@ class Graphics(BaseGraphics):
             node_data=(
                 self.base["cowpi"].loc[
                     self.base["cowpi"]["i"] == 0
-                ][["hispanic", "wdn_node"]].groupby("wdn_node").median().astype(bool)
+                ][["hispanic", "wdn_node"]].groupby("wdn_node")
+                .median().astype(bool)["hispanic"]
             ),
             wn_nodes=True,
             label_map="% non-Hispanic",
@@ -3933,6 +3936,29 @@ class Graphics(BaseGraphics):
             format=self.format,
             bbox_inches="tight",
             transparent=self.transparent,
+        )
+        plt.close()
+
+        """ Plot map with the percent residential """
+        node_buildings = pd.read_pickle("buildings.pkl")
+        counts = node_buildings.value_counts(["wdn_node", "type"]).unstack()
+        perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
+        # print(perc_counts)
+
+        ax = plt.subplot()
+        ax = self.bg_map(
+            ax=ax,
+            wn_nodes=True,
+            node_data=perc_counts["res"],
+            label_nodes="% Residential",
+            node_cmap="viridis",
+            legend_bool=True
+        )
+        plt.savefig(
+            self.pub_loc + "perc_res_map." + self.format,
+            format=self.format,
+            bbox_inches="tight",
+            transparent=self.transparent
         )
         plt.close()
 
