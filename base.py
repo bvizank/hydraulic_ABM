@@ -3701,7 +3701,7 @@ class Graphics(BaseGraphics):
                     ["cowpi", "wdn_node"]
                 ]
                 .groupby("wdn_node")
-                .mean()
+                .mean()["cowpi"]
                 * 100,
                 wn_nodes=True,
                 node_cmap="viridis",
@@ -3715,7 +3715,7 @@ class Graphics(BaseGraphics):
                     ["cowpi", "wdn_node"]
                 ]
                 .groupby("wdn_node")
-                .mean()
+                .mean()["cowpi"]
                 * 100,
                 wn_nodes=True,
                 node_cmap="viridis",
@@ -3727,7 +3727,7 @@ class Graphics(BaseGraphics):
                     ["cowpi", "wdn_node"]
                 ]
                 .groupby("wdn_node")
-                .mean()
+                .mean()["cowpi"]
                 * 100,
                 wn_nodes=True,
                 node_cmap="viridis",
@@ -3739,7 +3739,7 @@ class Graphics(BaseGraphics):
                     ["cowpi", "wdn_node"]
                 ]
                 .groupby("wdn_node")
-                .mean()
+                .mean()["cowpi"]
                 * 100,
                 wn_nodes=True,
                 node_cmap="viridis",
@@ -3764,7 +3764,7 @@ class Graphics(BaseGraphics):
             fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
             cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
 
-            norm = mpl.colors.Normalize(vmin=0, vmax=700)
+            norm = mpl.colors.Normalize(vmin=0, vmax=10)
             fig.colorbar(
                 mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
                 cax=cbar_ax,
