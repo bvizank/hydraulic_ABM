@@ -349,9 +349,9 @@ class BaseGraphics:
 
         res_data = res_data.iloc[:, ::-1]
         # res_data = res_data.iloc[:, -self.days :]
-        res_sd = res_data.std(axis=0).reset_index(drop=True)
+        # res_sd = res_data.std(axis=0).reset_index(drop=True)
         res_data = res_data.mean(axis=0).reset_index(drop=True)
-        res_sd = res_sd.drop(0).reset_index(drop=True)
+        # res_sd = res_sd.drop(0).reset_index(drop=True)
         res_data = res_data.drop(0).reset_index(drop=True)
 
         nonres_data = (
@@ -363,13 +363,13 @@ class BaseGraphics:
         print(nonres_data)
         print(res_data)
 
-        nonres_var = (
-            data["var_demand"][nodes_w_demand].sum(axis=1) * 3600
-        ).reset_index(drop=True)
-        nonres_var = nonres_var.groupby(nonres_var.index // 24).sum()
-        nonres_var = nonres_var - res_data
+        # nonres_var = (
+        #     data["var_demand"][nodes_w_demand].sum(axis=1) * 3600
+        # ).reset_index(drop=True)
+        # nonres_var = nonres_var.groupby(nonres_var.index // 24).sum()
+        # nonres_var = nonres_var - res_data
 
-        nonres_sd = ut.calc_error(nonres_var, self.error)
+        # nonres_sd = ut.calc_error(nonres_var, self.error)
 
         all_data = pd.concat(
             [res_data, nonres_data], axis=1, keys=["Residential", "Non-residential"]
@@ -377,9 +377,9 @@ class BaseGraphics:
 
         all_data /= 1000000
 
-        all_sd = pd.concat(
-            [res_sd, nonres_sd], axis=1, keys=["Residential", "Non-residential"]
-        )
+        # all_sd = pd.concat(
+        #     [res_sd, nonres_sd], axis=1, keys=["Residential", "Non-residential"]
+        # )
 
         # ax = self.make_avg_plot(
         #     ax=ax,
