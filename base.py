@@ -2367,7 +2367,7 @@ class Graphics(BaseGraphics):
 
         if map:
             """Make age plot comparing base and PM"""
-            node_w_demand = [
+            nodes_w_demand = [
                 name
                 for name, node in self.wn.junctions()
                 if node.demand_timeseries_list[0].base_value > 0
@@ -3277,6 +3277,13 @@ class Graphics(BaseGraphics):
                 node_cmap="viridis",
                 vmax_inp=700,
             )
+            axes[0].text(
+                0.5, -0.04, "(a)", size=12, ha="center", transform=axes[0].transAxes
+            )
+            axes[1].text(
+                0.5, -0.04, "(b)", size=12, ha="center", transform=axes[1].transAxes
+            )
+
             # fig, axes = plt.subplots(2, 2)
             # axes[0, 0] = self.bg_map(
             #     ax=axes[0, 0],
@@ -3369,6 +3376,13 @@ class Graphics(BaseGraphics):
             pm_nobw_data = in_data[2]
             pm_data = in_data[3]
 
+        print(base_data["cowpi"][["income", "i"]].groupby("i").median().mean())
+        print(base_data["cowpi"][["income", "i"]].groupby("i").median().std() / math.sqrt(30))
+        print(base_data["cowpi"][["income", "i"]].groupby("i").quantile(0.2))
+        print(base_data["cowpi"]["income"].median())
+        print(base_data["cowpi"]["income"].mean())
+        print(base_data["cowpi"]["income"].quantile(0.2))
+
         """Make cowpi boxplots"""
         cowpi_bot20 = [
             base_data["cowpi"][base_data["cowpi"]["level"] == 0]["cowpi"] * 100,
@@ -3427,17 +3441,113 @@ class Graphics(BaseGraphics):
 
         """ Make plot of intersection between income and whether node exceeds
         threshold """
-        node_w_demand = [
+        nodes_w_demand = [
             name
             for name, node in self.wn.junctions()
             if node.demand_timeseries_list[0].base_value > 0
         ]
-        base_age = self.calc_age_diff(base_data["avg_age"], nodes_w_demand)
-        pm_age = self.calc_age_diff(pm_data["avg_age"], nodes_w_demand)
+        print(self.calc_age_diff(base_data["avg_age"], nodes_w_demand))
+        base_age = pd.DataFrame(
+            self.calc_age_diff(base_data["avg_age"], nodes_w_demand),
+            index=["data"]
+        ).T
+        pm_age = pd.DataFrame(
+            self.calc_age_diff(pm_data["avg_age"], nodes_w_demand),
+            index=["data"]
+        ).T
+
+        base_nodes = base_age[base_age["data"]].index.to_list()
+        pm_nodes = pm_age[pm_age["data"]].index.to_list()
+
+        # for row in base_data["cowpi"].iterrows():
+        #     print(row)
+        # print(base_data["cowpi"])
+
+        cowpi_lowI = [
+            base_data["cowpi"][base_data["cowpi"]["level"] == 0][["cowpi", "wdn_node"]],
+            pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][["cowpi", "wdn_node"]],
+        ]
+
+        cowpi_highI = [
+            base_data["cowpi"][base_data["cowpi"]["level"] == 1][["cowpi", "wdn_node"]],
+            pm_data["cowpi"][pm_data["cowpi"]["level"] == 1][["cowpi", "wdn_node"]],
+        ]
+
+        print(cowpi_lowI[0])
+
+        base_below = [
+            cowpi_lowI[0][~cowpi_lowI[0]["wdn_node"].isin(base_nodes)]["cowpi"] * 100,
+            cowpi_highI[0][~cowpi_highI[0]["wdn_node"].isin(base_nodes)]["cowpi"] * 100,
+        ]
+
+        base_above = [
+            cowpi_lowI[0][cowpi_lowI[0]["wdn_node"].isin(base_nodes)]["cowpi"] * 100,
+            cowpi_highI[0][cowpi_highI[0]["wdn_node"].isin(base_nodes)]["cowpi"] * 100,
+        ]
+
+        pm_below = [
+            cowpi_lowI[1][~cowpi_lowI[1]["wdn_node"].isin(pm_nodes)]["cowpi"] * 100,
+            cowpi_highI[1][~cowpi_highI[1]["wdn_node"].isin(pm_nodes)]["cowpi"] * 100,
+        ]
+
+        pm_above = [
+            cowpi_lowI[1][cowpi_lowI[1]["wdn_node"].isin(pm_nodes)]["cowpi"] * 100,
+            cowpi_highI[1][cowpi_highI[1]["wdn_node"].isin(pm_nodes)]["cowpi"] * 100,
+        ]
+
+        fig, axes = plt.subplots(1, 2, sharey=True)
+        axes[0] = self.make_income_comp_plot(
+            [base_below, base_above],
+            name + "cow_boxplot_income",
+            ["Low-income", "High-income"],
+            # ylabel="%HI",
+            box=1,
+            means=False,
+            outliers="",
+            income_line=None,
+            legend_kwds={"labels": ["<130 hours", ">130 hours"], "loc": "best"},
+            ax=axes[0]
+        )
+        axes[1] = self.make_income_comp_plot(
+            [pm_below, pm_above],
+            name + "cow_boxplot_income",
+            ["Low-income", "High-income"],
+            # ylabel="%HI",
+            box=1,
+            means=False,
+            outliers="",
+            income_line=None,
+            legend_kwds={"labels": ["<130 hours", ">130 hours"], "loc": "best"},
+            ax=axes[1]
+        )
+
+        for i in base_below:
+            print(i.median())
+        for i in base_above:
+            print(i.median())
+        for i in pm_below:
+            print(i.median())
+        for i in pm_above:
+            print(i.median())
+
+        axes[0].text(
+            0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0].transAxes
+        )
+        axes[1].text(
+            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
+        )
+
+        plt.gcf().set_size_inches(7, 3.5)
+
+        plt.savefig(
+            self.pub_loc + name + "cow_threshold_boxplot." + self.format,
+            format=self.format,
+            bbox_inches="tight",
+            transparent=self.transparent,
+        )
+        plt.close()
 
         if demographics:
-            fix, axes = plt.subplots(3, 1)
-
             """Make race cross low-income plot"""
             low_race = self.filter_demo(
                 0, "white", "cowpi", 100, data=[self.base, self.pm]
@@ -3461,6 +3571,8 @@ class Graphics(BaseGraphics):
             print([a.median() for a in high_race["white"]])
             print([a.median() for a in high_race["nonwhite"]])
 
+            fix, axes = plt.subplots(3, 1)
+
             axes[0] = self.make_income_comp_plot(
                 [
                     low_race["white"],
@@ -3481,7 +3593,7 @@ class Graphics(BaseGraphics):
                         "High-income White",
                         "High-income Non-white",
                     ],
-                    "loc": (0.4, 0.49),
+                    "loc": "best",
                 },
                 ax=axes[0],
             )
@@ -3520,7 +3632,7 @@ class Graphics(BaseGraphics):
                         "High-income Hispanic",
                         "High-income Non-Hispanic",
                     ],
-                    "loc": (0.4, 0.49),
+                    "loc": "best",
                 },
                 ax=axes[1],
             )
@@ -3559,7 +3671,7 @@ class Graphics(BaseGraphics):
                         "High-income Renter",
                         "High-income Non-renter",
                     ],
-                    "loc": (0.4, 0.49),
+                    "loc": "best",
                 },
                 ax=axes[2],
             )
@@ -3791,6 +3903,13 @@ class Graphics(BaseGraphics):
                 node_cmap="viridis",
                 vmax_inp=10,
             )
+            axes[0].text(
+                0.5, -0.04, "(a)", size=12, ha="center", transform=axes[0].transAxes
+            )
+            axes[1].text(
+                0.5, -0.04, "(b)", size=12, ha="center", transform=axes[1].transAxes
+            )
+
             # fig, axes = plt.subplots(2, 2)
             # axes[0, 0] = self.bg_map(
             #     ax=axes[0, 0],

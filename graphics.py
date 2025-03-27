@@ -39,11 +39,11 @@ plots = Graphics(
 # plots.make_equity_plots()
 
 """ Cost plots """
-plots.make_cost_plots(map=True)
+# plots.make_cost_plots(map=True)
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
+plots.cowpi_boxplot(demographics=False, di=False, perc=False, sa=False, map=True)
 
 """ Block group map of city """
 # plots.make_city_map()
