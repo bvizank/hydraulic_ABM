@@ -340,18 +340,20 @@ class BaseGraphics:
         for i in range(int((len(res_data.columns) - 1) / 30)):
             if i != 0:
                 res_data.insert((31 * i), str(i), 0)
+
         res_data = res_data.iloc[:, ::-1].apply(
             lambda x: x - x.shift(-1, axis=0), axis=1
         )
+
         for i in range(int((len(res_data.columns) - 1) / 30)):
             if i != 0:
                 res_data = res_data.drop(str(i), axis=1)
 
         res_data = res_data.iloc[:, ::-1]
         # res_data = res_data.iloc[:, -self.days :]
-        # res_sd = res_data.std(axis=0).reset_index(drop=True)
+        res_var = res_data.var(axis=0).reset_index(drop=True)
         res_data = res_data.mean(axis=0).reset_index(drop=True)
-        # res_sd = res_sd.drop(0).reset_index(drop=True)
+        res_var = res_var.drop(0).reset_index(drop=True)
         res_data = res_data.drop(0).reset_index(drop=True)
 
         nonres_data = (
@@ -363,11 +365,14 @@ class BaseGraphics:
         print(nonres_data)
         print(res_data)
 
-        # nonres_var = (
-        #     data["var_demand"][nodes_w_demand].sum(axis=1) * 3600
-        # ).reset_index(drop=True)
-        # nonres_var = nonres_var.groupby(nonres_var.index // 24).sum()
-        # nonres_var = nonres_var - res_data
+        nonres_var = (
+            data["var_demand"][nodes_w_demand].sum(axis=1) * 3600
+        ).reset_index(drop=True)
+        nonres_var = nonres_var.groupby(nonres_var.index // 24).sum()
+        nonres_var = nonres_var - res_var
+
+        print(nonres_var)
+        print(res_var)
 
         # nonres_sd = ut.calc_error(nonres_var, self.error)
 
@@ -2139,44 +2144,6 @@ class Graphics(BaseGraphics):
             )
             plt.close()
 
-            ax = plt.subplot()
-
-            ax = self.plot_demand_res_nonres(ax, self.pm, nodes_w_demand)
-
-            ax.set_xlabel("Time (days)")
-            ax.set_ylabel("Demand (ML/day)")
-            plt.savefig(
-                self.pub_loc + "sum_demand_pm_" + "." + self.format,
-                format=self.format,
-                bbox_inches="tight",
-                transparent=self.transparent,
-            )
-            plt.close()
-            # ax = plt.subplot()
-            # ind_perc_nodes = perc_counts[perc_counts["ind"] > res_t].index
-            # ax = self.plot_demand_by_node(ax, ind_perc_nodes)
-
-            # plt.savefig(
-            #     self.pub_loc + "sum_demand_ind" + "." + self.format,
-            #     format=self.format,
-            #     bbox_inches="tight",
-            # )
-            # plt.close()
-
-            # ax = plt.subplot()
-            # com_perc_nodes = perc_counts[perc_counts["com"] > res_t].index
-            # ax = self.plot_demand_by_node(ax, com_perc_nodes)
-
-            # plt.savefig(
-            #     self.pub_loc + "sum_demand_com" + "." + self.format,
-            #     format=self.format,
-            #     bbox_inches="tight",
-            # )
-            # plt.close()
-
-            # print(len(res_perc_nodes))
-            # print(len(ind_perc_nodes))
-            # print(len(com_perc_nodes))
             print(perc_counts.groupby("type").size())
 
     def age_plots(
