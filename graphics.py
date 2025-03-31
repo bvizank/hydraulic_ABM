@@ -13,12 +13,12 @@ plots = Graphics(
     # scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
     scenario_ls=["base", "basebw", "pm", "pm_nobw"],
     skeletonized=True,
-    single=False,
+    single=True,
     remove_bg=False,
 )
 
 """ Demand plots """
-plots.demand_plots()
+# plots.demand_plots()
 
 """ Flow plots """
 # plots.flow_plots()
@@ -43,7 +43,7 @@ plots.demand_plots()
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-# plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
+# plots.cowpi_boxplot(demographics=False, di=False, perc=False, sa=False, map=True)
 
 """ Block group map of city """
 # plots.make_city_map()
@@ -61,7 +61,7 @@ plots.demand_plots()
 # plots.make_seir_plot(days)
 
 """ Make single plots """
-# plots.make_single_plots("2025-03-07_15-50_0_results", 180, True)
+plots.make_single_plots("30_pm/0", 180, True)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))

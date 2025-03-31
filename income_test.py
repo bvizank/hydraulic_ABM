@@ -98,28 +98,29 @@ def dist_hist(ind_dist, i):
     plt.close()
 
 
-income = list()
-index = 0
-for i, key in enumerate(data):
-    '''
-    Get a set of samples for the given income range that is 100
-    times longer than the percentage given by the data.
-    e.g. for $0 - $10,000, we want 76 samples uniformly distributed
-    between 0 and 10000.
-    '''
-    if i != (len(data) - 1):
-        for j in range(math.ceil(data[key]/1000*4606)):
-            income.append(random.uniform(
-                list(data.keys())[i], list(data.keys())[i+1]
-            ))
-    else:
-        # at the end we need to arbitrarily set an upper bound
-        for j in range(math.ceil(data[key]/1000*4606)):
-            income.append(random.uniform(
-                list(data.keys())[i], list(data.keys())[i]*3
-            ))
-    index += data[key]
+# income = list()
+# index = 0
+# for i, key in enumerate(data):
+#     '''
+#     Get a set of samples for the given income range that is 100
+#     times longer than the percentage given by the data.
+#     e.g. for $0 - $10,000, we want 76 samples uniformly distributed
+#     between 0 and 10000.
+#     '''
+#     if i != (len(data) - 1):
+#         for j in range(math.ceil(data[key]/1000*4606)):
+#             income.append(random.uniform(
+#                 list(data.keys())[i], list(data.keys())[i+1]
+#             ))
+#     else:
+#         # at the end we need to arbitrarily set an upper bound
+#         for j in range(math.ceil(data[key]/1000*4606)):
+#             income.append(random.uniform(
+#                 list(data.keys())[i], list(data.keys())[i]*3
+#             ))
+#     index += data[key]
 
+income = ut.income_list(dt.)
 income = np.array(income)
 print(len(income))
 print(np.median(income))

@@ -999,6 +999,14 @@ class Parameters(Model):
             index=self.h_index,
         )
 
+        if self.verbose == 0.5:
+            print("Median income:")
+            print(self.income_comb["income"].median())
+            print("Mean income:")
+            print(self.income_comb["income"].mean())
+            print("20th percentile income:")
+            print(self.income_comb["income"].quantile(0.2))
+
     def set_attributes(self):
         """
         Assign agents an age 1 = 0-19, 2 = 20-29, 3 = 30-39, 4 = 40-49,
