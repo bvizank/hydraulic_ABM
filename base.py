@@ -1048,16 +1048,16 @@ class Graphics(BaseGraphics):
         ''' Make plots of aggregate demand data '''
         demand_base = self.base['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         demand_basebw = self.basebw['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         demand_pm = self.pm['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         demand_pm_nobw = self.pm_nobw['avg_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
              demand_basebw.sum(axis=1).rolling(24).mean(),
@@ -1069,16 +1069,16 @@ class Graphics(BaseGraphics):
 
         var_base = self.base['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         var_basebw = self.basebw['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         var_pm = self.pm['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         var_pm_nobw = self.pm_nobw['var_demand'][
             self.res_nodes + self.com_nodes + self.ind_nodes
-        ] / 1000 * 3600
+        ]
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
              var_basebw.sum(axis=1).rolling(24).mean(),
@@ -1090,7 +1090,7 @@ class Graphics(BaseGraphics):
 
         demand_err = ut.calc_error(demand_var, self.error)
 
-        fig, axes = plt.subplots(2, 1)
+        fig, axes = plt.subplots(1, 2, sharey=True)
         # format the y axis ticks to have a dollar sign and thousands commas
         fmt = '{x:,.0f}'
         tick = mtick.StrMethodFormatter(fmt)
@@ -1098,7 +1098,8 @@ class Graphics(BaseGraphics):
         axes[1].yaxis.set_major_formatter(tick) 
 
         axes[1] = self.make_avg_plot(
-            axes[1], demand, demand_err, ['Base', 'TWA', 'PM', 'TWA+PM'],
+            axes[1], demand / 1000 * 3600, demand_err / 1000 * 3600,
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
             self.x_values_hour, show_labels=False
         )
 
@@ -1109,16 +1110,16 @@ class Graphics(BaseGraphics):
         ''' Plot residential demand in a subfigure '''
         demand_base = self.base['avg_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         demand_basebw = self.basebw['avg_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         demand_pm = self.pm['avg_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         demand_pm_nobw = self.pm_nobw['avg_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         demand = pd.concat(
             [demand_base.sum(axis=1).rolling(24).mean(),
              demand_basebw.sum(axis=1).rolling(24).mean(),
@@ -1130,16 +1131,16 @@ class Graphics(BaseGraphics):
 
         var_base = self.base['var_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         var_basebw = self.basebw['var_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         var_pm = self.pm['var_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         var_pm_nobw = self.pm_nobw['var_demand'][
             self.res_nodes
-        ] / 1000 * 3600
+        ]
         demand_var = pd.concat(
             [var_base.sum(axis=1).rolling(24).mean(),
              var_basebw.sum(axis=1).rolling(24).mean(),
@@ -1152,7 +1153,7 @@ class Graphics(BaseGraphics):
         demand_err = ut.calc_error(demand_var, self.error)
 
         axes[0] = self.make_avg_plot(
-            axes[0], demand, demand_err,
+            axes[0], demand / 1000 * 3600, demand_err / 1000 * 3600,
             ['Base', 'TWA', 'PM', 'TWA+PM'], self.x_values_hour
         )
 
@@ -1163,7 +1164,7 @@ class Graphics(BaseGraphics):
                      transform=axes[1].transAxes)
         fig.supxlabel('Time (days)', y=0.03)
         fig.supylabel('Demand (L)', x=0.06)
-        plt.gcf().set_size_inches(3.5, 7)
+        plt.gcf().set_size_inches(7, 3.5)
         plt.tight_layout()
 
         plt.savefig(self.pub_loc + 'sum_demand_aggregate' + '.' + self.format,
@@ -1186,7 +1187,7 @@ class Graphics(BaseGraphics):
         print(last30_age)
 
         axes = plt.subplot()
-        
+
         print((last30_age > 150).mean())
 
         axes.boxplot(last30_age, showmeans=True)
@@ -1239,6 +1240,63 @@ class Graphics(BaseGraphics):
             show_labels=True
         )
         plt.savefig(self.pub_loc + 'tank_age.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Make system-wide age plot '''
+        age_base = self.base['avg_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        age_basebw = self.basebw['avg_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        age_pm = self.pm['avg_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        age_pm_nobw = self.pm_nobw['avg_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        age = pd.concat(
+            [age_base.mean(axis=1).rolling(24).mean(),
+             age_basebw.mean(axis=1).rolling(24).mean(),
+             age_pm_nobw.mean(axis=1).rolling(24).mean(),
+             age_pm.mean(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
+        )
+
+        var_base = self.base['var_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        var_basebw = self.basebw['var_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        var_pm = self.pm['var_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        var_pm_nobw = self.pm_nobw['var_age'][
+            self.res_nodes + self.com_nodes + self.ind_nodes
+        ]
+        age_var = pd.concat(
+            [var_base.mean(axis=1).rolling(24).mean(),
+             var_basebw.mean(axis=1).rolling(24).mean(),
+             var_pm_nobw.mean(axis=1).rolling(24).mean(),
+             var_pm.mean(axis=1).rolling(24).mean()],
+            axis=1,
+            keys=['Base', 'TWA', 'PM', 'TWA+PM']
+        )
+
+        age_err = ut.calc_error(age_var, self.error)
+
+        fig, axes = plt.subplots(1, 1)
+
+        axes = self.make_avg_plot(
+            axes, age / 3600, age_err / 3600,
+            ['Base', 'TWA', 'PM', 'TWA+PM'],
+            self.x_values_hour, fig_name="system_water_age",
+            xlabel="Time (days)", ylabel="Water Age (hours)", show_labels=True
+        )
+        plt.savefig(self.pub_loc + 'system_water_age' + '.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -1299,6 +1357,54 @@ class Graphics(BaseGraphics):
         #         ax.axhline(y=150, color='k', linestyle='dashdot')
 
         plt.savefig(self.pub_loc + 'mean_age_sector.' + self.format,
+                    format=self.format, bbox_inches='tight')
+        plt.close()
+
+        ''' Make age plot by sector for base, twa, and PM '''
+        cols = ['Residential', 'Commercial', 'Industrial']
+
+        age_pm = self.calc_sec_averages(self.pm['avg_age'])
+        age_sd_pm = self.calc_sec_averages(self.pm['var_age'])
+        age_pm_err = ut.calc_error(age_sd_pm, self.error)
+
+        age_pm_nobw = self.calc_sec_averages(self.pm_nobw['avg_age'])
+        age_sd_pm_nobw = self.calc_sec_averages(self.pm_nobw['var_age'])
+        age_pm_nobw_err = ut.calc_error(age_sd_pm_nobw, self.error)
+
+        age_base = self.calc_sec_averages(self.base['avg_age'])
+        age_sd_base = self.calc_sec_averages(self.base['var_age'])
+        age_base_err = ut.calc_error(age_sd_base, self.error)
+
+        fig, axes = plt.subplots(nrows=1, ncols=3, sharey=True)
+        axes[0] = self.make_avg_plot(
+            axes[0], age_base / 3600, age_base_err / 3600,
+            cols, self.x_values_hour
+        )
+        axes[1] = self.make_avg_plot(
+            axes[1], age_basebw / 3600, age_basebw_err / 3600,
+            cols, self.x_values_hour
+        )
+        axes[2] = self.make_avg_plot(
+            axes[2], age_pm_nobw / 3600, age_pm_nobw_err / 3600,
+            cols, self.x_values_hour
+        )
+
+        axes[0].legend(cols)
+        # axes[0].text(
+        #     0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0].transAxes
+        # )
+        # axes[1].text(
+        #     0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
+        # )
+        # axes[2].text(
+        #     0.5, -0.14, "(c)", size=12, ha="center", transform=axes[2].transAxes
+        # )
+
+        fig.supxlabel('Time (days)', y=-0.06)
+        fig.supylabel('Water Age (hours)', x=0.04)
+        plt.gcf().set_size_inches(9, 3.5)
+
+        plt.savefig(self.pub_loc + 'mean_age_sector_nopm.' + self.format,
                     format=self.format, bbox_inches='tight')
         plt.close()
 
@@ -1375,25 +1481,6 @@ class Graphics(BaseGraphics):
             self.pm['cowpi'][self.pm['cowpi']['level'] == 1]['cowpi']*100
         ]
 
-        # cowpi_med = [
-        #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cowpi']*100,
-        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 2]['cowpi']*100,
-        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 2]['cowpi']*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 2]['cowpi']*100
-        # ]
-
-        # cowpi_high = [
-        #     self.base['cowpi'][self.base['cowpi']['level'] == 3]['cowpi']*100,
-        #     self.basebw['cowpi'][self.basebw['cowpi']['level'] == 3]['cowpi']*100,
-        #     self.pm_nobw['cowpi'][self.pm_nobw['cowpi']['level'] == 3]['cowpi']*100,
-        #     self.pm['cowpi'][self.pm['cowpi']['level'] == 3]['cowpi']*100
-        # ]
-
-        # data = {
-        #     'low': cowpi_low,
-        #     'med': cowpi_med,
-        #     'high': cowpi_high
-        # }
         data = {
             'low': age_low,
             'high': age_high
@@ -2221,7 +2308,7 @@ class Graphics(BaseGraphics):
                      transform=axes[1].transAxes)
         fig.supxlabel('Time (days)', y=-0.03)
         fig.supylabel('Percent of Households', x=0.04)
-        plt.gcf().set_size_inches(7, 3.5)
+        plt.gcf().set_size_inches(9, 3.5)
 
         plt.savefig(self.pub_loc + 'twa_comp.' + self.format,
                     format=self.format, bbox_inches='tight')
