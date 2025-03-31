@@ -4302,7 +4302,7 @@ class Graphics(BaseGraphics):
         )
         fig.supxlabel("Time (days)", y=-0.03)
         fig.supylabel("Percent of Households", x=0.04)
-        plt.gcf().set_size_inches(7, 3.5)
+        plt.gcf().set_size_inches(9, 3.5)
 
         plt.savefig(
             self.pub_loc + "twa_comp." + self.format,
