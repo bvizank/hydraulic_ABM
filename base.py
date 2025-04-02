@@ -2414,16 +2414,16 @@ class Graphics(BaseGraphics):
             )
 
             axes[0, 0].text(
-                0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
+                0.5, -0.14, "Base", size=12, ha="center", transform=axes[0, 0].transAxes
             )
             axes[0, 1].text(
-                0.5, -0.14, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
+                0.5, -0.14, "TWA", size=12, ha="center", transform=axes[0, 1].transAxes
             )
             axes[1, 0].text(
-                0.5, -0.14, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
+                0.5, -0.14, "PM", size=12, ha="center", transform=axes[1, 0].transAxes
             )
             axes[1, 1].text(
-                0.5, -0.14, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
+                0.5, -0.14, "TWA+PM", size=12, ha="center", transform=axes[1, 1].transAxes
             )
             # fig.supxlabel("Time (days)", y=0)
             # fig.supylabel("Age (hrs)", x=0.04)

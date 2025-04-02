@@ -18,7 +18,7 @@ plots = Graphics(
 )
 
 """ Demand plots """
-# plots.demand_plots()
+plots.demand_plots()
 
 """ Flow plots """
 # plots.flow_plots()
