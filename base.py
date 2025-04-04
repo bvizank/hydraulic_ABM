@@ -1075,6 +1075,7 @@ class BaseGraphics:
         income_line=4.6,
         legend_kwds={},
         ax=None,
+        sec_x=None,
     ):
         if box == 2:
             fig, axes = plt.subplots(1, 2, sharey=True)
@@ -1125,6 +1126,10 @@ class BaseGraphics:
             for i, block in enumerate(data):
                 pos = [x + (width * i) + 0.01 for x in xlocations]
                 # print(f"Median for first block: {block[0].median()}")
+                if sec_x is not None:
+                    box_props = {"facecolor": "C" + str(i % 2)}
+                else:
+                    box_props = {"facecolor": "C" + str(i)}
                 axes.append(
                     ax.boxplot(
                         block,
@@ -1134,7 +1139,7 @@ class BaseGraphics:
                         positions=pos,
                         manage_ticks=False,
                         patch_artist=True,
-                        boxprops={"facecolor": "C" + str(i)},
+                        boxprops=box_props,
                         medianprops={"color": "black"},
                     )
                 )
@@ -1147,7 +1152,19 @@ class BaseGraphics:
 
             # set the x tick location and labels
             ax.set_xticks([x + len(data) / 2 * width - (width / 2) for x in xlocations])
+            ax.tick_params(axis="x", length=0)
             ax.set_xticklabels(xlabel, rotation=0)
+
+            if sec_x is not None:
+                sec = ax.secondary_xaxis(location=0)
+                sec_locs = list()
+                for i in xlocations:
+                    sec_locs.append(i + (width/2))
+                    sec_locs.append(i + (width/2*5))
+                sec.set_xticks(sec_locs, labels=sec_x * len(xlocations))
+                print("Second axis locations")
+                print(sec_locs)
+
             ax.legend(
                 [a["boxes"][0] for a in axes],
                 legend_kwds["labels"],
@@ -3101,7 +3118,7 @@ class Graphics(BaseGraphics):
                 cost_high_race["white"],
                 cost_high_race["nonwhite"],
             ],
-            xlabel=["Base", "TWA+PM"],
+            xlabel=["\nBase", "\nTWA+PM"],
             ylabel="Cost ($)",
             box=1,
             means=False,
@@ -3109,14 +3126,15 @@ class Graphics(BaseGraphics):
             outliers="",
             legend_kwds={
                 "labels": [
-                    "Low-income White",
-                    "Low-income Non-white",
-                    "High-income White",
-                    "High-income Non-white",
+                    "White",
+                    "Non-white",
+                    # "High-income White",
+                    # "High-income Non-white",
                 ],
                 "loc": "upper left",
             },
             ax=axes[0],
+            sec_x=["Low", "High"]
         )
 
         # hispanic cost boxplot
@@ -3143,7 +3161,7 @@ class Graphics(BaseGraphics):
                 cost_high_hispanic["nonhispanic"],
             ],
             name + "cost_boxplot_hispanic",
-            ["Base", "TWA+PM"],
+            ["\nBase", "\nTWA+PM"],
             ylabel="Cost ($)",
             box=1,
             means=False,
@@ -3151,14 +3169,15 @@ class Graphics(BaseGraphics):
             outliers="",
             legend_kwds={
                 "labels": [
-                    "Low-income Hispanic",
-                    "Low-income Non-Hispanic",
-                    "High-income Hispanic",
-                    "High-income Non-Hispanic",
+                    "Hispanic",
+                    "Non-Hispanic",
+                    # "High-income Hispanic",
+                    # "High-income Non-Hispanic",
                 ],
                 "loc": "upper left",
             },
             ax=axes[1],
+            sec_x=["Low", "High"]
         )
 
         # renter cost boxplot
@@ -3186,7 +3205,7 @@ class Graphics(BaseGraphics):
                 cost_high_renter["nonrenter"],
             ],
             name + "cost_boxplot_renter",
-            ["Base", "TWA+PM"],
+            ["\nBase", "\nTWA+PM"],
             ylabel="Cost ($)",
             box=1,
             means=False,
@@ -3194,25 +3213,34 @@ class Graphics(BaseGraphics):
             outliers="",
             legend_kwds={
                 "labels": [
-                    "Low-income Renter",
-                    "Low-income Non-renter",
-                    "High-income Renter",
-                    "High-income Non-renter",
+                    "Renter",
+                    "Non-renter",
+                    # "High-income Renter",
+                    # "High-income Non-renter",
                 ],
                 "loc": "upper left",
             },
             ax=axes[2],
+            sec_x=["Low", "High"]
         )
 
         axes[0].text(
-            0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
+            0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0].transAxes
         )
         axes[1].text(
-            0.5, -0.1, "(b)", size=12, ha="center", transform=axes[1].transAxes
+            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
         )
         axes[2].text(
-            0.5, -0.1, "(c)", size=12, ha="center", transform=axes[2].transAxes
+            0.5, -0.14, "(c)", size=12, ha="center", transform=axes[2].transAxes
         )
+
+        # # Shrink current axis by 20%
+        # box = ax.get_position()
+        # ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+
+        # # Put a legend to the right of the current axis
+        # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.subplots_adjust(hspace=0.3)
 
         plt.gcf().set_size_inches(3.5, 7)
 
@@ -3548,21 +3576,22 @@ class Graphics(BaseGraphics):
                     high_race["nonwhite"],
                 ],
                 "cow_boxplot_race",
-                ["Base", "TWA+PM"],
+                ["\nBase", "\nTWA+PM"],
                 box=1,
                 means=False,
                 outliers="",
                 income_line=None,
                 legend_kwds={
                     "labels": [
-                        "Low-income White",
-                        "Low-income Non-white",
-                        "High-income White",
-                        "High-income Non-white",
+                        "White",
+                        "Non-white",
+                        # "High-income White",
+                        # "High-income Non-white",
                     ],
                     "loc": "best",
                 },
                 ax=axes[0],
+                sec_x=["Low", "High"]
             )
 
             """ Make hispanic low-income plot """
@@ -3587,21 +3616,22 @@ class Graphics(BaseGraphics):
                     high_hispanic["nonhispanic"],
                 ],
                 "cow_boxplot_hispanic",
-                ["Base", "TWA+PM"],
+                ["\nBase", "\nTWA+PM"],
                 box=1,
                 means=False,
                 outliers="",
                 income_line=None,
                 legend_kwds={
                     "labels": [
-                        "Low-income Hispanic",
-                        "Low-income Non-Hispanic",
-                        "High-income Hispanic",
-                        "High-income Non-Hispanic",
+                        "Hispanic",
+                        "Non-Hispanic",
+                        # "High-income Hispanic",
+                        # "High-income Non-Hispanic",
                     ],
                     "loc": "best",
                 },
                 ax=axes[1],
+                sec_x=["Low", "High"]
             )
 
             """ Make hispanic low-income plot """
@@ -3626,7 +3656,7 @@ class Graphics(BaseGraphics):
                     high_renter["nonrenter"],
                 ],
                 "cow_boxplot_renter",
-                ["Base", "TWA+PM"],
+                ["\nBase", "\nTWA+PM"],
                 box=1,
                 means=False,
                 outliers="",
