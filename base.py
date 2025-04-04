@@ -1159,8 +1159,8 @@ class BaseGraphics:
                 sec = ax.secondary_xaxis(location=0)
                 sec_locs = list()
                 for i in xlocations:
-                    sec_locs.append(i + (width/2))
-                    sec_locs.append(i + (width/2*5))
+                    sec_locs.append(i + (width / 2))
+                    sec_locs.append(i + (width / 2 * 5))
                 sec.set_xticks(sec_locs, labels=sec_x * len(xlocations))
                 print("Second axis locations")
                 print(sec_locs)
@@ -2440,7 +2440,12 @@ class Graphics(BaseGraphics):
                 0.5, -0.14, "PM", size=12, ha="center", transform=axes[1, 0].transAxes
             )
             axes[1, 1].text(
-                0.5, -0.14, "TWA+PM", size=12, ha="center", transform=axes[1, 1].transAxes
+                0.5,
+                -0.14,
+                "TWA+PM",
+                size=12,
+                ha="center",
+                transform=axes[1, 1].transAxes,
             )
             # fig.supxlabel("Time (days)", y=0)
             # fig.supylabel("Age (hrs)", x=0.04)
@@ -3134,7 +3139,7 @@ class Graphics(BaseGraphics):
                 "loc": "upper left",
             },
             ax=axes[0],
-            sec_x=["Low", "High"]
+            sec_x=["Low", "High"],
         )
 
         # hispanic cost boxplot
@@ -3177,7 +3182,7 @@ class Graphics(BaseGraphics):
                 "loc": "upper left",
             },
             ax=axes[1],
-            sec_x=["Low", "High"]
+            sec_x=["Low", "High"],
         )
 
         # renter cost boxplot
@@ -3221,7 +3226,7 @@ class Graphics(BaseGraphics):
                 "loc": "upper left",
             },
             ax=axes[2],
-            sec_x=["Low", "High"]
+            sec_x=["Low", "High"],
         )
 
         axes[0].text(
@@ -3372,7 +3377,10 @@ class Graphics(BaseGraphics):
             pm_data = in_data[3]
 
         print(base_data["cowpi"][["income", "i"]].groupby("i").median().mean())
-        print(base_data["cowpi"][["income", "i"]].groupby("i").median().std() / math.sqrt(30))
+        print(
+            base_data["cowpi"][["income", "i"]].groupby("i").median().std()
+            / math.sqrt(30)
+        )
         print(base_data["cowpi"][["income", "i"]].groupby("i").quantile(0.2))
         print(base_data["cowpi"]["income"].median())
         print(base_data["cowpi"]["income"].mean())
@@ -3443,12 +3451,10 @@ class Graphics(BaseGraphics):
         ]
         print(self.calc_age_diff(base_data["avg_age"], nodes_w_demand))
         base_age = pd.DataFrame(
-            self.calc_age_diff(base_data["avg_age"], nodes_w_demand),
-            index=["data"]
+            self.calc_age_diff(base_data["avg_age"], nodes_w_demand), index=["data"]
         ).T
         pm_age = pd.DataFrame(
-            self.calc_age_diff(pm_data["avg_age"], nodes_w_demand),
-            index=["data"]
+            self.calc_age_diff(pm_data["avg_age"], nodes_w_demand), index=["data"]
         ).T
 
         base_nodes = base_age[base_age["data"]].index.to_list()
@@ -3501,7 +3507,7 @@ class Graphics(BaseGraphics):
             outliers="",
             income_line=None,
             legend_kwds={"labels": ["<130 hours", ">130 hours"], "loc": "best"},
-            ax=axes[0]
+            ax=axes[0],
         )
         axes[1] = self.make_income_comp_plot(
             [pm_below, pm_above],
@@ -3513,7 +3519,7 @@ class Graphics(BaseGraphics):
             outliers="",
             income_line=None,
             legend_kwds={"labels": ["<130 hours", ">130 hours"], "loc": "best"},
-            ax=axes[1]
+            ax=axes[1],
         )
 
         for i in base_below:
@@ -3588,10 +3594,10 @@ class Graphics(BaseGraphics):
                         # "High-income White",
                         # "High-income Non-white",
                     ],
-                    "loc": "best",
+                    "loc": "upper left",
                 },
                 ax=axes[0],
-                sec_x=["Low", "High"]
+                sec_x=["Low", "High"],
             )
 
             """ Make hispanic low-income plot """
@@ -3628,10 +3634,10 @@ class Graphics(BaseGraphics):
                         # "High-income Hispanic",
                         # "High-income Non-Hispanic",
                     ],
-                    "loc": "best",
+                    "loc": "upper left",
                 },
                 ax=axes[1],
-                sec_x=["Low", "High"]
+                sec_x=["Low", "High"],
             )
 
             """ Make hispanic low-income plot """
@@ -3663,26 +3669,28 @@ class Graphics(BaseGraphics):
                 income_line=None,
                 legend_kwds={
                     "labels": [
-                        "Low-income Renter",
-                        "Low-income Non-renter",
-                        "High-income Renter",
-                        "High-income Non-renter",
+                        "Renter",
+                        "Non-renter",
+                        # "High-income Renter",
+                        # "High-income Non-renter",
                     ],
-                    "loc": "best",
+                    "loc": "upper left",
                 },
                 ax=axes[2],
+                sec_x=["Low", "High"],
             )
             axes[0].text(
-                0.5, -0.1, "(a)", size=12, ha="center", transform=axes[0].transAxes
+                0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0].transAxes
             )
             axes[1].text(
-                0.5, -0.1, "(b)", size=12, ha="center", transform=axes[1].transAxes
+                0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
             )
             axes[2].text(
-                0.5, -0.1, "(c)", size=12, ha="center", transform=axes[2].transAxes
+                0.5, -0.14, "(c)", size=12, ha="center", transform=axes[2].transAxes
             )
 
-            plt.gcf().set_size_inches(3.5, 7)
+            plt.subplots_adjust(hspace=0.3)
+            plt.gcf().set_size_inches(3.5, 7.8)
 
             plt.savefig(
                 self.pub_loc + name + "cow_demo_boxplots." + self.format,
@@ -4164,14 +4172,15 @@ class Graphics(BaseGraphics):
         node_buildings = pd.read_pickle("buildings.pkl")
         counts = node_buildings.value_counts(["wdn_node", "type"]).unstack()
         perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
+        print(perc_counts[["com", "caf", "ind", "gro"]].sum(axis=1))
         # print(perc_counts)
 
         ax = plt.subplot()
         ax = self.bg_map(
             ax=ax,
             wn_nodes=True,
-            node_data=perc_counts["res"],
-            label_nodes="% Residential",
+            node_data=perc_counts[["com", "caf", "ind", "gro"]].sum(axis=1),
+            label_nodes="% Non-residential",
             node_cmap="viridis",
             legend_bool=True,
         )
