@@ -2430,37 +2430,38 @@ class Graphics(BaseGraphics):
                 node_cmap=ListedColormap(["blue", "red"]),
             )
 
-            axes[0, 0].text(
-                0.5, -0.14, "Base", size=12, ha="center", transform=axes[0, 0].transAxes
-            )
-            axes[0, 1].text(
-                0.5, -0.14, "TWA", size=12, ha="center", transform=axes[0, 1].transAxes
-            )
-            axes[1, 0].text(
-                0.5, -0.14, "PM", size=12, ha="center", transform=axes[1, 0].transAxes
-            )
-            axes[1, 1].text(
-                0.5,
-                -0.14,
-                "TWA+PM",
-                size=12,
-                ha="center",
-                transform=axes[1, 1].transAxes,
-            )
+            # axes[0, 0].text(
+            #     0.5, -0.14, "Base", size=12, ha="center", transform=axes[0, 0].transAxes
+            # )
+            # axes[0, 1].text(
+            #     0.5, -0.14, "TWA", size=12, ha="center", transform=axes[0, 1].transAxes
+            # )
+            # axes[1, 0].text(
+            #     0.5, -0.14, "PM", size=12, ha="center", transform=axes[1, 0].transAxes
+            # )
+            # axes[1, 1].text(
+            #     0.5,
+            #     -0.14,
+            #     "TWA+PM",
+            #     size=12,
+            #     ha="center",
+            #     transform=axes[1, 1].transAxes,
+            # )
             # fig.supxlabel("Time (days)", y=0)
             # fig.supylabel("Age (hrs)", x=0.04)
-            orange_dot = mlines.Line2D(
-                [0], [0], color="red", linewidth=0, marker=".", markersize=10
-            )
-            blue_dot = mlines.Line2D(
-                [0], [0], color="blue", linewidth=0, marker=".", markersize=10
-            )
-            plt.gcf().set_size_inches(7, 6)
-            fig.legend(
-                handles=[blue_dot, orange_dot],
-                labels=["<" + str(thres_n) + " hours", ">" + str(thres_n) + " hours"],
-                loc="outside lower center",
-            )
+            # orange_dot = mlines.Line2D(
+            #     [0], [0], color="red", linewidth=0, marker=".", markersize=10
+            # )
+            # blue_dot = mlines.Line2D(
+            #     [0], [0], color="blue", linewidth=0, marker=".", markersize=10
+            # )
+            plt.gcf().set_size_inches(7, 7)
+            # fig.legend(
+            #     handles=[blue_dot, orange_dot],
+            #     labels=["<" + str(thres_n) + " hours", ">" + str(thres_n) + " hours"],
+            #     loc="outside lower center",
+            # )
+            plt.subplots_adjust(hspace=0.01, wspace=0.01)
 
             plt.savefig(
                 self.pub_loc + name + "intersection_age." + self.format,
@@ -3572,7 +3573,7 @@ class Graphics(BaseGraphics):
             print([a.median() for a in high_race["white"]])
             print([a.median() for a in high_race["nonwhite"]])
 
-            fix, axes = plt.subplots(3, 1)
+            fix, axes = plt.subplots(1, 3)
 
             axes[0] = self.make_income_comp_plot(
                 [
@@ -3690,7 +3691,7 @@ class Graphics(BaseGraphics):
             )
 
             plt.subplots_adjust(hspace=0.3)
-            plt.gcf().set_size_inches(3.5, 7.8)
+            plt.gcf().set_size_inches(8, 3.5)
 
             plt.savefig(
                 self.pub_loc + name + "cow_demo_boxplots." + self.format,
@@ -4000,28 +4001,28 @@ class Graphics(BaseGraphics):
             )
             plt.close()
 
-            # fig, axes = plt.subplots(1, 1)
-            # axes = self.bg_map(
-            #     ax=axes,
-            #     node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
-            #         ["cowpi", "wdn_node"]
-            #     ]
-            #     .groupby("wdn_node")
-            #     .mean()
-            #     * 100,
-            #     wn_nodes=True,
-            #     node_cmap="Oranges",
-            #     vmax_inp=10,
-            #     # legend_bool=True,
-            #     # label="Cost of water / household income (%)",
-            # )
-            # plt.savefig(
-            #     self.pub_loc + name + "cowpi_network_3mt." + self.format,
-            #     format=self.format,
-            #     bbox_inches="tight",
-            #     transparent=self.transparent,
-            # )
-            # plt.close()
+            fig, axes = plt.subplots(1, 1)
+            axes = self.bg_map(
+                ax=axes,
+                node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ]
+                .groupby("wdn_node")
+                .mean()["cowpi"]
+                * 100,
+                wn_nodes=True,
+                node_cmap="viridis",
+                vmax_inp=10,
+                legend_bool=True,
+                label_nodes="%HI",
+            )
+            plt.savefig(
+                self.pub_loc + name + "cowpi_network_pm." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+                transparent=self.transparent,
+            )
+            plt.close()
 
     def make_city_map(self):
         """Plot the block groups of clinton"""
