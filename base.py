@@ -523,17 +523,27 @@ class BaseGraphics:
 
         return out_dict
 
-    def calc_industry_distance(self, wn):
+    def calc_industry_distance(self, wn, res=None, ind=None):
         """
         Function to calculate the distance from each residential node
         to the nearest industrial node.
         """
         ind_distances = dict()
         close_node = dict()
-        for res_name in self.res_nodes:
+        if res is None:
+            res_ls = self.res_nodes
+        else:
+            res_ls = res
+
+        if ind is None:
+            ind_ls = self.ind_nodes
+        else:
+            ind_ls = ind
+
+        for res_name in res_ls:
             node = wn.get_node(res_name)
             curr_node_dis = dict()
-            for ind_name in self.ind_nodes:
+            for ind_name in ind_ls:
                 ind_node = wn.get_node(ind_name)
                 curr_node_dis[ind_node.name] = self.calc_distance(node, ind_node)
             # find the key with the min value, i.e. the node with the lowest distance
@@ -959,37 +969,37 @@ class BaseGraphics:
         vector and two y vectors.
         """
         mean_y1 = binned_statistic(
-            x, y1, statistic="mean", bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x, y1, statistic="mean" # , bins=[0, 100, 1000, 1500, 2000, 2500, 3000, 3500]
         )
         mean_y2 = binned_statistic(
-            x, y2, statistic="mean", bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x, y2, statistic="mean" # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
         )
 
         sd_y1 = binned_statistic(
-            x, sd1, statistic="mean", bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x, sd1, statistic="mean" # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
         )
         sd_y2 = binned_statistic(
-            x, sd2, statistic="mean", bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x, sd2, statistic="mean" # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
         )
-        sd_y1 = ut.calc_error(sd_y1.statistic, self.error) / 3600
-        sd_y2 = ut.calc_error(sd_y2.statistic, self.error) / 3600
+        sd_y1 = ut.calc_error(sd_y1.statistic, self.error) / 100
+        sd_y2 = ut.calc_error(sd_y2.statistic, self.error) / 100
         # print(mean_y1.bin_edges)
 
-        bin_names = [
-            "0-500",
-            "500-1000",
-            "1000-1500",
-            "1500-2000",
-            "2000-2500",
-            "2500-3000",
-            "3000-3500",
-        ]
+        # bin_names = [
+        #     "0-500",
+        #     "500-1000",
+        #     "1000-1500",
+        #     "1500-2000",
+        #     "2000-2500",
+        #     "2500-3000",
+        #     "3000-3500",
+        # ]
 
         data_dict = {data_names[0]: mean_y1.statistic, data_names[1]: mean_y2.statistic}
 
         sd_dict = {data_names[0]: sd_y1, data_names[1]: sd_y2}
 
-        bar_x = np.arange(len(bin_names))
+        bar_x = np.arange(10)
         width = 0.25  # width of the bars
         multiplier = 0  # iterator
 
@@ -1010,7 +1020,7 @@ class BaseGraphics:
             multiplier += 1
 
         ax.legend()
-        ax.set_xticks(bar_x + width, bin_names, rotation=45)
+        # ax.set_xticks(bar_x + width, bin_names, rotation=45)
         ax.set_xlabel(xlabel)
         ax.set_ylabel(ylabel)
 
@@ -2504,43 +2514,136 @@ class Graphics(BaseGraphics):
 
     def ind_dist_plots(self):
         """Calculate the distance to the closest industrial node"""
-        ind_distances, ind_closest = self.calc_industry_distance(self.wn)
+        if self.skeletonized:
+            node_buildings = pd.read_pickle("buildings.pkl")
+            # node_buildings = node_buildings.to_crs(epsg=3310)
+            counts = node_buildings.value_counts(["wdn_node", "type"]).unstack()
+            perc_counts = counts.divide(counts.sum(axis=1) / 100, axis=0)
+            res_nodes = perc_counts[perc_counts["res"] > 0].index.tolist()
+            nonres_nodes = perc_counts[perc_counts["res"].isna()].index.tolist()
+            print(res_nodes)
+            print(nonres_nodes)
+
+            wn_junctions = wntr.network.to_gis(self.wn, crs="EPSG:4326").junctions
+
+            wn_junctions = wn_junctions.to_crs(epsg=3310)
+            res_wn_nodes = wn_junctions.loc[res_nodes, :]
+            nonres_wn_nodes = wn_junctions.loc[nonres_nodes, :]
+
+            dist = dict()
+
+            for i, row in nonres_wn_nodes.iterrows():
+                dist[i] = res_wn_nodes.distance(row.geometry)
+
+            dist = pd.DataFrame(dist)
+
+            min_dist = dist.min(axis=1)
+
+            # nonres_buildings = node_buildings[
+            #     node_buildings["type"].isin(["com", "ind", "gro", "caf"])
+            # ]
+            # base = node_buildings.query("type == 'res'").plot(markersize=1, color="blue")
+            # nonres_buildings.plot(ax=base, markersize=1, color="black")
+            # plt.show()
+            # print(nonres_buildings)
+            # for i, row in nonres_buildings.iterrows():
+            #     dist[i] = node_buildings.query("type == 'res'").distance(row.geometry)
+
+            # dist = pd.DataFrame(dist)
+            # min_dist = pd.DataFrame(
+            #     {
+            #         "ind_dist": dist.min(axis=1),
+            #         "wdn_node": node_buildings.query("type == 'res'").wdn_node
+            #     }
+            # )
+            # min_dist = min_dist.groupby("wdn_node").mean()
+
+            # ind_distances, ind_closest = self.calc_industry_distance(
+            #     self.wn, res=res_nodes, ind=nonres_nodes
+            # )
 
         """ Make lists of the age values and age error values to plot """
-        pm_age_values = list()
-        base_age_values = list()
-        pm_age_sd = list()
-        base_age_sd = list()
-        pm_curr_age_values = self.pm["avg_age"].iloc[len(self.pm["avg_age"]) - 1] / 3600
-        base_curr_age_values = (
-            self.base["avg_age"].iloc[len(self.base["avg_age"]) - 1] / 3600
-        )
-        pm_curr_age_sd = self.pm["var_age"].iloc[len(self.pm["var_age"]) - 1]
-        base_curr_age_sd = self.base["var_age"].iloc[len(self.base["var_age"]) - 1]
-        # print(pm_curr_age_values)
-        """ Collect the age for each residential node """
-        for i, age in pm_curr_age_values.items():
-            base_age = base_curr_age_values[i]
-            pm_sd = pm_curr_age_sd[i]
-            base_sd = base_curr_age_sd[i]
-            # if the node is in the distance list, add the age
-            # otherwise delete the node from the distance list
-            if i in ind_distances.keys():
-                if age < 500:
-                    pm_age_values.append(age)
-                    base_age_values.append(base_age)
-                    pm_age_sd.append(pm_sd)
-                    base_age_sd.append(base_sd)
-                else:
-                    del ind_distances[i]
+        # pm_age_values = list()
+        # base_age_values = list()
+        # pm_age_sd = list()
+        # base_age_sd = list()
+        # pm_curr_age_values = self.pm["avg_age"].iloc[len(self.pm["avg_age"]) - 1] / 3600
+        # base_curr_age_values = (
+        #     self.base["avg_age"].iloc[len(self.base["avg_age"]) - 1] / 3600
+        # )
+        # pm_curr_age_sd = self.pm["var_age"].iloc[len(self.pm["var_age"]) - 1]
+        # base_curr_age_sd = self.base["var_age"].iloc[len(self.base["var_age"]) - 1]
+        # # print(pm_curr_age_values)
+        # """ Collect the age for each residential node """
+        # for i, age in pm_curr_age_values.items():
+        #     # if the node is in the distance list, add the age
+        #     # otherwise delete the node from the distance list
+        #     if i in ind_distances.keys():
+        #         if age < 500:
+        #             pm_age_values.append(age)
+        #             base_age_values.append(base_curr_age_values[i])
+        #             pm_age_sd.append(pm_curr_age_sd[i])
+        #             base_age_sd.append(base_curr_age_sd[i])
+        #         else:
+        #             del ind_distances[i]
 
-        dist_values = [i for i in ind_distances.values()]
+        # dist_values = [i for i in ind_distances.values()]
+        print(min_dist)
+        # base_age = self.base["avg_age"].iloc[-1] / 3600
+        # pm_age = self.pm["avg_age"].iloc[-1] / 3600
+        # base_age = base_age.loc[min_dist.index]
+        # pm_age = pm_age.loc[min_dist.index]
+
+        # base_age_var = self.base["var_age"].iloc[-1]
+        # pm_age_var = self.pm["var_age"].iloc[-1]
+        # base_age_var = base_age_var.loc[min_dist.index]
+        # pm_age_var = pm_age_var.loc[min_dist.index]
+
+        base_data = (
+            self.base["cowpi"][self.base["cowpi"]["level"] == 0][
+                ["cowpi", "wdn_node"]
+            ]
+            .groupby("wdn_node")
+            .mean()["cowpi"]
+            * 100
+        )
+        base_var = (
+            self.base["cowpi"][self.base["cowpi"]["level"] == 0][
+                ["cowpi", "wdn_node"]
+            ]
+            .groupby("wdn_node")
+            .var()["cowpi"]
+        )
+        pm_data = (
+            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0][
+                ["cowpi", "wdn_node"]
+            ]
+            .groupby("wdn_node")
+            .mean()["cowpi"]
+            * 100
+        )
+        pm_var = (
+            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0][
+                ["cowpi", "wdn_node"]
+            ]
+            .groupby("wdn_node")
+            .var()["cowpi"]
+        )
+
+        base_data = base_data.drop('96')
+        base_var = base_var.drop('96')
+        min_dist = min_dist.drop('96')
+
+        print(base_data)
+        print(pm_data)
+
+        # min_dist = pd.concat([min_dist, base_age])
         self.make_distance_plot(
-            dist_values,
-            base_age_values,
-            pm_age_values,
-            base_age_sd,
-            pm_age_sd,
+            min_dist,
+            base_data.loc[min_dist.index],
+            pm_data.loc[min_dist.index],
+            base_var.loc[min_dist.index],
+            pm_var.loc[min_dist.index],
             "Distance (m)",
             "Age (hr)",
             "pm_age_ind_distance",

@@ -24,10 +24,10 @@ plots = Graphics(
 # plots.flow_plots()
 
 """ Age plots """
-plots.age_plots(map=True, threshold=True)
+# plots.age_plots(map=True, threshold=True)
 
 """ Industrial distance plots """
-# plots.ind_dist_plots()
+plots.ind_dist_plots()
 
 """ State variable comparison plots """
 # plots.sv_comp_plots()
