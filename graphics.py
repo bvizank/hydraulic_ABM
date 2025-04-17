@@ -10,8 +10,8 @@ plots = Graphics(
     error="se",
     days=days,
     inp_file="Input Files/cities/clinton/clinton.inp",
-    # scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
-    scenario_ls=["base", "basebw", "pm", "pm_nobw"],
+    scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
+    # scenario_ls=["base", "basebw", "pm", "pm_nobw"],
     skeletonized=True,
     single=False,
     remove_bg=False,
@@ -27,7 +27,7 @@ plots = Graphics(
 # plots.age_plots(map=True, threshold=True)
 
 """ Industrial distance plots """
-plots.ind_dist_plots()
+# plots.ind_dist_plots()
 
 """ State variable comparison plots """
 # plots.sv_comp_plots()
@@ -55,7 +55,7 @@ plots.ind_dist_plots()
 # plots.make_twa_plots()
 
 """ Make SA plots """
-# plots.sa_plots(age=False, cost=False, cowpi=True, map=False)
+plots.sa_plots(age=False, cost=False, cowpi=True, map=False)
 
 """ SEIR plot """
 # plots.make_seir_plot(days)

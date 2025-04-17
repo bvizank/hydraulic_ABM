@@ -969,17 +969,25 @@ class BaseGraphics:
         vector and two y vectors.
         """
         mean_y1 = binned_statistic(
-            x, y1, statistic="mean" # , bins=[0, 100, 1000, 1500, 2000, 2500, 3000, 3500]
+            x,
+            y1,
+            statistic="mean",  # , bins=[0, 100, 1000, 1500, 2000, 2500, 3000, 3500]
         )
         mean_y2 = binned_statistic(
-            x, y2, statistic="mean" # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x,
+            y2,
+            statistic="mean",  # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
         )
 
         sd_y1 = binned_statistic(
-            x, sd1, statistic="mean" # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x,
+            sd1,
+            statistic="mean",  # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
         )
         sd_y2 = binned_statistic(
-            x, sd2, statistic="mean" # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
+            x,
+            sd2,
+            statistic="mean",  # , bins=[0, 500, 1000, 1500, 2000, 2500, 3000, 3500]
         )
         sd_y1 = ut.calc_error(sd_y1.statistic, self.error) / 100
         sd_y2 = ut.calc_error(sd_y2.statistic, self.error) / 100
@@ -2600,39 +2608,31 @@ class Graphics(BaseGraphics):
         # pm_age_var = pm_age_var.loc[min_dist.index]
 
         base_data = (
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0][
-                ["cowpi", "wdn_node"]
-            ]
+            self.base["cowpi"][self.base["cowpi"]["level"] == 0][["cowpi", "wdn_node"]]
             .groupby("wdn_node")
             .mean()["cowpi"]
             * 100
         )
         base_var = (
-            self.base["cowpi"][self.base["cowpi"]["level"] == 0][
-                ["cowpi", "wdn_node"]
-            ]
+            self.base["cowpi"][self.base["cowpi"]["level"] == 0][["cowpi", "wdn_node"]]
             .groupby("wdn_node")
             .var()["cowpi"]
         )
         pm_data = (
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0][
-                ["cowpi", "wdn_node"]
-            ]
+            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0][["cowpi", "wdn_node"]]
             .groupby("wdn_node")
             .mean()["cowpi"]
             * 100
         )
         pm_var = (
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0][
-                ["cowpi", "wdn_node"]
-            ]
+            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0][["cowpi", "wdn_node"]]
             .groupby("wdn_node")
             .var()["cowpi"]
         )
 
-        base_data = base_data.drop('96')
-        base_var = base_var.drop('96')
-        min_dist = min_dist.drop('96')
+        base_data = base_data.drop("96")
+        base_var = base_var.drop("96")
+        min_dist = min_dist.drop("96")
 
         print(base_data)
         print(pm_data)
@@ -3468,6 +3468,7 @@ class Graphics(BaseGraphics):
         perc=False,
         sa=False,
         map=False,
+        ax=None,
     ):
         if in_data is None:
             base_data = self.base
@@ -3533,18 +3534,40 @@ class Graphics(BaseGraphics):
         #     box=True,
         # )
 
-        self.make_income_comp_plot(
-            [cowpi_bot20, cowpi_top80],
-            name + "cow_boxplot_income",
-            ["Base", "TWA", "PM", "TWA+PM"],
-            # ['Base', 'Base+BW', 'SD+BW'],
-            ylabel="%HI",
-            box=1,
-            means=False,
-            outliers="",
-            income_line=None,
-            legend_kwds={"labels": ["Low-income", "High-income"], "loc": "upper left"},
-        )
+        if ax is not None:
+            ax = self.make_income_comp_plot(
+                [cowpi_bot20, cowpi_top80],
+                name + "cow_boxplot_income",
+                ["Base", "TWA", "PM", "TWA+PM"],
+                # ['Base', 'Base+BW', 'SD+BW'],
+                ylabel="%HI",
+                box=1,
+                means=False,
+                outliers="",
+                income_line=None,
+                legend_kwds={
+                    "labels": ["Low-income", "High-income"],
+                    "loc": "upper left",
+                },
+                ax=ax,
+            )
+            return ax
+        else:
+            self.make_income_comp_plot(
+                [cowpi_bot20, cowpi_top80],
+                name + "cow_boxplot_income",
+                ["Base", "TWA", "PM", "TWA+PM"],
+                # ['Base', 'Base+BW', 'SD+BW'],
+                ylabel="%HI",
+                box=1,
+                means=False,
+                outliers="",
+                income_line=None,
+                legend_kwds={
+                    "labels": ["Low-income", "High-income"],
+                    "loc": "upper left",
+                },
+            )
 
         """ Make plot of intersection between income and whether node exceeds
         threshold """
@@ -4489,16 +4512,29 @@ class Graphics(BaseGraphics):
             )
 
         if cowpi:
-            self.cowpi_boxplot(
+            fig, axes = plt.subplots(1, 3, sharey=True)
+            axes[0] = self.cowpi_boxplot(
                 in_data=[self.base, self.basebw_neg20, self.pm_nobw, self.pm_neg20],
                 name="sa-20",
-                demographics=True,
+                demographics=False,
+                ax=axes[0],
             )
-            self.cowpi_boxplot(
+            axes[1] = self.cowpi_boxplot(name="", demographics=False, ax=axes[1])
+            axes[2] = self.cowpi_boxplot(
                 in_data=[self.base, self.basebw_20, self.pm_nobw, self.pm_20],
                 name="sa20",
-                demographics=True,
+                demographics=False,
+                ax=axes[2],
             )
+
+            plt.gcf().set_size_inches(9, 3.5)
+            plt.savefig(
+                self.pub_loc + "sa_cowpi_income." + self.format,
+                format=self.format,
+                bbox_inches="tight",
+                transparent=self.transparent,
+            )
+            plt.close()
 
         if map:
             fig, axes = plt.subplots(1, 2, sharey=True)
