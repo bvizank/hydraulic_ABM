@@ -704,6 +704,8 @@ class BaseGraphics:
             data["cost"]["total"]["i"] = data["cost"]["bw_cost"]["i"]
             # data["cost"]["total"]["unique_id"] = data["cost"]["bw_cost"]["unique_id"]
 
+        print(data["cost"]["total"])
+
         self.convert_level(data["income"])
 
         data["cowpi"] = pd.concat(
@@ -711,12 +713,17 @@ class BaseGraphics:
             [
                 data["income"].loc[:, "level"],
                 (
-                    data["cost"]["total"].iloc[:, -2]
-                    / data["income"].loc[:, "income"]
-                    * self.days
-                    / 365
+                    (
+                        data["cost"]["total"].iloc[:, -2]
+                        - data["cost"]["total"].iloc[:, -3]
+                    )
+                    / (
+                          data["income"].loc[:, "income"]
+                          * 30
+                          / 365
+                      )
                 ),
-                data["cost"]["total"].iloc[:, -2],
+                data["cost"]["total"].iloc[:, -2] - data["cost"]["total"].iloc[:, -3],
                 data["income"].loc[:, "income"],
                 data["demo"]["demo"].loc[:, "white"],
                 data["demo"]["demo"].loc[:, "hispanic"],
@@ -3212,7 +3219,8 @@ class Graphics(BaseGraphics):
         cost_high_race = self.filter_demo(1, "white", "cost", data=[self.base, self.pm])
 
         print("low-income cost values")
-        for _, i in cost_low_race.items():
+        for name, i in cost_low_race.items():
+            print(name)
             for j in i:
                 print(j.median())
         print("high-income cost values")
@@ -3230,7 +3238,7 @@ class Graphics(BaseGraphics):
             xlabel=["\nBase", "\nTWA+PM"],
             ylabel="Cost ($)",
             box=1,
-            means=False,
+            means=True,
             income_line=None,
             outliers="",
             legend_kwds={
@@ -3273,7 +3281,7 @@ class Graphics(BaseGraphics):
             ["\nBase", "\nTWA+PM"],
             ylabel="Cost ($)",
             box=1,
-            means=False,
+            means=True,
             income_line=None,
             outliers="",
             legend_kwds={
@@ -3317,7 +3325,7 @@ class Graphics(BaseGraphics):
             ["\nBase", "\nTWA+PM"],
             ylabel="Cost ($)",
             box=1,
-            means=False,
+            means=True,
             income_line=None,
             outliers="",
             legend_kwds={
@@ -3370,7 +3378,7 @@ class Graphics(BaseGraphics):
                 .mean()["cost"],
                 wn_nodes=True,
                 node_cmap="viridis",
-                vmax_inp=700,
+                vmax_inp=100,
             )
             axes[1] = self.bg_map(
                 ax=axes[1],
@@ -3379,7 +3387,7 @@ class Graphics(BaseGraphics):
                 .mean()["cost"],
                 wn_nodes=True,
                 node_cmap="viridis",
-                vmax_inp=700,
+                vmax_inp=100,
             )
             axes[0].text(
                 0.5, -0.04, "(a)", size=12, ha="center", transform=axes[0].transAxes
@@ -3444,7 +3452,7 @@ class Graphics(BaseGraphics):
             fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
             cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
 
-            norm = mpl.colors.Normalize(vmin=0, vmax=700)
+            norm = mpl.colors.Normalize(vmin=0, vmax=100)
             fig.colorbar(
                 mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
                 cax=cbar_ax,
@@ -3544,7 +3552,7 @@ class Graphics(BaseGraphics):
                 box=1,
                 means=False,
                 outliers="",
-                income_line=None,
+                # income_line=None,
                 legend_kwds={
                     "labels": ["Low-income", "High-income"],
                     "loc": "upper left",
@@ -3562,7 +3570,7 @@ class Graphics(BaseGraphics):
                 box=1,
                 means=False,
                 outliers="",
-                income_line=None,
+                # income_line=None,
                 legend_kwds={
                     "labels": ["Low-income", "High-income"],
                     "loc": "upper left",
@@ -3632,7 +3640,7 @@ class Graphics(BaseGraphics):
             box=1,
             means=False,
             outliers="",
-            income_line=None,
+            # income_line=None,
             legend_kwds={"labels": ["<130 hours", ">130 hours"], "loc": "best"},
             ax=axes[0],
         )
@@ -3644,7 +3652,7 @@ class Graphics(BaseGraphics):
             box=1,
             means=False,
             outliers="",
-            income_line=None,
+            # income_line=None,
             legend_kwds={"labels": ["<130 hours", ">130 hours"], "loc": "best"},
             ax=axes[1],
         )
@@ -3699,7 +3707,7 @@ class Graphics(BaseGraphics):
             print([a.median() for a in high_race["white"]])
             print([a.median() for a in high_race["nonwhite"]])
 
-            fix, axes = plt.subplots(1, 3)
+            fix, axes = plt.subplots(3, 1)
 
             axes[0] = self.make_income_comp_plot(
                 [
@@ -3713,7 +3721,7 @@ class Graphics(BaseGraphics):
                 box=1,
                 means=False,
                 outliers="",
-                income_line=None,
+                # income_line=None,
                 legend_kwds={
                     "labels": [
                         "White",
@@ -3753,7 +3761,7 @@ class Graphics(BaseGraphics):
                 box=1,
                 means=False,
                 outliers="",
-                income_line=None,
+                # income_line=None,
                 legend_kwds={
                     "labels": [
                         "Hispanic",
@@ -3793,7 +3801,7 @@ class Graphics(BaseGraphics):
                 box=1,
                 means=False,
                 outliers="",
-                income_line=None,
+                # income_line=None,
                 legend_kwds={
                     "labels": [
                         "Renter",
@@ -3817,7 +3825,7 @@ class Graphics(BaseGraphics):
             )
 
             plt.subplots_adjust(hspace=0.3)
-            plt.gcf().set_size_inches(8, 3.5)
+            plt.gcf().set_size_inches(3.5, 7)
 
             plt.savefig(
                 self.pub_loc + name + "cow_demo_boxplots." + self.format,
@@ -4021,7 +4029,7 @@ class Graphics(BaseGraphics):
                 * 100,
                 wn_nodes=True,
                 node_cmap="viridis",
-                vmax_inp=10,
+                vmax_inp=100,
             )
             axes[1] = self.bg_map(
                 ax=axes[1],
@@ -4033,7 +4041,7 @@ class Graphics(BaseGraphics):
                 * 100,
                 wn_nodes=True,
                 node_cmap="viridis",
-                vmax_inp=10,
+                vmax_inp=100,
             )
             axes[0].text(
                 0.5, -0.04, "(a)", size=12, ha="center", transform=axes[0].transAxes
@@ -4112,7 +4120,7 @@ class Graphics(BaseGraphics):
             fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
             cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
 
-            norm = mpl.colors.Normalize(vmin=0, vmax=10)
+            norm = mpl.colors.Normalize(vmin=0, vmax=100)
             fig.colorbar(
                 mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
                 cax=cbar_ax,
