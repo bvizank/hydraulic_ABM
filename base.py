@@ -1919,30 +1919,32 @@ class Graphics(BaseGraphics):
         fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(
             nrows=2, ncols=2, sharex=True, sharey=True
         )
-        ax1.plot(np.delete(self.x_values_day, 0), data[cols[0]])
+        print(self.x_values_day)
+        print(data[cols[0]])
+        ax1.plot(self.x_values_day, data[cols[0]])
         ax1.fill_between(
-            np.delete(self.x_values_day, 0),
+            self.x_values_day,
             data[cols[0]] - err[cols[0]],
             data[cols[0]] + err[cols[0]],
             alpha=0.5,
         )
-        ax2.plot(np.delete(self.x_values_day, 0), data[cols[1]])
+        ax2.plot(self.x_values_day, data[cols[1]])
         ax2.fill_between(
-            np.delete(self.x_values_day, 0),
+            self.x_values_day,
             data[cols[1]] - err[cols[1]],
             data[cols[1]] + err[cols[1]],
             alpha=0.5,
         )
-        ax3.plot(np.delete(self.x_values_day, 0), data[cols[2]])
+        ax3.plot(self.x_values_day, data[cols[2]])
         ax3.fill_between(
-            np.delete(self.x_values_day, 0),
+            self.x_values_day,
             data[cols[2]] - err[cols[2]],
             data[cols[2]] + err[cols[2]],
             alpha=0.5,
         )
-        ax4.plot(np.delete(self.x_values_day, 0), data[cols[3]])
+        ax4.plot(self.x_values_day, data[cols[3]])
         ax4.fill_between(
-            np.delete(self.x_values_day, 0),
+            self.x_values_day,
             data[cols[3]] - err[cols[3]],
             data[cols[3]] + err[cols[3]],
             alpha=0.5,
@@ -2074,7 +2076,7 @@ class Graphics(BaseGraphics):
             keys=cost_leg,
         )
 
-        print(cost_p)
+        print(cost_p.drop("i"))
 
         fig, axes = plt.subplots(1, 2, sharey=True)
         axes[0] = self.make_avg_plot(

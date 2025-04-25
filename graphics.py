@@ -20,7 +20,7 @@ plots = Graphics(publication=True, error="se", days=days)
 # plots.sv_comp_plots()
 
 """ BBN decision plots """
-plots.bbn_plots()
+# plots.bbn_plots()
 
 """ Equity plots showing the burden of paying for water """
 # plots.make_equity_plots()
