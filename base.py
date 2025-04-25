@@ -316,9 +316,13 @@ class BaseGraphics:
         data["cowpi"] = pd.DataFrame(
             {
                 "level": data["income"].loc[:, "level"],
-                "cowpi": data["cost"]["total"].iloc[:, -2]
-                / (data["income"].loc[:, "income"] * self.days / 365),
-                "cost": data["cost"]["total"].iloc[:, -2],
+                "cowpi": (
+                    data["cost"]["total"].iloc[:, -2]
+                    - data["cost"]["total"].iloc[:, -3]
+                    / (data["income"].loc[:, "income"] * 30 / 365)
+                ),
+                "cost": data["cost"]["total"].iloc[:, -2]
+                - data["cost"]["total"].iloc[:, -3],
                 "income": data["income"].loc[:, "income"],
                 "i": data["income"].loc[:, "i"],
             },
@@ -332,6 +336,7 @@ class BaseGraphics:
         Manipulate household data to be ready to plot
         """
         # get base data ready
+        # print("Package base")
         self.package_household(self.base, self.base_comp_dir, bw=False)
 
         # get base+bw data ready
@@ -344,31 +349,31 @@ class BaseGraphics:
         self.package_household(self.pm, self.pm_comp_dir)
 
         # get pm_nodi data ready
-        self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
+        # self.package_household(self.pm_nodi, self.pm_nodi_comp_dir)
 
         # get pm_perc data ready
         # self.package_household(self.pm_perc, self.pm_comp_perc_dir)
 
         # get pm_noD data ready
-        self.package_household(self.pm_noD, self.pm_comp_noD_dir)
+        # self.package_household(self.pm_noD, self.pm_comp_noD_dir)
 
         # get pm_noC data ready
-        self.package_household(self.pm_noC, self.pm_comp_noC_dir)
+        # self.package_household(self.pm_noC, self.pm_comp_noC_dir)
 
         # get pm_noH data ready
-        self.package_household(self.pm_noH, self.pm_comp_noH_dir)
+        # self.package_household(self.pm_noH, self.pm_comp_noH_dir)
 
         # get pm 25ind data ready
-        self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
+        # self.package_household(self.pm25ind, self.pm_25ind_comp_dir)
 
         # get pm 50ind data ready
-        self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
+        # self.package_household(self.pm50ind, self.pm_50ind_comp_dir)
 
         # get pm 75ind data ready
-        self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
+        # self.package_household(self.pm75ind, self.pm_75ind_comp_dir)
 
         # get pm 100ind data ready
-        self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
+        # self.package_household(self.pm100ind, self.pm_100ind_comp_dir)
 
     def make_avg_plot(
         self,
@@ -869,13 +874,13 @@ class Graphics(BaseGraphics):
         # self.groc_loc = 'Output Files/30_groc_equity/'
         # self.ppe_loc = 'Output Files/30_ppe_equity/'
         self.comp_list = [
-            "seir_data",
-            "demand",
-            "age",
-            "flow",
+            # "seir_data",
+            # "demand",
+            # "age",
+            # "flow",
             "cov_ff",
             "cov_pers",
-            "agent_loc",
+            # "agent_loc",
             "wfh",
             "dine",
             "groc",
@@ -904,9 +909,9 @@ class Graphics(BaseGraphics):
         self.pm_nobw = ut.read_comp_data(
             self.pm_nobw_comp_dir, self.comp_list, days, self.truncate_list
         )
-        self.pm_nodi = ut.read_comp_data(
-            self.pm_nodi_comp_dir, self.comp_list, days, self.truncate_list
-        )
+        # self.pm_nodi = ut.read_comp_data(
+        #     self.pm_nodi_comp_dir, self.comp_list, days, self.truncate_list
+        # )
         self.base = ut.read_comp_data(
             self.base_comp_dir, self.comp_list, days, self.truncate_list
         )
@@ -980,19 +985,19 @@ class Graphics(BaseGraphics):
         """ Import water network and data """
         inp_file = "Input Files/micropolis/MICROPOLIS_v1_inc_rest_consumers.inp"
         self.wn = wntr.network.WaterNetworkModel(inp_file)
-        self.x_values_hour = np.array(
-            [x for x in np.arange(0, days, days / len(self.pm["avg_demand"]))]
-        )
+        # self.x_values_hour = np.array(
+        #     [x for x in np.arange(0, days, days / len(self.pm["avg_demand"]))]
+        # )
         self.x_values_day = np.array([x for x in range(self.days)])
 
         """ Get times list: first time is max wfh, 75% wfh, 50% wfh, 25% wfh """
-        self.get_times(self.pm)
+        # self.get_times(self.pm)
 
         """ Set the various node lists """
         self.get_nodes(self.wn)
 
         """ Get industrial distances for each residential node in the network """
-        self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
+        # self.ind_distances, ind_closest = self.calc_industry_distance(self.wn)
         # self.dist_values = [v for k, v in ind_distances.items() if k in self.res_nodes]
 
     def flow_plots(self):
@@ -1852,10 +1857,10 @@ class Graphics(BaseGraphics):
 
         fig, axes = plt.subplots(nrows=1, ncols=2, sharey=False)
         axes[0] = self.make_avg_plot(
-            axes[0], pers, pers_err, ["Base", "PM"], np.delete(self.x_values_day, 0)
+            axes[0], pers, pers_err, ["Base", "PM"], self.x_values_day
         )
         axes[1] = self.make_avg_plot(
-            axes[1], ff, ff_err, ["Base", "PM"], np.delete(self.x_values_day, 0)
+            axes[1], ff, ff_err, ["Base", "PM"], self.x_values_day
         )
 
         axes[0].legend(["Base", "PM"])
@@ -1878,6 +1883,7 @@ class Graphics(BaseGraphics):
 
         # ax = plt.subplot()
         # ax = self.make_avg_plot(ax, data, err, ['Base', 'PM'],
+        # print(item)
         #                         np.delete(self.x_values, 0),
         #                         'Time (day)', 'Average Value',
         #                         show_labels=True)
@@ -1990,21 +1996,21 @@ class Graphics(BaseGraphics):
         plt.close()
 
     def make_cost_plots(self):
-        wntr.graphics.plot_network(
-            self.wn,
-            node_attribute=self.base["cost"]["total"]
-            .iloc[:, -1]
-            .groupby(level=0)
-            .mean(),
-            node_size=5,
-            node_colorbar_label="Water Cost ($)",
-        )
-        plt.savefig(
-            self.pub_loc + "tot_cost_base_map." + self.format,
-            format=self.format,
-            bbox_inches="tight",
-        )
-        plt.close()
+        # wntr.graphics.plot_network(
+        #     self.wn,
+        #     node_attribute=self.base["cost"]["total"]
+        #     .iloc[:, -1]
+        #     .groupby(level=0)
+        #     .mean(),
+        #     node_size=5,
+        #     node_colorbar_label="Water Cost ($)",
+        # )
+        # plt.savefig(
+        #     self.pub_loc + "tot_cost_base_map." + self.format,
+        #     format=self.format,
+        #     bbox_inches="tight",
+        # )
+        # plt.close()
 
         # pm_tot_cost = self.pm['avg_bw_cost'] + self.pm['avg_tw_cost']
         # ax = wntr.graphics.plot_network(
@@ -2026,7 +2032,7 @@ class Graphics(BaseGraphics):
         # pm_mean_cost = pm_tot_cost.iloc[-1, :].mean()
         # base_mean_cost = base_tot_cost.iloc[-1, :].mean()
 
-        """ Make total cost plots showing tap, bottle, and total cost """
+        """Make total cost plots showing tap, bottle, and total cost"""
         # exclude = ['TN460', 'TN459', 'TN458']
         # print(
         #     self.basebw['cost']['bw_cost'].loc[
@@ -2048,48 +2054,57 @@ class Graphics(BaseGraphics):
         )
         plt.close()
 
-        # cost_leg = ['Bottled Water', 'Tap Water', 'Total']
-        # cost_b = pd.concat(
-        #     [self.basebw['cost']['bw_cost'].mean(axis=0),
-        #      self.basebw['cost']['tw_cost'].mean(axis=0),
-        #      self.basebw['cost']['total'].mean(axis=0)],
-        #     axis=1,
-        #     keys=cost_leg
-        # )
-        # cost_p = pd.concat(
-        #     [self.pm['cost']['bw_cost'].mean(axis=0),
-        #      self.pm['cost']['tw_cost'].mean(axis=0),
-        #      self.pm['cost']['total'].mean(axis=0)],
-        #     axis=1,
-        #     keys=cost_leg
-        # )
+        cost_leg = ["Bottled Water", "Tap Water", "Total"]
+        cost_b = pd.concat(
+            [
+                self.basebw["cost"]["bw_cost"].mean(axis=0),
+                self.basebw["cost"]["tw_cost"].mean(axis=0),
+                self.basebw["cost"]["total"].mean(axis=0),
+            ],
+            axis=1,
+            keys=cost_leg,
+        )
+        cost_p = pd.concat(
+            [
+                self.pm["cost"]["bw_cost"].mean(axis=0),
+                self.pm["cost"]["tw_cost"].mean(axis=0),
+                self.pm["cost"]["total"].mean(axis=0),
+            ],
+            axis=1,
+            keys=cost_leg,
+        )
 
-        # fig, axes = plt.subplots(1, 2, sharey=True)
-        # axes[0] = self.make_avg_plot(
-        #     axes[0], cost_b, None, cost_leg,
-        #     cost_b.index / 24, sd_plot=False
-        # )
-        # axes[1] = self.make_avg_plot(
-        #     axes[1], cost_p, None, cost_leg,
-        #     cost_b.index / 24, sd_plot=False
-        # )
+        print(cost_p)
 
-        # fmt = '${x:,.0f}'
-        # tick = mtick.StrMethodFormatter(fmt)
-        # axes[0].yaxis.set_major_formatter(tick)
+        fig, axes = plt.subplots(1, 2, sharey=True)
+        axes[0] = self.make_avg_plot(
+            axes[0], cost_b, None, cost_leg, cost_b.index / 24, sd_plot=False
+        )
+        axes[1] = self.make_avg_plot(
+            axes[1], cost_p, None, cost_leg, cost_b.index / 24, sd_plot=False
+        )
 
-        # plt.gcf().set_size_inches(7, 3.5)
-        # fig.supxlabel('Time (days)', y=-0.03)
-        # fig.supylabel('Cost', x=0.04)
-        # axes[0].legend(cost_leg, loc='upper left')
-        # axes[0].text(0.5, -0.14, "(a)", size=12, ha="center",
-        #              transform=axes[0].transAxes)
-        # axes[1].text(0.5, -0.14, "(b)", size=12, ha="center",
-        #              transform=axes[1].transAxes)
+        fmt = "${x:,.0f}"
+        tick = mtick.StrMethodFormatter(fmt)
+        axes[0].yaxis.set_major_formatter(tick)
 
-        # plt.savefig(self.pub_loc + 'cost.' + self.format,
-        #             format=self.format, bbox_inches='tight')
-        # plt.close()
+        plt.gcf().set_size_inches(7, 3.5)
+        fig.supxlabel("Time (days)", y=-0.03)
+        fig.supylabel("Cost", x=0.04)
+        axes[0].legend(cost_leg, loc="upper left")
+        axes[0].text(
+            0.5, -0.14, "(a)", size=12, ha="center", transform=axes[0].transAxes
+        )
+        axes[1].text(
+            0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
+        )
+
+        plt.savefig(
+            self.pub_loc + "cost." + self.format,
+            format=self.format,
+            bbox_inches="tight",
+        )
+        plt.close()
 
         """ Make income based cost plots """
         cost_low = [
@@ -2141,21 +2156,21 @@ class Graphics(BaseGraphics):
         )
 
         """ Make income based cost plots for SA """
-        cost_low = [
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cost"],
-            self.pm25ind["cowpi"][self.pm25ind["cowpi"]["level"] == 0]["cost"],
-            self.pm50ind["cowpi"][self.pm50ind["cowpi"]["level"] == 0]["cost"],
-            self.pm75ind["cowpi"][self.pm75ind["cowpi"]["level"] == 0]["cost"],
-            self.pm100ind["cowpi"][self.pm100ind["cowpi"]["level"] == 0]["cost"],
-        ]
+        # cost_low = [
+        #     self.pm["cowpi"][self.pm["cowpi"]["level"] == 0]["cost"],
+        #     self.pm25ind["cowpi"][self.pm25ind["cowpi"]["level"] == 0]["cost"],
+        #     self.pm50ind["cowpi"][self.pm50ind["cowpi"]["level"] == 0]["cost"],
+        #     self.pm75ind["cowpi"][self.pm75ind["cowpi"]["level"] == 0]["cost"],
+        #     self.pm100ind["cowpi"][self.pm100ind["cowpi"]["level"] == 0]["cost"],
+        # ]
 
-        cost_high = [
-            self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cost"],
-            self.pm25ind["cowpi"][self.pm25ind["cowpi"]["level"] == 1]["cost"],
-            self.pm50ind["cowpi"][self.pm50ind["cowpi"]["level"] == 1]["cost"],
-            self.pm75ind["cowpi"][self.pm75ind["cowpi"]["level"] == 1]["cost"],
-            self.pm100ind["cowpi"][self.pm100ind["cowpi"]["level"] == 1]["cost"],
-        ]
+        # cost_high = [
+        #     self.pm["cowpi"][self.pm["cowpi"]["level"] == 1]["cost"],
+        #     self.pm25ind["cowpi"][self.pm25ind["cowpi"]["level"] == 1]["cost"],
+        #     self.pm50ind["cowpi"][self.pm50ind["cowpi"]["level"] == 1]["cost"],
+        #     self.pm75ind["cowpi"][self.pm75ind["cowpi"]["level"] == 1]["cost"],
+        #     self.pm100ind["cowpi"][self.pm100ind["cowpi"]["level"] == 1]["cost"],
+        # ]
 
         # cost_med = [
         #     self.base['cowpi'][self.base['cowpi']['level'] == 2]['cost'],
@@ -2176,21 +2191,21 @@ class Graphics(BaseGraphics):
         #     'med': cost_med,
         #     'high': cost_high
         # }
-        data = {"low": cost_low, "high": cost_high}
+        # data = {"low": cost_low, "high": cost_high}
 
-        print(data)
+        # print(data)
 
-        self.make_income_comp_plot(
-            data,
-            "cost_boxplot_SA",
-            ["PM+BW", "PM+BW-25", "PM+BW-50", "PM+BW-75", "PM+BW-100"],
-            # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
-            ylabel="Cost ($)",
-            box=True,
-            means=False,
-            income_line=None,
-            outliers="",
-        )
+        # self.make_income_comp_plot(
+        #     data,
+        #     "cost_boxplot_SA",
+        #     ["PM+BW", "PM+BW-25", "PM+BW-50", "PM+BW-75", "PM+BW-100"],
+        #     # ['PM+BW', 'PM+BW-25', 'PM+BW-50', 'PM+BW-75'],
+        #     ylabel="Cost ($)",
+        #     box=True,
+        #     means=False,
+        #     income_line=None,
+        #     outliers="",
+        # )
 
     def cowpi_boxplot(self, di=False, perc=False, exclusion=False, sa=False):
         print(self.base["cowpi"][self.base["cowpi"]["level"] == 0].median())

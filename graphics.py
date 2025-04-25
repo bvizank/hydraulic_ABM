@@ -2,46 +2,46 @@ from base import Graphics
 
 
 days = 180
-plots = Graphics(publication=False, error='se', days=days)
+plots = Graphics(publication=True, error="se", days=days)
 
-''' Demand plots '''
+""" Demand plots """
 # plots.demand_plots()
 
-''' Flow plots '''
+""" Flow plots """
 # plots.flow_plots()
 
-''' Age plots '''
+""" Age plots """
 # plots.age_plots()
 
-''' Industrial distance plots '''
+""" Industrial distance plots """
 # plots.ind_dist_plots()
 
-''' State variable comparison plots '''
+""" State variable comparison plots """
 # plots.sv_comp_plots()
 
-''' BBN decision plots '''
-# plots.bbn_plots()
+""" BBN decision plots """
+plots.bbn_plots()
 
-''' Equity plots showing the burden of paying for water '''
+""" Equity plots showing the burden of paying for water """
 # plots.make_equity_plots()
 
-''' Cost plots '''
-# plots.make_cost_plots()
+""" Cost plots """
+plots.make_cost_plots()
 
-''' %HI (cowpi) plots '''
+""" %HI (cowpi) plots """
 # plots.cowpi_barchart()
 # plots.cowpi_boxplot(di=False, perc=False, exclusion=True, sa=False)
 
-''' Income plots '''
+""" Income plots """
 # plots.income_plots()
 
-''' Tap water avoidance plots '''
-plots.make_twa_plots()
+""" Tap water avoidance plots """
+# plots.make_twa_plots()
 
-''' SEIR plot '''
+""" SEIR plot """
 # plots.make_seir_plot(days)
 
-''' Make single plots '''
+""" Make single plots """
 # plots.make_single_plots('2024-12-18_11-30_0_results', 60)
 
 # ''' Export comparison stats '''
