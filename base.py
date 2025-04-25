@@ -297,8 +297,12 @@ class BaseGraphics:
         # print(data['cost']['total'].iloc[:, -2])
         data['cowpi'] = pd.DataFrame(
             {'level': data['income'].loc[:, 'level'],
-             'cowpi': data['cost']['total'].iloc[:, -2] / (data['income'].loc[:, 'income'] * self.days / 365),
-             'cost': data['cost']['total'].iloc[:, -2],
+             'cowpi': (
+                    data['cost']['total'].iloc[:, -2]
+                    - data['cost']['total'].iloc[:, -3]
+                    / (data['income'].loc[:, 'income'] * self.days / 365)
+                ),
+             'cost': data['cost']['total'].iloc[:, -2] - data['cost']['total'].iloc[:, -3],
              'income': data['income'].loc[:, 'income'],
              'i': data['income'].loc[:, 'i']},
             index=data['cost']['total'].index

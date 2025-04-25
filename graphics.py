@@ -2,7 +2,7 @@ from base import Graphics
 
 
 days = 180
-plots = Graphics(publication=False, error='se', days=days)
+plots = Graphics(publication=True, error='se', days=days)
 
 ''' Demand plots '''
 # plots.demand_plots()
@@ -17,7 +17,7 @@ plots = Graphics(publication=False, error='se', days=days)
 # plots.ind_dist_plots()
 
 ''' State variable comparison plots '''
-# plots.sv_comp_plots()
+plots.sv_comp_plots()
 
 ''' BBN decision plots '''
 # plots.bbn_plots()
@@ -26,7 +26,7 @@ plots = Graphics(publication=False, error='se', days=days)
 # plots.make_equity_plots()
 
 ''' Cost plots '''
-# plots.make_cost_plots()
+plots.make_cost_plots()
 
 ''' %HI (cowpi) plots '''
 # plots.cowpi_barchart()
@@ -36,7 +36,7 @@ plots = Graphics(publication=False, error='se', days=days)
 # plots.income_plots()
 
 ''' Tap water avoidance plots '''
-plots.make_twa_plots()
+# plots.make_twa_plots()
 
 ''' SEIR plot '''
 # plots.make_seir_plot(days)
