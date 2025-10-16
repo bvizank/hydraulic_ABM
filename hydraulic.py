@@ -82,7 +82,7 @@ class ENepanet_update(ENepanet):
             self.errcode = self.ENlib.ENgetpatternid(iIndex, byref(fId))
         self._error()
         return str(fId.value, 'UTF-8')
-        
+
     def ENclearreport(self):
         ''' Clear the report file from the current project '''
         self.errcode = self.ENlib.EN_clearreport(self._project)
@@ -163,7 +163,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
                     # do something
             sim.close()
             results = wntr.epanet.io.BinFile().read("temp2.bin")
-        
+
 
         Because of the way EPANET binary files are written, a warning will be issued
         when reading in the results - this is normal and is not a problem.
@@ -176,7 +176,7 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
         self._results: SimulationResults = None
         self._node_attributes = [
             (EN.QUALITY, "_quality", "quality", None),
-            # (EN.DEMAND, "_demand", "demand", HydParam.Demand._to_si),
+            (EN.DEMAND, "_demand", "demand", HydParam.Demand._to_si),
             # (EN.HEAD, "_head", "head", HydParam.HydraulicHead._to_si),
             # (EN.PRESSURE, "_pressure", "pressure", HydParam.Pressure._to_si),
         ]
@@ -650,16 +650,16 @@ class EpanetSimulator_Stepwise(WaterNetworkSimulator):
             self._last_line_added = report_line
             logger.debug("Reporting at time {}".format(time))
             self._temp_index.append(time)
-            # demand = list()
+            demand = list()
             # head = list()
             # pressure = list()
             quality = list()
             for idx in self._node_name_idx:
-                # demand.append(self._en.ENgetnodevalue(idx, EN.DEMAND))
+                demand.append(self._en.ENgetnodevalue(idx, EN.DEMAND))
                 # head.append(self._en.ENgetnodevalue(idx, EN.HEAD))
                 # pressure.append(self._en.ENgetnodevalue(idx, EN.PRESSURE))
                 quality.append(self._en.ENgetnodevalue(idx, EN.QUALITY))
-            # self._temp_node_report_lines["demand"].append(demand)
+            self._temp_node_report_lines["demand"].append(demand)
             # self._temp_node_report_lines["head"].append(head)
             # self._temp_node_report_lines["pressure"].append(pressure)
             self._temp_node_report_lines["quality"].append(quality)

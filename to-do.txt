@@ -1,0 +1,15 @@
+To-do list for applying ABM to real cities
+
+1. Get weights of household numbers from census based on city name
+
+2. Calculate industrial distance
+
+
+
+Things that have changed to accomodate clinton
+
+1. The move functions are very different.
+	I used numpy for a lot of lists and therefore had to change many of the
+	supporting functions (e.g. industry_agents)
+
+2. collect_demands

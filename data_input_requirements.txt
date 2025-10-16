@@ -1,0 +1,4 @@
+Required data to develop a hydraulically coupled ABM.
+
+1. Boundary polygon for the city.
+2. Water sources and tanks.
