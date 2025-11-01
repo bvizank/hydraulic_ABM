@@ -16,6 +16,22 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
+def get_bg_layer(tracts):
+    """
+    Fetch block group data from ESRI https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/USA_Block_Groups_v1/FeatureServer
+    """
+    layer_defs = ["TRACT = " + i for i in tracts]
+    url = (
+        "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/USA_Block_Groups_v1/FeatureServer"
+        + "query?"
+        + " AND ".join(layer_defs)
+    )
+
+    response = requests.get(url)
+
+    print(response)
+
+
 def query_nconemap(map_name, id, params, call, url=None):
     """
     Fetch data from NCOneMap from the given map_name

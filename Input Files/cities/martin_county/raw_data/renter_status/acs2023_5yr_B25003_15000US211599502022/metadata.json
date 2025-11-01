@@ -1,0 +1,28 @@
+{
+    "release": {
+        "id": "acs2023_5yr",
+        "name": "ACS 2023 5-year",
+        "years": "2019-2023"
+    },
+    "tables": {
+        "B25003": {
+            "columns": {
+                "B25003001": {
+                    "indent": 0,
+                    "name": "Total:"
+                },
+                "B25003002": {
+                    "indent": 1,
+                    "name": "Owner occupied"
+                },
+                "B25003003": {
+                    "indent": 1,
+                    "name": "Renter occupied"
+                }
+            },
+            "denominator_column_id": "B25003001",
+            "title": "Tenure",
+            "universe": "Occupied housing units"
+        }
+    }
+}

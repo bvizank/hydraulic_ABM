@@ -3375,7 +3375,7 @@ class Graphics(BaseGraphics):
                 ax=axes[0],
                 node_data=cost_base["cowpi"][["cost", "wdn_node"]]
                 .groupby("wdn_node")
-                .mean()["cost"],
+                .median()["cost"],
                 wn_nodes=True,
                 node_cmap="viridis",
                 vmax_inp=100,
@@ -3384,7 +3384,7 @@ class Graphics(BaseGraphics):
                 ax=axes[1],
                 node_data=cost_pm["cowpi"][["cost", "wdn_node"]]
                 .groupby("wdn_node")
-                .mean()["cost"],
+                .median()["cost"],
                 wn_nodes=True,
                 node_cmap="viridis",
                 vmax_inp=100,
@@ -4019,29 +4019,34 @@ class Graphics(BaseGraphics):
 
         if map:
             fig, axes = plt.subplots(1, 2)
+            base_cowpi_data = base_data["cowpi"][base_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ].groupby("wdn_node").median()["cowpi"] * 100
+
+            print(base_cowpi_data)
+
+            print(base_cowpi_data > 4.5)
             axes[0] = self.bg_map(
                 ax=axes[0],
-                node_data=base_data["cowpi"][base_data["cowpi"]["level"] == 0][
-                    ["cowpi", "wdn_node"]
-                ]
-                .groupby("wdn_node")
-                .mean()["cowpi"]
-                * 100,
+                node_data=base_cowpi_data > 4.5,
                 wn_nodes=True,
-                node_cmap="viridis",
-                vmax_inp=100,
+                node_cmap=ListedColormap(["blue", "red"]),
+                label_nodes=["< 4.5%", "> 4.5%"],
+                legend_bool=True
+                # vmax_inp=100,
             )
+
+            pm_cowpi_data = pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
+                    ["cowpi", "wdn_node"]
+                ].groupby("wdn_node").median()["cowpi"] * 100
             axes[1] = self.bg_map(
                 ax=axes[1],
-                node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
-                    ["cowpi", "wdn_node"]
-                ]
-                .groupby("wdn_node")
-                .mean()["cowpi"]
-                * 100,
+                node_data=pm_cowpi_data > 4.5,
                 wn_nodes=True,
-                node_cmap="viridis",
-                vmax_inp=100,
+                node_cmap=ListedColormap(["blue", "red"]),
+                label_nodes=["< 4.5%", "> 4.5%"],
+                legend_bool=True
+                # vmax_inp=100,
             )
             axes[0].text(
                 0.5, -0.04, "(a)", size=12, ha="center", transform=axes[0].transAxes
@@ -4050,83 +4055,18 @@ class Graphics(BaseGraphics):
                 0.5, -0.04, "(b)", size=12, ha="center", transform=axes[1].transAxes
             )
 
-            # fig, axes = plt.subplots(2, 2)
-            # axes[0, 0] = self.bg_map(
-            #     ax=axes[0, 0],
-            #     node_data=base_data["cowpi"][base_data["cowpi"]["level"] == 0][
-            #         ["cowpi", "wdn_node"]
-            #     ]
-            #     .groupby("wdn_node")
-            #     .mean()["cowpi"]
-            #     * 100,
-            #     wn_nodes=True,
-            #     node_cmap="viridis",
-            #     vmax_inp=10,
-            #     # legend_bool=True,
-            #     # label="%HI",
-            # )
-            # axes[0, 1] = self.bg_map(
-            #     ax=axes[0, 1],
-            #     node_data=basebw_data["cowpi"][basebw_data["cowpi"]["level"] == 0][
-            #         ["cowpi", "wdn_node"]
-            #     ]
-            #     .groupby("wdn_node")
-            #     .mean()["cowpi"]
-            #     * 100,
-            #     wn_nodes=True,
-            #     node_cmap="viridis",
-            #     vmax_inp=10,
-            # )
-            # axes[1, 0] = self.bg_map(
-            #     ax=axes[1, 0],
-            #     node_data=pm_nobw_data["cowpi"][pm_nobw_data["cowpi"]["level"] == 0][
-            #         ["cowpi", "wdn_node"]
-            #     ]
-            #     .groupby("wdn_node")
-            #     .mean()["cowpi"]
-            #     * 100,
-            #     wn_nodes=True,
-            #     node_cmap="viridis",
-            #     vmax_inp=10,
-            # )
-            # axes[1, 1] = self.bg_map(
-            #     ax=axes[1, 1],
-            #     node_data=pm_data["cowpi"][pm_data["cowpi"]["level"] == 0][
-            #         ["cowpi", "wdn_node"]
-            #     ]
-            #     .groupby("wdn_node")
-            #     .mean()["cowpi"]
-            #     * 100,
-            #     wn_nodes=True,
-            #     node_cmap="viridis",
-            #     vmax_inp=10,
-            # )
-
-            # axes[0, 0].text(
-            #     0.5, -0.08, "(a)", size=12, ha="center", transform=axes[0, 0].transAxes
-            # )
-            # axes[0, 1].text(
-            #     0.5, -0.08, "(b)", size=12, ha="center", transform=axes[0, 1].transAxes
-            # )
-            # axes[1, 0].text(
-            #     0.5, -0.08, "(c)", size=12, ha="center", transform=axes[1, 0].transAxes
-            # )
-            # axes[1, 1].text(
-            #     0.5, -0.08, "(d)", size=12, ha="center", transform=axes[1, 1].transAxes
-            # )
-
             plt.gcf().set_size_inches(7, 3.5)
 
-            fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
-            cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
+            # fig.subplots_adjust(bottom=0.12, wspace=0.1, hspace=0.08)
+            # cbar_ax = fig.add_axes(rect=(0.165, 0.05, 0.7, 0.02))
 
-            norm = mpl.colors.Normalize(vmin=0, vmax=100)
-            fig.colorbar(
-                mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
-                cax=cbar_ax,
-                orientation="horizontal",
-                label="%HI",
-            )
+            # norm = mpl.colors.Normalize(vmin=0, vmax=100)
+            # fig.colorbar(
+            #     mpl.cm.ScalarMappable(norm=norm, cmap="viridis"),
+            #     cax=cbar_ax,
+            #     orientation="horizontal",
+            #     label="%HI",
+            # )
             plt.savefig(
                 self.pub_loc + name + "cowpi_network." + self.format,
                 format=self.format,
@@ -4475,7 +4415,7 @@ class Graphics(BaseGraphics):
             0.5, -0.14, "(b)", size=12, ha="center", transform=axes[1].transAxes
         )
         fig.supxlabel("Time (days)", y=-0.03)
-        fig.supylabel("Percent of Households", x=0.04)
+        fig.supylabel("% of Households \nAdopting TWA Behavior", x=0.04)
         plt.gcf().set_size_inches(9, 3.5)
 
         plt.savefig(

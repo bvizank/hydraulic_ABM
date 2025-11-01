@@ -39,7 +39,7 @@ plots = Graphics(
 # plots.make_equity_plots()
 
 """ Cost plots """
-plots.make_cost_plots(map=True)
+# plots.make_cost_plots(map=True)
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
