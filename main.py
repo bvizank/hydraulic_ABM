@@ -28,7 +28,7 @@ run_sim(
     no_wfh_perc=0,
     bbn_models=[],
     daily_contacts=30,
-    city="clinton",
+    city="martin_county",
     verbose=0.5,
     hyd_sim="monthly",
     dist_income=False,
@@ -36,4 +36,6 @@ run_sim(
     bw=False,
     ind_min_demand=0,
     twa_process="absolute",
+    building_use="PRIM_OCC",
+    hot_start=False
 )

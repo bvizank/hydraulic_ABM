@@ -596,7 +596,7 @@ class ConsumerModel(Parameters):
                 # print(f"House base demand {house.base_demand * 60 * 60 * 24}")
                 if reduction_val > daily_demand:
                     print(f"House base demand {house.base_demand * 60 * 60 * 24}")
-                    print(f"House demand patter {curr_pat}")
+                    print(f"House demand pattern {curr_pat}")
                     print(
                         f"Reduction value {reduction_val} exceeds daily demand {daily_demand}"
                     )

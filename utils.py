@@ -369,6 +369,7 @@ def income_list(data, n_house, model, s=None):
 
     income = list()
     index = 0
+    print(data)
     for i, key in enumerate(data):
         """
         Get a set of samples for the given income range that is 100

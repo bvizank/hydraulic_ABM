@@ -16,20 +16,47 @@ import warnings
 warnings.filterwarnings("ignore")
 
 
-def get_bg_layer(tracts):
+def get_bg_layer(tracts, ctfips, crs):
     """
     Fetch block group data from ESRI https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/USA_Block_Groups_v1/FeatureServer
     """
-    layer_defs = ["TRACT = " + i for i in tracts]
     url = (
-        "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/USA_Block_Groups_v1/FeatureServer"
-        + "query?"
-        + " AND ".join(layer_defs)
+        "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/"
+        + "USA_Block_Groups_v1/FeatureServer/"
+        + "0"
+        + "/query?"
     )
 
-    response = requests.get(url)
+    payload = {
+        "where": "TRACT IN (" + ",".join(["'" + i + "'" for i in tracts]) + ") AND COUNTY=" + str(ctfips),
+        "returnIdsOnly": "true",
+        "f": "geojson",
+    }
 
-    print(response)
+    response = requests.get(url, params=payload).json()
+
+    object_ids = response["properties"]["objectIds"]
+
+    payload = {
+        "outFields": "TRACT,BLKGRP",
+        "outSR": str(crs),
+        "f": "geojson",
+        "objectIds": ",".join(map(str, object_ids))
+    }
+
+    response = requests.get(url, params=payload).json()
+
+    features = response["features"]
+    geometry = list()
+    out_features = list()
+    for feature in features:
+        geometry.append(shape(feature["geometry"]))
+        out_features.append(feature["properties"])
+    df = gpd.GeoDataFrame(
+        out_features, geometry=geometry, crs="EPSG:"+str(crs)
+    )
+
+    return df
 
 
 def query_nconemap(map_name, id, params, call, url=None):
@@ -50,6 +77,97 @@ def query_nconemap(map_name, id, params, call, url=None):
     data = response.json()
 
     return data
+
+
+def query_fema(map_name, fips, layer_id=0, max_record_count=100, crs=3547):
+    """
+    Fetch data from FEMA's ESRI building data Feature Layer
+
+    Parameters:
+    -----------
+
+    map_name (str): options are USA_Block_Groups_v1 or USA_Structures_View
+
+    layer_name (str): 
+
+    """
+
+    # first get the object ids of the subset
+    payload = {
+        "where": "FIPS=" + str(fips),
+        "returnIdsOnly": "true",
+        "f": "geojson"
+    }
+    url = (
+        "https://services2.arcgis.com/FiaPA4ga0iQKduv3/arcgis/rest/services/"
+        + map_name
+        + "/FeatureServer/"
+        + str(layer_id)
+        + "/query?"
+    )
+
+    response = requests.get(url, params=payload).json()
+
+    object_ids = response["properties"]["objectIds"]
+
+    print(f"The location you have chosen has {len(object_ids)} buildings.")
+
+    # get objects in groups of the max record count
+    if len(object_ids) > max_record_count:
+        df = gpd.GeoDataFrame()
+        for i in range(0, len(object_ids), max_record_count):
+            print(f"Fetching data for objects {i} to {i + max_record_count}")
+            curr_ids = object_ids[i:(i + max_record_count)]
+            curr_ids = ",".join(map(str, curr_ids))
+            payload = {
+                "outFields": "OCC_CLS,PRIM_OCC,SEC_OCC,PROP_ADDR,SQFEET,CENSUSCODE",
+                "outSR": str(crs),
+                "f": "geojson",
+                "objectIds": curr_ids
+            }
+
+            response = requests.get(url, params=payload)
+
+            print(response)
+
+            features = response.json()["features"]
+            geometry = list()
+            out_features = list()
+            for feature in features:
+                geometry.append(shape(feature["geometry"]))
+                out_features.append(feature["properties"])
+            new_df = gpd.GeoDataFrame(
+                out_features, geometry=geometry, crs="EPSG:"+str(crs)
+            )
+            df = pd.concat([df, new_df])
+            last_i = i
+
+        # print(f"Fetching the final records: {last_i} to {len(object_ids)}")
+        # curr_ids = object_ids[last_i:len(object_ids)]
+        # curr_ids = ",".join(map(str, curr_ids))
+        # payload = {
+        #     "outFields": "OCC_CLS,PRIM_OCC,SEC_OCC,PROP_ADDR,SQFEET,CENSUSCODE",
+        #     "outSR": str(crs),
+        #     "f": "geojson",
+        #     "objectIds": curr_ids
+        # }
+
+        # response = requests.get(url, params=payload)
+
+        # features = response.json()["features"]
+        # geometry = list()
+        # out_features = list()
+        # for feature in features:
+        #     geometry.append(shape(feature["geometry"]))
+        #     out_features.append(feature["properties"])
+        # new_df = gpd.GeoDataFrame(
+        #     out_features, geometry=geometry, crs="EPSG:"+str(crs)
+        # )
+        # df = pd.concat([df, new_df])
+
+        # print(df)
+
+    return df
 
 
 def convert_geojson_gdf(data, filter, filter_key=None, filter_val=None):
@@ -122,6 +240,20 @@ def get_osm_buildings_within_area(service_area_geom):
 
     # plt.hist(buildings['area'], bins=100)
     # plt.show()
+
+    return buildings
+
+
+def assign_bg_api(buildings, bg_layer):
+    """
+    Assign the block group to each building using data from census api
+    """
+    buildings = buildings.sjoin(bg_layer, how="inner")
+
+    print(buildings)
+
+    buildings.loc[:, "bg"] = buildings.loc[:, "bg"] + buildings.loc[:, "BLKGRP"]
+    buildings.loc[:, "bg"] = pd.to_numeric(buildings.loc[:, "bg"])
 
     return buildings
 
@@ -266,6 +398,13 @@ def buildings_in_city(city_name):
     return buildings
 
 
+def buildings_by_area(fips):
+    """
+    Find the buildings in the county given the FIPS code
+    """
+    return query_fema("USA_Structures_View", fips, 0)
+
+
 def building_stats(buildings):
     """
     Print the statistics of the buidings in the given city
@@ -277,6 +416,75 @@ def building_stats(buildings):
     print(f"Number of commercial buildings found: {com_buildings}")
     print(f"Number of residential buildings found: {res_buildings}")
     print(f"Number of industrial buildings found: {ind_buildings}")
+
+
+def fema_building_types(buildings, perc_caf=0.1, perc_gro=0.01):
+    """
+    Characterize the building types based on the FEMA building database
+    """
+    # if OCC_CLS is "Residential" and PRIM_OCC is "Single Family Dwelling"
+    # then type is res
+    buildings["res"] = (
+        (buildings["OCC_CLS"] == "Residential") &
+        (buildings["PRIM_OCC"].isin(["Single Family Dwelling", "Manufactured Home", "Unclassified"]))
+    )
+
+    buildings["mfh"] = (
+        (buildings["OCC_CLS"] == "Residential") &
+        (buildings["PRIM_OCC"].isin(["Institutional Dormitory", "Multi - Family Dwelling"]))
+    )
+
+    buildings["ind"] = (
+        buildings["OCC_CLS"] == "Industrial"
+    )
+
+    buildings["com"] = (
+        (buildings["OCC_CLS"].isin(
+            [
+                "Commercial", "Utility & Misc.", "Education", "Government",
+                "Unclassified", "Agriculture"
+            ]
+        )) |
+        (buildings["PRIM_OCC"] == "Temporary Lodging")
+    )
+
+    """
+    Make a certain number of commercial buildings, cafe and grocery buildings
+    because FEMA doesn't include either distinction in it's building classification
+    system
+    """
+    # total number of buildings
+    tot_buildings = len(buildings)
+    com_buildings = np.where(buildings.com == True)
+
+    caf_buildings = tot_buildings * perc_caf
+    gro_buildings = tot_buildings * perc_gro
+
+    buildings["caf"] = False
+    buildings["caf"].iloc[np.random.choice(com_buildings[0], int(caf_buildings))] = True
+
+    # convert PRIM_OCC to "Retail Trade" if cafe
+    buildings.PRIM_OCC[buildings.caf == True] = "Retail Trade"
+
+    buildings["gro"] = False
+    buildings["gro"].iloc[np.random.choice(com_buildings[0], int(gro_buildings))] = True
+
+    # convert PRIM_OCC to "Retail Trade" if cafe
+    buildings.PRIM_OCC[buildings.gro == True] = "Retail Trade"
+
+    # make all com buildings that were turned into caf or gro nodes, false
+    buildings["com"].iloc[np.where(buildings.caf == True)] = False
+    buildings["com"].iloc[np.where(buildings.gro == True)] = False
+
+    buildings["type"] = buildings.apply(type_helper, axis=1)
+
+    # make PRIM_OCC a list to conform to previous standards
+    buildings["PRIM_OCC"] = buildings["PRIM_OCC"]
+
+    # make PRIM_OCC a list to conform to previous standards
+    buildings["PRIM_OCC"] = buildings["PRIM_OCC"].apply(lambda x: [x])
+
+    return buildings
 
 
 def type_helper(x):
@@ -441,7 +649,7 @@ def ckdnearest(gdfA, gdfB):
     return gdf
 
 
-def make_node_groups(buildings, wn):
+def make_node_groups(buildings, wn, crs=4326):
     """
     Map the buildings to each node of the wn.
 
@@ -453,52 +661,121 @@ def make_node_groups(buildings, wn):
         wn : WaterNetworkModel
             water network of the target city
     """
-    wn_gis = wntr.network.to_gis(wn, crs="EPSG:4326")
+    wn_gis = wntr.network.to_gis(wn, crs="EPSG:"+str(crs))
     # print(wn_gis.junctions.loc['1555', :])
 
     # wn_gis.junctions.plot()
     # print(buildings['geometry'].centroid.index)
 
-    buildings.geometry = buildings.geometry.centroid
+    # buildings.geometry = buildings.geometry.centroid
 
     wn_nearest = ckdnearest(buildings, wn_gis.junctions)
 
     return wn_nearest
 
 
-def make_building_list(wn, city, dir):
+def make_building_list(wn, city, dir, crs=3547, fips=21159):
     # read parcel data from pickle or from NC OneMap
-    if city + "_parcel.pkl" in os.listdir(dir):
-        buildings = pd.read_pickle(os.path.join(dir, city + "_parcel.pkl"))
-    else:
-        buildings = buildings_in_city(city)
-        buildings.to_pickle(os.path.join(dir, city + "_parcel.pkl"))
+    # UNCOMMENT IF USING NC CITY
+    # if city + "_parcel.pkl" in os.listdir(dir):
+    #     buildings = pd.read_pickle(os.path.join(dir, city + "_parcel.pkl"))
+    # else:
+    #     buildings = buildings_in_city(city)
+    #     buildings.to_pickle(os.path.join(dir, city + "_parcel.pkl"))
 
     # read water service area from pickle or from NC OneMap
-    if city + "_service_area.pkl" in os.listdir(dir):
-        service_area = pd.read_pickle(os.path.join(dir, city + "_service_area.pkl"))
-    else:
-        service_area = get_water_utility_service_areas(city)
-        service_area.to_pickle(os.path.join(city + "_service_area.pkl"))
+    # UNCOMMENT IF USING NC CITY
+    # if city + "_service_area.pkl" in os.listdir(dir):
+    #     service_area = pd.read_pickle(os.path.join(dir, city + "_service_area.pkl"))
+    # else:
+    #     service_area = get_water_utility_service_areas(city)
+    #     service_area.to_pickle(os.path.join(city + "_service_area.pkl"))
 
-    buildings = buildings_by_type(buildings)
-    buildings.to_csv(os.path.join(dir, "building_data.csv"))
+    # buildings = buildings_by_type(buildings)
+    if city + "_buildings.pkl" in os.listdir(dir):
+        buildings = pd.read_pickle(os.path.join(dir, city + "_buildings.pkl"))
+    else:
+        buildings = buildings_by_area(fips)
+        buildings.to_pickle(os.path.join(dir, city + "_buildings.pkl"))
+
+    # clean data from FEMA
+    # convert polygons to points
+    buildings.geometry = buildings.geometry.centroid
+
+    # remove any buildings that do not have an address
+    buildings = buildings[~buildings.PROP_ADDR.isnull()]
+
+    # group by address to consolidate multi-building lots
+    buildings = (
+        buildings
+        .groupby("PROP_ADDR")
+        .agg(
+            {
+                "OCC_CLS": "first",
+                "PRIM_OCC": "first",
+                "SEC_OCC": "first",
+                "SQFEET": "sum",
+                "CENSUSCODE": "first",
+                "geometry": "first"
+            }
+        )
+    )
+
+    print(buildings)
+
+    # add the prison back
+    buildings.loc["628 FEDERAL DRIVE", "OCC_CLS"] = "Residential"
+    buildings.loc["628 FEDERAL DRIVE", "PRIM_OCC"] = "Institutional Dormitory"
+
+    buildings = fema_building_types(buildings)
+
+    # reinitialize geodataframe after groupby
+    buildings = gpd.GeoDataFrame(buildings, geometry="geometry", crs=crs)
+
+    # rename columns to match rest of model
+    buildings = buildings.rename(columns={"SQFEET": "area", "CENSUSCODE": "bg"})
+
+    # update the bg column
+    buildings.loc[:, "bg"] = buildings.loc[:, "bg"].str[5:]
+
+    # assign bg to each building
+
+    if city + "_bg_layer.pkl" in os.listdir(dir):
+        bg_layer = pd.read_pickle(os.path.join(dir, city + "_bg_layer.pkl"))
+    else:
+        # get the tracts from building data
+        tracts = buildings["bg"].unique()
+
+        # get the block group gis layer
+        bg_layer = get_bg_layer(tracts, 159, crs)
+
+    print(bg_layer)
+
+    buildings = assign_bg_api(buildings, bg_layer)
+
+    # save building data to a csv
+    buildings.to_csv(os.path.join(dir, city + "_building_data.csv"))
+
+    print(buildings)
+    print(buildings.crs)
 
     # get the area of each building
-    data2keep = [
-        "parusedesc",
-        "parusedsc2",
-        "geometry",
-        "type",
-        "bg",
-        "Shape__Are",
-        "area",
-    ]
-    buildings = get_building_areas(city, buildings, service_area)
-    buildings = buildings.loc[:, data2keep]
+    # UNCOMMENT IF USING NC CITY
+    # data2keep =
+    #     "parusedesc",
+    #     "parusedsc2",
+    #     "geometry",
+    #     "type",
+    #     "bg",
+    #     "Shape__Are",
+    #     "area",
+    # ]
+    # buildings = get_building_areas(city, buildings, service_area)
+    # buildings = buildings.loc[:, data2keep]
 
     # remove parcels without a building
-    buildings = buildings[~buildings["area"].isnull()]
+    # UNCOMMENT IF USING NC CITY
+    # buildings = buildings[~buildings["area"].isnull()]
     # print(buildings)
 
-    return make_node_groups(buildings, wn)
+    return make_node_groups(buildings, wn, crs=crs), bg_layer

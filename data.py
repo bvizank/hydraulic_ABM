@@ -36,12 +36,6 @@ wfh_patterns = np.genfromtxt(
     r"Input Files/res_patterns/normalized_res_patterns.csv", delimiter=","
 )
 
-""" Low income values by household size """
-low_income = {1: 41100, 2: 46950, 3: 52800, 4: 58650, 5: 63350, 6: 68050}
-
-""" Extremely low income values by household size """
-ex_low_income = {1: 15400, 2: 20440, 3: 25820, 4: 31200, 5: 36580, 6: 41960}
-
 """ Gamma parameters for income based on size for Clinton, NC """
 size_income = {
     1: (0.22849, 96694.59),
@@ -225,11 +219,47 @@ ind_types = {
     "BOTTLING PLANT": com_water_coef["manufacturing"],
 }
 
+res_types = {
+    "Single Family Dwelling": com_water_coef["other_com"],
+    "Manufactured Home": com_water_coef["other_com"],
+    "Institutional Dormitory": com_water_coef["other_com"],
+    "Multi - Family Dwelling": com_water_coef["other_com"],
+}
+
+com_types = {
+    "Retail Trade": com_water_coef["stores"],
+    "Agriculture": com_water_coef["gen_com"],
+    "Unclassified": com_water_coef["gen_com"],
+    "Temporary Lodging": com_water_coef["hotel"],
+    "Professional/Technical Services": com_water_coef["offices"],
+    "Personal and Repair Services": com_water_coef["auto"],
+    "Aviation": com_water_coef["gen_com"],
+    "Emergency Response": com_water_coef["gen_com"],
+    "General Services": com_water_coef["gen_com"],
+    "Entertainment and Recreation": com_water_coef["other_com"],
+    "Pre-K - 12 Schools": com_water_coef["school"],
+    "Medical Office/Clinic": com_water_coef["medical"]
+}
+
+ind_types = {
+    "Light": com_water_coef["gen_ind"]
+}
+
+# UNCOMMENT IF USING CLINTON
+# par_types = {
+#     "res": res_types,
+#     "mfh": mfh_types,
+#     "com": com_types,
+#     "caf": caf_types,
+#     "gro": gro_types,
+#     "ind": ind_types,
+# }
+
 par_types = {
     "res": res_types,
     "mfh": mfh_types,
     "com": com_types,
-    "caf": caf_types,
-    "gro": gro_types,
+    "caf": com_types,
+    "gro": com_types,
     "ind": ind_types,
 }

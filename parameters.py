@@ -161,6 +161,15 @@ class Parameters(Model):
         """ skeletonized network """
         self.skeleton = False
 
+        """ percent of the population that works at industrial sites """
+        self.perc_ind = 0.25
+
+        """ building use column """
+        self.building_use = "parusedsc2"
+
+        """ hot start age values """
+        self.hot_start = True
+
         """ Data collectors """
         # self.agent_matrix = dict()
 
@@ -258,7 +267,7 @@ class Parameters(Model):
             x["type"],
             x["area"],
             x["bg"],
-            x["parusedsc2"],
+            x[self.building_use],
             self,
         )
         return building
@@ -272,7 +281,7 @@ class Parameters(Model):
             None,
             self.twa_mods,
             self,
-            x["parusedsc2"],
+            x[self.building_use],
             x["capacity"],
             x["bg"],
             x["area"],
@@ -303,6 +312,7 @@ class Parameters(Model):
         self.num_com_agents = num_agents_all["com"] + num_agents_all["gro"]
         self.num_caf_agents = num_agents_all["caf"]
         self.num_gro_agents = num_agents_all["gro"]
+
         if self.verbose > 0:
             print(f"Total number of agents: {self.num_agents}")
             print(f"Capacity of all industrial nodes: {self.num_ind_agents}")
@@ -319,21 +329,23 @@ class Parameters(Model):
 
     def iterate_capacity(self):
         # factor to convert building area to capacity
+        # sq ft/person
         ind_denom = 1000
         com_denom = 1000
         mfh_denom = 500
         self.assign_capacity(ind_denom, com_denom, mfh=mfh_denom, res=True)
 
-        ind_cap_difference = self.num_ind_agents - self.num_agents * 0.25
+        ind_cap_difference = self.num_ind_agents - self.num_agents * self.perc_ind
 
-        while abs(ind_cap_difference) > 100:
+        while abs(ind_cap_difference) > 500:
+            print(ind_cap_difference)
             if ind_cap_difference > 0:
                 ind_denom += 10
                 self.assign_capacity(ind_denom, com_denom, mfh_denom)
             else:
                 ind_denom -= 10
                 self.assign_capacity(ind_denom, com_denom, mfh_denom)
-            ind_cap_difference = self.num_ind_agents - self.num_agents * 0.25
+            ind_cap_difference = self.num_ind_agents - self.num_agents * self.perc_ind
 
         # the self.num_agents * 0.3 term is the number of agents that don't
         # move to a commercial or work node during a given day. This would be
@@ -416,7 +428,7 @@ class Parameters(Model):
         self.income_dist.columns = [int(i) for i in self.income_dist.columns]
 
         """ Assign each building a node in the WDN """
-        self.node_buildings = ci.make_building_list(self.wn, city, city_dir)
+        self.node_buildings, _ = ci.make_building_list(self.wn, city, city_dir)
 
         """ Assign the nodes with capacity values """
         self.iterate_capacity()
@@ -547,6 +559,8 @@ class Parameters(Model):
         self.agents_list = dict()
 
         # initialize income values for all of the households in the sim
+        print(self.node_buildings)
+        print(self.income_dist.index)
         self.income_list = dict()
         for i, row in self.income_dist.iterrows():
             res_grp = self.node_buildings[
@@ -565,7 +579,7 @@ class Parameters(Model):
                 print(f"Group size for bg {i}: {grp_size}")
             if grp_size > 0:
                 self.income_list[i] = ut.income_list(
-                    data=row, n_house=grp_size * 1.1, model=self
+                    data=row, n_house=int(grp_size * 1.1), model=self
                 )
 
         if self.verbose > 0:
@@ -614,7 +628,7 @@ class Parameters(Model):
                 continue
             for building_id in self.wdn_nodes[name]:
                 building = self.buildings[building_id]
-                # print(f"Building {building_id} with type {building.type} has a demand of {building.base_demand}")
+                print(f"Building {building_id} with type {building.parcel_desc} has a demand of {building.base_demand}")
                 demand += building.base_demand
             node.demand_timeseries_list[0].base_value = demand
 
@@ -1127,7 +1141,8 @@ class Parameters(Model):
         self.base_demand_list()
 
         # set age with previous steady state values
-        self.set_age()
+        if self.hot_start:
+            self.set_age()
 
         # set epanet options
         if self.hyd_sim in ["hourly", "monthly"]:

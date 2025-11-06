@@ -1339,6 +1339,81 @@ class BaseGraphics:
 
         return ax
 
+    def prepare_wn_data(self):
+        """
+        Prepare the wn gis data
+        """
+        wn_gis = wntr.network.to_gis(self.wn)
+        wn_gis.junctions = wn_gis.junctions.set_crs(self.crs)
+        wn_gis.pipes = wn_gis.pipes.set_crs(self.crs)
+        node_buildings = wn_gis.junctions
+
+        return wn_gis, node_buildings
+
+    def prepare_bg_data(self, node_data):
+        """
+        Prepare the wn gis data and block group data for use in subsequent
+        plots
+        """
+        # data directory for city
+        data_dir = os.path.join("Input Files/cities", self.city)
+
+        node_buildings, bg_layer = ci.make_building_list(self.wn, self.city, data_dir, self.crs)
+        node_buildings = node_buildings.query('type == "res"')
+
+        # import demographic data using pandas and join with bg_layer
+        demo = pd.read_csv(os.path.join(data_dir, "demographics_bg.csv"))
+        bg_layer["bg"] = bg_layer["TRACT"] + bg_layer["BLKGRP"]
+        bg_layer.set_index("bg", inplace=True)
+        bg_layer.index = bg_layer.index.astype("int64")
+        demo.set_index("bg", inplace=True)
+        demo[["perc_w", "perc_nh", "perc_renter"]] = (
+            demo[["perc_w", "perc_nh", "perc_renter"]] * 100
+        )
+
+        bg_layer = bg_layer.join(demo)
+
+        if self.city == "clinton":
+            # import the block groups for sampson county
+            gdf = geopandas.read_file(data_dir + "sampson_bg_clinton/tl_2023_37_bg.shp")
+            gdf["bg"] = gdf["TRACTCE"] + gdf["BLKGRPCE"]
+            gdf.set_index("bg", inplace=True)
+            gdf.index = gdf.index.astype("int64")
+
+            # filter the bgs for clinton
+            bg = ["970802", "970600", "970801", "970702", "970701"]
+            gdf = gdf[gdf["TRACTCE"].isin(bg)]
+
+            gdf = gdf.join(demo)
+
+        if node_data is not None:
+            # apply the bg crs to the wn data
+            # wn_gis.junctions.to_crs(gdf.crs, inplace=True)
+            print(node_buildings.crs)
+            node_buildings.to_crs(self.crs, inplace=True)
+
+            # add node_data to wn_gis.junctions
+            node_data.index = node_data.index.astype("int64")
+            node_buildings.index = node_buildings.index.astype("int64")
+            # wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
+            # wn_gis.junctions.insert(0, 'data', node_data)
+            # print(wn_gis.junctions)
+            # print(node_buildings)
+            # print(node_data)
+            node_buildings["data"] = node_data
+
+            # clip the bg layer to the extent of the wn layer
+            # gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
+            bg_layer = geopandas.clip(bg_layer, mask=node_buildings.total_bounds)
+        else:
+            # wn_gis = wntr.network.to_gis(self.wn)
+            # wn_gis.junctions = wn_gis.junctions.set_crs("epsg:4326")
+            # wn_gis.junctions.to_crs(gdf.crs, inplace=True)
+            node_buildings.to_crs(self.crs, inplace=True)
+            bg_layer = geopandas.clip(bg_layer, mask=node_buildings.total_bounds)
+
+        return node_buildings, bg_layer
+
     def bg_map(
         self,
         ax,
@@ -1369,77 +1444,25 @@ class BaseGraphics:
 
             display_demo  :  str
                 demographic to be displayed on the block groups
-                options: ['median_income', 'perc_w', 'perc_nh']
+                options: ['median_income', 'perc_w', 'perc_nh', 'perc_renter']
 
             node_data  :  pd.DataFrame
                 node data to be displayed
         """
-        # directory with clinton data
-        dir = "Input Files/cities/clinton/"
-
-        # convert the wn to an object with various gdfs
+        # prepare the building and wn node data
         if wn_nodes:
-            wn_gis = wntr.network.to_gis(self.wn)
-            wn_gis.junctions = wn_gis.junctions.set_crs("epsg:4326")
-            wn_gis.pipes = wn_gis.pipes.set_crs("epsg:4326")
-            node_buildings = wn_gis.junctions
+            wn_gis, node_buildings = self.prepare_wn_data()
         else:
-            node_buildings = ci.make_building_list(self.wn, "clinton", dir)
-            node_buildings = node_buildings.query('type == "res"')
+            node_buildings, gdf = self.prepare_bg_data(node_data)
 
-        # import the block groups for sampson county
-        gdf = geopandas.read_file(dir + "sampson_bg_clinton/tl_2023_37_bg.shp")
-        gdf["bg"] = gdf["TRACTCE"] + gdf["BLKGRPCE"]
-        gdf.set_index("bg", inplace=True)
-        gdf.index = gdf.index.astype("int64")
-
-        # import demographic data using pandas
-        demo = pd.read_csv(dir + "demographics_bg.csv")
-        demo.set_index("bg", inplace=True)
-        demo[["perc_w", "perc_nh", "perc_renter"]] = (
-            demo[["perc_w", "perc_nh", "perc_renter"]] * 100
-        )
-        # filter the bgs for clinton
-        bg = ["970802", "970600", "970801", "970702", "970701"]
-        gdf = gdf[gdf["TRACTCE"].isin(bg)]
-
-        gdf = gdf.join(demo)
-        # print(gdf)
-
-        if node_data is not None:
-            # apply the bg crs to the wn data
-            # wn_gis.junctions.to_crs(gdf.crs, inplace=True)
-            node_buildings.to_crs(gdf.crs, inplace=True)
-
-            # add node_data to wn_gis.junctions
-            node_data.index = node_data.index.astype("int64")
-            node_buildings.index = node_buildings.index.astype("int64")
-            # wn_gis.junctions.index = wn_gis.junctions.index.astype('int64')
-            # wn_gis.junctions.insert(0, 'data', node_data)
-            # print(wn_gis.junctions)
-            # print(node_buildings)
-            # print(node_data)
-            node_buildings["data"] = node_data
-
-            # clip the bg layer to the extent of the wn layer
-            # gdf = geopandas.clip(gdf, mask=wn_gis.junctions.total_bounds)
-            gdf = geopandas.clip(gdf, mask=node_buildings.total_bounds)
-        else:
-            # wn_gis = wntr.network.to_gis(self.wn)
-            # wn_gis.junctions = wn_gis.junctions.set_crs("epsg:4326")
-            # wn_gis.junctions.to_crs(gdf.crs, inplace=True)
-            node_buildings.to_crs(gdf.crs, inplace=True)
-            gdf = geopandas.clip(gdf, mask=node_buildings.total_bounds)
-
-        if wn_nodes:
-            wn_gis.pipes.to_crs(gdf.crs, inplace=True)
+        print(gdf)
 
         # plot the bg layer
         if display_demo is not None:
             ax = gdf.plot(
                 ax=ax,
                 column=display_demo,
-                cmap="Blues",
+                cmap="viridis",
                 legend=True,
                 zorder=1,
                 legend_kwds={
@@ -1567,11 +1590,15 @@ class Graphics(BaseGraphics):
         skeletonized=False,
         single=False,
         remove_bg=False,
+        crs=4326,
+        city="clinton"
     ):
         self.days = days
         self.x_len = days * 24
         self.skeletonized = skeletonized
         self.transparent = remove_bg
+        self.crs = crs
+        self.city = city
         self.comp_list = [
             "seir_data",
             "demand",
@@ -4563,7 +4590,7 @@ class Graphics(BaseGraphics):
         )
         plt.close()
 
-    def make_single_plots(self, file, days, twa_plot=True):
+    def make_single_plots(self, file, days, bw=False, twa_plot=True):
         """Set the warmup period"""
         x_len = days * 24
 
@@ -4589,7 +4616,10 @@ class Graphics(BaseGraphics):
         data = ut.read_data(loc, comp_list)
         print(data["wfh"].sum(axis=1))
         print(data["cov_ff"].sum(axis=1))
-        data["tot_cost"] = data["tw_cost"] + data["bw_cost"]
+        if bw:
+            data["tot_cost"] = data["tw_cost"] + data["bw_cost"]
+        else:
+            data["tot_cost"] = data["tw_cost"]
         data["tot_demand"] = data["tw_demand"] + data["bw_demand"]
         print(data["tw_demand"].sum(axis=1) / 3.875 / len(data["tw_demand"].columns))
         print(
@@ -4659,9 +4689,9 @@ class Graphics(BaseGraphics):
         # plt.savefig(loc + 'demand_tanks.png', bbox_inches='tight')
         # plt.close()
 
-        data["demand"].loc[:, "58"].plot()
-        plt.savefig(loc + "demand_58.png", bbox_inches="tight")
-        plt.close()
+        # data["demand"].loc[:, "58"].plot()
+        # plt.savefig(loc + "demand_58.png", bbox_inches="tight")
+        # plt.close()
 
         demand = data["demand"][nodes_w_demand].sum(axis=1)
         x_values = np.array([x for x in np.arange(0, days, days / x_len)])
@@ -4698,9 +4728,9 @@ class Graphics(BaseGraphics):
         age = data["age"][nodes_w_demand].mean(axis=1)
         age_all = data["age"][nodes_w_demand] / 3600
         print(age_all)
-        age_all.loc[:, "58"].plot()
-        plt.savefig(loc + "age_58.png", bbox_inches="tight")
-        plt.close()
+        # age_all.loc[:, "58"].plot()
+        # plt.savefig(loc + "age_58.png", bbox_inches="tight")
+        # plt.close()
         # print(data['age'].loc[8470800, self.com_nodes].sort_values() / 3600)
         # print(data['age'].loc[8470800, self.res_nodes].sort_values() / 3600)
         plt.plot(x_values, age.iloc[-x_len:] / 3600)
@@ -4768,6 +4798,8 @@ class Graphics(BaseGraphics):
         # plt.savefig(loc + 'tot_cost_map.' + self.format,
         #             format=self.format, bbox_inches='tight')
         # plt.close()
+
+        """ Make maps with water age and bg demographics """
         print(data["age"].iloc[-1, :])
 
         ax = wntr.graphics.plot_network(
@@ -4782,13 +4814,14 @@ class Graphics(BaseGraphics):
         )
         plt.close()
 
-        """ Make maps with water age and bg demographics """
         data["income"].set_index(keys="id", inplace=True)
         # cowpi = pd.concat(
         #     [data['income'],
         #      data['tot_cost'].iloc[-1, :] / (data['income'] * self.days / 365)],
         #     axis=1, keys=['Income', 'COWPI']
         # )
+        print(data["tot_cost"])
+        print(data["income"])
         cowpi = pd.concat(
             [
                 data["tot_cost"].iloc[-1, :]
@@ -4807,12 +4840,18 @@ class Graphics(BaseGraphics):
                 print(row)
 
         cowpi_grouped = cowpi.groupby(level=0).mean()
+        print(cowpi_grouped)
         ax = plt.subplot()
         # self.bg_map(ax, 'median_income', data['age'].iloc[-1, :] / 3600)
-        self.bg_map(ax, "median_income", cowpi_grouped.loc[:, "cowpi"] > 4.6)
+        self.bg_map(
+            ax,
+            display_demo="perc_w",
+            node_data=cowpi_grouped.loc[:, "cowpi"] > 4.6,
+            vmin_inp=0,
+        )
         plt.gcf().set_size_inches(7, 3.5)
         plt.savefig(
-            loc + "income-x-age." + self.format, format=self.format, bbox_inches="tight"
+            loc + "perc_w-x-age." + self.format, format=self.format, bbox_inches="tight"
         )
         plt.close()
 
@@ -4850,63 +4889,63 @@ class Graphics(BaseGraphics):
         plt.close()
 
         # plot race boxplot
-        print(data["demo"])
-        race = pd.concat(
-            [
-                cowpi[data["demo"].loc["white", :]]
-                .loc[:, "cowpi"]
-                .reset_index(drop=True),
-                cowpi[~data["demo"].loc["white", :]]
-                .loc[:, "cowpi"]
-                .reset_index(drop=True),
-            ],
-            axis=1,
-            keys=["White", "POC"],
-        )
-        # print(race)
-        for i, row in race.iterrows():
-            print(row)
+        # print(data["demo"])
+        # race = pd.concat(
+        #     [
+        #         cowpi[data["demo"].loc["white", :]]
+        #         .loc[:, "cowpi"]
+        #         .reset_index(drop=True),
+        #         cowpi[~data["demo"].loc["white", :]]
+        #         .loc[:, "cowpi"]
+        #         .reset_index(drop=True),
+        #     ],
+        #     axis=1,
+        #     keys=["White", "POC"],
+        # )
+        # # print(race)
+        # for i, row in race.iterrows():
+        #     print(row)
 
-        ax = plt.subplot()
-        race.plot(kind="box", sym="")
-        plt.savefig(
-            loc + "race_cowpi." + self.format, format=self.format, bbox_inches="tight"
-        )
-        plt.close()
+        # ax = plt.subplot()
+        # race.plot(kind="box", sym="")
+        # plt.savefig(
+        #     loc + "race_cowpi." + self.format, format=self.format, bbox_inches="tight"
+        # )
+        # plt.close()
 
-        # plot hispanic boxplot
-        hispanic = pd.concat(
-            [
-                cowpi[~data["demo"].loc["hispanic", :]]["cowpi"].reset_index(drop=True),
-                cowpi[data["demo"].loc["hispanic", :]]["cowpi"].reset_index(drop=True),
-            ],
-            axis=1,
-            keys=["Non-Hispanic", "Hispanic"],
-        )
+        # # plot hispanic boxplot
+        # hispanic = pd.concat(
+        #     [
+        #         cowpi[~data["demo"].loc["hispanic", :]]["cowpi"].reset_index(drop=True),
+        #         cowpi[data["demo"].loc["hispanic", :]]["cowpi"].reset_index(drop=True),
+        #     ],
+        #     axis=1,
+        #     keys=["Non-Hispanic", "Hispanic"],
+        # )
 
-        ax = plt.subplot()
-        race.plot(kind="box", sym="")
-        plt.savefig(
-            loc + "race_cowpi." + self.format, format=self.format, bbox_inches="tight"
-        )
-        plt.close()
+        # ax = plt.subplot()
+        # race.plot(kind="box", sym="")
+        # plt.savefig(
+        #     loc + "race_cowpi." + self.format, format=self.format, bbox_inches="tight"
+        # )
+        # plt.close()
 
-        # plot renters boxplot
-        hispanic = pd.concat(
-            [
-                cowpi[data["demo"].loc["renter", :]]["cowpi"].reset_index(drop=True),
-                cowpi[~data["demo"].loc["renter", :]]["cowpi"].reset_index(drop=True),
-            ],
-            axis=1,
-            keys=["Renter", "Non-renter"],
-        )
+        # # plot renters boxplot
+        # hispanic = pd.concat(
+        #     [
+        #         cowpi[data["demo"].loc["renter", :]]["cowpi"].reset_index(drop=True),
+        #         cowpi[~data["demo"].loc["renter", :]]["cowpi"].reset_index(drop=True),
+        #     ],
+        #     axis=1,
+        #     keys=["Renter", "Non-renter"],
+        # )
 
-        ax = plt.subplot()
-        hispanic.plot(kind="box", sym="")
-        plt.savefig(
-            loc + "renter_cowpi." + self.format, format=self.format, bbox_inches="tight"
-        )
-        plt.close()
+        # ax = plt.subplot()
+        # hispanic.plot(kind="box", sym="")
+        # plt.savefig(
+        #     loc + "renter_cowpi." + self.format, format=self.format, bbox_inches="tight"
+        # )
+        # plt.close()
 
         """ Plot the number of residences """
         node_buildings = pd.read_pickle("buildings.pkl")

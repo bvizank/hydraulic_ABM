@@ -388,6 +388,7 @@ class Building:
         for desc in self.parcel_desc:
             if desc in dt.par_types[self.type].keys():
                 mult = dt.par_types[self.type][desc]
+                print(f"Multiplier for {self.parcel_desc}: {mult}")
                 return self.area * mult * 3.875 / 24 / 60 / 60
 
         # if self.type == "com":
@@ -545,13 +546,20 @@ class Household:
         self.capacity = capacity
         self.model = model
 
-        # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
-        self.base_rate_water = 15.55  # dollars per month; city of clinton, nc
-        self.cons_rate_water = 0.000844022  # dollars per L; clinton, nc
-        self.base_rate_sewer = 16.21  # dollars per month; clinton, nc
-        self.cons_rate_sewer = 0.00081577  # dollars per L; clinton, nc
+        self.base_rate_water = 50.01  # dollars per month; martin county
+        self.cons_rate_water = 0.0027715  # dollars per L; martin county
+        self.base_rate_sewer = 38.0  # dollars per month; martin county
+        self.cons_rate_sewer = 0.0039128  # dollars per L; martin county
         self.bottle_cost_pl = 0.325  # dollars per L
-        self.min_wage = 7.25  # minimum wage for NC
+        self.min_vol = 7570  # the volume of water when per unit pricing goes into effect, [L]
+
+        # https://www.cityofclintonnc.com/DocumentCenter/View/759/FY23-24-fee-schedule?bidId=
+        # self.base_rate_water = 15.55  # dollars per month; city of clinton, nc
+        # self.cons_rate_water = 0.000844022  # dollars per L; clinton, nc
+        # self.base_rate_sewer = 16.21  # dollars per month; clinton, nc
+        # self.cons_rate_sewer = 0.00081577  # dollars per L; clinton, nc
+        # self.bottle_cost_pl = 0.325  # dollars per L
+        # self.min_wage = 7.25  # minimum wage for NC
 
         self.tap_cost = 0  # the total cost of tap water
         self.bottle_cost = 0  # the total cost of bottled water
@@ -661,21 +669,24 @@ class Household:
         # set the income level: low, medium, high
         # low income is set using HUD thresholds by household size
         # https://www.huduser.gov/portal/datasets/il.html
-        high_income = 150000
-        if self.income < dt.ex_low_income[int(len(self.agent_obs))]:
-            self.income_level = 0
-        if (
-            self.income < dt.low_income[int(len(self.agent_obs))]
-            and self.income > dt.ex_low_income[int(len(self.agent_obs))]
-        ):
-            self.income_level = 1
-        if (
-            self.income >= dt.low_income[int(len(self.agent_obs))]
-            and self.income < high_income
-        ):
-            self.income_level = 2
-        if self.income >= high_income:
-            self.income_level = 3
+        # high_income = 150000
+        # if self.income < dt.ex_low_income[int(len(self.agent_obs))]:
+        #     self.income_level = 0
+        # if (
+        #     self.income < dt.low_income[int(len(self.agent_obs))]
+        #     and self.income > dt.ex_low_income[int(len(self.agent_obs))]
+        # ):
+        #     self.income_level = 1
+        # if (
+        #     self.income >= dt.low_income[int(len(self.agent_obs))]
+        #     and self.income < high_income
+        # ):
+        #     self.income_level = 2
+        # if self.income >= high_income:
+        #     self.income_level = 3
+
+        # placeholder
+        self.income_level = 0
 
         # pick water age thresholds for TWA behaviors
         self.twa_thresholds = {
@@ -824,9 +835,18 @@ class Household:
         #     print(f"Monthly demand: {self.sum_demand}")
         #     print(f"Monthly reduction: {self.reduction}")
 
-    def calc_tap_cost(self, structure="simple"):
+    def calc_tap_cost(self, min_vol=300*28.3168, structure="simple"):
         """
         Helper to calculate cost of tap water
+
+        Parameters:
+        -----------
+
+        min_vol (float): minimum volume charged at base rate. Needs to
+                         be in L!
+        structure (str): billing structure. simple represents a two tier
+                         block rate, where consumers pay a base rate up to
+                         a given volume, then pay per unit after
         """
         if structure == "simple":
             """
@@ -834,12 +854,11 @@ class Household:
             300 cu. ft. household pays consumption rate (which is per
             100 cu. ft.)
             """
-            cons_threshold = 300 * 28.3168  # 300 cu. ft. to L
             water = (
                 self.base_rate_water
                 + (
-                    self.tap_demand - cons_threshold
-                    if self.tap_demand > cons_threshold
+                    self.tap_demand - self.min_vol
+                    if self.tap_demand > self.min_vol
                     else 0
                 ) * self.cons_rate_water
             )
@@ -848,7 +867,17 @@ class Household:
             Calculate sewer cost. All use is charged a base rate and a per
             100 cu. ft. consumption rate
             """
-            sewer = self.base_rate_sewer + self.tap_demand * self.cons_rate_sewer
+            # if city == "clinton":
+            #     sewer = self.base_rate_sewer + self.tap_demand * self.cons_rate_sewer
+            # else:
+            sewer = (
+                self.base_rate_sewer
+                + (
+                    self.tap_demand - self.min_vol
+                    if self.tap_demand > self.min_vol
+                    else 0
+                ) * self.cons_rate_sewer
+            )
             self.tap_cost += water + sewer
 
     def calc_cost(self):

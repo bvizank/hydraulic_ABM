@@ -9,12 +9,14 @@ plots = Graphics(
     publication=True,
     error="se",
     days=days,
-    inp_file="Input Files/cities/clinton/clinton.inp",
+    inp_file="Input Files/cities/martin_county/martin_county.inp",
     # scenario_ls=["base", "basebw", "pm", "pm_nobw", "sa"],
     scenario_ls=["base", "basebw", "pm", "pm_nobw"],
     skeletonized=True,
-    single=False,
+    single=True,
     remove_bg=False,
+    crs=3547,
+    city="martin_county"
 )
 
 """ Demand plots """
@@ -43,7 +45,7 @@ plots = Graphics(
 
 """ %HI (cowpi) plots """
 # plots.cowpi_barchart()
-plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
+# plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
 
 """ Block group map of city """
 # plots.make_city_map()
@@ -61,7 +63,7 @@ plots.cowpi_boxplot(demographics=True, di=False, perc=False, sa=False, map=True)
 # plots.make_seir_plot(days)
 
 """ Make single plots """
-# plots.make_single_plots("30_pm/0", 180, True)
+plots.make_single_plots("2025-11-06_12-26_0_results", 180, twa_plot=False)
 
 # ''' Export comparison stats '''
 # print("WFH model stats: " + str(plots.calc_model_stats(wn, only_wfh['avg_seir_data'], only_wfh['avg_age']/3600)))
